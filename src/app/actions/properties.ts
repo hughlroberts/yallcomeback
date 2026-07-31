@@ -1002,6 +1002,7 @@ export async function addCalendarBlock(formData: FormData) {
   await assertPropertyAccess(propertyId, access);
 
   const guestEmail = String(formData.get("guestEmail") || "").trim() || null;
+  const guestPhone = String(formData.get("guestPhone") || "").trim() || null;
   const amountRaw = String(formData.get("invoiceAmount") || "").trim();
   const invoiceAmount =
     amountRaw && Number.isFinite(Number(amountRaw))
@@ -1023,6 +1024,7 @@ export async function addCalendarBlock(formData: FormData) {
       occupantName: String(formData.get("occupantName") || "").trim() || null,
       notes: String(formData.get("notes") || "").trim() || null,
       guestEmail,
+      guestPhone,
       invoiceAmount,
     },
   });

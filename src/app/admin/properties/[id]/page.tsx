@@ -717,8 +717,27 @@ export default async function AdminPropertyDetailPage({
           <Input name="occupantName" placeholder="Jane Smith" />
         </div>
         <div>
-          <Label>Guest email (for invoice)</Label>
-          <Input name="guestEmail" type="email" placeholder="guest@example.com" />
+          <Label>Guest email</Label>
+          <Input
+            name="guestEmail"
+            type="email"
+            placeholder="guest@example.com"
+          />
+          <p className="mt-1 text-xs text-stone-400">
+            For invoices or messaging later
+          </p>
+        </div>
+        <div>
+          <Label>Guest phone</Label>
+          <Input
+            name="guestPhone"
+            type="tel"
+            placeholder="(555) 555-1234"
+            autoComplete="tel"
+          />
+          <p className="mt-1 text-xs text-stone-400">
+            Optional — for text / call follow-up later
+          </p>
         </div>
         <div>
           <Label>Invoice amount ($)</Label>
@@ -732,7 +751,11 @@ export default async function AdminPropertyDetailPage({
         </div>
         <div className="sm:col-span-2">
           <Label>Notes (admin only)</Label>
-          <Textarea name="notes" rows={2} placeholder="Phone, arrival time, etc." />
+          <Textarea
+            name="notes"
+            rows={2}
+            placeholder="Arrival time, special requests, etc."
+          />
         </div>
         <div className="sm:col-span-2">
           <label className="flex items-center gap-2 text-sm text-stone-700">
@@ -770,6 +793,7 @@ export default async function AdminPropertyDetailPage({
                     {b.blockType ? ` · ${b.blockType}` : ""}
                     {b.occupantName ? ` · ${b.occupantName}` : ""}
                     {b.guestEmail ? ` · ${b.guestEmail}` : ""}
+                    {b.guestPhone ? ` · ${b.guestPhone}` : ""}
                   </p>
                   {b.notes && <p className="mt-1 text-stone-400">{b.notes}</p>}
                   <p className="mt-2 text-xs">

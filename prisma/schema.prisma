@@ -447,8 +447,10 @@ model CalendarBlock {
   blockType    BlockType?
   occupantName String?
   notes        String?
-  /// Guest contact for Stripe invoice email
+  /// Guest contact for invoice / email later
   guestEmail   String?
+  /// Guest phone for SMS / follow-up later
+  guestPhone   String?
   /// Amount due for this offline stay (host-entered)
   invoiceAmount Float?
   invoiceCurrency String       @default("USD")
