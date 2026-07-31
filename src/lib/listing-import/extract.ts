@@ -1,3 +1,4 @@
+import { sanitizeAmenities } from "@/lib/listing-amenities";
 import type { ImportSource, ImportedListingDraft } from "./types";
 
 function metaContent(html: string, prop: string): string | null {
@@ -213,7 +214,7 @@ function extractAmenities(html: string, description: string): string[] {
       found.add(t);
     }
   }
-  return Array.from(found).slice(0, 40);
+  return sanitizeAmenities(Array.from(found)).slice(0, 40);
 }
 
 export function extractListingFromHtml(opts: {
