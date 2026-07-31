@@ -158,7 +158,16 @@ export async function updateHostProfile(formData: FormData) {
   const websiteUrl = normalizeWebsiteUrl(
     String(formData.get("websiteUrl") || ""),
   );
-  const logoUrl = String(formData.get("logoUrl") || "").trim() || null;
+  const logoUrlRaw = String(formData.get("logoUrl") || "").trim();
+  // Only http(s) or same-origin relative paths — block javascript:/data: spoof
+  const logoUrl =
+    !logoUrlRaw
+      ? null
+      : logoUrlRaw.startsWith("/") && !logoUrlRaw.startsWith("//")
+        ? logoUrlRaw
+        : /^https?:\/\//i.test(logoUrlRaw)
+          ? logoUrlRaw
+          : null;
   const primaryColorRaw = String(
     formData.get("primaryColor") || existing.primaryColor || "#2563eb",
   ).trim();

@@ -69,12 +69,20 @@ function rewriteHostGuestPath(
   return withTenant(req, hostSlug, { rewriteUrl: url, mode: "custom" });
 }
 
+/** Drop client-supplied tenant headers so guests cannot spoof host chrome. */
+function cleanRequestHeaders(req: NextRequest): Headers {
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.delete(TENANT_SLUG_HEADER);
+  requestHeaders.delete("x-tenant-mode");
+  return requestHeaders;
+}
+
 function withTenant(
   req: NextRequest,
   hostSlug: string,
   opts?: { rewriteUrl?: URL; mode?: "custom" | "path" },
 ): NextResponse {
-  const requestHeaders = new Headers(req.headers);
+  const requestHeaders = cleanRequestHeaders(req);
   requestHeaders.set(TENANT_SLUG_HEADER, hostSlug);
   // custom = root paths on host domain; path = /h/slug preview on platform
   requestHeaders.set("x-tenant-mode", opts?.mode ?? "custom");
@@ -89,12 +97,28 @@ function withTenant(
   });
 }
 
+function passthrough(req: NextRequest): NextResponse {
+  return NextResponse.next({
+    request: { headers: cleanRequestHeaders(req) },
+  });
+}
+
+/**
+ * Prefer the public hostname (Railway / reverse proxies set x-forwarded-host).
+ */
+function requestHostname(req: NextRequest): string | null {
+  const forwarded = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const raw = forwarded || req.headers.get("host");
+  return raw?.split(":")[0]?.toLowerCase() || null;
+}
+
 /**
  * 1) Custom domain → host brand rewrite + tenant header
  * 2) Auth gates for /admin and /account (Auth.js)
+ * 3) Strip spoofed x-tenant-* on every request
  */
 export default auth((req) => {
-  const hostname = req.headers.get("host");
+  const hostname = requestHostname(req);
   const hostSlug = hostSlugForHostname(hostname);
 
   if (hostSlug) {
@@ -109,7 +133,7 @@ export default auth((req) => {
     return withTenant(req, hMatch[1].toLowerCase(), { mode: "path" });
   }
 
-  return NextResponse.next();
+  return passthrough(req);
 });
 
 export const config = {

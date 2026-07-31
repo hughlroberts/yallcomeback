@@ -16,21 +16,62 @@ export const metadata = { title: "Brand & website" };
 export default async function AdminBrandPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; error?: string }>;
+  searchParams: Promise<{ saved?: string; error?: string; hostId?: string }>;
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/brand");
 
   const params = await searchParams;
 
-  const host = access.isPlatform
-    ? await prisma.host.findFirst({
-        where: access.hostId ? { id: access.hostId } : { active: true },
-        orderBy: { name: "asc" },
-      })
-    : access.hostId
-      ? await prisma.host.findUnique({ where: { id: access.hostId } })
-      : null;
+  // Hosts: always their brand. Platform: require ?hostId= (never edit "first" host).
+  let host = null as Awaited<ReturnType<typeof prisma.host.findUnique>>;
+  if (access.isPlatform) {
+    const pick =
+      params.hostId?.trim() ||
+      access.hostId ||
+      null;
+    if (pick) {
+      host = await prisma.host.findUnique({ where: { id: pick } });
+    }
+  } else if (access.hostId) {
+    host = await prisma.host.findUnique({ where: { id: access.hostId } });
+  }
+
+  if (!host && access.isPlatform) {
+    const hosts = await prisma.host.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, slug: true, active: true },
+      take: 50,
+    });
+    return (
+      <div className="mx-auto max-w-2xl space-y-4">
+        <h1 className="text-2xl font-semibold text-stone-900">Brand & website</h1>
+        <p className="text-sm text-stone-600">
+          Platform operators: pick a host brand to edit. Guests on that host&apos;s
+          custom domain see this identity — not Yall Come Back.
+        </p>
+        <ul className="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white">
+          {hosts.map((h) => (
+            <li key={h.id}>
+              <Link
+                href={`/admin/brand?hostId=${h.id}`}
+                className="flex items-center justify-between px-4 py-3 text-sm hover:bg-stone-50"
+              >
+                <span className="font-medium text-stone-900">{h.name}</span>
+                <span className="text-stone-400">
+                  {h.slug}
+                  {!h.active ? " · inactive" : ""}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        {hosts.length === 0 ? (
+          <p className="text-sm text-stone-500">No hosts yet.</p>
+        ) : null}
+      </div>
+    );
+  }
 
   if (!host) {
     return (
@@ -85,7 +126,15 @@ export default async function AdminBrandPage({
 
       <form action={updateHostProfile} className="space-y-6">
         <input type="hidden" name="hostId" value={host.id} />
-        <input type="hidden" name="returnTo" value="/admin/brand" />
+        <input
+          type="hidden"
+          name="returnTo"
+          value={
+            access.isPlatform
+              ? `/admin/brand?hostId=${host.id}`
+              : "/admin/brand"
+          }
+        />
         {/* Preserve ops fields hosts don't edit on this form */}
         <input type="hidden" name="sitePresence" value={host.sitePresence} />
         {host.listOnMarketplace ? (
