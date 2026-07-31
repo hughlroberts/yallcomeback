@@ -30,8 +30,9 @@ export function BrandMark({
 }
 
 /**
- * Vertical cannon mark for the header (files 3 zip — tall narrow art).
- * viewBox is ~20×100 (already upright).
+ * Vertical cannon for the header.
+ * Height-driven + w-auto so the full silhouette shows (no forced narrow box).
+ * Padded SVG keeps muzzle/wheels inside the paint box.
  */
 export function BrandCannon({
   className,
@@ -42,26 +43,27 @@ export function BrandCannon({
   tone?: "bonnet" | "honey" | "dusk" | "cream" | "currentcolor";
   priority?: boolean;
 }) {
-  // Vertical source from brand kit (not the horizontal h- variants)
-  const src =
-    tone === "currentcolor"
-      ? "/brand/ycb-cannon-bare-currentcolor.svg"
-      : `/brand/ycb-cannon-bare-${tone}.svg`;
+  const src = `/brand/ycb-cannon-v-${tone}.svg`;
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element -- w-auto + overflow-visible; next/image wraps and can clip tall SVGs
+    <img
       src={src}
       alt=""
-      width={20}
-      height={100}
-      className={cn("shrink-0", className)}
-      priority={priority}
-      unoptimized
+      width={24}
+      height={104}
+      className={cn(
+        "ycb-logo__cannon block h-full w-auto max-w-none shrink-0 object-contain object-center",
+        className,
+      )}
+      decoding="async"
+      {...(priority ? { fetchPriority: "high" as const } : {})}
     />
   );
 }
 
 /**
- * Header lockup: small vertical cannon + “yall come back” wordmark.
+ * Header lockup: vertical cannon + “yall come back” wordmark.
+ * shrink-0 so flex never squishes/truncates the wordmark; overflow-visible for Fraunces glyphs.
  */
 export function BrandLogo({
   className,
@@ -74,22 +76,20 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn(
-        "ycb-logo group inline-flex min-w-0 items-center gap-2 sm:gap-2.5",
+        "ycb-logo group inline-flex shrink-0 items-center gap-2.5 overflow-visible sm:gap-3.5",
         className,
       )}
       aria-label="yall come back, home"
     >
-      <BrandCannon
-        tone="bonnet"
-        priority
-        // Tall + thin — much smaller than before
-        className="h-7 w-auto sm:h-8 md:h-9"
-      />
-      <span className="inline-flex min-w-0 items-baseline">
+      {/* Fixed-height slot so the cannon can grow without the bar clipping ends */}
+      <span className="ycb-logo__cannon-slot inline-flex shrink-0 items-center justify-center overflow-visible">
+        <BrandCannon tone="bonnet" priority />
+      </span>
+      <span className="ycb-logo__word inline-flex shrink-0 items-baseline overflow-visible">
         <span className="ycb-logo__quote" aria-hidden>
           &ldquo;
         </span>
-        <span className="truncate">yall come back</span>
+        <span className="ycb-logo__text">yall come back</span>
         <span className="ycb-logo__quote" aria-hidden>
           &rdquo;
         </span>

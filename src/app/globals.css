@@ -116,31 +116,66 @@ body {
   }
 }
 
-/* Typographic logo lockup — seal + wordmark read at a glance */
+/* Typographic logo lockup — cannon + wordmark; never clip glyphs */
 .ycb-logo {
   font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 500;
-  line-height: 1.05;
+  line-height: 1.25;
   color: var(--color-ink);
   text-decoration: none;
   white-space: nowrap;
+  overflow: visible;
   font-variation-settings: "SOFT" 40, "WONK" 1;
 }
 @media (min-width: 640px) {
   .ycb-logo {
-    font-size: 1.75rem;
+    font-size: 1.7rem;
   }
 }
 @media (min-width: 768px) {
   .ycb-logo {
-    font-size: 2rem;
+    font-size: 1.9rem;
   }
 }
+/* Slot tall enough for a readable vertical cannon; grows with breakpoints */
+.ycb-logo__cannon-slot {
+  height: 2.75rem; /* 44px — full cannon, not clipped */
+  width: auto;
+  overflow: visible;
+}
+@media (min-width: 640px) {
+  .ycb-logo__cannon-slot {
+    height: 3.25rem; /* 52px */
+  }
+}
+@media (min-width: 768px) {
+  .ycb-logo__cannon-slot {
+    height: 3.75rem; /* 60px */
+  }
+}
+.ycb-logo__cannon {
+  height: 100%;
+  width: auto;
+}
+.ycb-logo__word {
+  overflow: visible;
+  /* room for opening quote so it doesn't sit on the “y” */
+  padding-left: 0.05em;
+}
+.ycb-logo__text {
+  display: inline-block;
+  overflow: visible;
+  /* Fraunces italic “y” has negative left sidebearing — give it air */
+  padding-left: 0.06em;
+  padding-right: 0.04em;
+}
 .ycb-logo__quote {
+  display: inline-block;
   color: var(--color-highlight);
-  font-size: 1.35em;
-  line-height: 0;
+  font-size: 1.15em;
+  line-height: 1.25;
+  /* never line-height: 0 — that collapsed neighboring glyph paint boxes */
 }
 
 /* Prefer light UI always */
