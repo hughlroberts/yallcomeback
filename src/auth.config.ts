@@ -10,15 +10,19 @@ export const authConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
-        token.role = (user as { role?: string }).role ?? "GUEST";
+        const role = (user as { role?: "ADMIN" | "HOST" | "GUEST" }).role;
+        token.role = role ?? "GUEST";
         token.hostId = (user as { hostId?: string | null }).hostId ?? null;
+        token.roleCheckedAt = Date.now();
       }
+      // No DB access here (edge middleware). Full refresh is in lib/auth.ts.
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = (token.id as string) ?? token.sub ?? "";
-        session.user.role = (token.role as "ADMIN" | "HOST" | "GUEST") ?? "GUEST";
+        session.user.role =
+          (token.role as "ADMIN" | "HOST" | "GUEST" | undefined) ?? "GUEST";
         (session.user as { hostId?: string | null }).hostId =
           (token.hostId as string | null) ?? null;
       }

@@ -223,7 +223,7 @@
 | P1-3 | P1 | **fixed** | `2733fcd` | Danger zone + type exact title to delete |
 | P1-4 | P1 | **skipped** | — | No test framework in repo; adding suite is net-new |
 | P1-5 | P1 | **fixed** | `6ec8b7a` | Multi-host requires explicit hostId |
-| P1-6 | P1 | **needs decision** | — | JWT role refresh strategy not chosen |
+| P1-6 | P1 | **fixed** | (main) | JWT re-reads role/hostId from DB every 60s on session access |
 | P2 prefer-const | P2 | **fixed** | `2733fcd` | availability + extract |
 | P2 wizard Link | P2 | **fixed** | follow-up on main | Wizard `<a href=/admin…>` → `next/link` |
 | P2 eslint setState-in-effect | P2 | **skipped** | — | Hydration patterns; needs careful rewrite |

@@ -5,6 +5,9 @@ import { prisma } from "./db";
 import { authConfig } from "@/auth.config";
 import type { Role } from "@prisma/client";
 
+/** How often to re-read role/hostId from the database (ms). */
+const ROLE_REFRESH_MS = 60_000;
+
 declare module "next-auth" {
   interface User {
     role: Role;
@@ -19,6 +22,57 @@ declare module "next-auth" {
       hostId?: string | null;
     };
   }
+}
+
+declare module "@auth/core/jwt" {
+  interface JWT {
+    id?: string;
+    role?: Role;
+    hostId?: string | null;
+    /** Last time role/hostId were loaded from the DB */
+    roleCheckedAt?: number;
+  }
+}
+
+async function refreshRoleFromDb(token: {
+  id?: string;
+  role?: Role;
+  hostId?: string | null;
+  roleCheckedAt?: number;
+  name?: string | null;
+  email?: string | null;
+}) {
+  const userId = token.id;
+  if (!userId) return token;
+
+  const now = Date.now();
+  const last = token.roleCheckedAt ?? 0;
+  if (now - last < ROLE_REFRESH_MS) return token;
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      role: true,
+      hostId: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  if (!dbUser) {
+    // Account removed — demote so gates fail closed
+    token.role = "GUEST";
+    token.hostId = null;
+    token.roleCheckedAt = now;
+    return token;
+  }
+
+  token.role = dbUser.role;
+  token.hostId = dbUser.hostId;
+  token.name = dbUser.name;
+  token.email = dbUser.email;
+  token.roleCheckedAt = now;
+  return token;
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -54,18 +108,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user }) {
+      // Fresh login — stamp claims from authorize()
       if (user) {
         token.id = user.id!;
         token.role = user.role;
         token.hostId = user.hostId ?? null;
+        token.roleCheckedAt = Date.now();
+        return token;
       }
-      return token;
+
+      // Ongoing session — re-read role/hostId from DB on a short interval
+      // so ops role changes apply without forcing re-login.
+      return refreshRoleFromDb(token);
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = (token.id as string) ?? token.sub ?? "";
         session.user.role = (token.role as Role) ?? "GUEST";
         session.user.hostId = (token.hostId as string | null) ?? null;
+        if (token.name !== undefined) {
+          session.user.name = token.name as string | null;
+        }
+        if (typeof token.email === "string") {
+          session.user.email = token.email;
+        }
       }
       return session;
     },
