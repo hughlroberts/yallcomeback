@@ -67,12 +67,12 @@ export function isPlatformPath(pathname: string): boolean {
     pathname.startsWith("/uploads") ||
     pathname === "/favicon.ico" ||
     pathname === "/favicon.svg" ||
-    pathname === "/apple-touch-icon.png" ||
-    pathname.startsWith("/opengraph-image") ||
-    pathname.startsWith("/twitter-image")
+    pathname === "/apple-touch-icon.png"
   ) {
     return true;
   }
+  // opengraph-image / twitter-image intentionally NOT platform-only so custom
+  // domains receive x-tenant-slug and can render host-branded cards.
   // static files
   if (pathname.includes(".") && !pathname.startsWith("/marketplace")) {
     return true;
