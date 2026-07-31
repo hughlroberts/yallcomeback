@@ -116,7 +116,7 @@ body {
   }
 }
 
-/* Typographic logo lockup — cannon + wordmark; never clip glyphs */
+/* Typographic logo lockup — YCB seal + wordmark; never clip glyphs */
 .ycb-logo {
   font-family: var(--font-display);
   font-size: 1.35rem;
@@ -137,26 +137,6 @@ body {
   .ycb-logo {
     font-size: 1.9rem;
   }
-}
-/* Slot tall enough for a readable vertical cannon; grows with breakpoints */
-.ycb-logo__cannon-slot {
-  height: 2.75rem; /* 44px — full cannon, not clipped */
-  width: auto;
-  overflow: visible;
-}
-@media (min-width: 640px) {
-  .ycb-logo__cannon-slot {
-    height: 3.25rem; /* 52px */
-  }
-}
-@media (min-width: 768px) {
-  .ycb-logo__cannon-slot {
-    height: 3.75rem; /* 60px */
-  }
-}
-.ycb-logo__cannon {
-  height: 100%;
-  width: auto;
 }
 .ycb-logo__word {
   overflow: visible;

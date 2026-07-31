@@ -62,7 +62,7 @@ export function BrandCannon({
 }
 
 /**
- * Header lockup: vertical cannon + “yall come back” wordmark.
+ * Header lockup: YCB circular seal + “yall come back” wordmark.
  * shrink-0 so flex never squishes/truncates the wordmark; overflow-visible for Fraunces glyphs.
  */
 export function BrandLogo({
@@ -76,15 +76,16 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn(
-        "ycb-logo group inline-flex shrink-0 items-center gap-2.5 overflow-visible sm:gap-3.5",
+        "ycb-logo group inline-flex shrink-0 items-center gap-2.5 overflow-visible sm:gap-3",
         className,
       )}
       aria-label="yall come back, home"
     >
-      {/* Fixed-height slot so the cannon can grow without the bar clipping ends */}
-      <span className="ycb-logo__cannon-slot inline-flex shrink-0 items-center justify-center overflow-visible">
-        <BrandCannon tone="bonnet" priority />
-      </span>
+      <BrandMark
+        size={72}
+        priority
+        className="h-10 w-10 sm:h-12 sm:w-12 md:h-[3.25rem] md:w-[3.25rem]"
+      />
       <span className="ycb-logo__word inline-flex shrink-0 items-baseline overflow-visible">
         <span className="ycb-logo__quote" aria-hidden>
           &ldquo;
