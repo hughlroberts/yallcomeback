@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   getMarketplaceListings,
   getMarketplacePlaceSuggestions,
+  marketplaceDiscoveryEnabled,
 } from "@/lib/host";
 import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
@@ -115,13 +116,16 @@ async function StaysPanel({
   rawGuests?: string;
   rawPets?: string;
 }) {
-  const listings = await getMarketplaceListings({
-    q: where,
-    guests,
-    pets,
-    checkIn,
-    checkOut,
-  });
+  const [listings, showDiscovery] = await Promise.all([
+    getMarketplaceListings({
+      q: where,
+      guests,
+      pets,
+      checkIn,
+      checkOut,
+    }),
+    marketplaceDiscoveryEnabled(),
+  ]);
 
   const filters: string[] = [];
   if (where) filters.push(`near “${where}”`);
@@ -152,7 +156,7 @@ async function StaysPanel({
         />
       ) : null}
 
-      {!hasActiveSearch ? (
+      {showDiscovery && !hasActiveSearch ? (
         <GuestDiscoverySections
           currentSearch={currentSearch}
           className="mb-4 -mx-4 sm:-mx-6"
@@ -195,7 +199,7 @@ async function StaysPanel({
         </p>
       ) : null}
 
-      {hasActiveSearch ? (
+      {showDiscovery && hasActiveSearch ? (
         <GuestDiscoverySections
           currentSearch={currentSearch}
           className="mt-8 border-t border-slate-200 -mx-4 sm:-mx-6"

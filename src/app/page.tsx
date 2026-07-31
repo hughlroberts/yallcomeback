@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   getMarketplaceListings,
   getMarketplacePlaceSuggestions,
+  marketplaceDiscoveryEnabled,
 } from "@/lib/host";
 import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
@@ -12,6 +13,8 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const showDiscovery = await marketplaceDiscoveryEnabled();
+
   const [listings, liveHosts, featuredHost, placeSuggestions] =
     await Promise.all([
       getMarketplaceListings({ take: 6 }),
@@ -22,23 +25,25 @@ export default async function HomePage() {
           OR: [{ hostingMode: "SELF" }, { subscriptionStatus: "ACTIVE" }],
         },
       }),
-      prisma.host.findFirst({
-        where: { slug: "cherokee-landing", active: true },
-        include: {
-          properties: {
-            where: { published: true },
+      showDiscovery
+        ? prisma.host.findFirst({
+            where: { slug: "cherokee-landing", active: true },
             include: {
-              images: {
-                orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-                take: 1,
+              properties: {
+                where: { published: true },
+                include: {
+                  images: {
+                    orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+                    take: 1,
+                  },
+                  host: { select: { name: true, slug: true } },
+                },
+                take: 2,
+                orderBy: { featured: "desc" },
               },
-              host: { select: { name: true, slug: true } },
             },
-            take: 2,
-            orderBy: { featured: "desc" },
-          },
-        },
-      }),
+          })
+        : Promise.resolve(null),
       getMarketplacePlaceSuggestions(),
     ]);
 
@@ -132,11 +137,13 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Continue search · recently viewed · based on your search (only if history) */}
-      <GuestDiscoverySections className="border-b border-stone-200 bg-white" />
+      {/* Continuity rails only once inventory is large enough */}
+      {showDiscovery ? (
+        <GuestDiscoverySections className="border-b border-stone-200 bg-white" />
+      ) : null}
 
-      {/* Featured host */}
-      {featuredHost && featuredHost.properties.length > 0 ? (
+      {/* Featured host — same threshold as discovery rails */}
+      {showDiscovery && featuredHost && featuredHost.properties.length > 0 ? (
         <section className="bg-stone-50">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
             <div className="grid items-center gap-10 lg:grid-cols-2">

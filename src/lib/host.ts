@@ -40,6 +40,22 @@ export function marketplacePropertyWhere() {
   };
 }
 
+/**
+ * Guest continuity rails (recently viewed, stay-in place, featured host block)
+ * only show once the marketplace has enough inventory to feel full.
+ */
+export const DISCOVERY_MIN_LISTINGS = 20;
+
+export async function getMarketplaceListingCount(): Promise<number> {
+  return prisma.property.count({ where: marketplacePropertyWhere() });
+}
+
+/** True when discovery rails / featured stays should render. */
+export async function marketplaceDiscoveryEnabled(): Promise<boolean> {
+  const count = await getMarketplaceListingCount();
+  return count > DISCOVERY_MIN_LISTINGS;
+}
+
 /** Properties on a single host's branded site */
 export function hostSitePropertyWhere(hostId: string) {
   return {
