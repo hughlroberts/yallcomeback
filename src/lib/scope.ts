@@ -68,13 +68,26 @@ export async function resolveHostIdForCreate(
   const fromForm = formData
     ? String(formData.get("hostId") || "").trim()
     : "";
-  if (fromForm) return fromForm;
+  if (fromForm) {
+    const host = await prisma.host.findFirst({
+      where: { id: fromForm, active: true },
+    });
+    if (!host) throw new Error("Selected host not found");
+    return host.id;
+  }
 
-  // Platform admin without explicit host: use first active host or create none
-  const first = await prisma.host.findFirst({
+  // Platform admin must pick a host when more than one brand exists
+  const hosts = await prisma.host.findMany({
     where: { active: true },
     orderBy: { createdAt: "asc" },
+    select: { id: true },
+    take: 2,
   });
-  if (!first) throw new Error("Create a host before adding properties");
-  return first.id;
+  if (hosts.length === 0) {
+    throw new Error("Create a host before adding properties");
+  }
+  if (hosts.length > 1) {
+    throw new Error("Select a host brand before creating a listing");
+  }
+  return hosts[0]!.id;
 }
