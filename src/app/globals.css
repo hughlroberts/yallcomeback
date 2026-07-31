@@ -78,16 +78,21 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Typographic logo lockup */
+/* Typographic logo lockup — large enough to read at a glance */
 .ycb-logo {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.65rem;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.05;
   color: var(--color-ink);
   text-decoration: none;
   white-space: nowrap;
   font-variation-settings: "SOFT" 40, "WONK" 1;
+}
+@media (min-width: 640px) {
+  .ycb-logo {
+    font-size: 1.85rem;
+  }
 }
 .ycb-logo__quote {
   color: var(--color-highlight);

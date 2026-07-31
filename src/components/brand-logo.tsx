@@ -5,13 +5,15 @@ import { cn } from "@/lib/utils";
 /** Official seal mark from brand kit. */
 export function BrandMark({
   className,
-  size = 32,
+  size = 48,
   mono = false,
+  priority = false,
 }: {
   className?: string;
   size?: number;
   /** Outline seal for dark / bonnet backgrounds */
   mono?: boolean;
+  priority?: boolean;
 }) {
   const src = mono ? "/brand/ycb-seal-mono.svg" : "/brand/ycb-seal.svg";
   return (
@@ -21,14 +23,14 @@ export function BrandMark({
       width={size}
       height={size}
       className={cn("shrink-0", className)}
-      priority
+      priority={priority}
       unoptimized
     />
   );
 }
 
 /**
- * Header lockup: seal + wordmark “yall come back” in honey quotes.
+ * Header lockup: large seal + readable wordmark in honey quotes.
  */
 export function BrandLogo({
   className,
@@ -41,12 +43,16 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn(
-        "ycb-logo group inline-flex min-w-0 items-center gap-2.5",
+        "ycb-logo group inline-flex min-w-0 items-center gap-3",
         className,
       )}
       aria-label="yall come back, home"
     >
-      <BrandMark size={36} className="h-9 w-9" />
+      <BrandMark
+        size={52}
+        priority
+        className="h-11 w-11 sm:h-[3.25rem] sm:w-[3.25rem]"
+      />
       <span className="hidden min-w-0 items-baseline sm:inline-flex">
         <span className="ycb-logo__quote" aria-hidden>
           &ldquo;
@@ -60,7 +66,7 @@ export function BrandLogo({
   );
 }
 
-/** Full-color seal for trust spots (checkout, print, about). */
+/** Full-color seal for trust spots (checkout, print, about, footer). */
 export function BrandSeal({
   className,
   size = 120,

@@ -5,20 +5,23 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-hairline bg-bonnet text-buttermilk/90">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-3 sm:px-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <BrandSeal size={48} className="h-12 w-12" />
-            <p className="font-display text-lg font-medium text-buttermilk">
+        <div className="flex flex-col items-start gap-5 sm:col-span-1">
+          <BrandSeal
+            size={160}
+            className="h-28 w-28 sm:h-36 sm:w-36 lg:h-40 lg:w-40"
+          />
+          <div>
+            <p className="font-display text-2xl font-medium tracking-tight text-buttermilk sm:text-3xl">
               yallcomeback.com
             </p>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-buttermilk/70">
+              The same stay minus the middle man. Your guests book you, not a
+              marketplace.
+            </p>
+            <p className="mt-4 font-display text-lg font-medium text-honey sm:text-xl">
+              &ldquo;yall come back&rdquo;
+            </p>
           </div>
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-buttermilk/70">
-            The same stay minus the middle man. Your guests book you, not a
-            marketplace.
-          </p>
-          <p className="mt-4 font-display text-base font-medium text-honey">
-            &ldquo;yall come back&rdquo;
-          </p>
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.08em] text-buttermilk/50">
