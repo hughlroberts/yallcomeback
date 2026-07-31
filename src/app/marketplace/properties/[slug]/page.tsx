@@ -181,24 +181,20 @@ export default async function MarketplacePropertyPage({
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
-          <Link
-            href="/marketplace"
-            className="text-stone-500 hover:text-stone-800"
-          >
-            Stays
-          </Link>
-          <span className="text-stone-300">/</span>
-          <span className="font-medium text-stone-800 line-clamp-1">
-            {property.title}
-          </span>
-        </div>
-
-        {/* Title row - Share + Save top-right like Airbnb */}
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <h2 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
-            {property.title}
-          </h2>
+        {/* Title lives in the hero only — breadcrumb + share/save here */}
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
+            <Link
+              href="/marketplace"
+              className="text-stone-500 hover:text-stone-800"
+            >
+              Stays
+            </Link>
+            <span className="text-stone-300">/</span>
+            <span className="font-medium text-stone-800 line-clamp-1">
+              {property.title}
+            </span>
+          </div>
           <ListingShareSave
             title={property.title}
             listing={{
