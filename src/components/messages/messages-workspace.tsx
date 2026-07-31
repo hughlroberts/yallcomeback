@@ -16,7 +16,6 @@ import {
   updateBookingHostNotes,
 } from "@/app/actions/messages";
 import { updateNotificationSettings } from "@/app/actions/account";
-import { formatListingClock } from "@/components/things-to-know";
 import { Button, Textarea } from "@/components/ui";
 import type {
   ConversationListItem,
@@ -24,7 +23,7 @@ import type {
   MessagesViewer,
 } from "@/lib/messages-access";
 import { isViewerHostOnConversation } from "@/lib/messages-access";
-import { cn } from "@/lib/utils";
+import { cn, formatTime12h } from "@/lib/utils";
 
 export type MessageDeliveryPrefs = {
   emailNotifications: boolean;
@@ -85,7 +84,7 @@ function stayDateRange(checkIn: Date, checkOut: Date, nights: number) {
 }
 
 function checkInOutLine(date: Date, time: string) {
-  return `${format(date, "EEE, MMM d")} · ${formatListingClock(time)}`;
+  return `${format(date, "EEE, MMM d")} · ${formatTime12h(time)}`;
 }
 
 function otherPartyName(

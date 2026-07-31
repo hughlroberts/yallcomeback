@@ -26,7 +26,7 @@ import { AdminSleepingEditor } from "@/components/admin-sleeping-editor";
 import { AdminBookingMessages } from "@/components/admin-booking-messages";
 import { AdminCancellationPolicy } from "@/components/admin-cancellation-policy";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
-import { nightsBetween, parseAmenities } from "@/lib/utils";
+import { formatTime12h, nightsBetween, parseAmenities } from "@/lib/utils";
 import { requireHostAdmin } from "@/lib/auth";
 import { propertyScopeWhere } from "@/lib/scope";
 import { isStripeConfigured } from "@/lib/stripe";
@@ -323,16 +323,24 @@ export default async function AdminPropertyDetailPage({
           <Input
             id="checkInTime"
             name="checkInTime"
-            defaultValue={property.checkInTime}
+            defaultValue={formatTime12h(property.checkInTime)}
+            placeholder="3:00 PM"
           />
+          <p className="mt-1 text-xs text-stone-500">
+            Use 12-hour time (e.g. 3:00 PM), not 15:00.
+          </p>
         </div>
         <div>
           <Label htmlFor="checkOutTime">Checkout time</Label>
           <Input
             id="checkOutTime"
             name="checkOutTime"
-            defaultValue={property.checkOutTime}
+            defaultValue={formatTime12h(property.checkOutTime)}
+            placeholder="11:00 AM"
           />
+          <p className="mt-1 text-xs text-stone-500">
+            Use 12-hour time (e.g. 11:00 AM).
+          </p>
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="houseRules">House rules</Label>

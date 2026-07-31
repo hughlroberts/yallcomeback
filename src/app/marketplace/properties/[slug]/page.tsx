@@ -15,7 +15,7 @@ import {
   marketplacePropertyWhere,
 } from "@/lib/host";
 import { resolveDisclaimer } from "@/lib/pricing";
-import { formatMoney, parseAmenities } from "@/lib/utils";
+import { formatMoney, formatTime12h, parseAmenities } from "@/lib/utils";
 import { AmenitiesDisplay } from "@/components/amenities-display";
 import { SleepingArrangementsDisplay } from "@/components/sleeping-arrangements-display";
 import { ListingLocationMap } from "@/components/listing-location-map";
@@ -234,7 +234,8 @@ export default async function MarketplacePropertyPage({
               <p className="mt-2 text-sm text-stone-500">
                 From {formatMoney(property.baseNightlyRate)} / night · min{" "}
                 {property.defaultMinNights} nights · check-in{" "}
-                {property.checkInTime} · checkout {property.checkOutTime}
+                {formatTime12h(property.checkInTime)} · checkout{" "}
+                {formatTime12h(property.checkOutTime)}
               </p>
             </div>
 

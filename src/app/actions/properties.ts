@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { slugify } from "@/lib/utils";
+import { parseTimeTo24h, slugify } from "@/lib/utils";
 import {
   assertPropertyAccess,
   ensureHostAccess,
@@ -813,8 +813,14 @@ export async function updateProperty(formData: FormData) {
         ),
       ),
       depositPercent: Number(formData.get("depositPercent") || 30),
-      checkInTime: String(formData.get("checkInTime") || "16:00"),
-      checkOutTime: String(formData.get("checkOutTime") || "11:00"),
+      checkInTime: parseTimeTo24h(
+        String(formData.get("checkInTime") || ""),
+        "15:00",
+      ),
+      checkOutTime: parseTimeTo24h(
+        String(formData.get("checkOutTime") || ""),
+        "11:00",
+      ),
       houseRules: String(formData.get("houseRules") || "") || null,
       disclaimer: String(formData.get("disclaimer") || "") || null,
       published: formData.get("published") === "on",

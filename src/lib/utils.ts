@@ -59,6 +59,61 @@ export function formatDateRangeUS(
   return a || b || "";
 }
 
+/**
+ * Guest-facing clock: never show 24-hour/"military" time.
+ * "15:00" → "3:00 PM", "11:00" → "11:00 AM". Already-formatted strings pass through.
+ */
+export function formatTime12h(raw: string | null | undefined): string {
+  if (raw == null || raw === "") return "";
+  const s = String(raw).trim();
+  if (/\b(am|pm)\b/i.test(s)) {
+    // Normalize spacing: "3:00PM" → "3:00 PM"
+    return s.replace(/\s*(am|pm)\s*$/i, (_, ap) => ` ${ap.toUpperCase()}`);
+  }
+  const m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(s);
+  if (!m) return s;
+  let h = Number(m[1]);
+  const min = m[2]!;
+  if (!Number.isFinite(h) || h < 0 || h > 23) return s;
+  const suffix = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${min} ${suffix}`;
+}
+
+/**
+ * Normalize host-entered times to 24h HH:mm for storage.
+ * Accepts "3:00 PM", "15:00", "3pm", etc. Falls back to default if unparseable.
+ */
+export function parseTimeTo24h(
+  raw: string | null | undefined,
+  fallback = "15:00",
+): string {
+  if (raw == null || String(raw).trim() === "") return fallback;
+  const s = String(raw).trim().toLowerCase().replace(/\s+/g, " ");
+
+  const withMeridiem = /^(\d{1,2})(?::(\d{2}))?\s*(a|p)\.?m\.?$/.exec(s);
+  if (withMeridiem) {
+    let h = Number(withMeridiem[1]);
+    const min = withMeridiem[2] ?? "00";
+    const isPm = withMeridiem[3] === "p";
+    if (h < 1 || h > 12 || Number(min) > 59) return fallback;
+    if (isPm && h !== 12) h += 12;
+    if (!isPm && h === 12) h = 0;
+    return `${String(h).padStart(2, "0")}:${min}`;
+  }
+
+  const military = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(s);
+  if (military) {
+    const h = Number(military[1]);
+    const min = military[2]!;
+    if (h < 0 || h > 23 || Number(min) > 59) return fallback;
+    return `${String(h).padStart(2, "0")}:${min}`;
+  }
+
+  return fallback;
+}
+
 export function parseAmenities(raw: string | null | undefined): string[] {
   if (!raw) return [];
   try {

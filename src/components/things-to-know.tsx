@@ -12,6 +12,7 @@ import {
   guestFacingBullets,
 } from "@/lib/cancellation-policies";
 import { petRuleLine } from "@/lib/pets";
+import { formatTime12h } from "@/lib/utils";
 
 type Props = {
   checkInTime: string;
@@ -31,17 +32,9 @@ type Props = {
   nonRefundableOption?: boolean;
 };
 
-/** "16:00" → "4:00 PM" */
+/** @deprecated Use formatTime12h from @/lib/utils */
 export function formatListingClock(raw: string): string {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(raw.trim());
-  if (!m) return raw;
-  let h = Number(m[1]);
-  const min = m[2];
-  if (!Number.isFinite(h) || h < 0 || h > 23) return raw;
-  const suffix = h >= 12 ? "PM" : "AM";
-  h = h % 12;
-  if (h === 0) h = 12;
-  return `${h}:${min}${suffix}`;
+  return formatTime12h(raw);
 }
 
 function safetyItemsFromAmenities(amenities: string[]): string[] {
@@ -76,8 +69,8 @@ function houseRuleHighlights(opts: {
   houseRules?: string | null;
 }): string[] {
   const lines: string[] = [
-    `Check-in after ${formatListingClock(opts.checkInTime)}`,
-    `Checkout before ${formatListingClock(opts.checkOutTime)}`,
+    `Check-in after ${formatTime12h(opts.checkInTime)}`,
+    `Checkout before ${formatTime12h(opts.checkOutTime)}`,
     `${opts.maxGuests} guest${opts.maxGuests === 1 ? "" : "s"} maximum`,
   ];
   if (opts.petsAllowed === false) {

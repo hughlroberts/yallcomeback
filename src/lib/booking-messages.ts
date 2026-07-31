@@ -13,6 +13,7 @@
 
 import { prisma } from "@/lib/db";
 import { dispatchEmail } from "@/lib/messaging";
+import { formatTime12h } from "@/lib/utils";
 
 export type AutoMessageKind = "ON_BOOKING" | "WEEK_BEFORE" | "DAY_BEFORE";
 
@@ -151,13 +152,18 @@ export function interpolateBookingMessage(
     day: "numeric",
     year: "numeric",
   });
+  // Always 12-hour clock in guest messages (never "15:00")
+  const checkInTime12 = vars.checkInTime
+    ? formatTime12h(vars.checkInTime)
+    : "";
+
   return template
     .replaceAll("{{guestName}}", vars.guestName)
     .replaceAll("{{propertyTitle}}", vars.propertyTitle)
     .replaceAll("{{hostName}}", vars.hostName)
     .replaceAll("{{checkIn}}", checkInStr)
     .replaceAll("{{checkOut}}", checkOutStr)
-    .replaceAll("{{checkInTime}}", vars.checkInTime || "")
+    .replaceAll("{{checkInTime}}", checkInTime12)
     .replaceAll(
       "{{guests}}",
       vars.guests != null ? String(vars.guests) : "",
