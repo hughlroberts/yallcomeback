@@ -26,9 +26,7 @@ export default async function NewListingWizardPage({
       })
     : [];
 
-  const defaultImportUrl =
-    sp.importUrl?.trim() ||
-    "https://www.airbnb.com/rooms/600541790815158094";
+  const defaultImportUrl = sp.importUrl?.trim() || "";
 
   return (
     <div className="mx-auto max-w-3xl space-y-10 px-4 py-8 sm:px-6">
