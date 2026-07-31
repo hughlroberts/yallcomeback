@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BookingWidget } from "@/components/booking-widget";
 
 import { PhotoGallery } from "@/components/photo-gallery";
@@ -43,7 +43,26 @@ export default async function MarketplacePropertyPage({
   const sp = await searchParams;
 
   const marketplaceWhere = marketplacePropertyWhere();
-  const property = await prisma.property.findFirst({
+  const include = {
+    images: { orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }] },
+    seasons: { orderBy: { startDate: "asc" as const } },
+    location: true,
+    host: {
+      include: {
+        taxLines: {
+          where: { active: true },
+          orderBy: { sortOrder: "asc" as const },
+        },
+        _count: {
+          select: {
+            properties: { where: { published: true } },
+          },
+        },
+      },
+    },
+  };
+
+  let property = await prisma.property.findFirst({
     where: {
       slug,
       published: marketplaceWhere.published,
@@ -53,25 +72,43 @@ export default async function MarketplacePropertyPage({
         ...(sp.host ? { slug: sp.host } : {}),
       },
     },
-    include: {
-      images: { orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }] },
-      seasons: { orderBy: { startDate: "asc" } },
-      location: true,
-      host: {
-        include: {
-          taxLines: {
-            where: { active: true },
-            orderBy: { sortOrder: "asc" },
-          },
-          _count: {
-            select: {
-              properties: { where: { published: true } },
-            },
-          },
-        },
-      },
-    },
+    include,
   });
+
+  // Wrong ?host= (e.g. personal listing linked as Cherokee) → correct URL
+  if (!property && sp.host) {
+    const bySlug = await prisma.property.findFirst({
+      where: {
+        slug,
+        published: marketplaceWhere.published,
+        listOnMarketplace: marketplaceWhere.listOnMarketplace,
+        host: marketplaceWhere.host,
+      },
+      include: { host: { select: { slug: true } } },
+    });
+    if (bySlug && bySlug.host.slug !== sp.host) {
+      const q = new URLSearchParams();
+      q.set("host", bySlug.host.slug);
+      if (sp.checkIn) q.set("checkIn", sp.checkIn);
+      if (sp.checkOut) q.set("checkOut", sp.checkOut);
+      if (sp.guests) q.set("guests", sp.guests);
+      if (sp.pets) q.set("pets", sp.pets);
+      redirect(`/marketplace/properties/${slug}?${q.toString()}`);
+    }
+  }
+
+  // No host param: still resolve a unique marketplace slug
+  if (!property && !sp.host) {
+    property = await prisma.property.findFirst({
+      where: {
+        slug,
+        published: marketplaceWhere.published,
+        listOnMarketplace: marketplaceWhere.listOnMarketplace,
+        host: marketplaceWhere.host,
+      },
+      include,
+    });
+  }
 
   if (!property) notFound();
 

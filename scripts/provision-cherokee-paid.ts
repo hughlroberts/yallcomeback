@@ -199,26 +199,9 @@ Questions? Message us from your listing or booking.`,
     });
   }
 
+  // Business inventory only. Personal dock home lives under host slug
+  // `hugh-roberts` (not Cherokee Landing).
   const props = await Promise.all([
-    ensureProperty({
-      slug: "lakefront-private-dock",
-      title: "Lakefront with Private Dock",
-      tagline: "Deep water, sandy bottom, and a private dock on Cedar Creek",
-      description:
-        "Private home on Cedar Creek Lake within Cherokee Landing Resort. Sandy bottom swimming, dock, game room, and big lake views.",
-      city: "Log Cabin",
-      baseNightlyRate: 285,
-      bedrooms: 2,
-      bathrooms: 2,
-      beds: 5,
-      maxGuests: 9,
-      featured: true,
-      images: [
-        "/seed/lakefront/01.jpg",
-        "/seed/lakefront/02.jpg",
-        "/seed/lakefront/03.jpg",
-      ],
-    }),
     ensureProperty({
       slug: "eagles-nest-suite",
       title: "Upper Eagles Nest @ Cedar Creek",
@@ -231,6 +214,7 @@ Questions? Message us from your listing or booking.`,
       bathrooms: 1,
       beds: 2,
       maxGuests: 4,
+      featured: true,
       images: [
         "/seed/eagles-nest/01.jpg",
         "/seed/eagles-nest/02.jpg",

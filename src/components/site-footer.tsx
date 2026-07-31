@@ -5,17 +5,17 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-hairline bg-bonnet text-buttermilk/90">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-3 sm:px-6">
-        <div className="flex items-start gap-5 sm:col-span-1">
+        <div className="flex items-center gap-4 sm:col-span-1 sm:gap-5">
+          {/* Full-color seal: mono is bonnet-on-bonnet and invisible on this footer */}
           <BrandSeal
-            size={280}
-            mono
-            className="h-28 w-28 shrink-0 sm:h-36 sm:w-36 lg:h-40 lg:w-40"
+            size={160}
+            className="h-24 w-24 shrink-0 sm:h-28 sm:w-28"
           />
-          <div className="min-w-0 pt-1">
+          <div className="min-w-0">
             <p className="font-display text-xl font-medium tracking-tight text-buttermilk sm:text-2xl">
               yallcomeback.com
             </p>
-            <p className="mt-2 max-w-xs text-sm leading-relaxed text-buttermilk/70">
+            <p className="mt-2 max-w-[16rem] text-sm leading-relaxed text-buttermilk/70">
               The same stay minus the middle man. Your guests book you, not a
               marketplace.
             </p>
