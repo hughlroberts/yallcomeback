@@ -198,9 +198,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Free self-host website",
-    body: "Run Yall Come Back on your domain. List on the free marketplace. Keep your brand.",
+    body: "Run Yall Come Back on your domain. Optionally list on the free marketplace. Keep your brand.",
     description:
-      "Host Yall Come Back as your own rental website for free under MIT and list on the marketplace.",
+      "Host Yall Come Back free under MIT. Optional marketplace via central account or remote syndication API.",
     related: ["become-a-host", "how-yall-come-back-works", "listings"],
   },
   {

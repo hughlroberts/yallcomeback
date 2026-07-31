@@ -1409,12 +1409,26 @@ function SelfHost({ article }: { article: HelpArticle }) {
           </li>
           <li>
             <strong>Remote open-source deploy</strong> — Run the MIT code on your
-            servers. Create a free self-host account on yallcomeback.com, generate
+            servers. Create a free self-host account on the central site, generate
             a syndication API key (Admin → Brand &amp; website), and{" "}
             <code className="rounded bg-stone-100 px-1 text-xs">
               POST /api/syndication/listings
             </code>{" "}
             to push stays into the central marketplace.
+          </li>
+          <li>
+            Full remote steps, curl samples, and field list:{" "}
+            <Link
+              href="/open-source#marketplace"
+              className="font-semibold text-bonnet"
+            >
+              Open source → List on the marketplace
+            </Link>{" "}
+            and the repo file{" "}
+            <code className="rounded bg-stone-100 px-1 text-xs">
+              docs/remote-open-source-marketplace.md
+            </code>
+            .
           </li>
           <li>
             Register the free self-host path on{" "}

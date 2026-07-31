@@ -10,7 +10,7 @@ import {
 
 export const metadata = {
   title: "Free self-host · migrate your rental website",
-  description: `Deploy ${PRODUCT_NAME} on your own website or any domain. Free MIT software. Listings also appear on the free Yall Come Back marketplace.`,
+  description: `Deploy ${PRODUCT_NAME} on your own website or any domain. Free MIT software. Optionally list on the free Yall Come Back marketplace.`,
 };
 
 export default function SelfHostPage() {
@@ -27,9 +27,9 @@ export default function SelfHostPage() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-stone-300">
             Already have a rental website? Run Yall Come Back on your own domain
-            with ordinary website hosting - keep your brand, and still list
-            every stay on the free Yall Come Back marketplace so guests can find you
-            either way.
+            with ordinary website hosting — keep your brand. Listing on the free
+            Yall Come Back marketplace is optional so guests can find you either
+            way when you want discovery.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {REPO_URL ? (
@@ -60,6 +60,12 @@ export default function SelfHostPage() {
               className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5"
             >
               Prefer we host it (paid)?
+            </Link>
+            <Link
+              href="/open-source#marketplace"
+              className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5"
+            >
+              Remote open source + marketplace
             </Link>
             <Link
               href="/open-source"

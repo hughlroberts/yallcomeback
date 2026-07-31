@@ -43,12 +43,35 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Dual model + optional hosting fee
 
-1. **Host sites** - branded mini-sites at `/h/your-slug`
-2. **Shared marketplace** - opt-in listings at `/marketplace`
+1. **Host sites** - branded mini-sites at `/h/your-slug` (or custom domain)
+2. **Shared marketplace** - **opt-in** listings at `/marketplace` (Find a Place)
 3. **Monthly hosting fee** (optional) - if we host the site for you: approve → invoice → go live (per property / month, **not** a % of bookings)
-4. **Free self-host** - run this repo yourself under the MIT license
+4. **Free self-host** - $0 platform fee; either manage listings on the central app or run a remote open-source deploy
 
-Same calendar, pricing, and bookings either way.
+Same calendar, pricing, and bookings either way. Marketplace is never required.
+
+### Remote open source → central marketplace
+
+If you run this repo on **your own servers** and still want stays on the central Yall Come Back marketplace:
+
+1. Apply as free self-host on the **central** site: `/for-hosts?path=self`
+2. After approval: **Admin → Brand & website** → enable marketplace → **Generate syndication API key**
+3. From your remote deploy, push listings:
+
+```bash
+export YCB_ORIGIN="https://yallcomeback.com"
+export YCB_SYNDICATION_KEY="ycb_syn_...."
+
+curl -X POST "$YCB_ORIGIN/api/syndication/listings" \
+  -H "Authorization: Bearer $YCB_SYNDICATION_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"lake-cabin","title":"Lake cabin","baseNightlyRate":175,"published":true,"city":"Malakoff","region":"TX"}'
+```
+
+**Full guide (fields, update, unpublish, troubleshooting):**  
+[`docs/remote-open-source-marketplace.md`](./docs/remote-open-source-marketplace.md)
+
+Also summarized on the product page: `/open-source#marketplace`
 
 ### Public calendars
 

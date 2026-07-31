@@ -331,11 +331,18 @@ export default async function AdminBrandPage({
             <p className="mt-2">
               Host marketplace must be on, and the payload should set{" "}
               <code className="rounded bg-white px-1">published: true</code>.
-              See{" "}
-              <Link href="/open-source" className="font-medium text-bonnet hover:underline">
-                Open source
-              </Link>{" "}
-              for the full path.
+              Full guide:{" "}
+              <Link
+                href="/open-source#marketplace"
+                className="font-medium text-bonnet hover:underline"
+              >
+                Open source → List on the marketplace
+              </Link>
+              {" "}(repo:{" "}
+              <code className="rounded bg-white px-1">
+                docs/remote-open-source-marketplace.md
+              </code>
+              ).
             </p>
           </div>
         </Card>
