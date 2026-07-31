@@ -60,8 +60,8 @@ async function main() {
       name: "Listing hosting",
       slug: "listing",
       description:
-        "Flat $25 per published listing / month for website hosting on Yall Come Back. Not a booking commission.",
-      monthlyPrice: 25,
+        "Flat $40 per published listing / month for website hosting on Yall Come Back. Not a booking commission.",
+      monthlyPrice: 40,
       pricingModel: "PER_PROPERTY",
       minProperties: 1,
       currency: "USD",

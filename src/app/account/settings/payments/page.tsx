@@ -85,7 +85,7 @@ export default async function AccountPaymentsPage() {
           <>
             <PaymentLink
               title="Ops · website hosting"
-              description="Approve hosts, invoices, and the $25/listing hosting fee (platform admin only)."
+              description="Approve hosts, invoices, and the $40/listing hosting fee (platform admin only)."
               href="/ops/hosting"
               badge="Admin"
             />
