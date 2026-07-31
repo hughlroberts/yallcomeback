@@ -13,7 +13,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-bookings": "tsx prisma/seed-sample-bookings.ts",
     "db:setup": "prisma db push && tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate --schema=prisma/schema.prisma"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

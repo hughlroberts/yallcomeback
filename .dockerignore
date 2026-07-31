@@ -1,0 +1,14 @@
+# Keep prisma/ IN the build context (do not ignore it)
+node_modules
+.next
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+prisma/*.db
+prisma/*.db-journal
+public/uploads
+coverage
+.DS_Store
