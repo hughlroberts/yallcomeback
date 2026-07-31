@@ -100,7 +100,7 @@ function extractImageUrls(html: string, source: ImportSource): string[] {
   const out: string[] = [];
 
   const push = (u: string) => {
-    let url = decodeHtml(u).replace(/\\u002F/g, "/").split("?")[0]!;
+    const url = decodeHtml(u).replace(/\\u002F/g, "/").split("?")[0]!;
     if (!url.startsWith("http")) return;
     if (source === "airbnb") {
       if (

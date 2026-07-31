@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import {
   updateProperty,
-  deleteProperty,
   addSeason,
   deleteSeason,
   applyPeakHolidays,
@@ -25,6 +24,7 @@ import { AdminSleepingEditor } from "@/components/admin-sleeping-editor";
 import { AdminBookingMessages } from "@/components/admin-booking-messages";
 import { AdminCancellationPolicy } from "@/components/admin-cancellation-policy";
 import { ConfirmRemovePhotoButton } from "@/components/confirm-remove-photo-button";
+import { ConfirmDeleteProperty } from "@/components/confirm-delete-property";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 import { formatTime12h, nightsBetween, parseAmenities } from "@/lib/utils";
 import { requireHostAdmin } from "@/lib/auth";
@@ -137,12 +137,6 @@ export default async function AdminPropertyDetailPage({
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h2 className="text-lg font-semibold">Listing details</h2>
-        <form action={deleteProperty}>
-          <input type="hidden" name="id" value={property.id} />
-          <Button type="submit" variant="danger" className="!px-3 !py-1.5 text-xs">
-            Delete property
-          </Button>
-        </form>
       </div>
       <form action={updateProperty} className="mt-4 grid gap-4 sm:grid-cols-2">
         <input type="hidden" name="id" value={property.id} />
@@ -402,6 +396,10 @@ export default async function AdminPropertyDetailPage({
           <Button type="submit">Save details</Button>
         </div>
       </form>
+      <ConfirmDeleteProperty
+        propertyId={property.id}
+        propertyTitle={property.title}
+      />
     </Card>
   );
 

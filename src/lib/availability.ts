@@ -63,7 +63,7 @@ export function expandBlockedDates(
     const start = startOfDay(new Date(r.startDate));
     const end = startOfDay(new Date(r.endDate));
     // block nights: start inclusive, end exclusive (checkout free)
-    let cur = new Date(start);
+    const cur = new Date(start);
     while (cur < end) {
       blocked.add(cur.toISOString().slice(0, 10));
       cur.setDate(cur.getDate() + 1);

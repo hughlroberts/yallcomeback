@@ -151,57 +151,64 @@ export async function createBooking(formData: FormData) {
     }
   }
 
-  const booking = await prisma.booking.create({
-    data: {
-      propertyId: property.id,
-      userId: session?.user?.id,
-      guestName,
-      guestEmail,
-      guestPhone,
-      guestNotes,
-      checkIn: checkInDate,
-      checkOut: checkOutDate,
-      guests,
-      pets: quote.pets,
-      nights: quote.nights,
-      nightlySubtotal: quote.nightlySubtotal,
-      cleaningFee: quote.cleaningFee,
-      petFee: quote.petFee,
-      taxAmount: quote.taxAmount,
-      taxBreakdown: quote.taxBreakdownJson,
-      totalAmount: quote.totalAmount,
-      depositAmount: quote.depositAmount,
-      status: "PENDING_PAYMENT",
-      sourceChannel,
-      disclaimerAccepted: disclaimerText,
-      payments: {
-        create: {
-          amount: quote.depositAmount,
-          method,
-          status: "PENDING",
-          bitcoinAddress: btcAddress,
-          bitcoinAmountBtc,
-          bitcoinRateUsd,
-          notes:
-            method === "BITCOIN"
-              ? `Bitcoin deposit - pay ${quote.depositAmount.toFixed(2)} USD equivalent`
-              : null,
+  // Re-check availability inside a transaction to shrink double-book races
+  const booking = await prisma.$transaction(async (tx) => {
+    if (!(await isRangeAvailable(property.id, checkInDate, checkOutDate))) {
+      throw new Error("Dates not available");
+    }
+    const created = await tx.booking.create({
+      data: {
+        propertyId: property.id,
+        userId: session?.user?.id,
+        guestName,
+        guestEmail,
+        guestPhone,
+        guestNotes,
+        checkIn: checkInDate,
+        checkOut: checkOutDate,
+        guests,
+        pets: quote.pets,
+        nights: quote.nights,
+        nightlySubtotal: quote.nightlySubtotal,
+        cleaningFee: quote.cleaningFee,
+        petFee: quote.petFee,
+        taxAmount: quote.taxAmount,
+        taxBreakdown: quote.taxBreakdownJson,
+        totalAmount: quote.totalAmount,
+        depositAmount: quote.depositAmount,
+        status: "PENDING_PAYMENT",
+        sourceChannel,
+        disclaimerAccepted: disclaimerText,
+        payments: {
+          create: {
+            amount: quote.depositAmount,
+            method,
+            status: "PENDING",
+            bitcoinAddress: btcAddress,
+            bitcoinAmountBtc,
+            bitcoinRateUsd,
+            notes:
+              method === "BITCOIN"
+                ? `Bitcoin deposit - pay ${quote.depositAmount.toFixed(2)} USD equivalent`
+                : null,
+          },
         },
       },
-    },
-  });
+    });
 
-  // Soft hold: create calendar block for pending bookings to reduce double-book risk
-  await prisma.calendarBlock.create({
-    data: {
-      propertyId: property.id,
-      bookingId: booking.id,
-      source: "BOOKING",
-      startDate: checkInDate,
-      endDate: checkOutDate,
-      occupantName: guestName,
-      notes: `Booking ${booking.id} (${booking.status})`,
-    },
+    await tx.calendarBlock.create({
+      data: {
+        propertyId: property.id,
+        bookingId: created.id,
+        source: "BOOKING",
+        startDate: checkInDate,
+        endDate: checkOutDate,
+        occupantName: guestName,
+        notes: `Booking ${created.id} (${created.status})`,
+      },
+    });
+
+    return created;
   });
 
   // Host “on booking” template → guest inbox (if enabled on this listing)
