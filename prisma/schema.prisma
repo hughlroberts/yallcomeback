@@ -109,6 +109,15 @@ enum PetFeeUnit {
   PER_PET
 }
 
+/// One-time white-glove setup (listings + optional custom domain / website)
+enum SetupServiceStatus {
+  NONE
+  REQUESTED
+  INVOICED
+  PAID
+  WAIVED
+}
+
 /// Monthly website hosting plans (traditional hosting-style pricing)
 model HostingPlan {
   id            String              @id @default(cuid())
@@ -185,6 +194,13 @@ model Host {
   /// Hours before check-in to send scheduled messages (defaults for all listings)
   autoMsgWeekBeforeHours Int @default(168)
   autoMsgDayBeforeHours  Int @default(24)
+
+  /// Done-for-you setup: listings, brand, domain/website (one-time add-on)
+  setupServiceStatus   SetupServiceStatus  @default(NONE)
+  /// Snapshot of fee at request time (USD)
+  setupServiceAmount   Float               @default(500)
+  setupServicePaidAt   DateTime?
+  setupServiceNotes    String?
 
   users                User[]
   properties           Property[]

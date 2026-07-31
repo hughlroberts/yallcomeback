@@ -147,6 +147,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "Hosting plans: per-property or flat monthly",
       "Hosting invoices (Stripe invoice when configured, else manual)",
       "Subscription statuses: none, pending payment, active, past due, cancelled",
+      "Optional $500 one-time full setup (listings, brand, custom website)",
       "Public site only live when approved + paid (or self-hosted)",
     ],
   },

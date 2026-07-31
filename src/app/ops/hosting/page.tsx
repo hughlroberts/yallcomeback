@@ -16,6 +16,7 @@ import {
   daysUntil,
   formatPlanPrice,
   hostingModeLabel,
+  setupServiceLabel,
   sitePresenceLabel,
   subscriptionLabel,
 } from "@/lib/hosting";
@@ -137,6 +138,12 @@ export default async function OpsHostingPage() {
                     </p>
                     {host.tagline ? (
                       <p className="mt-1 text-sm text-stone-600">{host.tagline}</p>
+                    ) : null}
+                    {host.setupServiceStatus !== "NONE" ? (
+                      <p className="mt-2 text-sm font-medium text-bonnet">
+                        Full setup · {setupServiceLabel(host.setupServiceStatus)}{" "}
+                        · ${host.setupServiceAmount}
+                      </p>
                     ) : null}
                   </div>
                   <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900">

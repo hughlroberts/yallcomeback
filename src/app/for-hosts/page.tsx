@@ -2,6 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { HostSignupForm } from "@/components/HostSignupForm";
 import { prisma } from "@/lib/db";
+import {
+  SETUP_SERVICE_FEE_USD,
+  SETUP_SERVICE_LABEL,
+} from "@/lib/hosting";
 import { formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -132,6 +136,40 @@ export default async function ForHostsPage({
                 </ul>
               </div>
             ) : null}
+
+            <div className="rounded-3xl border border-honey/50 bg-honey/10 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-bonnet">
+                Optional add-on
+              </p>
+              <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-semibold text-stone-900">
+                    {SETUP_SERVICE_LABEL}
+                  </h2>
+                  <p className="mt-2 max-w-lg text-sm leading-relaxed text-stone-600">
+                    Prefer hands-off? We’ll set up the whole service for you —
+                    listings (including imports), brand, calendars, and your own
+                    website or custom domain when you want it. One-time fee;
+                    monthly hosting is separate.
+                  </p>
+                  <ul className="mt-3 list-inside list-disc text-sm text-stone-600">
+                    <li>Listings, photos, rates, and availability</li>
+                    <li>Host brand and guest booking flow</li>
+                    <li>Your domain / website when requested</li>
+                  </ul>
+                </div>
+                <p className="text-2xl font-semibold tabular-nums text-bonnet">
+                  {formatMoney(SETUP_SERVICE_FEE_USD)}
+                  <span className="block text-sm font-medium text-stone-500">
+                    one-time
+                  </span>
+                </p>
+              </div>
+              <p className="mt-4 text-xs text-stone-500">
+                Check “Full setup service” on the application form. We’ll
+                confirm scope and invoice after review.
+              </p>
+            </div>
 
             <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
               <h2 className="text-xl font-semibold text-stone-900">

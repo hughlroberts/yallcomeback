@@ -297,6 +297,25 @@ export async function updateHostOps(formData: FormData) {
   const active = formData.get("active") === "on";
   const name = String(formData.get("name") || host.name).trim() || host.name;
   const tagline = String(formData.get("tagline") || "").trim() || null;
+  const setupServiceStatusRaw = String(
+    formData.get("setupServiceStatus") || host.setupServiceStatus,
+  );
+  const setupServiceStatus = (
+    ["NONE", "REQUESTED", "INVOICED", "PAID", "WAIVED"] as const
+  ).includes(setupServiceStatusRaw as "NONE")
+    ? (setupServiceStatusRaw as
+        | "NONE"
+        | "REQUESTED"
+        | "INVOICED"
+        | "PAID"
+        | "WAIVED")
+    : host.setupServiceStatus;
+  const setupServiceNotes =
+    String(formData.get("setupServiceNotes") || "").trim() || null;
+  const setupServiceAmount = Math.max(
+    0,
+    Number(formData.get("setupServiceAmount") || host.setupServiceAmount || 500),
+  );
 
   let planMonthly = 0;
   if (planId) {
@@ -329,6 +348,15 @@ export async function updateHostOps(formData: FormData) {
     approvalNotes: string | null;
     listOnMarketplace: boolean;
     active: boolean;
+    setupServiceStatus:
+      | "NONE"
+      | "REQUESTED"
+      | "INVOICED"
+      | "PAID"
+      | "WAIVED";
+    setupServiceAmount: number;
+    setupServiceNotes: string | null;
+    setupServicePaidAt?: Date | null;
     approvalStatus?: "APPROVED" | "SUSPENDED";
     currentPeriodStart?: Date | null;
     currentPeriodEnd?: Date | null;
@@ -347,7 +375,17 @@ export async function updateHostOps(formData: FormData) {
     listOnMarketplace:
       hostingMode === "SELF" ? true : listOnMarketplace,
     active,
+    setupServiceStatus,
+    setupServiceAmount,
+    setupServiceNotes,
   };
+
+  if (setupServiceStatus === "PAID" && !host.setupServicePaidAt) {
+    data.setupServicePaidAt = new Date();
+  }
+  if (setupServiceStatus !== "PAID" && host.setupServicePaidAt) {
+    data.setupServicePaidAt = null;
+  }
 
   if (isComplimentary) {
     data.approvalStatus = "APPROVED";

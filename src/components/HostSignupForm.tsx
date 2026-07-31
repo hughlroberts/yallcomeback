@@ -254,6 +254,26 @@ export function HostSignupForm({
             </p>
           </div>
         )}
+
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-honey/40 bg-honey/10 px-4 py-3 text-sm text-stone-800">
+          <input
+            type="checkbox"
+            name="setupService"
+            value="1"
+            className="mt-1"
+          />
+          <span>
+            <span className="font-semibold text-stone-900">
+              Full setup service — $500 one-time
+            </span>
+            <span className="mt-1 block text-xs leading-relaxed text-stone-600">
+              We set up the whole service for you: import or create listings,
+              brand, calendars, and your own website / domain when you want it.
+              One-time add-on (separate from monthly hosting). You’ll be
+              invoiced after we confirm the work.
+            </span>
+          </span>
+        </label>
       </div>
 
       {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}

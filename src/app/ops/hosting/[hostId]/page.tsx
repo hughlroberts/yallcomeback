@@ -12,6 +12,9 @@ import {
   approvalLabel,
   formatPlanPrice,
   hostingModeLabel,
+  SETUP_SERVICE_FEE_USD,
+  SETUP_SERVICE_LABEL,
+  setupServiceLabel,
   sitePresenceLabel,
   subscriptionLabel,
 } from "@/lib/hosting";
@@ -118,6 +121,12 @@ export default async function OpsHostDetailPage({
             {isComplimentary ? (
               <span className="rounded-full bg-sage/30 px-3 py-1 text-xs font-medium text-sage-ink">
                 Complimentary · not billed
+              </span>
+            ) : null}
+            {host.setupServiceStatus !== "NONE" ? (
+              <span className="rounded-full bg-honey/30 px-3 py-1 text-xs font-medium text-stone-800">
+                Setup · {setupServiceLabel(host.setupServiceStatus)} ·{" "}
+                {formatMoney(host.setupServiceAmount || SETUP_SERVICE_FEE_USD)}
               </span>
             ) : null}
           </div>
@@ -273,6 +282,53 @@ export default async function OpsHostDetailPage({
               rows={2}
               defaultValue={host.approvalNotes || ""}
             />
+          </div>
+          <div className="sm:col-span-2 rounded-xl border border-honey/40 bg-honey/10 p-4">
+            <p className="text-sm font-semibold text-ink">
+              {SETUP_SERVICE_LABEL}
+            </p>
+            <p className="mt-1 text-xs text-ink-muted">
+              One-time ${SETUP_SERVICE_FEE_USD} for full setup (listings, brand,
+              website). Track status after the host requests it at signup.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="setupServiceStatus">Setup status</Label>
+                <select
+                  id="setupServiceStatus"
+                  name="setupServiceStatus"
+                  defaultValue={host.setupServiceStatus}
+                  className="mt-1 h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-white px-3 text-sm"
+                >
+                  <option value="NONE">Not requested</option>
+                  <option value="REQUESTED">Requested</option>
+                  <option value="INVOICED">Invoiced</option>
+                  <option value="PAID">Paid</option>
+                  <option value="WAIVED">Waived</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="setupServiceAmount">Amount (USD)</Label>
+                <Input
+                  id="setupServiceAmount"
+                  name="setupServiceAmount"
+                  type="number"
+                  min={0}
+                  step="1"
+                  defaultValue={host.setupServiceAmount ?? SETUP_SERVICE_FEE_USD}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="setupServiceNotes">Setup notes</Label>
+                <Textarea
+                  id="setupServiceNotes"
+                  name="setupServiceNotes"
+                  rows={2}
+                  defaultValue={host.setupServiceNotes || ""}
+                  placeholder="Scope, domain, invoice #…"
+                />
+              </div>
+            </div>
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input

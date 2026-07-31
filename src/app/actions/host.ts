@@ -7,7 +7,10 @@ import type { HostSitePresence } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
-import { hostMustListOnMarketplace } from "@/lib/hosting";
+import {
+  hostMustListOnMarketplace,
+  SETUP_SERVICE_FEE_USD,
+} from "@/lib/hosting";
 
 function parseSitePresence(raw: string): HostSitePresence {
   if (raw === "CUSTOM" || raw === "BOTH" || raw === "STAYLOCAL") return raw;
@@ -89,6 +92,8 @@ export async function registerHost(formData: FormData) {
     }
   }
 
+  const wantsSetup = formData.get("setupService") === "1";
+
   await prisma.$transaction(async (tx) => {
     const host = await tx.host.create({
       data: {
@@ -105,6 +110,11 @@ export async function registerHost(formData: FormData) {
         approvalStatus: "PENDING_REVIEW",
         subscriptionStatus: "NONE",
         planId: hostingMode === "PLATFORM" ? resolvedPlanId : null,
+        setupServiceStatus: wantsSetup ? "REQUESTED" : "NONE",
+        setupServiceAmount: SETUP_SERVICE_FEE_USD,
+        setupServiceNotes: wantsSetup
+          ? "Host requested full setup at signup (listings, brand, website)."
+          : null,
       },
     });
 

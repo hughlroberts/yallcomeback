@@ -6,7 +6,31 @@ import type {
   HostingPlan,
   HostingPricingModel,
   HostSitePresence,
+  SetupServiceStatus,
 } from "@prisma/client";
+
+/** One-time done-for-you setup: listings, brand, custom domain / website. */
+export const SETUP_SERVICE_FEE_USD = 500;
+
+export const SETUP_SERVICE_LABEL =
+  "Full setup (listings, brand & website)";
+
+export function setupServiceLabel(status: SetupServiceStatus): string {
+  switch (status) {
+    case "NONE":
+      return "Not requested";
+    case "REQUESTED":
+      return "Requested";
+    case "INVOICED":
+      return "Invoiced";
+    case "PAID":
+      return "Paid";
+    case "WAIVED":
+      return "Waived";
+    default:
+      return status;
+  }
+}
 
 export type HostLiveFields = Pick<
   Host,
