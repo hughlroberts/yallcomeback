@@ -18,13 +18,13 @@ import {
   deleteIcalConnection,
   syncIcalNow,
   uploadPropertyImage,
-  deletePropertyImage,
 } from "@/app/actions/properties";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
 import { AdminAmenitiesEditor } from "@/components/admin-amenities-editor";
 import { AdminSleepingEditor } from "@/components/admin-sleeping-editor";
 import { AdminBookingMessages } from "@/components/admin-booking-messages";
 import { AdminCancellationPolicy } from "@/components/admin-cancellation-policy";
+import { ConfirmRemovePhotoButton } from "@/components/confirm-remove-photo-button";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 import { formatTime12h, nightsBetween, parseAmenities } from "@/lib/utils";
 import { requireHostAdmin } from "@/lib/auth";
@@ -415,13 +415,12 @@ export default async function AdminPropertyDetailPage({
             className="relative aspect-square overflow-hidden rounded-lg bg-stone-100"
           >
             <Image src={img.url} alt={img.alt || ""} fill className="object-cover" />
-            <form action={deletePropertyImage} className="absolute bottom-2 right-2">
-              <input type="hidden" name="id" value={img.id} />
-              <input type="hidden" name="propertyId" value={property.id} />
-              <Button type="submit" variant="danger" className="!px-2 !py-1 text-xs">
-                Remove
-              </Button>
-            </form>
+            <div className="absolute bottom-2 right-2">
+              <ConfirmRemovePhotoButton
+                imageId={img.id}
+                propertyId={property.id}
+              />
+            </div>
           </div>
         ))}
       </div>
