@@ -39,7 +39,7 @@ import {
   parseSleepingArrangements,
   seedRoomsFromCounts,
 } from "@/lib/sleeping-arrangements";
-import { hostMustListOnMarketplace } from "@/lib/hosting";
+
 
 export const dynamic = "force-dynamic";
 
@@ -99,8 +99,6 @@ export default async function AdminPropertyDetailPage({
     sp.tab === "calendar"
       ? sp.tab
       : undefined;
-
-  const forceMarketplace = hostMustListOnMarketplace(property.host);
 
   const locations = await prisma.location.findMany({
     where: access.isPlatform
@@ -366,24 +364,17 @@ export default async function AdminPropertyDetailPage({
           />
           Published (visible when listed on marketplace)
         </label>
-        {forceMarketplace ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-950 sm:col-span-2">
-            <p className="font-medium">Marketplace - always on (self-host)</p>
-            <p className="mt-1 text-xs text-emerald-900/90">
-              Free self-hosts publish every listing to the free marketplace.
-            </p>
-            <input type="hidden" name="listOnMarketplace" value="on" />
-          </div>
-        ) : (
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="listOnMarketplace"
-              defaultChecked={property.listOnMarketplace}
-            />
-            List on shared marketplace
-          </label>
-        )}
+        <label className="flex items-center gap-2 text-sm sm:col-span-2">
+          <input
+            type="checkbox"
+            name="listOnMarketplace"
+            defaultChecked={property.listOnMarketplace}
+          />
+          <span>
+            List on shared Yall Come Back marketplace{" "}
+            <span className="text-stone-500">(optional — your choice)</span>
+          </span>
+        </label>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

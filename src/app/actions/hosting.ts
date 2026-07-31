@@ -121,12 +121,11 @@ export async function approveHost(formData: FormData) {
   if (!host) throw new Error("Host not found");
 
   if (hostingMode === "SELF") {
+    // Keep host's listOnMarketplace choice from signup / ops form
     await prisma.host.update({
       where: { id: hostId },
       data: {
         hostingMode: "SELF",
-        // Free self-host → always on free marketplace; brand lives on their domain
-        listOnMarketplace: true,
         sitePresence: "CUSTOM",
         approvalStatus: "APPROVED",
         approvalNotes,
@@ -135,10 +134,6 @@ export async function approveHost(formData: FormData) {
         subscriptionStatus: "NONE",
         active: true,
       },
-    });
-    await prisma.property.updateMany({
-      where: { hostId },
-      data: { listOnMarketplace: true },
     });
     revalidateHosting(host.slug);
     return;
@@ -372,8 +367,7 @@ export async function updateHostOps(formData: FormData) {
     billingEmail,
     contactEmail,
     approvalNotes,
-    listOnMarketplace:
-      hostingMode === "SELF" ? true : listOnMarketplace,
+    listOnMarketplace,
     active,
     setupServiceStatus,
     setupServiceAmount,

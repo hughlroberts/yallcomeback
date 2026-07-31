@@ -15,9 +15,9 @@ export type PropertyWithHost = Property & {
 
 /**
  * Properties visible on the central marketplace.
- * Free self-host (SELF) hosts always appear when published.
- * Paid (PLATFORM) hosts only when host + property marketplace flags are on
- * and subscription is active.
+ * Host and property must both opt into marketplace.
+ * Paid (PLATFORM) hosts also need an active subscription.
+ * Free self-host (SELF) may opt in or stay off the marketplace entirely.
  */
 export function marketplacePropertyWhere() {
   return {
@@ -26,13 +26,11 @@ export function marketplacePropertyWhere() {
     host: {
       active: true,
       approvalStatus: "APPROVED" as const,
+      listOnMarketplace: true,
       OR: [
-        // Free self-host → always on free marketplace
         { hostingMode: "SELF" as const },
-        // Paid host → must opt into marketplace + active subscription
         {
           hostingMode: "PLATFORM" as const,
-          listOnMarketplace: true,
           subscriptionStatus: "ACTIVE" as const,
         },
       ],

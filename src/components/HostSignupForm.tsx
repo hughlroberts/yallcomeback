@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registerHost } from "@/app/actions/host";
+import {
+  SETUP_SERVICE_FEE_USD,
+  SETUP_SERVICE_LABEL,
+} from "@/lib/hosting";
+import { formatMoney } from "@/lib/utils";
 
 type PlanOption = {
   id: string;
@@ -43,11 +48,11 @@ export function HostSignupForm({
     setError(null);
     formData.set("hostingMode", path === "self" ? "SELF" : "PLATFORM");
     if (path === "self") {
-      formData.set("listOnMarketplace", "1");
       formData.set("sitePresence", "CUSTOM");
     } else {
       formData.set("sitePresence", sitePresence);
     }
+    // listOnMarketplace comes from the checkbox (optional for both paths)
     const result = await registerHost(formData);
     setPending(false);
     if (result.error) {
@@ -68,7 +73,7 @@ export function HostSignupForm({
       </h2>
       <p className="mt-1 text-sm text-stone-500">
         {path === "self"
-          ? "Deploy on your domain. Your listings always appear on the free Yall Come Back marketplace after approval."
+          ? "Deploy on your domain at no monthly platform fee. Marketplace listing is optional — you choose."
           : "We host your brand on Yall Come Back. After approval you get a monthly hosting invoice (per property, not per booking)."}
       </p>
 
@@ -91,7 +96,7 @@ export function HostSignupForm({
           className={[
             "rounded-lg px-3 py-2.5 text-sm font-semibold transition",
             path === "self"
-              ? "bg-white text-stone-900 shadow-sm"
+              ? "bg-white text-stone-900 shadow-sm ring-2 ring-bonnet/30"
               : "text-stone-600 hover:text-stone-900",
           ].join(" ")}
         >
@@ -120,7 +125,7 @@ export function HostSignupForm({
           name="slug"
           required
           placeholder="lakeside-cabins"
-          hint="Internal id on Yall Come Back (not a public mini-site anymore)"
+          hint="Internal id on Yall Come Back"
         />
         <Field
           label="Tagline"
@@ -155,7 +160,7 @@ export function HostSignupForm({
                   defaultValue={
                     plans.find((p) => p.isDefault && p.monthlyPrice > 0)?.id ||
                     plans.find((p) => p.monthlyPrice > 0)?.id ||
-                    ""
+                    defaultPlanId
                   }
                   className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2"
                 >
@@ -164,7 +169,6 @@ export function HostSignupForm({
                     .map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name} - {planPriceLabel(p)}
-
                       </option>
                     ))}
                 </select>
@@ -223,39 +227,53 @@ export function HostSignupForm({
                 </label>
               ))}
             </fieldset>
-
-            <label className="flex items-start gap-2 text-sm text-stone-700">
-              <input
-                type="checkbox"
-                name="listOnMarketplace"
-                value="1"
-                defaultChecked
-                className="mt-1"
-              />
-              <span>
-                List published stays on the shared marketplace (you can turn this
-                off later)
-              </span>
-            </label>
           </>
         ) : (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-            <p className="font-medium">Free self-host includes</p>
-            <ul className="mt-1 list-inside list-disc text-xs leading-relaxed">
-              <li>Deploy on your own domain</li>
-              <li>All published listings on the free Yall Come Back marketplace</li>
-              <li>No monthly platform fee</li>
-            </ul>
-            <p className="mt-2 text-xs">
-              Full deploy guide:{" "}
-              <a href="/self-host" className="font-semibold underline">
-                /self-host
-              </a>
-            </p>
+          <div className="space-y-3">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+              <p className="font-semibold">
+                Self-host is free — $0 / month platform fee
+              </p>
+              <ul className="mt-2 list-inside list-disc text-xs leading-relaxed">
+                <li>Deploy the open-source stack on your own domain</li>
+                <li>Your brand, admin, calendars, and bookings — no monthly cut</li>
+                <li>
+                  Marketplace listing is <strong>optional</strong> (see below)
+                </li>
+              </ul>
+              <p className="mt-2 text-xs">
+                Deploy guide:{" "}
+                <a href="/self-host" className="font-semibold underline">
+                  /self-host
+                </a>
+              </p>
+            </div>
           </div>
         )}
 
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-honey/40 bg-honey/10 px-4 py-3 text-sm text-stone-800">
+        {/* Marketplace opt-in — both paths */}
+        <label className="flex items-start gap-2 rounded-xl border border-stone-200 px-3 py-3 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            name="listOnMarketplace"
+            value="1"
+            defaultChecked={path === "paid"}
+            key={`mkt-${path}`}
+            className="mt-1"
+          />
+          <span>
+            <span className="font-medium text-stone-900">
+              List on the free Yall Come Back marketplace
+            </span>
+            <span className="mt-0.5 block text-xs text-stone-500">
+              Optional. Leave unchecked to keep stays only on your own website.
+              You can change this later for each listing.
+            </span>
+          </span>
+        </label>
+
+        {/* $500 setup — always offered, including free self-host */}
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-honey/50 bg-honey/10 px-4 py-3 text-sm text-stone-800">
           <input
             type="checkbox"
             name="setupService"
@@ -264,14 +282,32 @@ export function HostSignupForm({
           />
           <span>
             <span className="font-semibold text-stone-900">
-              Full setup service — $500 one-time
+              {SETUP_SERVICE_LABEL} — {formatMoney(SETUP_SERVICE_FEE_USD)}{" "}
+              one-time
             </span>
             <span className="mt-1 block text-xs leading-relaxed text-stone-600">
-              We set up the whole service for you: import or create listings,
-              brand, calendars, and your own website / domain when you want it.
-              One-time add-on (separate from monthly hosting). You’ll be
-              invoiced after we confirm the work.
+              {path === "self" ? (
+                <>
+                  Self-host software is free. This optional add-on is if you want
+                  us to set everything up for you: import or create listings,
+                  brand, calendars, and your domain / website. One-time only —
+                  not a monthly fee. We’ll confirm scope and invoice after
+                  review.
+                </>
+              ) : (
+                <>
+                  We set up the whole service for you: import or create listings,
+                  brand, calendars, and your own website / domain when you want
+                  it. One-time add-on (separate from monthly hosting). You’ll be
+                  invoiced after we confirm the work.
+                </>
+              )}
             </span>
+            {path === "self" ? (
+              <span className="mt-2 block text-xs font-medium text-emerald-900">
+                Free self-host remains $0 / month even if you add this setup.
+              </span>
+            ) : null}
           </span>
         </label>
       </div>
@@ -286,7 +322,7 @@ export function HostSignupForm({
         {pending
           ? "Submitting…"
           : path === "self"
-            ? "Submit self-host registration"
+            ? "Submit free self-host registration"
             : "Submit paid hosting application"}
       </button>
     </form>

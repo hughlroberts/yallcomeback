@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 import {
-  hostMustListOnMarketplace,
+
   SETUP_SERVICE_FEE_USD,
 } from "@/lib/hosting";
 
@@ -60,9 +60,8 @@ export async function registerHost(formData: FormData) {
   const hostingMode =
     hostingModeRaw === "SELF" ? ("SELF" as const) : ("PLATFORM" as const);
 
-  // Self-host: always free marketplace. Paid: host chooses.
-  const listOnMarketplace =
-    hostingMode === "SELF" ? true : formData.get("listOnMarketplace") === "1";
+  // Marketplace is optional for both paid and free self-host
+  const listOnMarketplace = formData.get("listOnMarketplace") === "1";
 
   const sitePresenceRaw = String(formData.get("sitePresence") || "");
   const sitePresence: HostSitePresence =
@@ -190,7 +189,7 @@ export async function updateHostProfile(formData: FormData) {
     hostingMode = raw === "SELF" ? "SELF" : "PLATFORM";
   }
 
-  const isSelf = hostMustListOnMarketplace({ hostingMode });
+  const isSelf = hostingMode === "SELF";
 
   let sitePresence = parseSitePresence(
     String(formData.get("sitePresence") || existing.sitePresence),
@@ -199,10 +198,7 @@ export async function updateHostProfile(formData: FormData) {
     sitePresence = "CUSTOM";
   }
 
-  let listOnMarketplace = formData.get("listOnMarketplace") === "on";
-  if (isSelf) {
-    listOnMarketplace = true;
-  }
+  const listOnMarketplace = formData.get("listOnMarketplace") === "on";
 
   if (!name) redirect(`${HOST_PROFILE_PATH}?error=name`);
 
@@ -239,11 +235,11 @@ export async function updateHostProfile(formData: FormData) {
     },
   });
 
-  // Keep published properties in sync for free self-host marketplace
-  if (isSelf) {
+  // When host opts out of marketplace, unpublish properties from marketplace too
+  if (!listOnMarketplace) {
     await prisma.property.updateMany({
       where: { hostId: host.id },
-      data: { listOnMarketplace: true },
+      data: { listOnMarketplace: false },
     });
   }
 

@@ -234,8 +234,8 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
           </li>
           <li>
             <strong>SELF (free self-host)</strong> — You run the open-source app
-            on your own domain. There is no Yall Come Back hosting fee. Self-hosts
-            always appear on the free marketplace for discovery.
+            on your own domain. There is no Yall Come Back hosting fee.
+            Marketplace listing is optional (same as paid hosts).
           </li>
         </HelpUl>
       </HelpSection>
@@ -736,8 +736,8 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             hosting invoice.
           </li>
           <li>
-            Listings still go to the free Yall Come Back marketplace. Guests can find
-            you both ways.
+            You may list on the free Yall Come Back marketplace, or keep stays only
+            on your site. Marketplace is optional.
           </li>
           <li>
             Full steps:{" "}
@@ -1395,8 +1395,8 @@ function SelfHost({ article }: { article: HelpArticle }) {
       <HelpSection title="Marketplace and brand">
         <HelpUl>
           <li>
-            Self-host mode always participates in the free Yall Come Back marketplace
-            for discovery.
+            Self-host mode can join the free Yall Come Back marketplace for
+            discovery — or stay on your domain only. Marketplace is optional.
           </li>
           <li>
             Your guest-facing brand lives on your domain. Listings can still

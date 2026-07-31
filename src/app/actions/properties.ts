@@ -768,11 +768,8 @@ export async function updateProperty(formData: FormData) {
     if (!loc) throw new Error("Invalid location");
   }
 
-  // Free self-host listings always appear on the free marketplace
-  const listOnMarketplace =
-    existing.host.hostingMode === "SELF"
-      ? true
-      : formData.get("listOnMarketplace") === "on";
+  // Marketplace is optional for every host (paid and free self-host)
+  const listOnMarketplace = formData.get("listOnMarketplace") === "on";
 
   const property = await prisma.property.update({
     where: { id },

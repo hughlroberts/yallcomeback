@@ -48,18 +48,20 @@ export function isHostPublicLive(host: HostLiveFields): boolean {
   return host.subscriptionStatus === "ACTIVE";
 }
 
-/** Free self-host always syndicats listings to the free marketplace. */
+/**
+ * @deprecated Marketplace is always optional for every host (paid and self-host).
+ * Kept as a no-op false so older call sites that forced marketplace stop doing so.
+ */
 export function hostMustListOnMarketplace(
-  host: Pick<Host, "hostingMode">,
+  _host: Pick<Host, "hostingMode">,
 ): boolean {
-  return host.hostingMode === "SELF";
+  return false;
 }
 
-/** Effective marketplace switch after applying self-host rules. */
+/** Effective marketplace switch — host flag only (optional for self-host too). */
 export function hostListsOnMarketplace(
   host: Pick<Host, "hostingMode" | "listOnMarketplace">,
 ): boolean {
-  if (hostMustListOnMarketplace(host)) return true;
   return host.listOnMarketplace;
 }
 
@@ -93,12 +95,13 @@ export function hostBrandWebsite(
 export function hostUsesPlatformListings(
   host: Pick<Host, "sitePresence" | "hostingMode" | "listOnMarketplace">,
 ): boolean {
-  if (host.hostingMode === "SELF") return true;
-  if (host.sitePresence === "CUSTOM") {
-    // Custom-only site still may opt into marketplace for discovery
-    return host.listOnMarketplace;
+  // Marketplace opt-in is host-controlled for both paid and free self-host
+  if (!host.listOnMarketplace) return false;
+  if (host.sitePresence === "CUSTOM" && host.hostingMode === "PLATFORM") {
+    // Custom-only paid hosts may still opt in via listOnMarketplace
+    return true;
   }
-  return true; // STAYLOCAL or BOTH
+  return true;
 }
 
 export function canHostEditAdmin(host: HostLiveFields): boolean {

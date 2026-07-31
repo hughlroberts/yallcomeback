@@ -74,11 +74,11 @@ export default function SelfHostPage() {
       <div className="border-b border-stone-200 bg-emerald-50">
         <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
           <p className="text-sm text-emerald-950">
-            <strong>Self-host = free software + free marketplace.</strong> You
-            run the app on your servers/domain. Your published listings are
-            always eligible for the central Yall Come Back marketplace (no opt-out
-            required - that&apos;s the free trade). Paid platform hosts choose
-            marketplace on or off.
+            <strong>Self-host = free software ($0 / month platform fee).</strong>{" "}
+            You run the app on your servers/domain. Listing on the Yall Come Back
+            marketplace is <strong>optional</strong> — same choice paid hosts get.
+            Optional one-time full setup ($500) is available if you want help
+            going live.
           </p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function SelfHostPage() {
             <ul className="mt-4 space-y-2 text-sm leading-relaxed text-stone-700">
               <li>· Deploy on your website (or any domain)</li>
               <li>· Full admin, calendars, bookings, photos, iCal</li>
-              <li>· All published stays on the free Yall Come Back marketplace</li>
+              <li>· Optional free Yall Come Back marketplace listing (your choice)</li>
               <li>· No monthly platform fee, no booking commission</li>
               <li>· You own ops: SSL, backups, updates</li>
             </ul>
