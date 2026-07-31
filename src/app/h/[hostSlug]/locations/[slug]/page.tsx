@@ -16,10 +16,12 @@ export default async function HostLocationRedirect({
 
   const location = await prisma.location.findFirst({
     where: { hostId: host.id, slug, published: true },
-    select: { name: true, city: true },
+    select: { name: true, region: true },
   });
   if (!location) notFound();
 
-  const place = location.city || location.name;
+  const place = location.region
+    ? `${location.name}, ${location.region}`
+    : location.name;
   redirect(`/marketplace?where=${encodeURIComponent(place)}`);
 }
