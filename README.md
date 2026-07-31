@@ -1,36 +1,139 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Yall Come Back
 
-## Getting Started
+**The same stay minus the middle man.**
 
-First, run the development server:
+MIT open-source vacation rentals platform: host-branded sites, optional marketplace, calendars, bookings, and monthly website hosting (optional paid service — not a booking commission).
+
+## Secrets and environment variables
+
+| Where | What |
+|-------|------|
+| **Local** | Copy `.env.example` → `.env` and fill values. `.env` is gitignored. |
+| **GitHub** | Never commit `.env`, API keys, DB passwords, or `AUTH_SECRET`. Only `.env.example` (placeholders) belongs in the repo. |
+| **Railway** | Set the same keys under **Project → Variables**. Production values live only in Railway. |
+
+Required for any deploy:
+
+- `DATABASE_URL` — Postgres connection string on Railway (SQLite `file:./dev.db` is local-only)
+- `AUTH_SECRET` — long random string (`openssl rand -base64 32`)
+- `AUTH_URL` — public site origin, e.g. `https://your-app.up.railway.app`
+- `NEXT_PUBLIC_SITE_NAME` — e.g. `Yall Come Back`
+
+Optional: Stripe, Bitcoin, SMS/email messaging (see `.env.example`).
+
+## Quick start
 
 ```bash
+cd vacation-rentals
+npm install
+cp .env.example .env   # set AUTH_SECRET at minimum
+npm run db:setup
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Seeded accounts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Role | Email | Password | Notes |
+|------|-------|----------|--------|
+| Platform admin | `admin@example.com` | `admin12345` | Approvals & hosting billing |
+| Host (live) | `host@example.com` | `host12345` | `/h/cherokee-landing` |
+| Host (pending) | `pending@example.com` | `host12345` | Waiting under Admin → Hosting |
 
-## Learn More
+## Dual model + optional hosting fee
 
-To learn more about Next.js, take a look at the following resources:
+1. **Host sites** - branded mini-sites at `/h/your-slug`
+2. **Shared marketplace** - opt-in listings at `/marketplace`
+3. **Monthly hosting fee** (optional) - if we host the site for you: approve → invoice → go live (per property / month, **not** a % of bookings)
+4. **Free self-host** - run this repo yourself under the MIT license
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Same calendar, pricing, and bookings either way.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Public calendars
 
-## Deploy on Vercel
+| URL | What |
+|-----|------|
+| `/h/[host]/calendar` | All published stays for a host |
+| `/h/[host]/properties/[slug]/calendar` | Full month view for one stay |
+| `/marketplace/properties/[slug]/calendar` | Same availability via marketplace |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Guests only see available vs unavailable nights - never private block notes.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Architecture
+
+```
+┌─────────────────────┐     opt-in      ┌──────────────────────┐
+│  Host site          │ ──────────────► │  Marketplace         │
+│  /h/cherokee-landing│                 │  /marketplace        │
+│  brand + direct book│                 │  multi-host browse   │
+└─────────────────────┘                 └──────────────────────┘
+          │                                        │
+          └──────── same Property + calendar ──────┘
+```
+
+## Features
+
+Feature list is the single source of truth in **`src/lib/features.ts`** (also rendered on `/open-source`). Keep that file updated when you ship something new.
+
+Highlights:
+
+- Host-branded sites, locations, things to do, photo galleries  
+- Marketplace search, host directory, destinations  
+- Seasonal pricing, deposit %, booking widget  
+- Public availability calendars + admin calendar blocks  
+- iCal export/import (Airbnb/VRBO style) + cron sync  
+- Bookings with soft holds; manual deposit confirm (Stripe optional)  
+- Host application, approval, hosting plans & invoices  
+- Roles: `ADMIN` | `HOST` | `GUEST`
+
+## Stack
+
+- Next.js (App Router) + TypeScript + Tailwind  
+- SQLite via Prisma (swap to Postgres with `DATABASE_URL`)  
+- Auth.js credentials  
+- License: **MIT** (see `LICENSE`)
+
+## Platform hosting flow (optional paid)
+
+1. Host applies at `/for-hosts`  
+2. Builds listings while pending review  
+3. Admin → Hosting → approve  
+4. Monthly invoice (Stripe or manual)  
+5. Paid → public site + marketplace opt-in go live  
+
+## Stripe (placeholder until go-live)
+
+Payments run in **manual mode** until Stripe is configured:
+
+- Guest deposits: Admin → Bookings → mark paid  
+- Hosting invoices: Admin → Hosting → mark paid  
+
+At go-live, fill `.env` (never commit secrets):
+
+```env
+STRIPE_ENABLED=true
+STRIPE_SECRET_KEY=sk_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+Webhook: `POST /api/stripe/webhook`  
+Then set `STRIPE_LIVE_READY = true` in `src/lib/features.ts`. Status also shows under **Admin → Settings**.
+
+## iCal sync
+
+On each property admin page:
+
+1. Copy **Export URL** into Airbnb/VRBO  
+2. Paste their ICS under **Add import source**  
+3. **Sync now**, or:
+
+```bash
+curl http://localhost:3000/api/cron/sync-ical
+# Optional: Authorization: Bearer $CRON_SECRET
+```
+
+## License
+
+MIT - free to use, modify, and self-host. See [LICENSE](./LICENSE).

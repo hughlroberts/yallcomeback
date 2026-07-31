@@ -1,0 +1,615 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN // platform operator (marketplace owner)
+  HOST // property host / site owner
+  GUEST // booker
+}
+
+enum BlockSource {
+  MANUAL
+  BOOKING
+  ICAL_IMPORT
+}
+
+enum BlockType {
+  OWNER
+  FRIENDS
+  MAINTENANCE
+  OFFLINE
+  OTHER
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentMethod {
+  STRIPE
+  MANUAL
+  /// Guest pays deposit in Bitcoin to configured address
+  BITCOIN
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// Where the host's website lives
+enum HostingMode {
+  PLATFORM // site hosted on this platform (/h/slug) - monthly hosting fee after approval
+  SELF // self-hosted elsewhere; no platform hosting fee
+}
+
+/// Platform review before go-live billing
+enum HostApprovalStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+/// Monthly hosting subscription (not a booking commission)
+enum HostingSubStatus {
+  NONE
+  PENDING_PAYMENT // approved; first invoice open
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum HostingInvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  FAILED
+}
+
+/// How the monthly hosting fee is calculated
+enum HostingPricingModel {
+  /// monthlyPrice × billable property count (default - scales with listings)
+  PER_PROPERTY
+  /// flat monthlyPrice per host account
+  FLAT
+}
+
+/// Where guests are directed for this host's brand (paid / platform hosts)
+enum HostSitePresence {
+  /// StayLocal marketplace listing URLs are the guest-facing site
+  STAYLOCAL
+  /// Host's own domain / external site is primary (websiteUrl)
+  CUSTOM
+  /// Both StayLocal listings and the host's own domain
+  BOTH
+}
+
+/// How petFee is applied when guests bring pets
+enum PetFeeUnit {
+  /// One flat fee for the whole stay (any number of pets within max)
+  PER_STAY
+  /// Fee amount × number of pets
+  PER_PET
+}
+
+/// Monthly website hosting plans (traditional hosting-style pricing)
+model HostingPlan {
+  id            String              @id @default(cuid())
+  name          String
+  slug          String              @unique
+  description   String?
+  /// For PER_PROPERTY: price per property / month. For FLAT: total / month.
+  monthlyPrice  Float
+  pricingModel  HostingPricingModel @default(PER_PROPERTY)
+  /// Minimum billable units when PER_PROPERTY (e.g. 1 even with 0 listings)
+  minProperties Int                 @default(1)
+  currency      String              @default("USD")
+  isActive      Boolean             @default(true)
+  isDefault     Boolean             @default(false)
+  sortOrder     Int                 @default(0)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  hosts         Host[]
+  invoices      HostingInvoice[]
+}
+
+/// A host is an independent brand (listings on StayLocal and/or their own site)
+model Host {
+  id                   String              @id @default(cuid())
+  name                 String // legal / display name
+  slug                 String              @unique // brand id / admin references
+  tagline              String?
+  description          String?
+  logoUrl              String?
+  primaryColor         String              @default("#2563eb") // blue-600
+  contactEmail         String?
+  contactPhone         String?
+  /// Own domain or self-hosted app URL (e.g. https://www.example.com)
+  websiteUrl           String?
+  /// STAYLOCAL = use StayLocal listing URLs; CUSTOM = own domain; BOTH = both
+  sitePresence         HostSitePresence    @default(STAYLOCAL)
+  /// Host-level default: new properties inherit this for marketplace visibility
+  /// SELF (free self-host) hosts are always listed on the free marketplace
+  listOnMarketplace    Boolean             @default(true)
+  /// Host account active (soft kill switch)
+  active               Boolean             @default(true)
+  /// PLATFORM = paid hosting with us; SELF = free self-host on their own stack
+  hostingMode          HostingMode         @default(PLATFORM)
+  approvalStatus       HostApprovalStatus  @default(PENDING_REVIEW)
+  approvalNotes        String?
+  reviewedAt           DateTime?
+  planId               String?
+  plan                 HostingPlan?        @relation(fields: [planId], references: [id], onDelete: SetNull)
+  subscriptionStatus   HostingSubStatus    @default(NONE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  stripeCustomerId     String?
+  billingEmail         String?
+  /// Optional API key for remote self-hosted syndication (future)
+  syndicationApiKey    String?             @unique
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  /// Default disclaimer shown on bookings / listings when property has none
+  defaultDisclaimer    String?
+  /// Host confirmed they alone are responsible for tax filing (required before taxes apply)
+  taxLiabilityAcknowledged   Boolean   @default(false)
+  taxLiabilityAcknowledgedAt DateTime?
+
+  /// Default guest auto-messages for all listings (listing can override with its own body)
+  /// 1) On booking — confirmation
+  defaultAutoMsgOnBookingEnabled Boolean @default(true)
+  defaultAutoMsgOnBookingBody    String?
+  /// 2) ~1 week before check-in — invitation / what to expect
+  defaultAutoMsgWeekBeforeEnabled Boolean @default(true)
+  defaultAutoMsgWeekBeforeBody    String?
+  /// 3) ~1 day before check-in — access instructions
+  defaultAutoMsgDayBeforeEnabled Boolean @default(true)
+  defaultAutoMsgDayBeforeBody    String?
+  /// Hours before check-in to send scheduled messages (defaults for all listings)
+  autoMsgWeekBeforeHours Int @default(168)
+  autoMsgDayBeforeHours  Int @default(24)
+
+  users                User[]
+  properties           Property[]
+  locations            Location[]
+  invoices             HostingInvoice[]
+  conversations        Conversation[]
+  taxLines             HostTaxLine[]
+}
+
+/// Host-level tax rates (e.g. Texas hotel occupancy tax). Applies to ALL listings
+/// under this host - not configured per property. Host must file themselves.
+model HostTaxLine {
+  id               String   @id @default(cuid())
+  hostId           String
+  host             Host     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  /// Guest-facing label, e.g. "Texas hotel occupancy tax"
+  name             String
+  /// Percent of the taxable base (e.g. 6 = 6%)
+  ratePercent      Float
+  applyToLodging   Boolean  @default(true)
+  applyToCleaning  Boolean  @default(false)
+  applyToPetFee    Boolean  @default(false)
+  active           Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  /// Optional registration / permit number for host records only
+  registrationId   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([hostId, active])
+}
+
+/// Monthly hosting invoice (Stripe or manual) - not booking deposits
+model HostingInvoice {
+  id                    String               @id @default(cuid())
+  hostId                String
+  host                  Host                 @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  planId                String?
+  plan                  HostingPlan?         @relation(fields: [planId], references: [id], onDelete: SetNull)
+  amount                Float
+  currency              String               @default("USD")
+  /// Snapshot used for the line item (audit trail)
+  pricingModel          HostingPricingModel  @default(PER_PROPERTY)
+  unitPrice             Float                @default(0)
+  propertyCount         Int                  @default(1)
+  periodStart           DateTime
+  periodEnd             DateTime
+  status                HostingInvoiceStatus @default(OPEN)
+  dueDate               DateTime?
+  paidAt                DateTime?
+  stripeInvoiceId       String?              @unique
+  stripeHostedInvoiceUrl String?
+  notes                 String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  @@index([hostId, status])
+  @@index([periodEnd])
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String?
+  /// Preferred / display first name (optional)
+  preferredName String?
+  email        String    @unique
+  passwordHash String?
+  role         Role      @default(GUEST)
+  phone        String?
+  residentialAddress String?
+  mailingAddress     String?
+  emergencyContact   String?
+  /// Privacy: show read receipts on messages
+  showReadReceipts       Boolean @default(true)
+  /// Privacy: allow public listing pages in search engines (hosts)
+  includeListingsInSearch Boolean @default(true)
+  emailNotifications Boolean @default(true)
+  smsNotifications   Boolean @default(false)
+  /// Display preferences (Texas defaults)
+  language       String @default("en-US")
+  currencyDisplay String @default("USD")
+  /// Hosts belong to one Host org; ADMIN/GUEST usually null
+  hostId       String?
+  host         Host?     @relation(fields: [hostId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings             Booking[]
+  sentMessages         Message[]           @relation("MessageSender")
+  guestConversations   Conversation[]      @relation("ConversationGuest")
+}
+
+model Location {
+  id          String       @id @default(cuid())
+  hostId      String?
+  host        Host?        @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String
+  description String?
+  heroImage   String?
+  region      String?
+  country     String?
+  published   Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  properties  Property[]
+  thingsToDo  ThingToDo[]
+
+  @@unique([hostId, slug])
+}
+
+model ThingToDo {
+  id          String   @id @default(cuid())
+  locationId  String
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  title       String
+  slug        String
+  description String?
+  category    String?
+  imageUrl    String?
+  websiteUrl  String?
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([locationId, slug])
+}
+
+model Property {
+  id               String           @id @default(cuid())
+  hostId           String
+  host             Host             @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  locationId       String?
+  location         Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  title            String
+  slug             String
+  /// Simple place type from listing wizard (house, cabin, motel, etc.)
+  propertyType     String           @default("house")
+  /// Guest access: entire_place | private_room | shared_room
+  spaceType        String           @default("entire_place")
+  tagline          String?
+  description      String?
+  address          String?
+  city             String?
+  region           String?
+  country          String?
+  postalCode       String?
+  latitude         Float?
+  longitude        Float?
+  /// When true, public map shows exact pin; otherwise approximate area
+  showPreciseLocation Boolean       @default(false)
+  bedrooms         Int              @default(1)
+  bathrooms        Float            @default(1)
+  maxGuests        Int              @default(2)
+  beds             Int              @default(1)
+  /// JSON: SleepingRoom[] - per-room bed types (king, queen, twin, etc.)
+  sleepingArrangements String       @default("[]")
+  baseNightlyRate  Float
+  /// Extra % on Fri/Sat nights (e.g. 11 = +11%)
+  weekendPremiumPercent Float       @default(0)
+  /// Stay-level discounts (only the best qualifying one applies)
+  discountNewListingPercent Float   @default(0)
+  discountLastMinutePercent Float   @default(0)
+  discountWeeklyPercent     Float   @default(0)
+  discountMonthlyPercent    Float   @default(0)
+  defaultMinNights Int              @default(1)
+  cleaningFee      Float            @default(0)
+  /// Pet fee amount (see petFeeUnit for per stay vs per pet). Demo default $25 flat.
+  petFee           Float            @default(25)
+  petFeeUnit       PetFeeUnit       @default(PER_STAY)
+  petsAllowed      Boolean          @default(false)
+  /// Max dogs/pets when petsAllowed. Default 2; hosts may raise (e.g. 3+). 0 = no fixed cap.
+  maxPets          Int              @default(2)
+  depositPercent   Float            @default(30)
+  checkInTime      String           @default("16:00")
+  checkOutTime     String           @default("11:00")
+  houseRules       String?
+  /// Host-written disclaimer / liability language shown at booking
+  disclaimer       String?
+  amenities        String           @default("[]")
+  /// Short-stay policy (≤27 nights): FLEXIBLE | MODERATE | LIMITED | FIRM | STRICT | SUPER_FIRM_30 | SUPER_FIRM_60
+  cancellationPolicy String         @default("MODERATE")
+  /// Monthly stays (28+ nights): FIRM | STRICT
+  longTermCancellationPolicy String @default("FIRM")
+  /// Optional non-refundable discounted rate for short stays
+  nonRefundableOption Boolean       @default(false)
+  published        Boolean          @default(false)
+  featured         Boolean          @default(false)
+  /// Show this listing on the central marketplace (in addition to host site)
+  listOnMarketplace Boolean         @default(true)
+
+  /// Auto guest messages (per listing override; empty body falls back to host defaults)
+  /// Sent to guest inbox when a booking is created
+  autoMsgOnBookingEnabled Boolean    @default(false)
+  autoMsgOnBookingBody    String?
+  /// ~1 week before check-in (host default timing: autoMsgWeekBeforeHours)
+  autoMsgWeekBeforeEnabled Boolean   @default(false)
+  autoMsgWeekBeforeBody    String?
+  /// ~1 day before check-in — access instructions
+  autoMsgDayBeforeEnabled Boolean    @default(false)
+  autoMsgDayBeforeBody    String?
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  images           PropertyImage[]
+  seasons          SeasonalPrice[]
+  calendarBlocks   CalendarBlock[]
+  icalConnections  IcalConnection[]
+  bookings         Booking[]
+  conversations    Conversation[]
+
+  @@unique([hostId, slug])
+  @@index([listOnMarketplace, published])
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  url        String
+  alt        String?
+  sortOrder  Int      @default(0)
+  isCover    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model SeasonalPrice {
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name        String
+  startDate   DateTime
+  endDate     DateTime
+  nightlyRate Float
+  minNights   Int      @default(1)
+  /// Stable peak-holiday id (e.g. memorial-2026) for bulk min-night upgrades
+  holidayKey  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([propertyId, holidayKey])
+}
+
+/// Offline / manual stay payment via Stripe Invoice (online link or POS)
+enum BlockInvoiceStatus {
+  NONE
+  OPEN
+  PAID
+  VOID
+  FAILED
+}
+
+model CalendarBlock {
+  id           String          @id @default(cuid())
+  propertyId   String
+  property     Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  startDate    DateTime
+  endDate      DateTime
+  source       BlockSource     @default(MANUAL)
+  blockType    BlockType?
+  occupantName String?
+  notes        String?
+  /// Guest contact for Stripe invoice email
+  guestEmail   String?
+  /// Amount due for this offline stay (host-entered)
+  invoiceAmount Float?
+  invoiceCurrency String       @default("USD")
+  invoiceStatus BlockInvoiceStatus @default(NONE)
+  stripeInvoiceId String?      @unique
+  stripeHostedInvoiceUrl String?
+  invoiceSentAt DateTime?
+  invoicePaidAt DateTime?
+  bookingId    String?         @unique
+  booking      Booking?        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  connectionId String?
+  connection   IcalConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  externalUid  String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([propertyId, startDate, endDate])
+  @@index([connectionId, externalUid])
+  @@index([stripeInvoiceId])
+}
+
+model IcalConnection {
+  id            String          @id @default(cuid())
+  propertyId    String
+  property      Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name          String
+  importUrl     String?
+  exportSecret  String          @unique @default(cuid())
+  lastSyncedAt  DateTime?
+  lastSyncError String?
+  enabled       Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  blocks        CalendarBlock[]
+}
+
+model Booking {
+  id              String         @id @default(cuid())
+  propertyId      String
+  property        Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId          String?
+  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestName       String
+  guestEmail      String
+  guestPhone      String?
+  checkIn         DateTime
+  checkOut        DateTime
+  guests          Int            @default(1)
+  /// Number of pets on this stay (0 if none)
+  pets            Int            @default(0)
+  nights          Int
+  nightlySubtotal Float
+  cleaningFee     Float          @default(0)
+  petFee          Float          @default(0)
+  /// Sum of host-configured taxes at booking time (USD)
+  taxAmount       Float          @default(0)
+  /// JSON snapshot of tax lines applied [{ name, ratePercent, amount }]
+  taxBreakdown    String?
+  totalAmount     Float
+  depositAmount   Float
+  status          BookingStatus  @default(PENDING_PAYMENT)
+  /// How guest found the listing: host_site | marketplace | direct
+  sourceChannel   String         @default("host_site")
+  /// Snapshot of disclaimer accepted at booking time
+  disclaimerAccepted String?
+  guestNotes      String?
+  adminNotes      String?
+  /// Automated host → guest inbox messages (per kind, once each)
+  autoMsgOnBookingSentAt   DateTime?
+  autoMsgWeekBeforeSentAt  DateTime?
+  autoMsgDayBeforeSentAt   DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  payments        Payment[]
+  calendarBlock   CalendarBlock?
+  conversations   Conversation[]
+}
+
+/// Guest ↔ host messaging (in-app by default; SMS/email hooks for hosted portal)
+enum MessageChannel {
+  IN_APP
+  SMS
+  EMAIL
+}
+
+enum ConversationStatus {
+  OPEN
+  ARCHIVED
+}
+
+model Conversation {
+  id            String             @id @default(cuid())
+  hostId        String
+  host          Host               @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  propertyId    String?
+  property      Property?          @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  bookingId     String?
+  booking       Booking?           @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  guestUserId   String?
+  guestUser     User?              @relation("ConversationGuest", fields: [guestUserId], references: [id], onDelete: SetNull)
+  guestName     String
+  guestEmail    String
+  guestPhone    String?
+  subject       String?
+  status        ConversationStatus @default(OPEN)
+  lastMessageAt DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  messages      Message[]
+
+  @@index([hostId, status])
+  @@index([guestEmail])
+  @@index([bookingId])
+}
+
+model Message {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  /// GUEST | HOST | SYSTEM
+  senderRole     String
+  senderUserId   String?
+  senderUser     User?          @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: SetNull)
+  body           String
+  channel        MessageChannel @default(IN_APP)
+  /// Provider status when SMS/email hook fires (queued, sent, failed, skipped)
+  externalStatus String?
+  externalId     String?
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  bookingId       String
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  /// Deposit amount in USD
+  amount          Float
+  method          PaymentMethod @default(MANUAL)
+  status          PaymentStatus @default(PENDING)
+  stripeSessionId String?
+  /// Receiving address shown to guest (snapshot)
+  bitcoinAddress  String?
+  /// Estimated BTC at booking time (satoshi-rounded)
+  bitcoinAmountBtc Float?
+  /// USD per BTC rate used for the estimate
+  bitcoinRateUsd  Float?
+  /// On-chain transaction id when confirmed
+  bitcoinTxId     String?
+  notes           String?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model SiteSettings {
+  id                    String  @id @default("default")
+  siteName              String  @default("StayLocal")
+  marketplaceName       String  @default("StayLocal Marketplace")
+  marketplaceEnabled    Boolean @default(true)
+  currency              String  @default("USD")
+  currencySymbol        String  @default("$")
+  defaultDepositPercent Float   @default(30)
+  contactEmail          String?
+  contactPhone          String?
+  stripeEnabled         Boolean @default(false)
+}

@@ -1,26 +1,116 @@
 @import "tailwindcss";
 
+/*
+ * yallcomeback.com brand tokens (v1)
+ * See docs/brand/yallcomeback-brand-spec.md
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+
+  --color-ink: #2a3566;
+  --color-ink-muted: #5f6683;
+  --color-brand: #3a4a86;
+  --color-brand-hover: #2f3e7a;
+  --color-brand-active: #26325f;
+  --color-brand-text: #ffffff;
+  --color-support: #8c97ce;
+  --color-soft: #edeff8;
+  --color-soft-hover: #e3e7f5;
+  --color-highlight: #e8ce96;
+  --color-confirm: #93a38f;
+  --color-confirm-text: #2c3628;
+  --color-page: #fbf7ef;
+  --color-card: #ffffff;
+  --color-border: #e3ded2;
+  --color-focus: #3a4a86;
+
+  /* Aliases used by existing layout */
+  --background: var(--color-page);
+  --foreground: var(--color-ink);
+  --surface: var(--color-card);
+  --border: var(--color-border);
+  --muted: var(--color-ink-muted);
+  --primary: var(--color-brand);
+  --primary-soft: var(--color-soft);
+  --primary-hover: var(--color-brand-hover);
+  --ring: var(--color-support);
+
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-pill: 999px;
+  --shadow-float: 0 8px 24px rgba(42, 53, 102, 0.12),
+    0 2px 6px rgba(42, 53, 102, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-ink: #2a3566;
+  --color-ink-muted: #5f6683;
+  --color-bonnet: #3a4a86;
+  --color-bonnet-hover: #2f3e7a;
+  --color-bonnet-active: #26325f;
+  --color-lupine: #8c97ce;
+  --color-petal: #edeff8;
+  --color-petal-hover: #e3e7f5;
+  --color-honey: #e8ce96;
+  --color-sage: #93a38f;
+  --color-sage-ink: #2c3628;
+  --color-buttermilk: #fbf7ef;
+  --color-porcelain: #ffffff;
+  --color-hairline: #e3ded2;
+  --font-sans: var(--font-inter), var(--font-body), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --radius-control: 8px;
+  --radius-card: 12px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Typographic logo lockup */
+.ycb-logo {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+  font-variation-settings: "SOFT" 40, "WONK" 1;
+}
+.ycb-logo__quote {
+  color: var(--color-highlight);
+  font-size: 1.35em;
+  line-height: 0;
+}
+
+/* Prefer light UI always */
+input[type="date"],
+input[type="number"],
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
