@@ -335,31 +335,46 @@ export default async function OpsHostingPage() {
       {/* All hosts */}
       <section>
         <h2 className="text-lg font-semibold">All hosts</h2>
+        <p className="mt-1 text-sm text-stone-500">
+          Click a host to edit plan, domain, billing, and see all listings.
+          Complimentary = free for your brand (any number of properties). Paying
+          customers only see paid plans at signup.
+        </p>
         <div className="mt-4 overflow-x-auto rounded-xl border border-stone-200 bg-white">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-stone-200 bg-stone-50 text-stone-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Host</th>
+                <th className="px-4 py-3 font-medium">Listings</th>
                 <th className="px-4 py-3 font-medium">Mode</th>
                 <th className="px-4 py-3 font-medium">Guest site</th>
                 <th className="px-4 py-3 font-medium">Marketplace</th>
                 <th className="px-4 py-3 font-medium">Approval</th>
                 <th className="px-4 py-3 font-medium">Subscription</th>
                 <th className="px-4 py-3 font-medium">Plan</th>
-                <th className="px-4 py-3 font-medium">Period end</th>
+                <th className="px-4 py-3 font-medium" />
               </tr>
             </thead>
             <tbody>
               {hosts.map((h) => (
-                <tr key={h.id} className="border-b border-stone-100">
+                <tr
+                  key={h.id}
+                  className="border-b border-stone-100 hover:bg-stone-50/80"
+                >
                   <td className="px-4 py-3">
-                    <p className="font-medium">{h.name}</p>
+                    <Link
+                      href={`/ops/hosting/${h.id}`}
+                      className="font-medium text-stone-900 hover:text-bonnet"
+                    >
+                      {h.name}
+                    </Link>
                     <p className="text-xs text-stone-500">
                       {h.websiteUrl
                         ? h.websiteUrl.replace(/^https?:\/\//i, "")
                         : `/h/${h.slug}`}
                     </p>
                   </td>
+                  <td className="px-4 py-3">{h._count.properties}</td>
                   <td className="px-4 py-3">{hostingModeLabel(h.hostingMode)}</td>
                   <td className="px-4 py-3">
                     {h.hostingMode === "SELF"
@@ -381,11 +396,19 @@ export default async function OpsHostingPage() {
                     {h.plan
                       ? `${h.plan.name} (${formatPlanPrice(h.plan, formatMoney)})`
                       : " - "}
+                    {h.plan && h.plan.monthlyPrice <= 0 ? (
+                      <span className="ml-1 text-xs text-emerald-700">
+                        free
+                      </span>
+                    ) : null}
                   </td>
-                  <td className="px-4 py-3">
-                    {h.currentPeriodEnd
-                      ? h.currentPeriodEnd.toISOString().slice(0, 10)
-                      : " - "}
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/ops/hosting/${h.id}`}
+                      className="font-medium text-bonnet hover:underline"
+                    >
+                      Manage →
+                    </Link>
                   </td>
                 </tr>
               ))}

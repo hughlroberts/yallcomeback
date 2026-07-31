@@ -258,3 +258,118 @@ export async function assignHostPlan(formData: FormData) {
   });
   revalidateHosting(host.slug);
 }
+
+/**
+ * Platform ops: edit an existing host brand (plan, billing, domain, marketplace).
+ * Complimentary plan = free forever for your own brand / partners; still PLATFORM
+ * so multi-listing businesses stay on your stack without per-property charges.
+ */
+export async function updateHostOps(formData: FormData) {
+  await ensurePlatform();
+  const hostId = String(formData.get("hostId") || "");
+  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  if (!host) throw new Error("Host not found");
+
+  const planId = String(formData.get("planId") || "").trim() || null;
+  const hostingMode = String(formData.get("hostingMode") || host.hostingMode) as
+    | "PLATFORM"
+    | "SELF";
+  const subscriptionStatus = String(
+    formData.get("subscriptionStatus") || host.subscriptionStatus,
+  ) as
+    | "NONE"
+    | "PENDING_PAYMENT"
+    | "ACTIVE"
+    | "PAST_DUE"
+    | "CANCELLED";
+  const sitePresence = String(
+    formData.get("sitePresence") || host.sitePresence,
+  ) as "STAYLOCAL" | "CUSTOM" | "BOTH";
+  const websiteUrl =
+    String(formData.get("websiteUrl") || "").trim() || null;
+  const billingEmail =
+    String(formData.get("billingEmail") || "").trim() || null;
+  const contactEmail =
+    String(formData.get("contactEmail") || "").trim() || null;
+  const approvalNotes =
+    String(formData.get("approvalNotes") || "").trim() || null;
+  const listOnMarketplace = formData.get("listOnMarketplace") === "on";
+  const active = formData.get("active") === "on";
+  const name = String(formData.get("name") || host.name).trim() || host.name;
+  const tagline = String(formData.get("tagline") || "").trim() || null;
+
+  let planMonthly = 0;
+  if (planId) {
+    const plan = await prisma.hostingPlan.findUnique({ where: { id: planId } });
+    if (!plan) throw new Error("Plan not found");
+    planMonthly = plan.monthlyPrice;
+  }
+
+  // Complimentary / $0: active and never billed
+  const isComplimentary =
+    planId &&
+    planMonthly <= 0 &&
+    hostingMode === "PLATFORM";
+
+  const data: {
+    name: string;
+    tagline: string | null;
+    planId: string | null;
+    hostingMode: "PLATFORM" | "SELF";
+    subscriptionStatus:
+      | "NONE"
+      | "PENDING_PAYMENT"
+      | "ACTIVE"
+      | "PAST_DUE"
+      | "CANCELLED";
+    sitePresence: "STAYLOCAL" | "CUSTOM" | "BOTH";
+    websiteUrl: string | null;
+    billingEmail: string | null;
+    contactEmail: string | null;
+    approvalNotes: string | null;
+    listOnMarketplace: boolean;
+    active: boolean;
+    approvalStatus?: "APPROVED" | "SUSPENDED";
+    currentPeriodStart?: Date | null;
+    currentPeriodEnd?: Date | null;
+  } = {
+    name,
+    tagline,
+    planId,
+    hostingMode,
+    subscriptionStatus: isComplimentary ? "ACTIVE" : subscriptionStatus,
+    sitePresence:
+      hostingMode === "SELF" ? "CUSTOM" : sitePresence,
+    websiteUrl,
+    billingEmail,
+    contactEmail,
+    approvalNotes,
+    listOnMarketplace:
+      hostingMode === "SELF" ? true : listOnMarketplace,
+    active,
+  };
+
+  if (isComplimentary) {
+    data.approvalStatus = "APPROVED";
+    data.active = true;
+    if (!host.currentPeriodStart) {
+      data.currentPeriodStart = new Date();
+      const end = new Date();
+      end.setFullYear(end.getFullYear() + 10);
+      data.currentPeriodEnd = end;
+    }
+  }
+
+  if (hostingMode === "SELF") {
+    data.planId = null;
+    data.subscriptionStatus = "NONE";
+  }
+
+  await prisma.host.update({
+    where: { id: hostId },
+    data,
+  });
+
+  revalidateHosting(host.slug);
+  revalidatePath(`/ops/hosting/${hostId}`);
+}
