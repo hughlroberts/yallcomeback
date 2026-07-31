@@ -10,6 +10,7 @@ import {
   Menu,
   MessageCircle,
   Plane,
+  Search,
   Settings,
   User,
 } from "lucide-react";
@@ -134,6 +135,7 @@ export function UserMenu({
 
   const close = () => setOpen(false);
 
+  // Logged out: travel or host — no messages surface
   if (!isSignedIn) {
     return (
       <div className="flex items-center gap-2">
@@ -142,6 +144,12 @@ export function UserMenu({
           className="hidden rounded-full px-3 py-1.5 text-sm font-medium text-bonnet hover:bg-petal sm:inline"
         >
           List a stay
+        </Link>
+        <Link
+          href="/for-hosts"
+          className="rounded-full px-3 py-1.5 text-sm font-medium text-bonnet hover:bg-petal sm:hidden"
+        >
+          List
         </Link>
         <Link
           href="/login"
@@ -200,21 +208,9 @@ export function UserMenu({
 
           <div className="py-1">
             <MenuRow
-              href="/account/settings/personal"
-              icon={User}
-              label="Profile"
-              onNavigate={close}
-            />
-            <MenuRow
-              href="/account/settings"
-              icon={Settings}
-              label="Account settings"
-              onNavigate={close}
-            />
-            <MenuRow
-              href="/saved"
-              icon={Heart}
-              label="Wishlists"
+              href="/marketplace"
+              icon={Search}
+              label="Stays"
               onNavigate={close}
             />
             <MenuRow
@@ -224,6 +220,13 @@ export function UserMenu({
               onNavigate={close}
             />
             <MenuRow
+              href="/saved"
+              icon={Heart}
+              label="Wishlists"
+              onNavigate={close}
+            />
+            {/* Messages only after sign-in, in the account menu — not top nav */}
+            <MenuRow
               href="/messages"
               icon={MessageCircle}
               label="Messages"
@@ -232,12 +235,6 @@ export function UserMenu({
           </div>
 
           <div className="border-t border-stone-100 py-1">
-            <MenuRow
-              href="/account/settings/language"
-              icon={Globe}
-              label="Languages & currency"
-              onNavigate={close}
-            />
             {isHostOrAdmin ? (
               <>
                 <MenuRow
@@ -246,7 +243,6 @@ export function UserMenu({
                   label="Listings & bookings"
                   onNavigate={close}
                 />
-                {/* Platform ADMIN only — not shown to hosts or guests */}
                 {isPlatformAdmin ? (
                   <MenuRow
                     href="/ops"
@@ -264,6 +260,24 @@ export function UserMenu({
                 onNavigate={close}
               />
             )}
+            <MenuRow
+              href="/account/settings/personal"
+              icon={User}
+              label="Profile"
+              onNavigate={close}
+            />
+            <MenuRow
+              href="/account/settings"
+              icon={Settings}
+              label="Account settings"
+              onNavigate={close}
+            />
+            <MenuRow
+              href="/account/settings/language"
+              icon={Globe}
+              label="Languages & currency"
+              onNavigate={close}
+            />
           </div>
 
           <div className="border-t border-stone-100 py-1">

@@ -13,14 +13,14 @@ function activeFor(pathname: string, href: string): boolean {
   if (href === "/marketplace") {
     return path === "/marketplace" || path.startsWith("/marketplace/");
   }
-  if (href === "/messages") {
-    return path === "/messages" || path.startsWith("/messages/");
-  }
   if (href === "/saved") {
     return path === "/saved" || path.startsWith("/saved/");
   }
   if (href === "/admin") {
     return path.startsWith("/admin");
+  }
+  if (href === "/for-hosts") {
+    return path === "/for-hosts" || path.startsWith("/for-hosts/");
   }
   return path === href || (href !== "/" && path.startsWith(href + "/"));
 }
@@ -29,26 +29,28 @@ const LINK =
   "rounded-full px-3 py-1.5 text-sm font-medium transition whitespace-nowrap";
 
 /**
- * Shared chrome for every account - guests and hosts see the same nav shape.
- * Hosts get an extra "Listings" link; nobody is pushed into a separate "mode".
+ * Top chrome stays simple: travel (Stays) or host (List a stay / Listings).
+ * Messages live under the account menu after sign-in — not a primary CTA.
  */
 export function SiteHeaderNav(props: Props) {
   const pathname = usePathname() || "/";
 
+  const listingHref = props.isHostOrAdmin ? "/admin" : "/for-hosts";
+  const listingLabel = props.isHostOrAdmin ? "Listings" : "List a stay";
+
+  // Primary destinations only — no Messages in the top bar
   const links: { href: string; label: string; show: boolean }[] = [
     { href: "/marketplace", label: "Stays", show: true },
-    { href: "/saved", label: "Wishlists", show: props.isSignedIn },
-    { href: "/messages", label: "Messages", show: props.isSignedIn },
     {
-      href: props.isHostOrAdmin ? "/admin" : "/for-hosts",
-      label: "Listings",
+      href: listingHref,
+      label: listingLabel,
       show: true,
     },
   ];
 
   return (
     <nav className="flex min-w-0 flex-1 items-center justify-end gap-1 sm:gap-2">
-      <div className="hidden items-center gap-0.5 lg:flex">
+      <div className="hidden items-center gap-0.5 sm:flex">
         {links
           .filter((l) => l.show)
           .map((l) => {
@@ -66,45 +68,7 @@ export function SiteHeaderNav(props: Props) {
           })}
       </div>
 
-      {/* Tablet: key destinations */}
-      <div className="hidden items-center gap-0.5 sm:flex lg:hidden">
-        <Link
-          href="/marketplace"
-          className={cn(
-            LINK,
-            activeFor(pathname, "/marketplace") ? NAV_ACTIVE : NAV_IDLE,
-          )}
-        >
-          Stays
-        </Link>
-        {props.isSignedIn ? (
-          <Link
-            href="/messages"
-            className={cn(
-              LINK,
-              activeFor(pathname, "/messages") ? NAV_ACTIVE : NAV_IDLE,
-            )}
-          >
-            Messages
-          </Link>
-        ) : null}
-        <Link
-          href={props.isHostOrAdmin ? "/admin" : "/for-hosts"}
-          className={cn(
-            LINK,
-            activeFor(
-              pathname,
-              props.isHostOrAdmin ? "/admin" : "/for-hosts",
-            )
-              ? NAV_ACTIVE
-              : NAV_IDLE,
-          )}
-        >
-          Listings
-        </Link>
-      </div>
-
-      {/* Phone: Stays only; rest in menu */}
+      {/* Phone: Stays only; List a stay / account in menu or CTA */}
       <div className="flex items-center gap-0.5 sm:hidden">
         <Link
           href="/marketplace"
