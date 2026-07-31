@@ -140,22 +140,13 @@ body {
 }
 .ycb-logo__word {
   overflow: visible;
-  /* room for opening quote so it doesn't sit on the “y” */
-  padding-left: 0.05em;
 }
 .ycb-logo__text {
   display: inline-block;
   overflow: visible;
-  /* Fraunces italic “y” has negative left sidebearing — give it air */
-  padding-left: 0.06em;
-  padding-right: 0.04em;
-}
-.ycb-logo__quote {
-  display: inline-block;
-  color: var(--color-highlight);
-  font-size: 1.15em;
-  line-height: 1.25;
-  /* never line-height: 0 — that collapsed neighboring glyph paint boxes */
+  /* Fraunces “Y” sidebearing — slight air so it never clips */
+  padding-left: 0.04em;
+  padding-right: 0.02em;
 }
 
 /* Prefer light UI always */

@@ -87,13 +87,7 @@ export function BrandLogo({
         className="h-10 w-10 sm:h-12 sm:w-12 md:h-[3.25rem] md:w-[3.25rem]"
       />
       <span className="ycb-logo__word inline-flex shrink-0 items-baseline overflow-visible">
-        <span className="ycb-logo__quote" aria-hidden>
-          &ldquo;
-        </span>
-        <span className="ycb-logo__text">yall come back</span>
-        <span className="ycb-logo__quote" aria-hidden>
-          &rdquo;
-        </span>
+        <span className="ycb-logo__text">Yall Come Back</span>
       </span>
     </Link>
   );
