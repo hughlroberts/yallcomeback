@@ -80,20 +80,6 @@ export default async function HomePage() {
               placeSuggestions={placeSuggestions}
             />
           </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/marketplace"
-              className="rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
-            >
-              Find a stay
-            </Link>
-            <Link
-              href="/for-hosts"
-              className="rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
-            >
-              Host without the cut
-            </Link>
-          </div>
           <p className="mt-6 text-sm text-stone-300">
             {liveHosts} active host{liveHosts === 1 ? "" : "s"} ·{" "}
             {listings.length}+ listing
@@ -103,30 +89,46 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Why book here */}
+      {/* Why book here + primary CTAs */}
       <section className="border-b border-stone-200 bg-white">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
-          {[
-            {
-              title: "Direct booking",
-              body: "You book the place with the people who run it. Questions, check-in details, and the stay itself stay between you and the host - not a distant call center.",
-            },
-            {
-              title: "More of the money stays put",
-              body: "Big platforms take a large cut from hosts and stack service fees on guests. Here, more of what you pay goes to the stay - and hosts keep more of what they earn.",
-            },
-            {
-              title: "Built for locals and return guests",
-              body: "If you already know the property or live nearby, you should not pay a premium just to rebook. Search, message, and reserve without the extra platform tax.",
-            },
-          ].map((item) => (
-            <div key={item.title}>
-              <p className="text-sm font-semibold text-bonnet">{item.title}</p>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                {item.body}
-              </p>
-            </div>
-          ))}
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <div className="grid gap-8 sm:grid-cols-3">
+            {[
+              {
+                title: "Direct booking",
+                body: "You book the place with the people who run it. Questions, check-in details, and the stay itself stay between you and the host - not a distant call center.",
+              },
+              {
+                title: "More of the money stays put",
+                body: "Big platforms take a large cut from hosts and stack service fees on guests. Here, more of what you pay goes to the stay - and hosts keep more of what they earn.",
+              },
+              {
+                title: "Built for locals and return guests",
+                body: "If you already know the property or live nearby, you should not pay a premium just to rebook. Search, message, and reserve without the extra platform tax.",
+              },
+            ].map((item) => (
+              <div key={item.title}>
+                <p className="text-sm font-semibold text-bonnet">{item.title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 flex flex-wrap gap-3">
+            <Link
+              href="/marketplace"
+              className="rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover"
+            >
+              Find a stay
+            </Link>
+            <Link
+              href="/for-hosts"
+              className="rounded-full border border-bonnet/30 bg-petal px-6 py-3 text-sm font-semibold text-bonnet hover:bg-petal-hover"
+            >
+              Host without the cut
+            </Link>
+          </div>
         </div>
       </section>
 
