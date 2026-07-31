@@ -79,7 +79,7 @@ export function SiteFooter() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-buttermilk/50 sm:px-6">
           <p>© {new Date().getFullYear()} yallcomeback.com</p>
-          <p className="text-honey/90">Yall come back now.</p>
+          <p className="text-honey/90">Made in Texas by Texans.</p>
         </div>
       </div>
     </footer>
