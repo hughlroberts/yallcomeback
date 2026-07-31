@@ -28,7 +28,7 @@ export function SiteFooter() {
 
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-[0.08em] text-buttermilk/50">
-              Explore
+              Find a place
             </p>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
@@ -56,12 +56,12 @@ export function SiteFooter() {
 
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-[0.08em] text-buttermilk/50">
-              For hosts
+              Host a place
             </p>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
                 <Link href="/for-hosts" className="hover:text-honey">
-                  List your property
+                  Paid hosting or free self-host
                 </Link>
               </li>
               <li>

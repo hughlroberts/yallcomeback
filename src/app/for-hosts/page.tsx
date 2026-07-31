@@ -9,7 +9,11 @@ import {
 import { formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "For hosts" };
+export const metadata = {
+  title: "Host a Place",
+  description:
+    "Host with Yall Come Back: paid platform hosting or free self-host on your own domain — not a cut of every booking.",
+};
 
 export default async function ForHostsPage({
   searchParams,
@@ -38,19 +42,96 @@ export default async function ForHostsPage({
         />
         <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/85 to-stone-900/40" />
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-200/90">
-            For hosts
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-honey/90">
+            Host a place
           </p>
-          <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
-            Paid hosting or free self-host - your choice
+          <h1 className="mt-3 max-w-2xl font-display text-4xl font-medium tracking-tight text-white md:text-5xl">
+            Your place. Your brand.{" "}
+            <span className="text-honey">Your rules.</span>
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-stone-300">
-            Run on Yall Come Back with a monthly fee, or deploy free on your own
-            website (or any domain). Self-hosts always list on the free
-            marketplace; paid hosts choose marketplace and guest URLs.
+            Big platforms are built around their marketplace first. Yall Come Back
+            is built around hosts: run paid hosting with us, or deploy free on your
+            own website — and keep more of what you earn either way.
           </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href="#host-paths"
+              className="rounded-full bg-honey px-5 py-2.5 text-sm font-semibold text-stone-900 hover:bg-honey/90"
+            >
+              Choose how you host
+            </a>
+            <Link
+              href="/marketplace"
+              className="rounded-full border border-white/25 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              Finding a place instead?
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* Clear split: two host paths (YCB differentiator vs marketplace-only brands) */}
+      <section
+        id="host-paths"
+        className="border-b border-stone-200 bg-buttermilk/60"
+      >
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-bonnet">
+              Two ways to host
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
+              Not just another marketplace listing form
+            </h2>
+            <p className="mt-3 text-stone-600">
+              VRBO and Airbnb steer every host into their catalog. Here you pick
+              the path that fits: full-service on Yall Come Back, or free
+              self-host on your domain with marketplace reach when you want it.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            <Link
+              href="/for-hosts?path=paid#apply"
+              className="group rounded-3xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-black/5 transition hover:border-bonnet/30 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
+                Path 1 · Paid hosting
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
+                We run the stack for you
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                Monthly fee per published property — not a cut of every booking.
+                Your brand, guest URLs, calendars, and booking flow on the
+                platform. Opt into the free marketplace when it helps.
+              </p>
+              <p className="mt-4 text-sm font-semibold text-bonnet">
+                Apply for paid hosting →
+              </p>
+            </Link>
+            <Link
+              href="/for-hosts?path=self#apply"
+              className="group rounded-3xl border border-emerald-200 bg-emerald-50/80 p-6 shadow-sm ring-1 ring-emerald-900/5 transition hover:border-emerald-300 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-800">
+                Path 2 · Free self-host
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-emerald-900">
+                Your domain, zero monthly platform fee
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                Deploy free on your own website or any domain. Published stays
+                still appear on the free Yall Come Back marketplace so guests can
+                find you — without middleman commission.
+              </p>
+              <p className="mt-4 text-sm font-semibold text-emerald-900">
+                Apply for free self-host →
+              </p>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
@@ -220,7 +301,7 @@ export default async function ForHostsPage({
             </div>
           </div>
 
-          <div>
+          <div id="apply">
             <HostSignupForm
               initialPath={initialPath}
               plans={plans.map((p) => ({

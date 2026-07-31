@@ -121,7 +121,7 @@ export function AccountSettingsNav({
               <span className="text-base leading-none" aria-hidden>
                 🏠
               </span>
-              <span>Listings & bookings</span>
+              <span>Host dashboard</span>
             </Link>
           </li>
         ) : (
@@ -130,7 +130,7 @@ export function AccountSettingsNav({
               <span className="text-base leading-none" aria-hidden>
                 🏠
               </span>
-              <span>List a stay</span>
+              <span>Host a Place</span>
             </Link>
           </li>
         )}

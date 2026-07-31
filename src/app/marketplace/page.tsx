@@ -13,7 +13,10 @@ import { TrackRecentSearch } from "@/components/track-browse-history";
 import { searchIsMeaningful } from "@/lib/browse-history";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Stays" };
+export const metadata = {
+  title: "Find a Place",
+  description: "Search direct-book stays on Yall Come Back — no middleman.",
+};
 
 type SearchFields = {
   where?: string;

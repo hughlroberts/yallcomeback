@@ -135,22 +135,10 @@ export function UserMenu({
 
   const close = () => setOpen(false);
 
-  // Logged out: travel or host — no messages surface
+  // Logged out: account only — Find / Host live in the primary nav
   if (!isSignedIn) {
     return (
       <div className="flex items-center gap-2">
-        <Link
-          href="/for-hosts"
-          className="hidden rounded-full px-3 py-1.5 text-sm font-medium text-bonnet hover:bg-petal sm:inline"
-        >
-          List a stay
-        </Link>
-        <Link
-          href="/for-hosts"
-          className="rounded-full px-3 py-1.5 text-sm font-medium text-bonnet hover:bg-petal sm:hidden"
-        >
-          List
-        </Link>
         <Link
           href="/login"
           className="rounded-[var(--radius-control)] bg-bonnet px-4 py-2 text-sm font-medium text-white hover:bg-bonnet-hover"
@@ -207,10 +195,13 @@ export function UserMenu({
           )}
 
           <div className="py-1">
+            <p className="px-4 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400">
+              Find a place
+            </p>
             <MenuRow
               href="/marketplace"
               icon={Search}
-              label="Stays"
+              label="Browse stays"
               onNavigate={close}
             />
             <MenuRow
@@ -235,12 +226,15 @@ export function UserMenu({
           </div>
 
           <div className="border-t border-stone-100 py-1">
+            <p className="px-4 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400">
+              Host a place
+            </p>
             {isHostOrAdmin ? (
               <>
                 <MenuRow
                   href="/admin"
                   icon={Building2}
-                  label="Listings & bookings"
+                  label="Host dashboard"
                   onNavigate={close}
                 />
                 {isPlatformAdmin ? (
@@ -256,7 +250,7 @@ export function UserMenu({
               <MenuRow
                 href="/for-hosts"
                 icon={Building2}
-                label="List a stay"
+                label="Start hosting"
                 onNavigate={close}
               />
             )}
