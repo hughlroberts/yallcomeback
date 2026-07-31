@@ -8,16 +8,17 @@ export function SiteFooter() {
         {/* Stable columns: brand never collides with link lists when seal grows */}
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
           <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-            <div className="flex flex-col items-start gap-4">
+            {/* Seal + copy side by side (logo left, words shift right) */}
+            <div className="flex flex-row items-center gap-4 sm:gap-5">
               <BrandPhraseSeal
                 size={280}
-                className="h-28 w-28 shrink-0 sm:h-32 sm:w-32"
+                className="h-24 w-24 shrink-0 sm:h-28 sm:w-28"
               />
-              <div className="min-w-0 max-w-sm">
+              <div className="min-w-0 flex-1">
                 <p className="font-display text-xl font-medium tracking-tight text-buttermilk sm:text-2xl">
                   yallcomeback.com
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-buttermilk/70">
+                <p className="mt-1.5 text-sm leading-relaxed text-buttermilk/70 sm:mt-2">
                   The same stay minus the middle man. Your guests book you, not a
                   marketplace.
                 </p>
