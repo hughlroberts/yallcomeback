@@ -1,35 +1,17 @@
+# Local Postgres for development (matches .env.example DATABASE_URL)
+# Usage: docker compose up -d
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: vacation
-      POSTGRES_PASSWORD: vacation
-      POSTGRES_DB: vacation_rentals
-    volumes:
-      - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-
-  app:
-    build: .
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://vacation:vacation@db:5432/vacation_rentals
-      AUTH_SECRET: ${AUTH_SECRET:-change-me-in-production}
-      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
-      STRIPE_ENABLED: ${STRIPE_ENABLED:-false}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
-      NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME:-StayLocal Rentals}
+      POSTGRES_USER: yall
+      POSTGRES_PASSWORD: yall
+      POSTGRES_DB: yallcomeback
     volumes:
-      - uploads:/app/public/uploads
-    depends_on:
-      - db
+      - yall_pg:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
-  uploads:
+  yall_pg:

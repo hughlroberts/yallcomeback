@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [],
     unoptimized: false,
   },
-  // standalone output optional for Docker; enable when deploying with Docker
-  // output: "standalone",
+  // Required for Dockerfile (Railway Docker / standalone server.js)
+  output: "standalone",
   async redirects() {
     return [
       {
