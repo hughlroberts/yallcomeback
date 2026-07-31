@@ -153,7 +153,15 @@ export async function createBooking(formData: FormData) {
 
   // Re-check availability inside a transaction to shrink double-book races
   const booking = await prisma.$transaction(async (tx) => {
-    if (!(await isRangeAvailable(property.id, checkInDate, checkOutDate))) {
+    if (
+      !(await isRangeAvailable(
+        property.id,
+        checkInDate,
+        checkOutDate,
+        undefined,
+        tx,
+      ))
+    ) {
       throw new Error("Dates not available");
     }
     const created = await tx.booking.create({

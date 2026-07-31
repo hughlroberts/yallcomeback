@@ -219,13 +219,14 @@
 | P0-3 | P0 | **fixed** | `ff0000d` | HMAC token unit-tested; page calls `verifyBookingAccessToken` |
 | P0-4 | P0 | **fixed** | `a351c13` | Hosts no longer redirect to `/ops`; admins still do |
 | P1-1 | P1 | **fixed** | `c63cd69` | `auth.config` gates `/messages` and `/ops` |
-| P1-2 | P1 | **partial** | `2733fcd` | Booking+block in `$transaction` + re-check; still uses non-tx prisma for availability read — residual race under high concurrency |
+| P1-2 | P1 | **fixed** (improved) | `2733fcd` + follow-up | Availability re-check uses same Prisma TX client as booking+block create |
 | P1-3 | P1 | **fixed** | `2733fcd` | Danger zone + type exact title to delete |
 | P1-4 | P1 | **skipped** | — | No test framework in repo; adding suite is net-new |
 | P1-5 | P1 | **fixed** | `6ec8b7a` | Multi-host requires explicit hostId |
 | P1-6 | P1 | **needs decision** | — | JWT role refresh strategy not chosen |
 | P2 prefer-const | P2 | **fixed** | `2733fcd` | availability + extract |
-| P2 eslint rest | P2 | **skipped** | — | Remaining setState-in-effect / `<a>` Link rules need broader refactors |
+| P2 wizard Link | P2 | **fixed** | follow-up on main | Wizard `<a href=/admin…>` → `next/link` |
+| P2 eslint setState-in-effect | P2 | **skipped** | — | Hydration patterns; needs careful rewrite |
 | P2 CI lint | P2 | **needs decision** | — | Wire lint into Railway/CI |
 
 ### Tooling after fixes
@@ -237,24 +238,25 @@
 | `npm run lint` | Still fails on pre-existing P2 (wizard `<a>`, setState-in-effect) |
 | Local cron without secret | **503** (was open/500 before) |
 
-### Production follow-up (ops, not code)
+### Production follow-up (ops)
 
-1. **Set `CRON_SECRET`** on Railway and update cron jobs to send `Authorization: Bearer …`  
-2. **Merge/deploy** branch `qa/full-pass-fixes`  
+1. ~~**Set `CRON_SECRET`** on Railway~~ **done** (2026-07-31)  
+2. ~~**Merge/deploy** branch `qa/full-pass-fixes`~~ **merged to `main` and pushed**  
 3. Point local `.env` `DATABASE_URL` at Postgres (`docker compose`) so local dev is usable  
+4. Any external cron jobs must send `Authorization: Bearer $CRON_SECRET`
 
 ### Introduced / residual notes
 
 - Confirmation links **must** include `?t=` token (issued at booking redirect). Old emailed links without token fail unless user is logged in as guest/host.  
-- Booking race reduced but not eliminated without DB-level exclusion constraints (**needs decision** if full isolation required).  
+- Booking race improved with TX-scoped availability check; extreme concurrency may still need DB exclusion constraints.  
 - Did not change pricing/billing formulas.  
-- Did not run destructive prod commands; did not open PRs unless requested.
 
 ### Branch
 
-`qa/full-pass-fixes` — not merged to `main` in this session (review before deploy).
+`qa/full-pass-fixes` **merged into `main`** and pushed to origin. Railway deploy should pick up automatically.
 
 ---
 
-*Phases 1–3 complete for in-scope code fixes.*
+*Phases 1–3 complete; follow-up polish pushed 2026-07-31.*
+
 

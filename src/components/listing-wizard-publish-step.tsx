@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { publishListing } from "@/app/actions/properties";
 
@@ -53,12 +54,12 @@ export function ListingWizardPublishStep({
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white">
           S
         </span>
-        <a
+        <Link
           href="/admin/properties"
           className="rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal"
         >
           Save & exit
-        </a>
+        </Link>
       </header>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
@@ -73,7 +74,7 @@ export function ListingWizardPublishStep({
         <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:items-start">
           {/* Preview card */}
           <div>
-            <a
+            <Link
               href={previewHref}
               target="_blank"
               rel="noreferrer"
@@ -123,7 +124,7 @@ export function ListingWizardPublishStep({
                   New ★
                 </span>
               </div>
-            </a>
+            </Link>
           </div>
 
           {/* What's next */}
@@ -147,12 +148,12 @@ export function ListingWizardPublishStep({
                     Choose which dates are available. Guests can book as soon as
                     you publish.
                   </p>
-                  <a
+                  <Link
                     href={calendarHref}
                     className="mt-1 inline-block text-sm font-medium text-stone-800 underline-offset-2 hover:underline"
                   >
                     Open calendar →
-                  </a>
+                  </Link>
                 </div>
               </li>
               <li className="flex gap-4">
@@ -170,12 +171,12 @@ export function ListingWizardPublishStep({
                     House rules, fees, photos, and how guests book - all in the
                     full editor.
                   </p>
-                  <a
+                  <Link
                     href={editorHref}
                     className="mt-1 inline-block text-sm font-medium text-stone-800 underline-offset-2 hover:underline"
                   >
                     Open editor →
-                  </a>
+                  </Link>
                 </div>
               </li>
               <li className="flex gap-4">
@@ -209,12 +210,12 @@ export function ListingWizardPublishStep({
           <div className="h-full w-full bg-bonnet" />
         </div>
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 sm:px-6">
-          <a
+          <Link
             href={`/admin/properties/${propertyId}/setup?step=9`}
             className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
           >
             Back
-          </a>
+          </Link>
           <button
             type="button"
             onClick={onPublish}

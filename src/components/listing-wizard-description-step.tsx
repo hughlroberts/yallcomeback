@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { saveListingDescription } from "@/app/actions/properties";
 
@@ -45,12 +46,12 @@ export function ListingWizardDescriptionStep({
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white">
           S
         </span>
-        <a
+        <Link
           href="/admin/properties"
           className="rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal"
         >
           Save & exit
-        </a>
+        </Link>
       </header>
 
       <main className="mx-auto w-full max-w-xl flex-1 px-4 py-10 sm:px-6 sm:py-16">
@@ -86,12 +87,12 @@ export function ListingWizardDescriptionStep({
           <div className="h-full w-[88%] bg-bonnet" />
         </div>
         <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-4 sm:px-6">
-          <a
+          <Link
             href={`/admin/properties/${propertyId}/setup?step=6`}
             className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
           >
             Back
-          </a>
+          </Link>
           <button
             type="button"
             onClick={onNext}

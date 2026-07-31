@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/ui";
 import { requirePlatformAdmin } from "@/lib/auth";
@@ -182,9 +183,9 @@ STRIPE_WEBHOOK_SECRET=whsec_...`}
             </li>
             <li>
               Smoke-test hosting invoice under{" "}
-              <a href="/ops/hosting" className="text-bonnet underline">
+              <Link href="/ops/hosting" className="text-bonnet underline">
                 Admin → Hosting
-              </a>
+              </Link>
             </li>
             <li>Restart the app</li>
           </ol>

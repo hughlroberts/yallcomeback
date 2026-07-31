@@ -1,5 +1,8 @@
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "./db";
 import { datesOverlap, startOfDay } from "./utils";
+
+type DbClient = PrismaClient | Prisma.TransactionClient;
 
 export async function getUnavailableRanges(propertyId: string) {
   const blocks = await prisma.calendarBlock.findMany({
@@ -39,9 +42,11 @@ export async function isRangeAvailable(
   propertyId: string,
   checkIn: Date,
   checkOut: Date,
-  excludeBookingId?: string
+  excludeBookingId?: string,
+  /** Pass transaction client so availability is re-checked in the same TX */
+  db: DbClient = prisma,
 ): Promise<boolean> {
-  const blocks = await prisma.calendarBlock.findMany({
+  const blocks = await db.calendarBlock.findMany({
     where: {
       propertyId,
       ...(excludeBookingId

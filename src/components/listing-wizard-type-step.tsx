@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { LISTING_TYPES, type ListingTypeId } from "@/lib/listing-types";
 import { startListingDraft } from "@/app/actions/properties";
@@ -40,12 +41,12 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
           S
         </span>
         <div className="flex items-center gap-2">
-          <a
+          <Link
             href="/admin/properties"
             className="rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal"
           >
             Save & exit
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -112,12 +113,12 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
           <div className="h-full w-[12%] bg-bonnet" />
         </div>
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
-          <a
+          <Link
             href="/admin/properties"
             className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
           >
             Back
-          </a>
+          </Link>
           <button
             type="button"
             onClick={onNext}
