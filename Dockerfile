@@ -52,5 +52,5 @@ RUN mkdir -p public/uploads \
 USER nextjs
 EXPOSE 3000
 
-# Real DATABASE_URL must come from Railway at runtime
-CMD ["sh", "-c", "npx prisma db push --schema=prisma/schema.prisma && node server.js"]
+# Real DATABASE_URL must come from Railway Variables (link Postgres → this service)
+CMD ["sh", "-c", "if [ -z \"$DATABASE_URL\" ]; then echo 'FATAL: DATABASE_URL is not set on this service. In Railway: add Postgres, then on the web service Variables add DATABASE_URL = ${{ Postgres.DATABASE_URL }} (use Variable Reference).'; exit 1; fi; npx prisma db push --schema=prisma/schema.prisma && node server.js"]
