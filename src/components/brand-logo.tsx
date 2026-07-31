@@ -51,7 +51,7 @@ export function BrandLogo({
       <BrandMark
         size={80}
         priority
-        className="h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem]"
+        className="h-11 w-11 sm:h-14 sm:w-14 md:h-[4.5rem] md:w-[4.5rem]"
       />
       <span className="hidden min-w-0 items-baseline sm:inline-flex">
         <span className="ycb-logo__quote" aria-hidden>

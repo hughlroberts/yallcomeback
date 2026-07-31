@@ -264,7 +264,7 @@ export function BookingWidget({
   return (
     <div
       id="reserve"
-      className="scroll-mt-28 rounded-2xl border border-stone-200 bg-white p-5 shadow-lg"
+      className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5"
     >
       <p className="text-xl font-semibold text-stone-900">
         {formatMoney(baseNightlyRate, currencySymbol)}
@@ -458,7 +458,7 @@ export function BookingWidget({
       <button
         type="button"
         onClick={onBook}
-        className="mt-4 w-full rounded-[var(--radius-control)] bg-bonnet py-3 text-sm font-medium text-white hover:bg-bonnet-hover"
+        className="mt-4 min-h-12 w-full rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
       >
         Reserve
       </button>

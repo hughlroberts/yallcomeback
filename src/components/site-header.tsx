@@ -28,8 +28,8 @@ export async function SiteHeader() {
     session?.user?.role === "ADMIN" || session?.user?.role === "HOST";
 
   return (
-    <header className="sticky top-0 z-[200] border-b border-hairline/80 bg-buttermilk/95 backdrop-blur-md">
-      <div className="mx-auto flex h-[4.5rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:h-[5.25rem] sm:px-6">
+    <header className="sticky top-0 z-[200] border-b border-hairline/80 bg-buttermilk/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-3 sm:h-[4.75rem] sm:gap-3 sm:px-6 md:h-[5.25rem]">
         <BrandLogo />
         <SiteHeaderNav
           isSignedIn={Boolean(session?.user)}

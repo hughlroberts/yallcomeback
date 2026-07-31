@@ -645,8 +645,10 @@ export function MessagesWorkspace({
   return (
     <div
       className={cn(
-        "flex min-h-[28rem] overflow-hidden border-t border-stone-200 bg-white",
-        fillHeight ? "h-full" : "h-[calc(100vh-4.25rem)]",
+        "flex min-h-[20rem] overflow-hidden border-t border-stone-200 bg-white",
+        fillHeight
+          ? "h-full"
+          : "h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] sm:h-[calc(100dvh-4.75rem-env(safe-area-inset-top,0px))] md:h-[calc(100dvh-5.25rem-env(safe-area-inset-top,0px))]",
       )}
     >
       <div

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BookingWidget } from "@/components/booking-widget";
+import { MobileReserveBar } from "@/components/mobile-reserve-bar";
 
 import { PhotoGallery } from "@/components/photo-gallery";
 import { PropertyCard } from "@/components/property-card";
@@ -180,9 +181,9 @@ export default async function MarketplacePropertyPage({
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:px-6 sm:py-8 lg:pb-8">
         {/* Title lives in the hero only — breadcrumb + share/save here */}
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-5">
           <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
             <Link
               href="/marketplace"
@@ -216,10 +217,11 @@ export default async function MarketplacePropertyPage({
           <PhotoGallery photos={property.images} title={property.title} />
         </div>
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_380px]">
-          <div className="space-y-10">
-            <div className="border-b border-stone-200 pb-6">
-              <h2 className="text-xl font-semibold text-stone-900">
+        {/* Tablet+: side-by-side reserve; phone stacks with sticky bottom bar */}
+        <div className="mt-8 grid gap-8 md:grid-cols-[1fr_min(340px,42%)] md:items-start md:gap-8 lg:mt-10 lg:grid-cols-[1fr_380px] lg:gap-10">
+          <div className="min-w-0 space-y-8 sm:space-y-10">
+            <div className="border-b border-stone-200 pb-5 sm:pb-6">
+              <h2 className="text-lg font-semibold text-stone-900 sm:text-xl">
                 Entire home · {property.maxGuests} guests · {property.bedrooms}{" "}
                 bedroom{property.bedrooms === 1 ? "" : "s"} ·{" "}
                 {property.bathrooms} bath
@@ -256,7 +258,7 @@ export default async function MarketplacePropertyPage({
 
           </div>
 
-          <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="md:sticky md:top-28 md:self-start lg:top-28">
             <BookingWidget
               propertySlug={property.slug}
               hostSlug={property.host.slug}
@@ -303,6 +305,8 @@ export default async function MarketplacePropertyPage({
             />
           </div>
         </div>
+
+        <MobileReserveBar nightlyRate={property.baseNightlyRate} />
 
         {/* Full-width bottom stack: map → meet host → things to know */}
         <ListingLocationMap
@@ -371,7 +375,7 @@ export default async function MarketplacePropertyPage({
                 </p>
               </div>
             </div>
-            <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid gap-5 sm:mt-8 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
               {nearby.map((item) => (
                 <PropertyCard
                   key={item.id}

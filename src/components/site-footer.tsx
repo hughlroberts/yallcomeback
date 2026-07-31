@@ -3,13 +3,13 @@ import { BrandSeal } from "@/components/brand-logo";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-hairline bg-bonnet text-buttermilk/90">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-3 sm:px-6">
-        <div className="flex items-center gap-4 sm:col-span-1 sm:gap-5">
+    <footer className="mt-auto border-t border-hairline bg-bonnet pb-[env(safe-area-inset-bottom,0px)] text-buttermilk/90">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 sm:gap-10 sm:px-6 sm:py-14 md:grid-cols-3">
+        <div className="flex items-center gap-3 sm:col-span-2 sm:gap-5 md:col-span-1">
           {/* Full-color seal: mono is bonnet-on-bonnet and invisible on this footer */}
           <BrandSeal
             size={160}
-            className="h-24 w-24 shrink-0 sm:h-28 sm:w-28"
+            className="h-16 w-16 shrink-0 sm:h-24 sm:w-24 md:h-28 md:w-28"
           />
           <div className="min-w-0">
             <p className="font-display text-xl font-medium tracking-tight text-buttermilk sm:text-2xl">

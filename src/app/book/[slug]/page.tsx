@@ -242,8 +242,8 @@ export default async function BookPage({
       </section>
 
       {/* Trip summary — primary focus of this page */}
-      <section className="mt-8 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm sm:p-10">
-        <div className="flex flex-wrap items-start justify-between gap-6 border-b border-stone-100 pb-8">
+      <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:mt-8 sm:rounded-3xl sm:p-10">
+        <div className="flex flex-col gap-4 border-b border-stone-100 pb-6 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-6 sm:pb-8">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-stone-500">
               Your trip

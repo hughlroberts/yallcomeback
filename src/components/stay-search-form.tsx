@@ -139,8 +139,8 @@ export function StaySearchForm({
           ))
         : null}
 
-      <div className="flex flex-col sm:flex-row sm:items-stretch">
-        <label className="group relative flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-2.5 hover:bg-stone-50 sm:rounded-full">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-stretch sm:gap-0 md:flex-wrap lg:flex-nowrap">
+        <label className="group relative flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5 md:min-w-[12rem] md:flex-[1.2]">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
             Where
           </span>
@@ -152,72 +152,76 @@ export function StaySearchForm({
           />
         </label>
 
-        <div className="hidden w-px bg-stone-200 sm:block" aria-hidden />
+        <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
 
-        <label className="group flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-2.5 hover:bg-stone-50 sm:rounded-none">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-            Check-in
-          </span>
-          <input
-            name="checkIn"
-            type="date"
-            value={checkIn}
-            min={todayYmd}
-            onChange={(e) => onCheckInChange(e.target.value)}
-            className="w-full min-w-0 border-0 bg-transparent p-0 text-sm text-stone-900 outline-none"
-          />
-        </label>
-
-        <div className="hidden w-px bg-stone-200 sm:block" aria-hidden />
-
-        <label className="group flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-2.5 hover:bg-stone-50 sm:rounded-none">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-            Check-out
-          </span>
-          <input
-            name="checkOut"
-            type="date"
-            value={checkOut}
-            min={checkoutMin}
-            onChange={(e) => onCheckOutChange(e.target.value)}
-            className="w-full min-w-0 border-0 bg-transparent p-0 text-sm text-stone-900 outline-none"
-          />
-        </label>
-
-        <div className="hidden w-px bg-stone-200 sm:block" aria-hidden />
-
-        <div className="flex min-w-0 flex-[1.1] items-end gap-2 rounded-xl px-3 py-2 hover:bg-stone-50 sm:rounded-none sm:pr-1">
-          <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5">
+        <div className="grid grid-cols-2 gap-1 sm:contents">
+          <label className="group flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-none sm:py-2.5">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-              Guests
+              Check-in
             </span>
             <input
-              name="guests"
-              type="number"
-              min={1}
-              max={50}
-              defaultValue={defaultGuests}
-              placeholder="Any"
-              className="w-full min-w-0 border-0 bg-transparent p-0 text-sm text-stone-900 outline-none placeholder:text-stone-400"
+              name="checkIn"
+              type="date"
+              value={checkIn}
+              min={todayYmd}
+              onChange={(e) => onCheckInChange(e.target.value)}
+              className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none sm:text-sm"
             />
           </label>
-          <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5">
+
+          <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
+
+          <label className="group flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-none sm:py-2.5">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-              Pets
+              Check-out
             </span>
             <input
-              name="pets"
-              type="number"
-              min={0}
-              max={10}
-              defaultValue={defaultPets}
-              placeholder="0"
-              className="w-full min-w-0 border-0 bg-transparent p-0 text-sm text-stone-900 outline-none placeholder:text-stone-400"
+              name="checkOut"
+              type="date"
+              value={checkOut}
+              min={checkoutMin}
+              onChange={(e) => onCheckOutChange(e.target.value)}
+              className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none sm:text-sm"
             />
           </label>
+        </div>
+
+        <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
+
+        <div className="flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2 hover:bg-stone-50 sm:flex-[1.2] sm:flex-row sm:items-end sm:rounded-none sm:pr-1 md:w-full md:basis-full lg:w-auto lg:basis-auto">
+          <div className="flex min-w-0 flex-1 gap-2">
+            <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 px-1 py-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                Guests
+              </span>
+              <input
+                name="guests"
+                type="number"
+                min={1}
+                max={50}
+                defaultValue={defaultGuests}
+                placeholder="Any"
+                className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 sm:text-sm"
+              />
+            </label>
+            <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 px-1 py-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                Pets
+              </span>
+              <input
+                name="pets"
+                type="number"
+                min={0}
+                max={10}
+                defaultValue={defaultPets}
+                placeholder="0"
+                className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 sm:text-sm"
+              />
+            </label>
+          </div>
           <button
             type="submit"
-            className="mb-0.5 shrink-0 rounded-full bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+            className="min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:mb-0.5 sm:min-h-0 sm:w-auto sm:py-2.5"
           >
             Search
           </button>

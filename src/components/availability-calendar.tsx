@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn, formatDateRangeUS } from "@/lib/utils";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -85,11 +85,23 @@ export function AvailabilityCalendar({
     }
     return startOfMonth(new Date());
   });
+  // Phones: one month; tablet+: respect monthsToShow (usually 2)
+  const [wide, setWide] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 480px)");
+    const apply = () => setWide(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  const visibleMonths =
+    compact && !wide ? 1 : monthsToShow;
+
   const today = todayYmd();
 
   const months = useMemo(() => {
-    return Array.from({ length: monthsToShow }, (_, i) => addMonths(cursor, i));
-  }, [cursor, monthsToShow]);
+    return Array.from({ length: visibleMonths }, (_, i) => addMonths(cursor, i));
+  }, [cursor, visibleMonths]);
 
   function handleDayClick(key: string, unavailableNight: boolean) {
     if (!selectable || !onChange) return;
@@ -198,9 +210,8 @@ export function AvailabilityCalendar({
       <div
         className={cn(
           "grid",
-          // Compact reserve card: stack months so both stay readable in a narrow column.
-          // Full calendar: side-by-side from md up when showing two months.
-          monthsToShow === 2
+          // Compact: stack months. Full: side-by-side from md when 2 months visible.
+          visibleMonths === 2
             ? compact
               ? "mt-2 gap-4"
               : "mt-6 gap-8 md:grid-cols-2"

@@ -72,16 +72,54 @@
   --radius-card: 12px;
 }
 
+html {
+  /* Prevent horizontal rubber-band scroll from full-bleed carousels */
+  overflow-x: clip;
+}
+
 body {
   background: var(--color-page);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  /* Comfortable reading size on phones without breaking desktop */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Safe area helpers (notched phones) */
+.safe-px {
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+}
+.safe-pb {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+.safe-pt {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Touch-friendly minimums for primary controls on coarse pointers */
+@media (pointer: coarse) {
+  button:not([class*="size-"]):not([class*="h-"]),
+  [role="button"]:not([class*="size-"]) {
+    min-height: 2.75rem;
+  }
+  input[type="date"],
+  input[type="number"],
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px; /* avoids iOS zoom-on-focus */
+  }
 }
 
 /* Typographic logo lockup — seal + wordmark read at a glance */
 .ycb-logo {
   font-family: var(--font-display);
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 500;
   line-height: 1.05;
   color: var(--color-ink);
@@ -90,6 +128,11 @@ body {
   font-variation-settings: "SOFT" 40, "WONK" 1;
 }
 @media (min-width: 640px) {
+  .ycb-logo {
+    font-size: 1.75rem;
+  }
+}
+@media (min-width: 768px) {
   .ycb-logo {
     font-size: 2rem;
   }

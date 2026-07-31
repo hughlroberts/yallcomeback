@@ -60,11 +60,11 @@ export default async function MarketplacePage({
           />
           <div className="absolute inset-0 bg-gradient-to-b from-white via-white/90 to-white" />
         </div>
-        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 md:py-16">
           <p className="text-sm font-semibold uppercase tracking-wide text-bonnet">
             Explore
           </p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900">
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             Places to stay
           </h1>
           <p className="mt-3 max-w-2xl text-slate-600">
@@ -173,7 +173,7 @@ async function StaysPanel({
           </Link>
         ) : null}
       </div>
-      <div className="mt-8 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid gap-6 sm:mt-8 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-10">
         {listings.map((p) => (
           <PropertyCard
             key={p.id}
