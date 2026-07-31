@@ -37,7 +37,19 @@ export const authConfig = {
         return true;
       }
 
+      if (path.startsWith("/ops")) {
+        if (!isLoggedIn) return false;
+        if (role !== "ADMIN") {
+          return Response.redirect(new URL("/admin?error=admin_only", nextUrl));
+        }
+        return true;
+      }
+
       if (path.startsWith("/account") && !isLoggedIn) {
+        return false;
+      }
+
+      if (path.startsWith("/messages") && !isLoggedIn) {
         return false;
       }
 
