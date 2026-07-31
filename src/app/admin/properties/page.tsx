@@ -40,7 +40,7 @@ export default async function AdminPropertiesPage() {
           href="/admin/properties/new"
           className="rounded-[var(--radius-control)] bg-bonnet px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover"
         >
-          Create a new listing
+          Create / import listing
         </Link>
       </div>
 

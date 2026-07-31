@@ -2,7 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [],
+    remotePatterns: [
+      { protocol: "https", hostname: "a0.muscache.com", pathname: "/**" },
+      { protocol: "https", hostname: "muscache.com", pathname: "/**" },
+    ],
     unoptimized: false,
   },
   // Required for Dockerfile (Railway Docker / standalone server.js)
