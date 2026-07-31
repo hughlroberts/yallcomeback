@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Geist_Mono } from "next/font/google";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
+import { SiteShell } from "@/components/site-shell";
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@/lib/features";
 import "./globals.css";
 
@@ -92,9 +91,7 @@ export default function RootLayout({
         className="flex min-h-full flex-col bg-buttermilk text-ink"
         suppressHydrationWarning
       >
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <SiteShell>{children}</SiteShell>
       </body>
     </html>
   );

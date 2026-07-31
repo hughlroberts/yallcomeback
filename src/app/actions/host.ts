@@ -158,7 +158,13 @@ export async function updateHostProfile(formData: FormData) {
   const websiteUrl = normalizeWebsiteUrl(
     String(formData.get("websiteUrl") || ""),
   );
-  const primaryColor = String(formData.get("primaryColor") || "#2563eb").trim();
+  const logoUrl = String(formData.get("logoUrl") || "").trim() || null;
+  const primaryColorRaw = String(
+    formData.get("primaryColor") || existing.primaryColor || "#2563eb",
+  ).trim();
+  const primaryColor = /^#[0-9A-Fa-f]{3,8}$/.test(primaryColorRaw)
+    ? primaryColorRaw
+    : existing.primaryColor || "#2563eb";
   const contactEmail =
     String(formData.get("contactEmail") || "").trim() || null;
   const contactPhone =
@@ -166,6 +172,7 @@ export async function updateHostProfile(formData: FormData) {
   const defaultDisclaimer =
     String(formData.get("defaultDisclaimer") || "").trim() || null;
   const active = formData.get("active") === "on";
+  const returnTo = String(formData.get("returnTo") || "").trim();
 
   // Platform admins can change hosting mode; hosts cannot
   let hostingMode = existing.hostingMode;
@@ -204,6 +211,7 @@ export async function updateHostProfile(formData: FormData) {
       tagline,
       description,
       websiteUrl,
+      logoUrl,
       primaryColor,
       contactEmail,
       contactPhone,
@@ -231,10 +239,18 @@ export async function updateHostProfile(formData: FormData) {
   }
 
   revalidatePath("/admin");
+  revalidatePath("/admin/brand");
   revalidatePath("/ops/hosting");
   revalidatePath(`/h/${host.slug}`);
+  revalidatePath(`/h/${host.slug}/about`);
+  revalidatePath(`/h/${host.slug}/contact`);
+  revalidatePath(`/h/${host.slug}/stays`);
   revalidatePath("/marketplace");
   revalidatePath("/hosts");
   revalidatePath("/self-host");
-  redirect(`${HOST_PROFILE_PATH}?saved=1`);
+  const safeReturn =
+    returnTo.startsWith("/admin") || returnTo.startsWith("/ops")
+      ? returnTo
+      : HOST_PROFILE_PATH;
+  redirect(`${safeReturn}${safeReturn.includes("?") ? "&" : "?"}saved=1`);
 }

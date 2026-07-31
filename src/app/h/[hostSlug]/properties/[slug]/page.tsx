@@ -4,8 +4,13 @@ import { getHostBySlug } from "@/lib/host";
 
 export const dynamic = "force-dynamic";
 
-/** Host-site property URLs use the marketplace listing (reserve card has calendar). */
-export default async function HostPropertyPageRedirect({
+/**
+ * Host-site property URL.
+ * Booking UI lives on the shared listing page (calendar + reserve).
+ * Tenant chrome still applies via x-tenant-slug on custom domains, so guests
+ * stay in the host brand while completing the book flow.
+ */
+export default async function HostPropertyPage({
   params,
 }: {
   params: Promise<{ hostSlug: string; slug: string }>;
@@ -20,7 +25,8 @@ export default async function HostPropertyPageRedirect({
   });
   if (!property) notFound();
 
+  // Preserve host brand context for chrome + attribution
   redirect(
-    `/marketplace/properties/${property.slug}?host=${host.slug}#reserve`,
+    `/marketplace/properties/${property.slug}?host=${host.slug}&via=host_site#reserve`,
   );
 }
