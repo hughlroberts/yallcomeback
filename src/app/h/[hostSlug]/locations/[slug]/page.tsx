@@ -1,10 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getHostBySlug } from "@/lib/host";
+import { hostPublicBasePath } from "@/lib/host-base-path";
 
 export const dynamic = "force-dynamic";
 
-/** Legacy host area URL → marketplace search. */
+/** Legacy host area URL → host stays (do not bounce to YCB marketplace). */
 export default async function HostLocationRedirect({
   params,
 }: {
@@ -16,12 +17,10 @@ export default async function HostLocationRedirect({
 
   const location = await prisma.location.findFirst({
     where: { hostId: host.id, slug, published: true },
-    select: { name: true, region: true },
+    select: { id: true },
   });
   if (!location) notFound();
 
-  const place = location.region
-    ? `${location.name}, ${location.region}`
-    : location.name;
-  redirect(`/marketplace?where=${encodeURIComponent(place)}`);
+  const base = await hostPublicBasePath(host.slug);
+  redirect(`${base}/stays`);
 }
