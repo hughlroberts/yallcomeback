@@ -5,10 +5,11 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-hairline bg-bonnet text-buttermilk/90">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-3 sm:px-6">
-        <div className="flex flex-col items-start gap-5 sm:col-span-1">
+        <div className="flex flex-col items-start gap-6 sm:col-span-1">
           <BrandSeal
-            size={160}
-            className="h-28 w-28 sm:h-36 sm:w-36 lg:h-40 lg:w-40"
+            size={280}
+            mono
+            className="h-44 w-44 sm:h-52 sm:w-52 lg:h-56 lg:w-56"
           />
           <div>
             <p className="font-display text-2xl font-medium tracking-tight text-buttermilk sm:text-3xl">
