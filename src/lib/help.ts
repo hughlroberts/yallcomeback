@@ -68,9 +68,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Getting started",
     categoryId: "getting-started",
     title: "How Yall Come Back works",
-    body: "Host sites come first. The marketplace is optional. Bookings go to the host.",
+    body: "Hosts own the guest. The marketplace is optional discovery. Bookings go to the host.",
     description:
-      "Yall Come Back model: host sites, marketplace discovery, and direct booking without a cut of each stay.",
+      "Yall Come Back model: host-branded websites, optional marketplace, and direct booking without a cut of each stay.",
     related: ["getting-started", "become-a-host", "search-and-book"],
   },
   {
@@ -108,9 +108,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Guest guide",
     categoryId: "guests",
     title: "Save stays you like",
-    body: "Save listings with the heart control. Open your saved list on this device.",
+    body: "Save listings with the heart control. Open Wishlists on this device.",
     description:
-      "How to save listings and use recent views and last search on Yall Come Back.",
+      "How to save listings (Wishlists) and when continue-search rails appear on Yall Come Back.",
     related: ["search-and-book", "account"],
   },
   {
@@ -138,9 +138,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Create and manage listings",
-    body: "Add photos, amenities, house rules, publish status, and marketplace options.",
+    body: "Add photos, amenities, house rules, publish status, marketplace options, and fridge magnets.",
     description:
-      "How hosts set up listings on Yall Come Back for the host site and the marketplace.",
+      "How hosts set up listings on Yall Come Back for their website and the marketplace.",
     related: ["calendar", "pricing", "cancellation-policies", "host-messages"],
   },
   {

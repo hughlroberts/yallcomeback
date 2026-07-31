@@ -71,20 +71,20 @@ function GettingStarted({ article }: { article: HelpArticle }) {
       extraRelated={[
         {
           href: "/marketplace",
-          title: "Browse stays",
+          title: "Find a Place",
           description: "Open the marketplace and start a search.",
         },
         {
           href: "/for-hosts",
-          title: "List your property",
-          description: "Apply as a host or choose free self-host.",
+          title: "Host a Place",
+          description: "Apply for paid hosting or free self-host.",
         },
       ]}
     >
       <HelpLead>
-        Yall Come Back connects vacation rental hosts with guests. You can browse
-        homes, message hosts, and book a stay. You can also host your own
-        properties with a host site and an optional marketplace listing.
+        Yall Come Back connects vacation rental hosts with guests. You can find a
+        place, message hosts, and book a stay. Hosts can run a branded website
+        (and optional marketplace listing) so guests book them, not a middleman.
       </HelpLead>
 
       <HelpSection title="Create an account">
@@ -101,12 +101,14 @@ function GettingStarted({ article }: { article: HelpArticle }) {
             if you already have an account.
           </li>
           <li>
-            Hosts apply on{" "}
+            Hosts use{" "}
             <Link href="/for-hosts" className="font-semibold text-bonnet">
-              For hosts
-            </Link>
-            . After approval, manage listings in{" "}
-            <strong className="font-semibold text-stone-800">Admin</strong>.
+              Host a Place
+            </Link>{" "}
+            (or the header button with the same name). After approval, manage
+            listings in{" "}
+            <strong className="font-semibold text-stone-800">Admin</strong>{" "}
+            (host dashboard).
           </li>
           <li>
             Platform operators use the same Admin tools with full access. Hosts
@@ -118,19 +120,20 @@ function GettingStarted({ article }: { article: HelpArticle }) {
       <HelpSection title="If you are a guest">
         <HelpUl>
           <li>
-            Search stays on the{" "}
+            Use{" "}
             <Link href="/marketplace" className="font-semibold text-bonnet">
-              marketplace
-            </Link>
-            . You can also open a host site at{" "}
+              Find a Place
+            </Link>{" "}
+            on the marketplace, or open a host’s own website when they share
+            one. Host sites also work under{" "}
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               /h/[host]
-            </code>
-            .
+            </code>{" "}
+            on Yall Come Back.
           </li>
           <li>
-            Save listings you like. Message the host with questions. Request
-            dates in the booking widget.
+            Save listings you like. Message the host with questions after you
+            sign in. Request dates in the booking widget.
           </li>
           <li>
             Track trips under{" "}
@@ -149,16 +152,20 @@ function GettingStarted({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             Choose <strong>platform hosting</strong> (monthly fee; Yall Come Back
-            runs the site) or <strong>free self-host</strong> (you deploy the
-            software).
+            runs the stack) or <strong>free self-host</strong> (you deploy the
+            software on your domain).
+          </li>
+          <li>
+            Set logo, name, colors, about, and contact under{" "}
+            <strong className="font-semibold text-stone-800">
+              Admin → Brand &amp; website
+            </strong>
+            . Guests on your custom domain see your brand, not Yall Come Back.
           </li>
           <li>
             Add properties, photos, rates, and calendar blocks in Admin. Publish
-            when the listing is ready.
-          </li>
-          <li>
-            Set cancellation policies, auto messages, and tax lines. Guests see
-            clear rules before they book.
+            when the listing is ready. Set cancellation policies, auto messages,
+            and tax lines so guests see clear rules before they book.
           </li>
         </HelpUl>
       </HelpSection>
@@ -184,29 +191,35 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
   return (
     <HelpArticleLayout article={article}>
       <HelpLead>
-        Yall Come Back is built for <strong>host websites first</strong>. The
-        marketplace is second. Hosts keep the guest relationship. Hosts pay a
-        simple hosting fee, or self-host for free. Yall Come Back does not take a cut
-        of every booking.
+        Yall Come Back is built so <strong>hosts own the guest relationship</strong>.
+        The shared marketplace is optional discovery. Hosts pay a simple hosting
+        fee, or self-host for free. Yall Come Back does not take a cut of every
+        booking.
       </HelpLead>
 
       <HelpSection title="Two ways guests find a stay">
         <HelpUl>
           <li>
-            <strong>Host site</strong> — Each approved host has a public site at{" "}
+            <strong>Host website</strong> — Your brand, logo, colors, about page,
+            and contact. On a custom domain (for example cherokeelanding.net) or
+            under{" "}
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               /h/[host-slug]
             </code>
-            . The site shows logo, about text, listings, and calendars. Bookings
-            from here use the host-site channel.
+            . Guests book <em>you</em>. Bookings from here use the host-site
+            channel.
           </li>
           <li>
-            <strong>Shared marketplace</strong> — Guests browse many hosts at{" "}
+            <strong>Shared marketplace</strong> — Guests use{" "}
             <Link href="/marketplace" className="font-semibold text-bonnet">
+              Find a Place
+            </Link>{" "}
+            (
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               /marketplace
-            </Link>
-            . Listings show the host next to Reserve. You always know who you
-            book with. Bookings use the marketplace channel.
+            </code>
+            ) to browse many hosts. Listings show the host next to Reserve. You
+            always know who you book with. Bookings use the marketplace channel.
           </li>
         </HelpUl>
       </HelpSection>
@@ -214,14 +227,15 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting vs self-host">
         <HelpUl>
           <li>
-            <strong>PLATFORM</strong> — Yall Come Back runs your public site. You pay
-            a monthly hosting plan. The plan can be per property or flat. You
-            choose marketplace visibility and guest URL options.
+            <strong>PLATFORM (paid)</strong> — Yall Come Back runs the stack for you.
+            You pay a monthly hosting plan (per property or flat). You choose
+            marketplace visibility and set Brand &amp; website (logo, colors,
+            about, contact, domain).
           </li>
           <li>
-            <strong>SELF</strong> — You run the open-source app on your own
-            domain. There is no Yall Come Back hosting fee. Self-hosts always appear
-            on the free marketplace.
+            <strong>SELF (free self-host)</strong> — You run the open-source app
+            on your own domain. There is no Yall Come Back hosting fee. Self-hosts
+            always appear on the free marketplace for discovery.
           </li>
         </HelpUl>
       </HelpSection>
@@ -267,14 +281,14 @@ function SearchAndBook({ article }: { article: HelpArticle }) {
       extraRelated={[
         {
           href: "/marketplace",
-          title: "Browse stays",
+          title: "Find a Place",
           description: "Search by place, dates, and guests.",
         },
       ]}
     >
       <HelpLead>
-        Find a place on Yall Come Back. Search the marketplace or a host site. Read
-        the listing. Check the calendar. Then request your dates.
+        Find a place on Yall Come Back. Search the marketplace or a host website.
+        Read the listing. Check the calendar. Then request your dates.
       </HelpLead>
 
       <HelpSection title="Search the marketplace">
@@ -282,14 +296,16 @@ function SearchAndBook({ article }: { article: HelpArticle }) {
           <li>
             Open{" "}
             <Link href="/marketplace" className="font-semibold text-bonnet">
-              Browse stays
-            </Link>
-            . Filter by place, city, host, and guest count.
+              Find a Place
+            </Link>{" "}
+            in the header. Filter by place, city, host, and guest count.
           </li>
           <li>
-            Yall Come Back can show a <strong>continue last search</strong> banner
-            and <strong>recently viewed</strong> homes when you return. This
-            data is stored in your browser.
+            When the marketplace has enough inventory, Yall Come Back can show a{" "}
+            <strong>continue last search</strong> banner and{" "}
+            <strong>recently viewed</strong> homes. This data is stored in your
+            browser. Those rails stay hidden on a small inventory so the home
+            page stays simple.
           </li>
           <li>
             Open a listing for photos, amenities, map (“Where you will be”),
@@ -445,14 +461,16 @@ function Messaging({ article }: { article: HelpArticle }) {
       <HelpSection title="Start a conversation">
         <HelpUl>
           <li>
-            On a property page, use Message host on the host card.
+            On a property page, use Message host on the host card. You must be
+            signed in.
           </li>
           <li>
             After a booking, open the thread from your confirmation or inbox.
             Check-in details stay with the booking.
           </li>
           <li>
-            Guests: conversations live under your messages area. Hosts:{" "}
+            Messages are not a top header link until you sign in. Guests open
+            Messages from the account menu. Hosts also use{" "}
             <strong>Admin → Messages</strong>.
           </li>
         </HelpUl>
@@ -528,9 +546,13 @@ function SavedStays({ article }: { article: HelpArticle }) {
           <li>
             Open{" "}
             <Link href="/saved" className="font-semibold text-bonnet">
-              Saved
+              Wishlists
             </Link>{" "}
-            in the header at any time to review or remove stays.
+            from the account menu (or{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              /saved
+            </code>
+            ) to review or remove stays.
           </li>
           <li>
             Saved stays are device-based (local storage). If you clear browser
@@ -543,8 +565,9 @@ function SavedStays({ article }: { article: HelpArticle }) {
       <HelpSection title="Continue searching">
         <HelpUl>
           <li>
-            Yall Come Back can remember your last marketplace search and recently
-            viewed listings. This helps you continue your search.
+            When inventory is large enough, Yall Come Back can remember your last
+            marketplace search and recently viewed listings so you can continue
+            your search.
           </li>
           <li>
             Suggestions based on your search use that local history. Yall Come Back
@@ -636,11 +659,14 @@ function Account({ article }: { article: HelpArticle }) {
         <HelpP>
           Hosts also use{" "}
           <Link href="/admin" className="font-semibold text-bonnet">
-            Admin
+            Host dashboard (Admin)
           </Link>{" "}
-          for properties, bookings, messages, tax, and earnings. Platform admins
-          approve hosts and manage hosting plans in the same area with broader
-          access.
+          for properties,{" "}
+          <Link href="/admin/brand" className="font-semibold text-bonnet">
+            Brand &amp; website
+          </Link>
+          , bookings, messages, fridge magnets, tax, and earnings. Platform
+          admins approve hosts and manage hosting plans with broader access.
         </HelpP>
       </HelpSection>
     </HelpArticleLayout>
@@ -654,15 +680,16 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
       extraRelated={[
         {
           href: "/for-hosts",
-          title: "Apply to host",
+          title: "Host a Place",
           description: "Choose paid platform hosting or free self-host.",
         },
       ]}
     >
       <HelpLead>
-        Hosts get a branded public site, calendars, messaging, and booking
+        Hosts get a branded public website, calendars, messaging, and booking
         tools. Choose paid platform hosting or free self-host. Your choice
-        depends on how you want to run your website.
+        depends on how you want to run your website — Yall Come Back is not only a
+        marketplace.
       </HelpLead>
 
       <HelpSection title="Apply">
@@ -670,9 +697,10 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
           <li>
             Open{" "}
             <Link href="/for-hosts" className="font-semibold text-bonnet">
-              For hosts
+              Host a Place
             </Link>{" "}
-            and submit the application. Select a plan for the paid path.
+            in the header and submit the application. Select a plan for the paid
+            path, or free self-host.
           </li>
           <li>
             Status moves from pending to approved, or to rejected or suspended.
@@ -686,16 +714,17 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting (paid)">
         <HelpUl>
           <li>
-            Yall Come Back runs your host site. You pay a monthly hosting fee. The
-            fee can be per published property or a flat plan. See current plans
-            on For hosts.
+            Yall Come Back runs the stack for your guest site. You pay a monthly
+            hosting fee (per published property or flat plan). See current plans
+            on Host a Place.
           </li>
           <li>
             This is not a booking commission. You keep guest payments under your
             own deposit and payout process.
           </li>
           <li>
-            Choose marketplace opt-in and how guests reach your listings.
+            Choose marketplace opt-in and set Brand &amp; website (logo, colors,
+            about, contact, custom domain).
           </li>
         </HelpUl>
       </HelpSection>
@@ -726,12 +755,19 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
 
       <HelpSection title="After approval — first week checklist">
         <HelpUl>
+          <li>
+            Set Brand &amp; website (logo, name, colors, about, contact, domain).
+          </li>
           <li>Add at least one listing with photos and an accurate location.</li>
           <li>Set base rate, cleaning fee, deposit percent, and seasons.</li>
           <li>Block unavailable dates. Connect iCal if you use other channels.</li>
           <li>Set cancellation policies and booking auto messages.</li>
           <li>Add tax lines if you collect lodging tax through Yall Come Back.</li>
           <li>Publish the listing. Test a booking quote as a guest.</li>
+          <li>
+            Print a fridge magnet if you want a QR for return guests (choose
+            your website or Yall Come Back as the link target).
+          </li>
         </HelpUl>
       </HelpSection>
     </HelpArticleLayout>
@@ -746,8 +782,8 @@ function Listings({ article }: { article: HelpArticle }) {
         <strong className="font-semibold text-stone-800">
           Admin → Properties
         </strong>
-        . Guests see the same inventory on your host site and on the marketplace
-        when enabled.
+        . Guests see the same inventory on your host website and on the
+        marketplace when enabled.
       </HelpLead>
 
       <HelpSection title="Create a property">
@@ -802,11 +838,37 @@ function Listings({ article }: { article: HelpArticle }) {
       <HelpSection title="Policies and messages on the listing">
         <HelpP>
           Under the listing{" "}
-          <strong className="font-semibold text-stone-800">Messages</strong>{" "}
-          tab, set short-stay and long-stay cancellation policies. You can also
-          set an optional non-refundable discount and auto message templates.
-          See the dedicated help articles for those topics.
+          <strong className="font-semibold text-stone-800">Cancellation</strong>{" "}
+          tab, set short-stay and long-stay cancellation policies and any
+          optional non-refundable discount. Under the{" "}
+          <strong className="font-semibold text-stone-800">Messages</strong> tab,
+          set auto message templates. See the dedicated help articles for those
+          topics.
         </HelpP>
+      </HelpSection>
+
+      <HelpSection title="Fridge magnets">
+        <HelpUl>
+          <li>
+            Open{" "}
+            <strong className="font-semibold text-stone-800">
+              Admin → Fridge magnets
+            </strong>{" "}
+            (or Fridge magnet on a listing).
+          </li>
+          <li>
+            Before you print, choose where the QR code opens:{" "}
+            <strong>your website</strong> (you own the guest) or{" "}
+            <strong>Yall Come Back</strong> marketplace.
+          </li>
+          <li>
+            Set your website under{" "}
+            <Link href="/admin/brand" className="font-semibold text-bonnet">
+              Brand &amp; website
+            </Link>{" "}
+            so the host option uses your real domain.
+          </li>
+        </HelpUl>
       </HelpSection>
     </HelpArticleLayout>
   );
@@ -816,7 +878,7 @@ function Calendar({ article }: { article: HelpArticle }) {
   return (
     <HelpArticleLayout article={article}>
       <HelpLead>
-        One calendar drives availability for your host site, the marketplace,
+        One calendar drives availability for your host website, the marketplace,
         and external channels you sync with iCal.
       </HelpLead>
 
@@ -966,7 +1028,7 @@ function Taxes({ article }: { article: HelpArticle }) {
         },
         {
           href: "/for-hosts",
-          title: "Become a host",
+          title: "Host a Place",
           description: "Apply to host if you manage rental stays.",
         },
       ]}
@@ -1346,7 +1408,7 @@ function SelfHost({ article }: { article: HelpArticle }) {
               href="/for-hosts?path=self"
               className="font-semibold text-bonnet"
             >
-              For hosts
+              Host a Place
             </Link>{" "}
             when you want an account tied to that mode.
           </li>
@@ -1375,13 +1437,13 @@ function CancellationPolicies({ article }: { article: HelpArticle }) {
       extraRelated={[
         {
           href: "/marketplace",
-          title: "Browse stays",
+          title: "Find a Place",
           description:
             "Guests can see each listing policy under Things to know.",
         },
         {
           href: "/for-hosts",
-          title: "Host on Yall Come Back",
+          title: "Host a Place",
           description: "How hosting, payouts, and guest messaging work.",
         },
       ]}
@@ -1391,7 +1453,7 @@ function CancellationPolicies({ article }: { article: HelpArticle }) {
         short-term stays and one for long-term stays. Set them on each listing
         under{" "}
         <strong className="font-semibold text-stone-800">
-          Host admin → listing → Messages
+          Admin → Properties → [listing] → Cancellation
         </strong>
         .
       </HelpLead>
