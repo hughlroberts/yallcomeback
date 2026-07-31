@@ -78,10 +78,10 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Typographic logo lockup — large enough to read at a glance */
+/* Typographic logo lockup — seal + wordmark read at a glance */
 .ycb-logo {
   font-family: var(--font-display);
-  font-size: 1.65rem;
+  font-size: 1.75rem;
   font-weight: 500;
   line-height: 1.05;
   color: var(--color-ink);
@@ -91,7 +91,7 @@ body {
 }
 @media (min-width: 640px) {
   .ycb-logo {
-    font-size: 1.85rem;
+    font-size: 2rem;
   }
 }
 .ycb-logo__quote {

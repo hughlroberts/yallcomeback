@@ -49,9 +49,9 @@ export function BrandLogo({
       aria-label="yall come back, home"
     >
       <BrandMark
-        size={52}
+        size={80}
         priority
-        className="h-11 w-11 sm:h-[3.25rem] sm:w-[3.25rem]"
+        className="h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem]"
       />
       <span className="hidden min-w-0 items-baseline sm:inline-flex">
         <span className="ycb-logo__quote" aria-hidden>

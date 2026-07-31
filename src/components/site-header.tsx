@@ -29,7 +29,7 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-[200] border-b border-hairline/80 bg-buttermilk/95 backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:h-[4.5rem] sm:px-6">
+      <div className="mx-auto flex h-[4.5rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:h-[5.25rem] sm:px-6">
         <BrandLogo />
         <SiteHeaderNav
           isSignedIn={Boolean(session?.user)}
