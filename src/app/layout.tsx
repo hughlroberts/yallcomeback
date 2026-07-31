@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@/lib/features";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,14 +22,42 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Yall Come Back";
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || PRODUCT_NAME;
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.AUTH_URL ||
+  "https://yallcomeback-production.up.railway.app";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: siteName,
     template: `%s · ${siteName}`,
   },
-  description: "The same stay minus the middle man.",
+  description: PRODUCT_TAGLINE,
+  applicationName: siteName,
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName,
+    title: siteName,
+    description: PRODUCT_TAGLINE,
+    // opengraph-image.tsx is auto-linked by Next; keep absolute fallback
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: `${siteName} — ${PRODUCT_TAGLINE}`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteName,
+    description: PRODUCT_TAGLINE,
+    images: ["/twitter-image"],
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
