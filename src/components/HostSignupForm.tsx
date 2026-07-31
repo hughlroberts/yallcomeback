@@ -164,7 +164,7 @@ export function HostSignupForm({
                     .map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name} - {planPriceLabel(p)}
-                        {p.isDefault ? " (recommended)" : ""}
+
                       </option>
                     ))}
                 </select>
