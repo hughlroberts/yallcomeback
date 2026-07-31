@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** Official seal mark from brand kit. */
+/** Compact YCB monogram seal — for header / tight chrome. */
 export function BrandMark({
   className,
   size = 48,
@@ -30,7 +30,7 @@ export function BrandMark({
 }
 
 /**
- * Header lockup: large seal + readable wordmark in honey quotes.
+ * Header mark: compact YCB seal only (phrase lives in the footer).
  */
 export function BrandLogo({
   className,
@@ -43,30 +43,21 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn(
-        "ycb-logo group inline-flex min-w-0 items-center gap-3",
+        "group inline-flex shrink-0 items-center",
         className,
       )}
       aria-label="yall come back, home"
     >
       <BrandMark
-        size={80}
+        size={72}
         priority
-        className="h-11 w-11 sm:h-14 sm:w-14 md:h-[4.5rem] md:w-[4.5rem]"
+        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14"
       />
-      <span className="hidden min-w-0 items-baseline sm:inline-flex">
-        <span className="ycb-logo__quote" aria-hidden>
-          &ldquo;
-        </span>
-        <span className="truncate">yall come back</span>
-        <span className="ycb-logo__quote" aria-hidden>
-          &rdquo;
-        </span>
-      </span>
     </Link>
   );
 }
 
-/** Full-color seal for trust spots (checkout, print, about, footer). */
+/** Full-color compact seal (checkout, about, magnets). */
 export function BrandSeal({
   className,
   size = 120,
@@ -77,6 +68,34 @@ export function BrandSeal({
   mono?: boolean;
 }) {
   const src = mono ? "/brand/ycb-seal-mono.svg" : "/brand/ycb-seal.svg";
+  return (
+    <Image
+      src={src}
+      alt="Yall Come Back"
+      width={size}
+      height={size}
+      className={cn("shrink-0", className)}
+      unoptimized
+    />
+  );
+}
+
+/**
+ * Phrase seal (“yall come back” in the mark) — footer / large brand moments.
+ * Prefer mono on bonnet backgrounds so gold/cream reads correctly.
+ */
+export function BrandPhraseSeal({
+  className,
+  size = 200,
+  mono = false,
+}: {
+  className?: string;
+  size?: number;
+  mono?: boolean;
+}) {
+  const src = mono
+    ? "/brand/ycb-seal-phrase-mono.svg"
+    : "/brand/ycb-seal-phrase.svg";
   return (
     <Image
       src={src}
