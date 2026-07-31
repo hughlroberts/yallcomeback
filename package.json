@@ -14,6 +14,7 @@
     "db:seed-bookings": "tsx prisma/seed-sample-bookings.ts",
     "db:setup": "prisma db push && tsx prisma/seed.ts",
     "admin:ensure": "tsx scripts/ensure-platform-admin.ts",
+    "provision:cherokee": "tsx scripts/provision-cherokee-paid.ts",
     "postinstall": "prisma generate --schema=prisma/schema.prisma"
   },
   "prisma": {
