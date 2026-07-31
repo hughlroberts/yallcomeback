@@ -121,17 +121,26 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 Webhook: `POST /api/stripe/webhook`  
 Then set `STRIPE_LIVE_READY = true` in `src/lib/features.ts`. Status also shows under **Admin → Settings**.
 
-## iCal sync
+## iCal sync & scheduled jobs
 
 On each property admin page:
 
 1. Copy **Export URL** into Airbnb/VRBO  
 2. Paste their ICS under **Add import source**  
-3. **Sync now**, or:
+3. **Sync now**, or wait for the automatic schedule
+
+**Automatic (set-and-forget):**
+
+- **In-process** on Railway: `instrumentation.ts` runs iCal sync + booking auto-messages every ~20 minutes in production (`CRON_IN_PROCESS=true`).
+- **GitHub Actions backup**: `.github/workflows/cron.yml` pings the same endpoints every 20 minutes (needs secrets `CRON_SECRET` + `CRON_BASE_URL`).
+
+**Manual / external cron:**
 
 ```bash
-curl http://localhost:3000/api/cron/sync-ical
-# Optional: Authorization: Bearer $CRON_SECRET
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  https://your-app.up.railway.app/api/cron/sync-ical
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  https://your-app.up.railway.app/api/cron/booking-messages
 ```
 
 ## License

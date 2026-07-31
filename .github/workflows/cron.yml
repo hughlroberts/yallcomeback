@@ -1,0 +1,45 @@
+# Backup scheduler: pings production cron HTTP endpoints every 20 minutes.
+# Primary scheduler runs in-process on Railway (instrumentation.ts).
+#
+# Required GitHub secrets (repo → Settings → Secrets):
+#   CRON_SECRET  — same value as Railway CRON_SECRET
+#   CRON_BASE_URL — e.g. https://yallcomeback-production.up.railway.app
+
+name: Scheduled cron (iCal + booking messages)
+
+on:
+  schedule:
+    # Every 20 minutes (UTC)
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.CRON_SECRET != '' && secrets.CRON_BASE_URL != '' }}
+    steps:
+      - name: Sync iCal imports
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE: ${{ secrets.CRON_BASE_URL }}
+        run: |
+          set -e
+          code=$(curl -sS -o /tmp/ical.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${BASE%/}/api/cron/sync-ical")
+          echo "iCal HTTP $code"
+          cat /tmp/ical.json || true
+          test "$code" = "200"
+
+      - name: Deliver booking auto-messages
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE: ${{ secrets.CRON_BASE_URL }}
+        run: |
+          set -e
+          code=$(curl -sS -o /tmp/msg.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${BASE%/}/api/cron/booking-messages")
+          echo "Messages HTTP $code"
+          cat /tmp/msg.json || true
+          test "$code" = "200"
