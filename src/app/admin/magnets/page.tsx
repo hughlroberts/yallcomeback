@@ -25,13 +25,17 @@ export default async function AdminMagnetsPage() {
     <div>
       <PageHeader
         title="Fridge magnets"
-        subtitle="Print one page per stay — large QR code guests can scan to open the listing and book again next year."
+        subtitle="Print one page per stay — large QR code guests can scan to book again next year. You choose whether the code opens your website or Yall Come Back."
       />
 
       <div className="mb-6 rounded-2xl border border-blue-100 bg-petal/80 px-4 py-3 text-sm text-blue-900">
         <p className="font-medium">How to use</p>
         <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-blue-900/85">
           <li>Open a magnet for the listing you want.</li>
+          <li>
+            Choose where the QR goes: <strong>your website</strong> or{" "}
+            <strong>Yall Come Back</strong>.
+          </li>
           <li>Click <strong>Print this page</strong> (or Cmd/Ctrl+P).</li>
           <li>
             Use one page only — the layout is fixed to a single letter sheet.

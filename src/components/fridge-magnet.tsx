@@ -8,13 +8,17 @@ export function FridgeMagnet({
   listingUrl,
   qrSvg,
   siteName,
+  brandMarkSrc = "/brand/ycb-seal.svg",
 }: {
   propertyTitle: string;
   hostName: string;
   listingUrl: string;
   qrSvg: string;
   siteName: string;
+  /** Seal or host logo shown above the title */
+  brandMarkSrc?: string;
 }) {
+  const isHostLogo = brandMarkSrc !== "/brand/ycb-seal.svg";
   return (
     <div
       id="print-magnet"
@@ -23,11 +27,15 @@ export function FridgeMagnet({
       <div className="w-full shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/brand/ycb-seal.svg"
+          src={brandMarkSrc}
           alt=""
           width={72}
           height={72}
-          className="mx-auto h-[4.5rem] w-[4.5rem]"
+          className={
+            isHostLogo
+              ? "mx-auto h-[4.5rem] w-[4.5rem] rounded-full object-cover ring-1 ring-slate-200"
+              : "mx-auto h-[4.5rem] w-[4.5rem]"
+          }
         />
         <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-bonnet">
           Book again next year
