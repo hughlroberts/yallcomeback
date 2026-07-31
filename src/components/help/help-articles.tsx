@@ -1399,8 +1399,22 @@ function SelfHost({ article }: { article: HelpArticle }) {
             discovery — or stay on your domain only. Marketplace is optional.
           </li>
           <li>
-            Your guest-facing brand lives on your domain. Listings can still
-            deep-link from the shared marketplace.
+            <strong>Two technical paths (both can list on the marketplace):</strong>
+          </li>
+          <li>
+            <strong>Free self-host on Yall Come Back</strong> — Register at Host a
+            Place (self-host), get approved, point your domain, publish listings
+            here, turn marketplace on under Brand &amp; website. Same database as
+            Find a Place.
+          </li>
+          <li>
+            <strong>Remote open-source deploy</strong> — Run the MIT code on your
+            servers. Create a free self-host account on yallcomeback.com, generate
+            a syndication API key (Admin → Brand &amp; website), and{" "}
+            <code className="rounded bg-stone-100 px-1 text-xs">
+              POST /api/syndication/listings
+            </code>{" "}
+            to push stays into the central marketplace.
           </li>
           <li>
             Register the free self-host path on{" "}

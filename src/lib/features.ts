@@ -218,7 +218,7 @@ export const SELF_HOST_STEPS = [
   },
   {
     title: "Publish and welcome guests",
-    body: "Publish your listings. Guests can book on your website. The same stays also show on the free Yall Come Back marketplace.",
+    body: "Publish your listings. Guests book on your website. Optionally list the same stays on the free Yall Come Back marketplace (your choice).",
   },
 ];
 

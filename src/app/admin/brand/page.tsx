@@ -3,8 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { updateHostProfile } from "@/app/actions/host";
+import {
+  rotateSyndicationApiKey,
+  updateHostProfile,
+} from "@/app/actions/host";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { maskSyndicationKey } from "@/lib/syndication";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Brand & website" };
@@ -16,7 +20,12 @@ export const metadata = { title: "Brand & website" };
 export default async function AdminBrandPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; error?: string; hostId?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    error?: string;
+    hostId?: string;
+    synKey?: string;
+  }>;
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/brand");
@@ -137,9 +146,6 @@ export default async function AdminBrandPage({
         />
         {/* Preserve ops fields hosts don't edit on this form */}
         <input type="hidden" name="sitePresence" value={host.sitePresence} />
-        {host.listOnMarketplace ? (
-          <input type="hidden" name="listOnMarketplace" value="on" />
-        ) : null}
         {host.active ? <input type="hidden" name="active" value="on" /> : null}
 
         <Card className="space-y-5 p-6">
@@ -235,6 +241,102 @@ export default async function AdminBrandPage({
               defaultValue={host.description || ""}
               placeholder="Tell guests who you are, what makes the place special, and what to expect…"
             />
+          </div>
+        </Card>
+
+        <Card className="space-y-5 p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Marketplace (optional)
+          </h2>
+          <p className="text-sm text-stone-500">
+            Free self-host and paid hosts both control this. Turn on to appear on
+            the shared Yall Come Back marketplace; leave off for your domain only.
+          </p>
+          <label className="flex items-start gap-2 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              name="listOnMarketplace"
+              defaultChecked={host.listOnMarketplace}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">
+                List this brand on the free marketplace
+              </span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Each property also has its own marketplace checkbox. Both must be
+                on for a stay to appear under Find a Place.
+              </span>
+            </span>
+          </label>
+          {host.hostingMode === "SELF" ? (
+            <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
+              Free self-host mode — $0 / month platform fee. Marketplace is still
+              optional.
+            </p>
+          ) : null}
+        </Card>
+
+        <Card className="space-y-5 p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Open-source / remote syndication
+          </h2>
+          <p className="text-sm text-stone-500">
+            If you run a separate open-source copy of Yall Come Back on your own
+            servers, use an API key to push listings into{" "}
+            <strong>this</strong> marketplace. On-platform free self-host (same
+            app, your domain via DNS) does not need this — just publish listings
+            here and toggle marketplace above.
+          </p>
+          {params.synKey ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <p className="font-semibold">Copy your new key now</p>
+              <p className="mt-1 break-all font-mono text-xs">{params.synKey}</p>
+              <p className="mt-2 text-xs">
+                It will not be shown in full again. Store it in your remote
+                deploy secrets.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-stone-600">
+              Current key:{" "}
+              <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">
+                {maskSyndicationKey(host.syndicationApiKey)}
+              </code>
+            </p>
+          )}
+          <form action={rotateSyndicationApiKey} className="flex flex-wrap gap-3">
+            <input type="hidden" name="hostId" value={host.id} />
+            <input
+              type="hidden"
+              name="returnTo"
+              value={
+                access.isPlatform
+                  ? `/admin/brand?hostId=${host.id}`
+                  : "/admin/brand"
+              }
+            />
+            <Button type="submit" variant="secondary">
+              {host.syndicationApiKey
+                ? "Rotate syndication API key"
+                : "Generate syndication API key"}
+            </Button>
+          </form>
+          <div className="rounded-xl bg-stone-50 p-3 text-xs leading-relaxed text-stone-600">
+            <p className="font-semibold text-stone-800">Example push</p>
+            <pre className="mt-2 overflow-x-auto whitespace-pre-wrap font-mono text-[11px] text-stone-700">{`curl -X POST "$YCB_ORIGIN/api/syndication/listings" \\
+  -H "Authorization: Bearer $SYNDICATION_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"slug":"lake-cabin","title":"Lake cabin","baseNightlyRate":175,"published":true,"city":"Malakoff","region":"TX","images":[{"url":"https://example.com/cover.jpg","isCover":true}]}'`}</pre>
+            <p className="mt-2">
+              Host marketplace must be on, and the payload should set{" "}
+              <code className="rounded bg-white px-1">published: true</code>.
+              See{" "}
+              <Link href="/open-source" className="font-medium text-bonnet hover:underline">
+                Open source
+              </Link>{" "}
+              for the full path.
+            </p>
           </div>
         </Card>
 

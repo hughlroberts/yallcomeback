@@ -155,11 +155,11 @@ model Host {
   /// STAYLOCAL = use StayLocal listing URLs; CUSTOM = own domain; BOTH = both
   sitePresence         HostSitePresence    @default(STAYLOCAL)
   /// Host-level default: new properties inherit this for marketplace visibility
-  /// SELF (free self-host) hosts are always listed on the free marketplace
+  /// Opt into free marketplace discovery (optional for paid and free self-host)
   listOnMarketplace    Boolean             @default(true)
   /// Host account active (soft kill switch)
   active               Boolean             @default(true)
-  /// PLATFORM = paid hosting with us; SELF = free self-host on their own stack
+  /// PLATFORM = paid hosting with us; SELF = free self-host ($0 platform fee)
   hostingMode          HostingMode         @default(PLATFORM)
   approvalStatus       HostApprovalStatus  @default(PENDING_REVIEW)
   approvalNotes        String?
@@ -171,7 +171,7 @@ model Host {
   currentPeriodEnd     DateTime?
   stripeCustomerId     String?
   billingEmail         String?
-  /// Optional API key for remote self-hosted syndication (future)
+  /// Bearer key for remote open-source / self-host → central marketplace push
   syndicationApiKey    String?             @unique
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt

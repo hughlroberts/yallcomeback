@@ -259,3 +259,42 @@ export async function updateHostProfile(formData: FormData) {
       : HOST_PROFILE_PATH;
   redirect(`${safeReturn}${safeReturn.includes("?") ? "&" : "?"}saved=1`);
 }
+
+/**
+ * Issue or rotate the host syndication API key.
+ * Used by free self-host / open-source installs to push listings into the
+ * central marketplace without a paid hosting subscription.
+ */
+export async function rotateSyndicationApiKey(formData: FormData) {
+  const access = await requireHostAdmin();
+  if (!access) redirect("/login?callbackUrl=/admin/brand");
+
+  const hostId = String(formData.get("hostId") || "");
+  if (!hostId) redirect("/admin/brand?error=missing");
+  if (!access.isPlatform && access.hostId !== hostId) {
+    redirect("/admin/brand?error=forbidden");
+  }
+
+  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  if (!host) redirect("/admin/brand?error=missing");
+
+  const { generateSyndicationApiKey } = await import("@/lib/syndication");
+  const key = generateSyndicationApiKey();
+  await prisma.host.update({
+    where: { id: hostId },
+    data: { syndicationApiKey: key },
+  });
+
+  revalidatePath("/admin/brand");
+  revalidatePath(`/ops/hosting/${hostId}`);
+  // Return key via query once (shown on brand page)
+  const returnTo = String(formData.get("returnTo") || "/admin/brand").trim();
+  const base =
+    returnTo.startsWith("/admin") || returnTo.startsWith("/ops")
+      ? returnTo.split("?")[0]
+      : "/admin/brand";
+  const qs = new URLSearchParams();
+  if (access.isPlatform) qs.set("hostId", hostId);
+  qs.set("synKey", key);
+  redirect(`${base}?${qs.toString()}`);
+}

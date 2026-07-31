@@ -75,9 +75,13 @@ export default function OpenSourcePage() {
       <div className="border-b border-stone-200 bg-emerald-50">
         <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
           <p className="text-sm text-emerald-950">
-            <strong>Free forever for self-hosting.</strong> Platform website
-            hosting (our servers, approval, monthly fee) is optional. The
-            software itself is {LICENSE} open source - reuse, modify, and run on
+            <strong>Free forever for self-hosting.</strong> You can still publish
+            on the central Yall Come Back marketplace: register as free self-host
+            (or paid), opt into marketplace, then either manage listings on this
+            platform or push from a remote open-source deploy with a syndication
+            API key (Admin → Brand &amp; website). Platform website hosting (our
+            servers, monthly fee) is optional. The software itself is {LICENSE}{" "}
+            open source - reuse, modify, and run on
             your own domain at no cost.
           </p>
         </div>
