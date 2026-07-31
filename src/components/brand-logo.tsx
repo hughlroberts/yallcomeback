@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** Compact YCB monogram seal — checkout, magnets, compact chrome. */
+/** Compact YCB monogram seal — header mark + compact chrome. */
 export function BrandMark({
   className,
   size = 48,
@@ -29,33 +29,9 @@ export function BrandMark({
   );
 }
 
-/** Horizontal cannon mark (new top-logo art). */
-export function BrandCannon({
-  className,
-  /** bonnet on light header; honey/cream on dark */
-  tone = "bonnet",
-  priority = false,
-}: {
-  className?: string;
-  tone?: "bonnet" | "honey" | "dusk" | "cream" | "currentcolor";
-  priority?: boolean;
-}) {
-  const src = `/brand/ycb-cannon-h-${tone}.svg`;
-  return (
-    <Image
-      src={src}
-      alt=""
-      width={100}
-      height={21}
-      className={cn("shrink-0", className)}
-      priority={priority}
-      unoptimized
-    />
-  );
-}
-
 /**
- * Header lockup: cannon mark + “yall come back” wordmark.
+ * Header lockup: YCB seal (compact) + “yall come back” wordmark.
+ * Always show both so the brand is readable at a glance.
  */
 export function BrandLogo({
   className,
@@ -68,15 +44,15 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn(
-        "ycb-logo group inline-flex min-w-0 items-center gap-2.5 sm:gap-3",
+        "ycb-logo group inline-flex min-w-0 items-center gap-2 sm:gap-3",
         className,
       )}
       aria-label="yall come back, home"
     >
-      <BrandCannon
-        tone="bonnet"
+      <BrandMark
+        size={72}
         priority
-        className="h-8 w-auto sm:h-9 md:h-10"
+        className="h-10 w-10 sm:h-12 sm:w-12 md:h-[3.25rem] md:w-[3.25rem]"
       />
       <span className="inline-flex min-w-0 items-baseline">
         <span className="ycb-logo__quote" aria-hidden>
@@ -115,7 +91,7 @@ export function BrandSeal({
 }
 
 /**
- * Phrase seal (“yall come back” in the mark) — footer / large brand moments.
+ * Phrase seal (“yall come back” + cannon in the mark) — footer / large brand moments.
  */
 export function BrandPhraseSeal({
   className,
