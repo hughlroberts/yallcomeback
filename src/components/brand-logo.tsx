@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** Compact YCB monogram seal — header mark + compact chrome. */
+/** Compact YCB monogram seal — checkout, magnets, compact chrome. */
 export function BrandMark({
   className,
   size = 48,
@@ -30,8 +30,38 @@ export function BrandMark({
 }
 
 /**
- * Header lockup: YCB seal (compact) + “yall come back” wordmark.
- * Always show both so the brand is readable at a glance.
+ * Vertical cannon mark for the header (files 3 zip — tall narrow art).
+ * viewBox is ~20×100 (already upright).
+ */
+export function BrandCannon({
+  className,
+  tone = "bonnet",
+  priority = false,
+}: {
+  className?: string;
+  tone?: "bonnet" | "honey" | "dusk" | "cream" | "currentcolor";
+  priority?: boolean;
+}) {
+  // Vertical source from brand kit (not the horizontal h- variants)
+  const src =
+    tone === "currentcolor"
+      ? "/brand/ycb-cannon-bare-currentcolor.svg"
+      : `/brand/ycb-cannon-bare-${tone}.svg`;
+  return (
+    <Image
+      src={src}
+      alt=""
+      width={20}
+      height={100}
+      className={cn("shrink-0", className)}
+      priority={priority}
+      unoptimized
+    />
+  );
+}
+
+/**
+ * Header lockup: small vertical cannon + “yall come back” wordmark.
  */
 export function BrandLogo({
   className,
@@ -44,15 +74,16 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn(
-        "ycb-logo group inline-flex min-w-0 items-center gap-2 sm:gap-3",
+        "ycb-logo group inline-flex min-w-0 items-center gap-2 sm:gap-2.5",
         className,
       )}
       aria-label="yall come back, home"
     >
-      <BrandMark
-        size={72}
+      <BrandCannon
+        tone="bonnet"
         priority
-        className="h-10 w-10 sm:h-12 sm:w-12 md:h-[3.25rem] md:w-[3.25rem]"
+        // Tall + thin — much smaller than before
+        className="h-7 w-auto sm:h-8 md:h-9"
       />
       <span className="inline-flex min-w-0 items-baseline">
         <span className="ycb-logo__quote" aria-hidden>
