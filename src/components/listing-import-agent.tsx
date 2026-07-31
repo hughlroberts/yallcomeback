@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   importListingFromUrl,
   previewListingImport,
@@ -19,6 +20,7 @@ export function ListingImportAgent({
   hosts = [],
   defaultUrl = "",
 }: Props) {
+  const router = useRouter();
   const [url, setUrl] = useState(defaultUrl);
   const [chosenHostId, setChosenHostId] = useState(
     hostId || hosts[0]?.id || "",
@@ -51,17 +53,23 @@ export function ListingImportAgent({
     setError(null);
     setStep("Creating draft and downloading photos…");
     startTransition(async () => {
-      try {
-        const fd = new FormData();
-        fd.set("url", url);
-        if (chosenHostId) fd.set("hostId", chosenHostId);
-        if (rate) fd.set("baseNightlyRate", rate);
-        await importListingFromUrl(fd);
-      } catch (e) {
-        // redirect throws; only real errors land here
-        setError(e instanceof Error ? e.message : "Import failed");
+      const fd = new FormData();
+      fd.set("url", url);
+      if (chosenHostId) fd.set("hostId", chosenHostId);
+      if (rate) fd.set("baseNightlyRate", rate);
+      const res = await importListingFromUrl(fd);
+      if (!res.ok) {
+        setError(res.error);
         setStep(null);
+        return;
       }
+      setStep(
+        res.photoCount > 0
+          ? `Imported with ${res.photoCount} photos — opening draft…`
+          : "Imported — opening draft…",
+      );
+      router.push(`/admin/properties/${res.propertyId}?imported=1`);
+      router.refresh();
     });
   }
 
@@ -76,9 +84,11 @@ export function ListingImportAgent({
             Copy from Airbnb or VRBO
           </h2>
           <p className="mt-1 max-w-xl text-sm text-ink-muted">
-            Paste a public listing URL. We read the page, pull photos and
-            details, and open a draft so you can edit before publishing. Best
-            effort — OTAs change their sites, so always review the draft.
+            Paste a public listing URL (e.g.{" "}
+            <span className="font-mono text-[12px]">airbnb.com/rooms/…</span>
+            ). We read the page, pull photos and details, and open a draft so
+            you can edit before publishing. Best effort — OTAs change their
+            sites, so always review the draft.
           </p>
         </div>
       </div>
@@ -186,6 +196,11 @@ export function ListingImportAgent({
                 <p className="text-xs text-ink-muted">
                   Amenities: {preview.amenities.slice(0, 12).join(" · ")}
                   {preview.amenities.length > 12 ? "…" : ""}
+                </p>
+              ) : null}
+              {preview.rawNotes.length > 0 ? (
+                <p className="text-xs text-ink-muted">
+                  {preview.rawNotes.join(" · ")}
                 </p>
               ) : null}
             </div>

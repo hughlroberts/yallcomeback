@@ -308,7 +308,7 @@ export function BookingWidget({
             endDate: s.endDate,
           }))}
           title="Select dates"
-          monthsToShow={1}
+          monthsToShow={2}
           compact
           selectable
           checkIn={checkIn}
@@ -319,6 +319,7 @@ export function BookingWidget({
             setError(null);
           }}
         />
+
       </div>
 
       <div className="mt-3 overflow-hidden rounded-xl border border-stone-300">

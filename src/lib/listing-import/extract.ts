@@ -21,6 +21,7 @@ function decodeHtml(s: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
     .replace(/&nbsp;/g, " ");
 }
 
@@ -41,11 +42,38 @@ function jsonStringField(html: string, key: string): string | null {
 }
 
 function jsonNumberField(html: string, key: string): number | null {
-  const re = new RegExp(`"${key}"\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)`);
-  const m = html.match(re);
-  if (!m) return null;
-  const n = Number(m[1]);
-  return Number.isFinite(n) ? n : null;
+  // Prefer values near listing context when possible
+  const re = new RegExp(`"${key}"\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)`, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    const n = Number(m[1]);
+    if (Number.isFinite(n) && n > 0 && n < 10_000) return n;
+  }
+  return null;
+}
+
+/** schema.org JSON-LD blocks (VacationRental, Product, etc.) */
+function parseLdJsonBlocks(html: string): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  for (const m of html.matchAll(
+    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  )) {
+    try {
+      const raw = m[1]!.trim();
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (item && typeof item === "object") out.push(item as Record<string, unknown>);
+        }
+      } else if (parsed && typeof parsed === "object") {
+        out.push(parsed as Record<string, unknown>);
+      }
+    } catch {
+      /* skip broken ld+json */
+    }
+  }
+  return out;
 }
 
 function parseCountsFromOgTitle(title: string | null): {
@@ -71,16 +99,16 @@ function extractImageUrls(html: string, source: ImportSource): string[] {
   const out: string[] = [];
 
   const push = (u: string) => {
-    let url = u.split("?")[0]!;
+    let url = decodeHtml(u).replace(/\\u002F/g, "/").split("?")[0]!;
+    if (!url.startsWith("http")) return;
     if (source === "airbnb") {
-      // Prefer full-size originals when we only have UUID form
       if (
-        url.includes("muscache.com/im/pictures/") &&
-        !url.includes("PlatformAssets") &&
-        !url.includes("/user/")
+        url.includes("/user/") ||
+        url.includes("PlatformAssets") ||
+        url.includes("AirbnbPlatformAssets") ||
+        url.includes("/profile") ||
+        url.includes("avatar")
       ) {
-        // bump quality via query when re-downloading
-      } else if (url.includes("/user/") || url.includes("PlatformAssets")) {
         return;
       }
     }
@@ -95,11 +123,25 @@ function extractImageUrls(html: string, source: ImportSource): string[] {
   const og = metaContent(html, "og:image");
   if (og) push(og);
 
-  // Airbnb listing photos
+  // Airbnb listing photos (UUID-style paths)
   for (const m of html.matchAll(
-    /https:\/\/a0\.muscache\.com\/im\/pictures\/(?!AirbnbPlatformAssets)[^"'\\?]+\.(?:jpg|jpeg|png)/gi,
+    /https:\/\/a0\.muscache\.com\/im\/pictures\/(?:miso\/Hosting-\d+\/original\/)?[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.(?:jpg|jpeg|png)/gi,
   )) {
     push(m[0]!);
+  }
+
+  // Broader Airbnb pictures path, still excluding platform assets
+  for (const m of html.matchAll(
+    /https:\/\/a0\.muscache\.com\/im\/pictures\/(?!AirbnbPlatformAssets)[^"'\\s?]+\.(?:jpg|jpeg|png)/gi,
+  )) {
+    push(m[0]!);
+  }
+
+  // baseUrl fields in niobe JSON
+  for (const m of html.matchAll(
+    /"baseUrl"\s*:\s*"(https:\/\/a0\.muscache\.com\/im\/pictures\/[^"]+)"/gi,
+  )) {
+    push(m[1]!);
   }
 
   // VRBO / Expedia CDN common patterns
@@ -111,17 +153,21 @@ function extractImageUrls(html: string, source: ImportSource): string[] {
 
   // Generic og-like absolute images in JSON
   for (const m of html.matchAll(
-    /"(?:uri|url|baseUrl|large|xl_image)"\s*:\s*"(https:\/\/[^"]+\.(?:jpg|jpeg|png)[^"]*)"/gi,
+    /"(?:uri|url|large|xl_image)"\s*:\s*"(https:\/\/[^"]+\.(?:jpg|jpeg|png)[^"]*)"/gi,
   )) {
-    push(m[1]!.replace(/\\u002F/g, "/"));
+    push(m[1]!);
   }
 
+  // Prefer longer UUID photo lists (listing gallery) over OG single
   return out.slice(0, 40);
 }
 
+const AMENITY_JUNK =
+  /translated|where you|more information|guest favorite|show all|learn more|accessibility features|guest entrance|^share$|^save$|^saved$|check-in after|checkout before|self check-in|guests maximum|quiet hours|no parties|no smoking|what.?s the bathroom|where you.?ll sleep|report this|host details|languages|select dates|additional rules|additional requests|gather used|throw trash|turn things off|what this place offers|^adults$|^children$|^infants$|^pets$|nearby lake|carbon monoxide|smoke alarm|disabled parking|houston|austin|dallas|show more|read more|see all/i;
+
 function extractAmenities(html: string, description: string): string[] {
   const found = new Set<string>();
-  // Airbnb amenity titles near available:true is brittle; use common keywords from description
+  // Keyword scan (description + a slice of page HTML)
   const keywords = [
     "Wifi",
     "Kitchen",
@@ -144,19 +190,28 @@ function extractAmenities(html: string, description: string): string[] {
     "EV charger",
     "Private dock",
     "Game room",
+    "Fireplace",
+    "Patio",
+    "Balcony",
+    "Grill",
+    "Dishwasher",
   ];
   const blob = `${html.slice(0, 200_000)}\n${description}`.toLowerCase();
   for (const k of keywords) {
     if (blob.includes(k.toLowerCase())) found.add(k);
   }
-  // JSON amenity titles
-  const junk =
-    /translated|where you|more information|guest favorite|show all|learn more|accessibility features|guest entrance/i;
+  // JSON amenity titles near available:true (Airbnb amenity list)
   for (const m of html.matchAll(
-    /"title"\s*:\s*"([^"]{3,40})"\s*,\s*"subtitle"/g,
+    /"title"\s*:\s*"([^"]{3,48})"\s*,\s*"available"\s*:\s*true/g,
   )) {
     const t = decodeHtml(m[1]!);
-    if (t.length < 40 && !t.includes("http") && !junk.test(t)) found.add(t);
+    if (
+      !AMENITY_JUNK.test(t) &&
+      !t.includes("http") &&
+      !/^\d+\s*(bed|bath|guest)/i.test(t)
+    ) {
+      found.add(t);
+    }
   }
   return Array.from(found).slice(0, 40);
 }
@@ -170,16 +225,49 @@ export function extractListingFromHtml(opts: {
   const { html, source, sourceUrl, sourceId } = opts;
   const notes: string[] = [];
 
+  const ldBlocks = parseLdJsonBlocks(html);
+  const vacation = ldBlocks.find((b) => {
+    const t = b["@type"];
+    if (typeof t === "string") {
+      return /VacationRental|LodgingBusiness|Product|Apartment|House/i.test(t);
+    }
+    if (Array.isArray(t)) {
+      return t.some((x) =>
+        typeof x === "string" &&
+        /VacationRental|LodgingBusiness|Product|Apartment|House/i.test(x),
+      );
+    }
+    return false;
+  });
+
   const ogTitle = metaContent(html, "og:title");
   const ogDesc = metaContent(html, "og:description");
-  const listingTitle =
+
+  const ldName =
+    vacation && typeof vacation.name === "string" ? vacation.name : null;
+  const ldDesc =
+    vacation && typeof vacation.description === "string"
+      ? vacation.description
+      : null;
+
+  const listingTitle = (
     jsonStringField(html, "listingTitle") ||
-    jsonStringField(html, "name") ||
+    ldName ||
+    // Avoid greedy "name" which can pick UI chrome — only use short ones
+    (() => {
+      const n = jsonStringField(html, "name");
+      if (n && n.length >= 8 && n.length <= 100 && !AMENITY_JUNK.test(n)) {
+        return n;
+      }
+      return null;
+    })() ||
     ogDesc ||
     ogTitle ||
-    "Imported listing";
+    "Imported listing"
+  ).replace(/\s+/g, " ").trim();
 
   let description =
+    ldDesc ||
     jsonStringField(html, "description") ||
     jsonStringField(html, "sectionedDescription") ||
     ogDesc ||
@@ -190,9 +278,11 @@ export function extractListingFromHtml(opts: {
   if (longDesc && longDesc.length > description.length) {
     description = longDesc.replace(/<[^>]+>/g, "\n").replace(/\n{3,}/g, "\n\n");
   }
+  description = description.replace(/\s+\n/g, "\n").trim();
 
   const city =
     jsonStringField(html, "localizedCityName") ||
+    jsonStringField(html, "localizedLocation") ||
     jsonStringField(html, "city") ||
     (ogTitle?.match(/in\s+([^,·]+)/i)?.[1]?.trim() ?? null);
 
@@ -205,12 +295,24 @@ export function extractListingFromHtml(opts: {
       /in\s+([^·\-]+?)(?:\s*-\s*Airbnb|\s*$)/i,
     );
     if (loc) {
-      const parts = loc[1]!.split(",").map((s) => s.trim());
-      if (parts[0] && !city) {
-        /* city already set */
-      }
+      const parts = loc[1]!.split(",").map((s) => s.trim()).filter(Boolean);
       if (parts[1]) region = parts[1];
       if (parts[2]) country = parts[2];
+    }
+  }
+
+  // Address from schema.org
+  if (vacation && vacation.address && typeof vacation.address === "object") {
+    const addr = vacation.address as Record<string, unknown>;
+    if (!city && typeof addr.addressLocality === "string") {
+      /* handled below via fallback */
+    }
+    if (typeof addr.addressRegion === "string" && !region) {
+      region = addr.addressRegion;
+    }
+    if (typeof addr.addressCountry === "string") {
+      country =
+        typeof addr.addressCountry === "string" ? addr.addressCountry : country;
     }
   }
 
@@ -221,13 +323,21 @@ export function extractListingFromHtml(opts: {
     4;
 
   const bedrooms =
-    counts.bedrooms ?? jsonNumberField(html, "bedroomCount") ?? 1;
-  const beds = counts.beds ?? jsonNumberField(html, "bedCount") ?? bedrooms;
+    counts.bedrooms ??
+    jsonNumberField(html, "bedroomCount") ??
+    jsonNumberField(html, "bedrooms") ??
+    1;
+  const beds =
+    counts.beds ?? jsonNumberField(html, "bedCount") ?? bedrooms;
   const bathrooms =
-    counts.bathrooms ?? jsonNumberField(html, "bathroomCount") ?? 1;
+    counts.bathrooms ??
+    jsonNumberField(html, "bathroomCount") ??
+    jsonNumberField(html, "bathrooms") ??
+    1;
 
   const roomType =
     jsonStringField(html, "roomAndPropertyType") ||
+    jsonStringField(html, "propertyTypeGrouping") ||
     jsonStringField(html, "propertyType") ||
     jsonStringField(html, "roomType") ||
     "house";
@@ -254,19 +364,32 @@ export function extractListingFromHtml(opts: {
   if (ogDesc && ogDesc !== listingTitle && ogDesc.length < 120) {
     tagline = ogDesc;
   } else if (description) {
-    tagline = description.split("\n").map((l) => l.trim()).find(Boolean)?.slice(0, 120) ?? null;
+    tagline =
+      description
+        .split("\n")
+        .map((l) => l.trim())
+        .find(Boolean)
+        ?.slice(0, 120) ?? null;
   }
 
   const star = jsonNumberField(html, "starRating");
-  if (star) notes.push(`Source rating: ${star}`);
+  if (star && star <= 5) notes.push(`Source rating: ${star}`);
+
+  // Clean title if we accidentally picked full page title
+  let title = listingTitle.slice(0, 120);
+  title = title
+    .replace(/\s*[-–]\s*Airbnb.*$/i, "")
+    .replace(/\s*·\s*★.*$/i, "")
+    .replace(/\s*·\s*\d+\s*bedrooms?.*$/i, "")
+    .trim();
 
   return {
     source,
     sourceUrl,
     sourceId,
-    title: listingTitle.slice(0, 120),
+    title: title || "Imported listing",
     tagline,
-    description: description || listingTitle,
+    description: description || title,
     city: city?.replace(/\s+/g, " ").trim() || null,
     region,
     country,

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { cn, formatDateRangeUS } from "@/lib/utils";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -105,7 +105,12 @@ export function AvailabilityCalendar({
       }
       if (key < checkIn) {
         // Restart with earlier check-in if that night is free
-        if (!blocked.has(key)) onChange({ checkIn: key, checkOut: "" });
+        if (!blocked.has(key)) {
+          // Keep checkout month visible when picking near month end
+          const d = new Date(key + "T12:00:00");
+          setCursor(startOfMonth(d));
+          onChange({ checkIn: key, checkOut: "" });
+        }
         return;
       }
       if (rangeNightsFree(checkIn, key, blocked)) {
@@ -116,6 +121,8 @@ export function AvailabilityCalendar({
 
     // Start new selection (check-in must be an available night)
     if (unavailableNight) return;
+    const d = new Date(key + "T12:00:00");
+    setCursor(startOfMonth(d));
     onChange({ checkIn: key, checkOut: "" });
   }
 
@@ -190,9 +197,16 @@ export function AvailabilityCalendar({
 
       <div
         className={cn(
-          "mt-3 grid gap-6",
-          monthsToShow === 2 ? "lg:grid-cols-2" : "",
-          compact ? "mt-2 gap-3" : "mt-6 gap-8",
+          "grid",
+          // Compact reserve card: stack months so both stay readable in a narrow column.
+          // Full calendar: side-by-side from md up when showing two months.
+          monthsToShow === 2
+            ? compact
+              ? "mt-2 gap-4"
+              : "mt-6 gap-8 md:grid-cols-2"
+            : compact
+              ? "mt-2 gap-3"
+              : "mt-6 gap-8",
         )}
       >
         {months.map((month) => (
@@ -217,21 +231,21 @@ export function AvailabilityCalendar({
         )}
       >
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-emerald-100 ring-1 ring-emerald-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-100 ring-1 ring-emerald-300/80" />
           Available
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-stone-200 ring-1 ring-stone-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-stone-100 ring-1 ring-stone-200" />
           Unavailable
         </span>
         {selectable ? (
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-bonnet" />
+            <span className="h-2.5 w-2.5 rounded-full bg-bonnet" />
             Selected
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-white ring-2 ring-bonnet" />
+            <span className="h-2.5 w-2.5 rounded-full bg-white ring-2 ring-bonnet" />
             Today
           </span>
         )}
@@ -295,17 +309,17 @@ function MonthGrid({
       </p>
       <div
         className={cn(
-          "grid grid-cols-7 gap-1 text-center font-medium uppercase tracking-wide text-stone-400",
-          compact ? "text-[9px]" : "text-[11px]",
+          "grid grid-cols-7 text-center font-medium uppercase tracking-wide text-stone-400",
+          compact ? "gap-0 text-[10px]" : "gap-1 text-[11px]",
         )}
       >
         {WEEKDAYS.map((w) => (
           <div key={w} className={compact ? "py-0.5" : "py-1"}>
-            {compact ? w.slice(0, 1) : w}
+            {w}
           </div>
         ))}
       </div>
-      <div className={cn("mt-1 grid grid-cols-7", compact ? "gap-0.5" : "gap-1")}>
+      <div className={cn("mt-0.5 grid grid-cols-7", compact ? "gap-y-0.5" : "gap-1")}>
         {cells.map((day, i) => {
           if (!day) {
             return <div key={`e-${i}`} className="aspect-square" />;
@@ -332,51 +346,88 @@ function MonthGrid({
           const interactive =
             selectable && (canClickAsCheckIn || canClickAsCheckout || isCheckIn);
 
-          const baseStyle = selected
-            ? isCheckIn || isCheckOut
-              ? "bg-bonnet text-white ring-1 ring-bonnet-hover"
-              : "bg-petal text-blue-950 ring-1 ring-blue-200"
-            : unavailableNight
-              ? "bg-stone-100 text-stone-400 line-through decoration-stone-300"
-              : "bg-emerald-50 text-emerald-950 ring-1 ring-emerald-200/80";
+          // Softer cells: no strikethrough clutter on past days
+          let cellStyle: string;
+          if (isCheckIn || isCheckOut) {
+            cellStyle = "bg-bonnet text-white font-semibold";
+          } else if (inRange) {
+            cellStyle = "bg-petal text-blue-950";
+          } else if (isPast) {
+            cellStyle = "text-stone-300";
+          } else if (isBlocked) {
+            cellStyle = "text-stone-300 bg-stone-50";
+          } else {
+            cellStyle = "text-stone-800 hover:bg-emerald-50";
+          }
+
+          // Continuous range bar feel between check-in and check-out
+          let rangeShape = "rounded-full";
+          if (selected && checkIn && checkOut) {
+            if (isCheckIn && isCheckOut) {
+              rangeShape = "rounded-full";
+            } else if (isCheckIn) {
+              rangeShape = "rounded-l-full rounded-r-none";
+            } else if (isCheckOut) {
+              rangeShape = "rounded-r-full rounded-l-none";
+            } else if (inRange) {
+              rangeShape = "rounded-none";
+            }
+          }
 
           const Comp = interactive ? "button" : "div";
 
           return (
-            <Comp
+            <div
               key={key}
-              type={interactive ? "button" : undefined}
-              disabled={interactive ? false : undefined}
-              onClick={
-                interactive
-                  ? () => onDayClick(key, unavailableNight)
-                  : undefined
-              }
-              title={
-                isPast
-                  ? "Past"
-                  : isBlocked
-                    ? "Unavailable night"
-                    : selected
-                      ? isCheckIn
-                        ? "Check-in"
-                        : isCheckOut
-                          ? "Checkout"
-                          : "In stay"
-                      : "Available"
-              }
               className={cn(
-                "flex aspect-square items-center justify-center rounded-lg tabular-nums",
-                compact ? "text-[11px]" : "text-sm",
-                baseStyle,
-                !selected && isToday ? "ring-2 ring-bonnet ring-offset-1" : "",
-                interactive
-                  ? "cursor-pointer transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-bonnet"
+                "relative flex aspect-square items-center justify-center",
+                inRange || isCheckIn || isCheckOut
+                  ? ""
                   : "",
+                // Soft range background strip (behind endpoint pills)
+                inRange ? "bg-petal" : "",
+                isCheckIn && checkOut ? "bg-petal rounded-l-full" : "",
+                isCheckOut && checkIn ? "bg-petal rounded-r-full" : "",
               )}
             >
-              {day.getDate()}
-            </Comp>
+              <Comp
+                type={interactive ? "button" : undefined}
+                disabled={interactive ? false : undefined}
+                onClick={
+                  interactive
+                    ? () => onDayClick(key, unavailableNight)
+                    : undefined
+                }
+                title={
+                  isPast
+                    ? "Past"
+                    : isBlocked
+                      ? "Unavailable night"
+                      : selected
+                        ? isCheckIn
+                          ? "Check-in"
+                          : isCheckOut
+                            ? "Checkout"
+                            : "In stay"
+                        : "Available"
+                }
+                className={cn(
+                  "flex h-[88%] w-[88%] items-center justify-center tabular-nums",
+                  compact ? "text-[12px]" : "text-sm",
+                  rangeShape,
+                  cellStyle,
+                  !selected && isToday
+                    ? "ring-2 ring-bonnet ring-offset-1"
+                    : "",
+                  interactive
+                    ? "cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-bonnet"
+                    : "cursor-default",
+                  !interactive && isPast ? "pointer-events-none" : "",
+                )}
+              >
+                {day.getDate()}
+              </Comp>
+            </div>
           );
         })}
       </div>
