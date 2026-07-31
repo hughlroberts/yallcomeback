@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { formatDateRangeUS, formatMoney } from "@/lib/utils";
 import { MessageHostButton } from "@/components/message-host-form";
 import { BrandSeal } from "@/components/brand-logo";
@@ -10,6 +11,7 @@ import {
   getBitcoinLabel,
   getBitcoinNetworkLabel,
 } from "@/lib/bitcoin";
+import { verifyBookingAccessToken } from "@/lib/booking-access";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Booking confirmation" };
@@ -19,7 +21,11 @@ export default async function ConfirmationPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ pendingStripe?: string; inbox?: string }>;
+  searchParams: Promise<{
+    pendingStripe?: string;
+    inbox?: string;
+    t?: string;
+  }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -32,6 +38,27 @@ export default async function ConfirmationPage({
     },
   });
   if (!booking) notFound();
+
+  // P0-3: do not expose guest PII to anyone who knows the booking id
+  const session = await auth();
+  const tokenOk = verifyBookingAccessToken(id, sp.t);
+  const email = session?.user?.email?.toLowerCase();
+  const isGuest =
+    Boolean(session?.user?.id && booking.userId === session.user.id) ||
+    Boolean(email && email === booking.guestEmail.toLowerCase());
+  const isHost =
+    session?.user?.role === "ADMIN" ||
+    (session?.user?.role === "HOST" &&
+      session.user.hostId === booking.property.hostId);
+
+  if (!tokenOk && !isGuest && !isHost) {
+    if (!session?.user) {
+      redirect(
+        `/login?callbackUrl=${encodeURIComponent(`/book/confirmation/${id}`)}`,
+      );
+    }
+    notFound();
+  }
 
   const payment = booking.payments[0];
   const isBitcoin =

@@ -224,15 +224,14 @@ export async function createBooking(formData: FormData) {
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/messages");
 
+  const { bookingAccessToken } = await import("@/lib/booking-access");
   const confirmParams = new URLSearchParams();
+  confirmParams.set("t", bookingAccessToken(booking.id));
   if (method === "STRIPE") confirmParams.set("pendingStripe", "1");
   if (autoMsgConversationId) {
     confirmParams.set("inbox", autoMsgConversationId);
   }
-  const confirmQs = confirmParams.toString();
-  redirect(
-    `/book/confirmation/${booking.id}${confirmQs ? `?${confirmQs}` : ""}`,
-  );
+  redirect(`/book/confirmation/${booking.id}?${confirmParams.toString()}`);
 }
 
 export async function markDepositPaid(formData: FormData) {
