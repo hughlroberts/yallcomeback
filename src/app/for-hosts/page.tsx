@@ -121,9 +121,9 @@ export default async function ForHostsPage({
                 Your domain, zero monthly platform fee
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                Deploy free on your own website or any domain. Published stays
-                still appear on the free Yall Come Back marketplace so guests can
-                find you — without middleman commission.
+                Deploy free on your own website or any domain. Optionally list on
+                the free Yall Come Back marketplace when you want discovery —
+                without middleman commission.
               </p>
               <p className="mt-4 text-sm font-semibold text-emerald-900">
                 Apply for free self-host →
@@ -258,8 +258,8 @@ export default async function ForHostsPage({
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
                 Recreate your brand on this stack, point your domain, and keep
-                every stay on the free Yall Come Back marketplace. Full deploy and
-                migration notes for existing resort and rental operators.
+                every stay, with optional free marketplace discovery. Full deploy
+                and migration notes for existing resort and rental operators.
               </p>
               <Link
                 href="/self-host"
@@ -284,8 +284,8 @@ export default async function ForHostsPage({
                   and/or your own domain in Host admin.
                 </li>
                 <li>
-                  Self-hosts: deploy on your domain; all published stays go on
-                  the free marketplace. Paid hosts can opt marketplace on or off.
+                  Self-hosts and paid hosts both choose marketplace on or off.
+                  Self-hosts: deploy on your domain at $0 / month platform fee.
                 </li>
               </ol>
               <p className="mt-4 text-sm text-stone-500">
