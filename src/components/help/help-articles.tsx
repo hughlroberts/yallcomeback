@@ -1170,10 +1170,11 @@ function HostMessages({ article }: { article: HelpArticle }) {
         </HelpUl>
       </HelpSection>
 
-      <HelpSection title="Cancellation policies on the same tab">
+      <HelpSection title="Cancellation policies">
         <HelpP>
-          The Messages tab also holds short-stay and monthly cancellation
-          policies. Guests see them under Things to know. Full rules:{" "}
+          Short-stay and monthly cancellation policies live on each listing’s{" "}
+          <strong>Cancellation</strong> tab. Guests see them under Things to
+          know. Full rules:{" "}
           <Link
             href="/help/cancellation-policies"
             className="font-semibold text-bonnet"

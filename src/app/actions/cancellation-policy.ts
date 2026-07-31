@@ -45,5 +45,5 @@ export async function savePropertyCancellationPolicy(formData: FormData) {
 
   revalidatePath(`/admin/properties/${propertyId}`);
   revalidatePath("/marketplace");
-  redirect(`/admin/properties/${propertyId}?tab=messages&saved=policy`);
+  redirect(`/admin/properties/${propertyId}?tab=cancellation&saved=policy`);
 }

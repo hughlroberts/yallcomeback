@@ -125,6 +125,7 @@ type TabId =
   | "peaks"
   | "blocks"
   | "sync"
+  | "cancellation"
   | "messages";
 
 export function AdminListingWorkspace({
@@ -139,6 +140,7 @@ export function AdminListingWorkspace({
   peaksPanel,
   blocksPanel,
   syncPanel,
+  cancellationPanel,
   messagesPanel,
   initialTab,
 }: {
@@ -153,6 +155,7 @@ export function AdminListingWorkspace({
   peaksPanel: ReactNode;
   blocksPanel: ReactNode;
   syncPanel: ReactNode;
+  cancellationPanel?: ReactNode;
   messagesPanel?: ReactNode;
   initialTab?: TabId;
 }) {
@@ -273,6 +276,9 @@ export function AdminListingWorkspace({
     { id: "peaks", label: "Peak dates" },
     { id: "blocks", label: "Blocks" },
     { id: "sync", label: "Sync" },
+    ...(cancellationPanel
+      ? ([{ id: "cancellation" as const, label: "Cancellation" }] as const)
+      : []),
     ...(messagesPanel
       ? ([{ id: "messages" as const, label: "Messages" }] as const)
       : []),
@@ -835,6 +841,9 @@ export function AdminListingWorkspace({
       {tab === "peaks" ? <div className="max-w-3xl">{peaksPanel}</div> : null}
       {tab === "blocks" ? <div className="max-w-3xl">{blocksPanel}</div> : null}
       {tab === "sync" ? <div className="max-w-3xl">{syncPanel}</div> : null}
+      {tab === "cancellation" && cancellationPanel ? (
+        <div className="max-w-3xl">{cancellationPanel}</div>
+      ) : null}
       {tab === "messages" && messagesPanel ? (
         <div className="max-w-3xl">{messagesPanel}</div>
       ) : null}

@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   copyBookingMessagesToAllListings,
@@ -91,15 +90,12 @@ export function AdminBookingMessages({
   saved,
   error,
   copiedCount,
-  cancellationSlot,
-}: Props & { cancellationSlot?: React.ReactNode }) {
+}: Props) {
   const weekH = hostDefaults?.weekHours ?? 168;
   const dayH = hostDefaults?.dayHours ?? 24;
 
   return (
     <div className="space-y-6">
-      {cancellationSlot}
-
       <div>
         <h2 className="text-lg font-semibold text-stone-900">
           Booking messages

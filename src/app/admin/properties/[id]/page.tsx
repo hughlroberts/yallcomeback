@@ -88,6 +88,7 @@ export default async function AdminPropertyDetailPage({
 
   const initialTab =
     sp.tab === "messages" ||
+    sp.tab === "cancellation" ||
     sp.tab === "listing" ||
     sp.tab === "amenities" ||
     sp.tab === "rooms" ||
@@ -1049,6 +1050,15 @@ export default async function AdminPropertyDetailPage({
         blocksPanel={blocksPanel}
         syncPanel={syncPanel}
         initialTab={initialTab}
+        cancellationPanel={
+          <AdminCancellationPolicy
+            propertyId={property.id}
+            shortPolicy={property.cancellationPolicy}
+            longPolicy={property.longTermCancellationPolicy}
+            nonRefundableOption={property.nonRefundableOption}
+            saved={sp.saved}
+          />
+        }
         messagesPanel={
           <AdminBookingMessages
             propertyId={property.id}
@@ -1071,15 +1081,6 @@ export default async function AdminPropertyDetailPage({
               weekHours: property.host.autoMsgWeekBeforeHours,
               dayHours: property.host.autoMsgDayBeforeHours,
             }}
-            cancellationSlot={
-              <AdminCancellationPolicy
-                propertyId={property.id}
-                shortPolicy={property.cancellationPolicy}
-                longPolicy={property.longTermCancellationPolicy}
-                nonRefundableOption={property.nonRefundableOption}
-                saved={sp.saved}
-              />
-            }
           />
         }
       />
