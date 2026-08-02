@@ -118,6 +118,16 @@ enum SetupServiceStatus {
   WAIVED
 }
 
+/// Optional $35/mo market pricing intelligence add-on (hosted platform only).
+/// Separate from website hosting fees — never bundled into core plan price.
+enum PricingAddonStatus {
+  NONE
+  REQUESTED
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
 /// Monthly website hosting plans (traditional hosting-style pricing)
 model HostingPlan {
   id            String              @id @default(cuid())
@@ -201,6 +211,13 @@ model Host {
   setupServiceAmount   Float               @default(500)
   setupServicePaidAt   DateTime?
   setupServiceNotes    String?
+
+  /// Market pricing intelligence add-on ($35/mo extra — not included in hosting)
+  pricingIntelligenceAddonStatus    PricingAddonStatus @default(NONE)
+  /// Snapshot of monthly fee at subscription time
+  pricingIntelligenceAddonAmount    Float              @default(35)
+  pricingIntelligenceAddonStartedAt DateTime?
+  pricingIntelligenceAddonNotes     String?
 
   users                User[]
   properties           Property[]

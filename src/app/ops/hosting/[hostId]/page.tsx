@@ -283,6 +283,61 @@ export default async function OpsHostDetailPage({
               defaultValue={host.approvalNotes || ""}
             />
           </div>
+          <div className="sm:col-span-2 rounded-xl border border-bonnet/20 bg-petal/50 p-4">
+            <p className="text-sm font-semibold text-ink">
+              Pricing intelligence add-on ($35/mo)
+            </p>
+            <p className="mt-1 text-xs text-ink-muted">
+              Optional market research agents.{" "}
+              <strong>Not included in hosting plan price</strong> — billed as a
+              separate line. Activate only after payment.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="pricingIntelligenceAddonStatus">
+                  Add-on status
+                </Label>
+                <select
+                  id="pricingIntelligenceAddonStatus"
+                  name="pricingIntelligenceAddonStatus"
+                  defaultValue={host.pricingIntelligenceAddonStatus}
+                  className="mt-1 h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-white px-3 text-sm"
+                >
+                  <option value="NONE">Not subscribed</option>
+                  <option value="REQUESTED">Requested</option>
+                  <option value="ACTIVE">Active (+$35/mo)</option>
+                  <option value="PAST_DUE">Past due</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="pricingIntelligenceAddonAmount">
+                  Monthly amount (USD)
+                </Label>
+                <Input
+                  id="pricingIntelligenceAddonAmount"
+                  name="pricingIntelligenceAddonAmount"
+                  type="number"
+                  min={0}
+                  step="1"
+                  defaultValue={host.pricingIntelligenceAddonAmount ?? 35}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="pricingIntelligenceAddonNotes">
+                  Add-on notes
+                </Label>
+                <Textarea
+                  id="pricingIntelligenceAddonNotes"
+                  name="pricingIntelligenceAddonNotes"
+                  rows={2}
+                  defaultValue={host.pricingIntelligenceAddonNotes || ""}
+                  placeholder="Invoice #, activation date…"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="sm:col-span-2 rounded-xl border border-honey/40 bg-honey/10 p-4">
             <p className="text-sm font-semibold text-ink">
               {SETUP_SERVICE_LABEL}

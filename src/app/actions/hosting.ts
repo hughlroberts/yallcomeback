@@ -312,6 +312,31 @@ export async function updateHostOps(formData: FormData) {
     Number(formData.get("setupServiceAmount") || host.setupServiceAmount || 500),
   );
 
+  const pricingAddonStatusRaw = String(
+    formData.get("pricingIntelligenceAddonStatus") ||
+      host.pricingIntelligenceAddonStatus,
+  );
+  const pricingIntelligenceAddonStatus = (
+    ["NONE", "REQUESTED", "ACTIVE", "PAST_DUE", "CANCELLED"] as const
+  ).includes(pricingAddonStatusRaw as "NONE")
+    ? (pricingAddonStatusRaw as
+        | "NONE"
+        | "REQUESTED"
+        | "ACTIVE"
+        | "PAST_DUE"
+        | "CANCELLED")
+    : host.pricingIntelligenceAddonStatus;
+  const pricingIntelligenceAddonAmount = Math.max(
+    0,
+    Number(
+      formData.get("pricingIntelligenceAddonAmount") ||
+        host.pricingIntelligenceAddonAmount ||
+        35,
+    ),
+  );
+  const pricingIntelligenceAddonNotes =
+    String(formData.get("pricingIntelligenceAddonNotes") || "").trim() || null;
+
   let planMonthly = 0;
   if (planId) {
     const plan = await prisma.hostingPlan.findUnique({ where: { id: planId } });
@@ -352,6 +377,15 @@ export async function updateHostOps(formData: FormData) {
     setupServiceAmount: number;
     setupServiceNotes: string | null;
     setupServicePaidAt?: Date | null;
+    pricingIntelligenceAddonStatus:
+      | "NONE"
+      | "REQUESTED"
+      | "ACTIVE"
+      | "PAST_DUE"
+      | "CANCELLED";
+    pricingIntelligenceAddonAmount: number;
+    pricingIntelligenceAddonNotes: string | null;
+    pricingIntelligenceAddonStartedAt?: Date | null;
     approvalStatus?: "APPROVED" | "SUSPENDED";
     currentPeriodStart?: Date | null;
     currentPeriodEnd?: Date | null;
@@ -372,6 +406,9 @@ export async function updateHostOps(formData: FormData) {
     setupServiceStatus,
     setupServiceAmount,
     setupServiceNotes,
+    pricingIntelligenceAddonStatus,
+    pricingIntelligenceAddonAmount,
+    pricingIntelligenceAddonNotes,
   };
 
   if (setupServiceStatus === "PAID" && !host.setupServicePaidAt) {
@@ -379,6 +416,12 @@ export async function updateHostOps(formData: FormData) {
   }
   if (setupServiceStatus !== "PAID" && host.setupServicePaidAt) {
     data.setupServicePaidAt = null;
+  }
+  if (
+    pricingIntelligenceAddonStatus === "ACTIVE" &&
+    !host.pricingIntelligenceAddonStartedAt
+  ) {
+    data.pricingIntelligenceAddonStartedAt = new Date();
   }
 
   if (isComplimentary) {

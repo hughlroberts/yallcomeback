@@ -1,10 +1,26 @@
 # Platform pricing intelligence (hosted only)
 
-**Not included in the MIT open-source product.**
+**Not included in the MIT open-source product.**  
+**Not included in normal website hosting fees.**
 
-This feature runs only on the hosted Yall Come Back platform / marketplace
-product. Open-source self-host builds must set `YCB_OPEN_SOURCE_BUILD=true`
-(or leave `PLATFORM_PRODUCT_MODE` unset) so routes and cron stay disabled.
+This is a **paid add-on: $35 / month**, billed as its own line item (never
+bundled into plan monthly price). Open-source self-host builds must set
+`YCB_OPEN_SOURCE_BUILD=true` (or leave `PLATFORM_PRODUCT_MODE` unset) so routes
+and cron stay disabled.
+
+---
+
+## Pricing
+
+| Item | Amount |
+|------|--------|
+| Website hosting (paid platform) | Per plan (e.g. $/listing/mo) |
+| Free self-host | $0 / mo platform fee |
+| **Market pricing intelligence add-on** | **+$35 / mo** |
+
+Hosts request the add-on under **Admin → Pricing intelligence**. Ops sets status
+to **ACTIVE** after payment (**Ops → Hosting → host**). When active, the next
+hosting invoice includes a separate Stripe/manual line for the add-on.
 
 ---
 
@@ -52,10 +68,13 @@ YCB_OPEN_SOURCE_BUILD=true
 
 **Admin → Pricing intelligence**
 
-1. **Start research run** (per host brand).
-2. Open the run → read report + per-listing cards.
-3. **Approve** / **Reject** each suggestion.
-4. **Apply to listing base rate** only for approved items.
+1. **Request add-on** ($35/mo) if not already ACTIVE.
+2. After ops activates: **Start research run**.
+3. Open the run → read report + per-listing cards.
+4. **Approve** / **Reject** each suggestion.
+5. **Apply to listing base rate** only for approved items.
+
+Without an active add-on, research runs are blocked (platform can bypass for support only).
 
 ---
 

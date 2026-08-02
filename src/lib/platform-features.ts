@@ -6,6 +6,17 @@
  * routes stay dark and cron jobs no-op.
  */
 
+import type { PricingAddonStatus } from "@prisma/client";
+
+/** Monthly fee for market pricing intelligence — never bundled into core hosting. */
+export const PRICING_INTELLIGENCE_ADDON_USD = 35;
+
+export const PRICING_INTELLIGENCE_ADDON_LABEL =
+  "Market pricing intelligence";
+
+export const PRICING_INTELLIGENCE_ADDON_BLURB =
+  "Monthly AI market research and rate suggestions for your stays (capacity-matched comps). Optional add-on — not included in website hosting.";
+
 /**
  * Hosted YCB marketplace product (not a vanilla open-source self-host).
  * Set PLATFORM_PRODUCT_MODE=true on Railway / main product deploys.
@@ -20,9 +31,8 @@ export function isPlatformProductMode(): boolean {
 }
 
 /**
- * Monthly OTA-style pricing research + recommendations (agents).
- * Platform-only. Enable with PLATFORM_PRODUCT_MODE=true, or force with
- * PRICING_INTELLIGENCE_ENABLED=true for local testing.
+ * Feature exists on this deploy (platform product). Does not mean a given host
+ * has paid for the $35/mo add-on — use hostHasPricingIntelligenceAddon for that.
  */
 export function isPricingIntelligenceEnabled(): boolean {
   if (process.env.YCB_OPEN_SOURCE_BUILD?.trim().toLowerCase() === "true") {
@@ -34,6 +44,32 @@ export function isPricingIntelligenceEnabled(): boolean {
   return isPlatformProductMode();
 }
 
+/** Host has an active $35/mo pricing intelligence subscription. */
+export function hostHasPricingIntelligenceAddon(host: {
+  pricingIntelligenceAddonStatus: PricingAddonStatus | string;
+}): boolean {
+  return host.pricingIntelligenceAddonStatus === "ACTIVE";
+}
+
+export function pricingAddonStatusLabel(
+  status: PricingAddonStatus | string,
+): string {
+  switch (status) {
+    case "NONE":
+      return "Not subscribed";
+    case "REQUESTED":
+      return "Requested — awaiting activation";
+    case "ACTIVE":
+      return "Active (+$35/mo)";
+    case "PAST_DUE":
+      return "Past due";
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      return String(status);
+  }
+}
+
 /** Optional xAI / Grok key for richer competitor research narratives. */
 export function pricingIntelligenceLlmConfigured(): boolean {
   return Boolean(
@@ -42,7 +78,7 @@ export function pricingIntelligenceLlmConfigured(): boolean {
 }
 
 export const PLATFORM_ONLY_FEATURE_LABELS = [
-  "Market pricing intelligence (monthly AI research + recommendations)",
+  "Market pricing intelligence add-on ($35/mo — not in hosting fee)",
   "OTA peer comps (Airbnb / VRBO / Booking-style capacity matching)",
   "Human-approved price apply (suggestion-only by default)",
 ] as const;

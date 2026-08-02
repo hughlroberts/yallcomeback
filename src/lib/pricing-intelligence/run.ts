@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/db";
 import type { PricingRunTrigger, PricingRecBasis } from "@prisma/client";
-import { isPricingIntelligenceEnabled } from "@/lib/platform-features";
+import {
+  hostHasPricingIntelligenceAddon,
+  isPricingIntelligenceEnabled,
+  PRICING_INTELLIGENCE_ADDON_USD,
+} from "@/lib/platform-features";
 import { collectHostPricingData } from "./collector";
 import { analyzePricing, buildReportMarkdown } from "./analyst";
 
@@ -9,11 +13,13 @@ export type RunPricingOptions = {
   trigger?: PricingRunTrigger;
   /** Lookback days for internal stats (default 90). */
   lookbackDays?: number;
+  /** Platform admin may force a run without active add-on (support / demo). */
+  bypassAddonCheck?: boolean;
 };
 
 /**
  * Full agent loop for one host: collect → analyze → recommend (no auto-apply).
- * Platform product only.
+ * Platform product only. Requires the $35/mo add-on (unless bypassAddonCheck).
  */
 export async function runPricingIntelligenceForHost(
   opts: RunPricingOptions,
@@ -21,6 +27,23 @@ export async function runPricingIntelligenceForHost(
   if (!isPricingIntelligenceEnabled()) {
     throw new Error(
       "Pricing intelligence is a hosted-platform feature and is disabled on this deploy.",
+    );
+  }
+
+  const hostRow = await prisma.host.findUnique({
+    where: { id: opts.hostId },
+    select: {
+      id: true,
+      pricingIntelligenceAddonStatus: true,
+    },
+  });
+  if (!hostRow) throw new Error("Host not found");
+  if (
+    !opts.bypassAddonCheck &&
+    !hostHasPricingIntelligenceAddon(hostRow)
+  ) {
+    throw new Error(
+      `Market pricing intelligence is a $${PRICING_INTELLIGENCE_ADDON_USD}/mo add-on. Subscribe under Admin → Pricing intelligence (not included in hosting).`,
     );
   }
 
@@ -113,10 +136,12 @@ export async function runMonthlyPricingIntelligence(): Promise<{
   }
 
   const since = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
+  // Only hosts who pay the $35/mo add-on (separate from core hosting)
   const hosts = await prisma.host.findMany({
     where: {
       active: true,
       approvalStatus: "APPROVED",
+      pricingIntelligenceAddonStatus: "ACTIVE",
       properties: { some: { published: true } },
     },
     select: { id: true, name: true },
