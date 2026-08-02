@@ -208,6 +208,8 @@ model Host {
   invoices             HostingInvoice[]
   conversations        Conversation[]
   taxLines             HostTaxLine[]
+  /// Platform-only market pricing research runs (not in open-source product)
+  pricingIntelligenceRuns PricingIntelligenceRun[]
 }
 
 /// Host-level tax rates (e.g. Texas hotel occupancy tax). Applies to ALL listings
@@ -411,6 +413,7 @@ model Property {
   icalConnections  IcalConnection[]
   bookings         Booking[]
   conversations    Conversation[]
+  pricingRecommendations PricingRecommendation[]
 
   @@unique([hostId, slug])
   @@index([listOnMarketplace, published])
@@ -634,4 +637,92 @@ model SiteSettings {
   contactEmail          String?
   contactPhone          String?
   stripeEnabled         Boolean @default(false)
+}
+
+// ---------------------------------------------------------------------------
+// PLATFORM ONLY — market pricing intelligence (hosted YCB / marketplace).
+// Not part of the MIT open-source self-host product surface.
+// ---------------------------------------------------------------------------
+
+enum PricingRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum PricingRunTrigger {
+  MANUAL
+  MONTHLY_CRON
+}
+
+enum PricingRecStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  APPLIED
+  SKIPPED
+}
+
+enum PricingRecBasis {
+  /// Primary: comparable by guest capacity (maxGuests / house size)
+  CAPACITY
+  COMPETITIVE
+  SEASONALITY
+  OCCUPANCY
+  MIXED
+}
+
+/// One research cycle for a host brand (monthly or manual).
+model PricingIntelligenceRun {
+  id              String            @id @default(cuid())
+  hostId          String
+  host            Host              @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  status          PricingRunStatus  @default(PENDING)
+  trigger         PricingRunTrigger @default(MANUAL)
+  periodStart     DateTime
+  periodEnd       DateTime
+  /// Collector snapshot: internal stats + peer comps + external notes
+  collectorJson   String            @default("{}")
+  /// Analyst notes / model outputs
+  analystJson     String            @default("{}")
+  /// Human-readable report (markdown)
+  reportMarkdown  String?
+  error           String?
+  createdAt       DateTime          @default(now())
+  completedAt     DateTime?
+  recommendations PricingRecommendation[]
+
+  @@index([hostId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// Per-listing price suggestion from a research run. Human approve before apply.
+model PricingRecommendation {
+  id                   String          @id @default(cuid())
+  runId                String
+  run                  PricingIntelligenceRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  propertyId           String
+  property             Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  currentNightlyRate   Float
+  suggestedNightlyRate Float
+  changePercent        Float
+  basis                PricingRecBasis @default(CAPACITY)
+  confidence           Float           @default(0.5)
+  rationale            String
+  experimentNote       String?
+  projectedImpact      String?
+  riskNotes            String?
+  /// JSON: peer comps, OTA notes, etc.
+  evidenceJson         String          @default("{}")
+  status               PricingRecStatus @default(PENDING)
+  decidedAt            DateTime?
+  decidedByUserId      String?
+  appliedAt            DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@index([runId])
+  @@index([propertyId, status])
+  @@index([status])
 }

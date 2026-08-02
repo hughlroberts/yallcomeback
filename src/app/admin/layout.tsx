@@ -20,6 +20,7 @@ export default async function AdminLayout({
     { href: "/admin", label: "Dashboard", exact: true },
     { href: "/admin/properties", label: "Properties" },
     { href: "/admin/brand", label: "Brand & website" },
+    { href: "/admin/pricing", label: "Pricing intelligence" },
     { href: "/admin/magnets", label: "Fridge magnets" },
     { href: "/admin/bookings", label: "Bookings" },
     { href: "/admin/earnings", label: "Earnings" },

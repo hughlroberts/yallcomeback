@@ -87,8 +87,7 @@ export default function OpenSourcePage() {
             platform or push from a remote open-source deploy with a syndication
             API key (Admin → Brand &amp; website). Platform website hosting (our
             servers, monthly fee) is optional. The software itself is {LICENSE}{" "}
-            open source - reuse, modify, and run on
-            your own domain at no cost.
+            open source - reuse, modify, and run on your own domain at no cost.
           </p>
         </div>
       </div>
@@ -379,6 +378,20 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
                 docs/remote-open-source-marketplace.md
               </code>
               .
+            </p>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-stone-300 bg-stone-100/80 p-5 text-sm text-stone-700">
+            <p className="font-semibold text-stone-900">
+              Not in the open-source copy
+            </p>
+            <p className="mt-1 text-stone-600">
+              Hosted-platform tools such as{" "}
+              <strong>monthly AI market pricing intelligence</strong> (OTA-style
+              research agents and human-approved rate suggestions) ship only on
+              the Yall Come Back marketplace product. They are intentionally
+              excluded from this MIT feature inventory. Self-hosts set rates
+              manually or build their own tools.
             </p>
           </div>
         </section>

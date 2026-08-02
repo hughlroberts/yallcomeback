@@ -45,8 +45,25 @@ export async function runBookingMessages(): Promise<BookingMessagesResult> {
 export async function runAllCronJobs(): Promise<{
   ical: IcalSyncResult;
   messages: BookingMessagesResult;
+  pricing?: { skipped: boolean; hostsProcessed: number; errors: string[] };
 }> {
   const ical = await runIcalSync();
   const messages = await runBookingMessages();
-  return { ical, messages };
+
+  // Monthly pricing intelligence: only if explicitly enabled in-process.
+  // Prefer external monthly hit to /api/cron/pricing-intelligence.
+  let pricing:
+    | { skipped: boolean; hostsProcessed: number; errors: string[] }
+    | undefined;
+  if (
+    process.env.PRICING_INTELLIGENCE_MONTHLY_IN_PROCESS?.trim().toLowerCase() ===
+    "true"
+  ) {
+    const { runMonthlyPricingIntelligence } = await import(
+      "@/lib/pricing-intelligence/run"
+    );
+    pricing = await runMonthlyPricingIntelligence();
+  }
+
+  return { ical, messages, pricing };
 }

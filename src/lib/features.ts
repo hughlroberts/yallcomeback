@@ -2,6 +2,9 @@
  * Product feature inventory - keep this list current when you ship something new.
  * Rendered on /open-source (and mirrored in README) so self-hosters always see
  * what the free copy includes.
+ *
+ * Platform-only (hosted YCB) features — e.g. market pricing intelligence —
+ * live in `src/lib/platform-features.ts` and must NOT be listed here.
  */
 export const PRODUCT_NAME = "Yall Come Back";
 export const PRODUCT_DOMAIN = "yallcomeback.com";
