@@ -7,16 +7,10 @@ import { getRequestTenant } from "@/lib/tenant";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const runtime = "nodejs";
-
-export async function generateImageMetadata() {
-  const tenant = await getRequestTenant();
-  if (tenant) {
-    return {
-      alt: `${tenant.name}${tenant.tagline ? ` — ${tenant.tagline}` : ""}`,
-    };
-  }
-  return { alt: `${PRODUCT_NAME} — ${PRODUCT_TAGLINE}` };
-}
+// Must not use headers() during static generateStaticParams at build time.
+// Runtime requests still resolve tenant via getRequestTenant (safe try/catch).
+export const dynamic = "force-dynamic";
+export const alt = `${PRODUCT_NAME} — ${PRODUCT_TAGLINE}`;
 
 /**
  * iMessage / social link preview.

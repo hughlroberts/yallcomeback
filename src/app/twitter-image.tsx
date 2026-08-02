@@ -1,4 +1,5 @@
-export { default, size, contentType } from "./opengraph-image";
+export { default, size, contentType, alt } from "./opengraph-image";
 
-// Must be a local literal — Next cannot statically parse re-exported runtime.
+// Must be local literals — Next cannot statically parse re-exported config.
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";

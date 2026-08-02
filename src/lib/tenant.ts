@@ -14,12 +14,20 @@ export const TENANT_SLUG_HEADER = TENANT_HEADER;
  * Resolve the public host brand for this request.
  * Only trusts the middleware `x-tenant-slug` header so /admin, /login, etc.
  * on a custom domain still get platform chrome (hosts manage ops as YCB tools).
+ *
+ * Safe during build/static generation: returns null if headers() is unavailable
+ * (e.g. opengraph-image collect at build time).
  */
 export async function getRequestTenant(): Promise<HostTenant | null> {
-  const h = await headers();
-  const fromHeader = h.get(TENANT_HEADER)?.trim().toLowerCase();
-  if (!fromHeader) return null;
-  return getHostBySlug(fromHeader);
+  try {
+    const h = await headers();
+    const fromHeader = h.get(TENANT_HEADER)?.trim().toLowerCase();
+    if (!fromHeader) return null;
+    return getHostBySlug(fromHeader);
+  } catch {
+    // Build-time / generateStaticParams — no request context
+    return null;
+  }
 }
 
 /**
