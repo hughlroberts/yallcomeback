@@ -180,14 +180,23 @@ export default async function AdminBrandPage({
         </p>
       ) : null}
 
-      <form action={updateHostProfile} className="space-y-6">
+      {/*
+        Layout: brand form uses display:contents so we can place logo upload
+        immediately under Identity without nesting forms.
+      */}
+      <div className="flex flex-col gap-6">
+      <form
+        id="brand-form"
+        action={updateHostProfile}
+        className="contents"
+      >
         <input type="hidden" name="hostId" value={host.id} />
         <input type="hidden" name="returnTo" value={returnTo} />
         <input type="hidden" name="sitePresence" value={host.sitePresence} />
         {host.active ? <input type="hidden" name="active" value="on" /> : null}
 
         {/* —— Publish —— */}
-        <Card className="space-y-4 border-bonnet/20 bg-gradient-to-br from-petal/50 to-white p-6">
+        <Card className="order-1 space-y-4 border-bonnet/20 bg-gradient-to-br from-petal/50 to-white p-6">
           <div>
             <h2 className="text-lg font-semibold text-stone-900">Publish</h2>
             <p className="mt-1 text-sm text-stone-600">
@@ -229,7 +238,7 @@ export default async function AdminBrandPage({
         </Card>
 
         {/* —— Identity —— */}
-        <Card className="space-y-5 p-6">
+        <Card className="order-2 space-y-5 p-6">
           <h2 className="text-lg font-semibold text-stone-900">
             Identity & palette
           </h2>
@@ -261,9 +270,7 @@ export default async function AdminBrandPage({
                 defaultValue={host.logoUrl || ""}
               />
               <p className="text-xs text-stone-500">
-                Square works best. Prefer{" "}
-                <strong>Upload logo</strong> in the card below the form, or paste
-                a public URL.
+                Square works best. Or upload a file in the card directly below.
               </p>
             </div>
           </div>
@@ -311,7 +318,7 @@ export default async function AdminBrandPage({
         </Card>
 
         {/* —— Fixed pages —— */}
-        <Card className="space-y-5 p-6">
+        <Card className="order-4 space-y-5 p-6">
           <div>
             <h2 className="text-lg font-semibold text-stone-900">
               Pages (fixed set)
@@ -379,7 +386,7 @@ export default async function AdminBrandPage({
         </Card>
 
         {/* —— About content —— */}
-        <Card className="space-y-5 p-6">
+        <Card className="order-5 space-y-5 p-6">
           <h2 className="text-lg font-semibold text-stone-900">About content</h2>
           <p className="text-sm text-stone-500">
             Shown when the About page is on (and a short teaser on the home
@@ -430,7 +437,7 @@ export default async function AdminBrandPage({
         </Card>
 
         {/* —— Services page title (blocks saved in builder below) —— */}
-        <Card className="space-y-5 p-6">
+        <Card className="order-6 space-y-5 p-6">
           <h2 className="text-lg font-semibold text-stone-900">
             Other services page
           </h2>
@@ -452,7 +459,7 @@ export default async function AdminBrandPage({
         </Card>
 
         {/* —— Socials —— */}
-        <Card className="space-y-5 p-6">
+        <Card className="order-7 space-y-5 p-6">
           <h2 className="text-lg font-semibold text-stone-900">Social links</h2>
           <p className="text-sm text-stone-500">
             Full URL or handle. Shown in footer and on About.
@@ -498,7 +505,7 @@ export default async function AdminBrandPage({
         </Card>
 
         {/* —— Domain —— */}
-        <Card className="space-y-5 p-6">
+        <Card className="order-8 space-y-5 p-6">
           <h2 className="text-lg font-semibold text-stone-900">
             Domain & disclaimer
           </h2>
@@ -549,7 +556,7 @@ export default async function AdminBrandPage({
         </Card>
 
         {/* —— Marketplace —— */}
-        <Card className="space-y-5 p-6">
+        <Card className="order-9 space-y-5 p-6">
           <h2 className="text-lg font-semibold text-stone-900">
             Marketplace (optional)
           </h2>
@@ -580,33 +587,7 @@ export default async function AdminBrandPage({
           ) : null}
         </Card>
 
-        {/* —— Syndication —— */}
-        <Card className="space-y-5 p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Open-source / remote syndication
-          </h2>
-          <p className="text-sm text-stone-500">
-            If you run a separate open-source copy, use an API key to push
-            listings into this marketplace. On-platform hosting does not need
-            this.
-          </p>
-          {params.synKey ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              <p className="font-semibold">Copy your new key now</p>
-              <p className="mt-1 break-all font-mono text-xs">{params.synKey}</p>
-            </div>
-          ) : (
-            <p className="text-sm text-stone-600">
-              Current key:{" "}
-              <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">
-                {maskSyndicationKey(host.syndicationApiKey)}
-              </code>
-            </p>
-          )}
-          {/* nested form not valid HTML — use separate form below */}
-        </Card>
-
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="order-10 flex flex-wrap items-center gap-3">
           <Button type="submit">Save brand & website</Button>
           <Link
             href={previewPath}
@@ -624,42 +605,12 @@ export default async function AdminBrandPage({
         </div>
       </form>
 
-      {/* Services builder — separate from main form (client DnD) */}
-      {host.sitePageServices ? (
-        <Card className="space-y-4 p-6">
-          <ServicesPageBuilder
-            hostId={host.id}
-            returnTo={returnTo}
-            pageTitle={host.siteServicesTitle || "Other services"}
-            initialBlocks={blocksFromHost({
-              siteServicesBlocks: host.siteServicesBlocks,
-              siteServicesBody: host.siteServicesBody,
-            })}
-          />
-          <p className="text-xs text-stone-500">
-            Guest page:{" "}
-            <Link
-              href={`/h/${host.slug}/services`}
-              target="_blank"
-              className="font-medium text-bonnet hover:underline"
-            >
-              /h/{host.slug}/services →
-            </Link>
-          </p>
-        </Card>
-      ) : (
-        <Card className="p-6 text-sm text-stone-500">
-          Turn on <strong>Other services</strong> under Pages, save brand, then
-          reopen this screen to use the drag-and-drop page builder.
-        </Card>
-      )}
-
-      {/* Separate forms — cannot nest inside Save brand */}
-      <Card className="space-y-4 p-6">
+      {/* Logo upload sits under Identity (order-3) via flex order */}
+      <Card className="order-3 space-y-4 border-stone-200 p-6">
         <h2 className="text-lg font-semibold text-stone-900">Upload logo</h2>
         <p className="text-sm text-stone-500">
-          PNG, JPG, or WebP under 4&nbsp;MB. Updates your logo without saving the
-          rest of the form.
+          PNG, JPG, or WebP under 4&nbsp;MB. Saves the logo without submitting the
+          rest of the brand form.
         </p>
         <form
           action={uploadHostLogo}
@@ -683,15 +634,104 @@ export default async function AdminBrandPage({
         </form>
       </Card>
 
-      <form action={rotateSyndicationApiKey} className="flex flex-wrap gap-3">
-        <input type="hidden" name="hostId" value={host.id} />
-        <input type="hidden" name="returnTo" value={returnTo} />
-        <Button type="submit" variant="secondary">
-          {host.syndicationApiKey
-            ? "Rotate syndication API key"
-            : "Generate syndication API key"}
-        </Button>
-      </form>
+      {/* Services builder */}
+      {host.sitePageServices ? (
+        <Card className="order-11 space-y-4 p-6">
+          <ServicesPageBuilder
+            hostId={host.id}
+            returnTo={returnTo}
+            pageTitle={host.siteServicesTitle || "Other services"}
+            initialBlocks={blocksFromHost({
+              siteServicesBlocks: host.siteServicesBlocks,
+              siteServicesBody: host.siteServicesBody,
+            })}
+          />
+          <p className="text-xs text-stone-500">
+            Guest page:{" "}
+            <Link
+              href={`/h/${host.slug}/services`}
+              target="_blank"
+              className="font-medium text-bonnet hover:underline"
+            >
+              /h/{host.slug}/services →
+            </Link>
+          </p>
+        </Card>
+      ) : (
+        <Card className="order-11 p-6 text-sm text-stone-500">
+          Turn on <strong>Other services</strong> under Pages, save brand, then
+          reopen this screen to use the drag-and-drop page builder.
+        </Card>
+      )}
+
+      {/* Syndication — own box, advanced / optional */}
+      <Card className="order-12 space-y-4 border-stone-200 bg-stone-50/50 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-stone-900">
+                Syndication API key
+              </h2>
+              <Link
+                href="/help/syndication-api-key"
+                target="_blank"
+                className="inline-flex size-7 items-center justify-center rounded-full border border-stone-300 bg-white text-xs font-bold text-stone-600 hover:border-bonnet hover:text-bonnet"
+                title="What is this key?"
+                aria-label="About the syndication API key"
+              >
+                i
+              </Link>
+            </div>
+            <p className="mt-1 text-sm text-stone-600">
+              <strong>Advanced / optional.</strong> Only if you run a{" "}
+              <em>separate</em> open-source copy of Yall Come Back on your own
+              servers and want to push listings into{" "}
+              <strong>this</strong> marketplace.{" "}
+              <span className="text-stone-500">
+                Normal hosted brands (like a site on this app) do not need this.
+              </span>
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-stone-200/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+            Remote OSS only
+          </span>
+        </div>
+
+        {params.synKey ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="font-semibold">Copy your new key now</p>
+            <p className="mt-1 break-all font-mono text-xs">{params.synKey}</p>
+            <p className="mt-2 text-xs">
+              It will not be shown in full again. Store it in your remote deploy
+              secrets.
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-stone-600">
+            Current key:{" "}
+            <code className="rounded bg-white px-1.5 py-0.5 text-xs ring-1 ring-stone-200">
+              {maskSyndicationKey(host.syndicationApiKey)}
+            </code>
+          </p>
+        )}
+
+        <form action={rotateSyndicationApiKey} className="flex flex-wrap items-center gap-3">
+          <input type="hidden" name="hostId" value={host.id} />
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <Button type="submit" variant="secondary">
+            {host.syndicationApiKey
+              ? "Rotate syndication API key"
+              : "Generate syndication API key"}
+          </Button>
+          <Link
+            href="/help/syndication-api-key"
+            className="text-sm font-medium text-bonnet hover:underline"
+          >
+            How this works →
+          </Link>
+        </form>
+      </Card>
+      </div>
     </div>
   );
 }
