@@ -412,6 +412,7 @@ function priceForDate(
 
 type TabId =
   | "calendar"
+  | "insights"
   | "listing"
   | "amenities"
   | "rooms"
@@ -436,6 +437,7 @@ export function AdminListingWorkspace({
   syncPanel,
   cancellationPanel,
   messagesPanel,
+  insightsPanel,
   initialTab,
 }: {
   property: WorkspaceProperty;
@@ -451,6 +453,7 @@ export function AdminListingWorkspace({
   syncPanel: ReactNode;
   cancellationPanel?: ReactNode;
   messagesPanel?: ReactNode;
+  insightsPanel?: ReactNode;
   initialTab?: TabId;
 }) {
   const [tab, setTab] = useState<TabId>(initialTab || "calendar");
@@ -587,6 +590,9 @@ export function AdminListingWorkspace({
 
   const tabs: { id: TabId; label: string }[] = [
     { id: "calendar", label: "Calendar" },
+    ...(insightsPanel
+      ? ([{ id: "insights" as const, label: "Insights" }] as const)
+      : []),
     { id: "listing", label: "Listing" },
     { id: "amenities", label: "Amenities" },
     { id: "rooms", label: "Rooms & beds" },
@@ -957,6 +963,9 @@ export function AdminListingWorkspace({
         </div>
       ) : null}
 
+      {tab === "insights" && insightsPanel ? (
+        <div className="max-w-4xl">{insightsPanel}</div>
+      ) : null}
       {tab === "listing" ? <div className="max-w-3xl">{listingPanel}</div> : null}
       {tab === "amenities" ? (
         <div className="max-w-3xl">{amenitiesPanel}</div>

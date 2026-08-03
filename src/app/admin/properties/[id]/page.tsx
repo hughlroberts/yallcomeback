@@ -19,6 +19,7 @@ import {
   uploadPropertyImage,
 } from "@/app/actions/properties";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
+import { AdminListingInsights } from "@/components/admin-listing-insights";
 import { AdminAmenitiesEditor } from "@/components/admin-amenities-editor";
 import { AdminSleepingEditor } from "@/components/admin-sleeping-editor";
 import { AdminBookingMessages } from "@/components/admin-booking-messages";
@@ -29,6 +30,10 @@ import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 import { formatTime12h, nightsBetween, parseAmenities } from "@/lib/utils";
 import { requireHostAdmin } from "@/lib/auth";
 import { propertyScopeWhere } from "@/lib/scope";
+import {
+  getListingInsights,
+  listHostInsightsOptions,
+} from "@/lib/listing-insights";
 import { isStripeConfigured } from "@/lib/stripe";
 import {
   DEFAULT_PEAK_MIN_NIGHTS,
@@ -96,7 +101,8 @@ export default async function AdminPropertyDetailPage({
     sp.tab === "peaks" ||
     sp.tab === "blocks" ||
     sp.tab === "sync" ||
-    sp.tab === "calendar"
+    sp.tab === "calendar" ||
+    sp.tab === "insights"
       ? sp.tab
       : undefined;
 
@@ -1001,6 +1007,9 @@ export default async function AdminPropertyDetailPage({
     </Card>
   );
 
+  const hostListings = await listHostInsightsOptions(property.hostId);
+  const insightsInitial = await getListingInsights([property.id], 30);
+
   return (
     <div className="w-full max-w-[1400px]">
       <AdminListingWorkspace
@@ -1049,6 +1058,13 @@ export default async function AdminPropertyDetailPage({
           checkOut: toYmd(b.checkOut),
           status: b.status,
         }))}
+        insightsPanel={
+          <AdminListingInsights
+            currentPropertyId={property.id}
+            hostListings={hostListings}
+            initial={insightsInitial}
+          />
+        }
         listingPanel={listingPanel}
         amenitiesPanel={
           <AdminAmenitiesEditor

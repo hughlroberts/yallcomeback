@@ -24,6 +24,7 @@ import { ListingShareSave } from "@/components/listing-share-save";
 import { MeetYourHost } from "@/components/meet-your-host";
 import { ThingsToKnow } from "@/components/things-to-know";
 import { TrackRecentlyViewed } from "@/components/track-browse-history";
+import { TrackListingView } from "@/components/track-listing-view";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +156,7 @@ export default async function MarketplacePropertyPage({
         maxGuests={property.maxGuests}
         imageUrl={property.images[0]?.url ?? null}
       />
+      <TrackListingView propertyId={property.id} />
       <div className="relative h-[38vh] min-h-[240px] overflow-hidden bg-stone-900 md:h-[44vh]">
         {cover ? (
           <Image

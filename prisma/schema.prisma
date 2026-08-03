@@ -483,9 +483,29 @@ model Property {
   bookings         Booking[]
   conversations    Conversation[]
   pricingRecommendations PricingRecommendation[]
+  /// Daily public listing view counts (host Insights)
+  viewDays         PropertyViewDay[]
 
   @@unique([hostId, slug])
   @@index([listOnMarketplace, published])
+}
+
+/**
+ * Aggregated listing views per UTC calendar day (Airbnb-style Insights).
+ * Incremented from guest listing pages (deduped lightly client-side).
+ */
+model PropertyViewDay {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  /// Date at 00:00 UTC
+  day        DateTime
+  views      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([propertyId, day])
+  @@index([propertyId, day])
 }
 
 model PropertyImage {
