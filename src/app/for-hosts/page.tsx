@@ -86,10 +86,10 @@ export default async function ForHostsPage({
               Pick the product that matches how you want to grow
             </h2>
             <p className="mt-3 text-stone-600">
-              Airbnb and VRBO only sell one path: their marketplace, their cut,
-              their brand. Yall Come Back gives you three clear options — same
-              calendars and booking tools, different guest-facing surface and
-              ownership model. No commission on bookings on any path.
+              Big platforms only sell their catalog and take a cut. Yall Come
+              Back gives you three clear options: same calendars and booking
+              tools, different guest-facing surface and ownership model. No
+              commission on bookings on any path.
             </p>
           </div>
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
@@ -101,12 +101,12 @@ export default async function ForHostsPage({
                 1 · Marketplace only
               </p>
               <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
-                List like Airbnb — keep more of every stay
+                List on Yall Come Back. Keep more of every stay.
               </h3>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-stone-600">
                 Guests search and book on the shared Yall Come Back marketplace
                 with a familiar look and short listing URLs. You get calendars,
-                messaging, Insights, and booking tools —{" "}
+                messaging, Insights, and booking tools with{" "}
                 <strong className="font-semibold text-stone-800">
                   no cut of the booking
                 </strong>
@@ -114,7 +114,7 @@ export default async function ForHostsPage({
                 want discovery without building a website.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                <li>✓ Platform look &amp; feel guests already trust</li>
+                <li>✓ Platform look and feel guests already trust</li>
                 <li>✓ Listing-first URLs (not a host mini-site)</li>
                 <li>✓ Zero commission · monthly hosting only</li>
               </ul>
@@ -131,7 +131,7 @@ export default async function ForHostsPage({
                 2 · Custom website
               </p>
               <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
-                Your brand, your domain — we host the site
+                Your brand, your domain. We host the site.
               </h3>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-stone-600">
                 Yall Come Back runs a real guest website for you: logo, palette,
@@ -139,19 +139,16 @@ export default async function ForHostsPage({
                 <strong className="font-semibold text-stone-800">
                   Other services
                 </strong>{" "}
-                page (boat rentals, camping, tours — even when it’s not lodging).
-                Point{" "}
-                <span className="font-medium text-stone-800">
-                  cherokeelanding.net
-                </span>
-                -style domains when you’re ready. Marketplace listing stays{" "}
+                page (boat rentals, camping, tours, even when it is not lodging).
+                Point your own custom domain when you are ready. Marketplace
+                listing stays{" "}
                 <strong className="font-semibold text-stone-800">optional</strong>
                 .
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
                 <li>✓ Branded site guests remember as yours</li>
-                <li>✓ Fixed pages + services builder — not a full CMS maze</li>
-                <li>✓ Demo → Live publish before DNS cutover</li>
+                <li>✓ Fixed pages and services builder, not a full CMS maze</li>
+                <li>✓ Demo to Live publish before DNS cutover</li>
               </ul>
               <p className="mt-5 text-sm font-semibold text-bonnet">
                 Build my website →
@@ -169,15 +166,10 @@ export default async function ForHostsPage({
                 Own the code. $0 platform fee. Forever.
               </h3>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-stone-600">
-                Run the full MIT stack on your servers or a free self-host
-                registration on our platform — your data, your domain, no monthly
+                Run the full MIT stack on your servers or register for free
+                self-host on our platform: your data, your domain, no monthly
                 platform bill. Optionally syndicate into the central marketplace
-                for discovery.{" "}
-                <strong className="font-semibold text-stone-800">
-                  AI / agentic pricing
-                </strong>{" "}
-                stays on the hosted product only — the open tree stays lean and
-                yours to fork.
+                for discovery. The open tree is yours to fork and deploy.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
                 <li>✓ MIT license · export anytime</li>
