@@ -146,7 +146,7 @@ export default async function AdminPricingPage({
           </strong>
           . It is not part of hosting. Request below; we activate after payment.
         </p>
-      ) : sp.error ? (
+      ) : sp.error && !String(sp.error).includes("NEXT_REDIRECT") ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           {decodeURIComponent(sp.error)}
         </p>

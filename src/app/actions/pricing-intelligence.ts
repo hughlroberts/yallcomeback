@@ -250,12 +250,24 @@ export async function startPricingResearch(formData: FormData) {
       bypassAddonCheck: bypass,
     });
     revalidatePath("/admin/pricing");
+    revalidatePath(`/admin/pricing/${runId}`);
+    // redirect() throws NEXT_REDIRECT — must not be caught below
     redirect(
       `/admin/pricing/${runId}?started=1&n=${recommendationCount}`,
     );
   } catch (e) {
+    // Next.js redirect() and notFound() use thrown digests — rethrow them
+    if (
+      typeof e === "object" &&
+      e !== null &&
+      "digest" in e &&
+      typeof (e as { digest?: unknown }).digest === "string" &&
+      String((e as { digest: string }).digest).startsWith("NEXT_")
+    ) {
+      throw e;
+    }
     const msg = e instanceof Error ? e.message : "run_failed";
-    redirect(`/admin/pricing?error=${encodeURIComponent(msg.slice(0, 120))}`);
+    redirect(`/admin/pricing?error=${encodeURIComponent(msg.slice(0, 160))}`);
   }
 }
 
