@@ -9,8 +9,10 @@ import {
   uploadHostLogo,
 } from "@/app/actions/host";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { ServicesPageBuilder } from "@/components/services-page-builder";
 import { maskSyndicationKey } from "@/lib/syndication";
 import { sitePublishStateLabel } from "@/lib/host-site";
+import { blocksFromHost } from "@/lib/services-blocks";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Brand & website" };
@@ -427,16 +429,17 @@ export default async function AdminBrandPage({
           </div>
         </Card>
 
-        {/* —— Services content —— */}
+        {/* —— Services page title (blocks saved in builder below) —— */}
         <Card className="space-y-5 p-6">
           <h2 className="text-lg font-semibold text-stone-900">
-            Other services content
+            Other services page
           </h2>
           <p className="text-sm text-stone-500">
-            Only shown when the Services page toggle is on.
+            Turn the page on above, set a title, then build the page with blocks
+            after you save. Not a full website builder — fixed block types only.
           </p>
           <div className="space-y-1.5">
-            <Label htmlFor="siteServicesTitle">Title</Label>
+            <Label htmlFor="siteServicesTitle">Page title</Label>
             <Input
               id="siteServicesTitle"
               name="siteServicesTitle"
@@ -444,16 +447,8 @@ export default async function AdminBrandPage({
               placeholder="Boat rentals & lake extras"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="siteServicesBody">Details</Label>
-            <Textarea
-              id="siteServicesBody"
-              name="siteServicesBody"
-              rows={6}
-              defaultValue={host.siteServicesBody || ""}
-              placeholder="Pontoon rentals next door, kayaks, firewood…"
-            />
-          </div>
+          {/* Keep body for legacy; builder writes siteServicesBlocks */}
+          <input type="hidden" name="siteServicesBody" value={host.siteServicesBody || ""} />
         </Card>
 
         {/* —— Socials —— */}
@@ -628,6 +623,36 @@ export default async function AdminBrandPage({
           </Link>
         </div>
       </form>
+
+      {/* Services builder — separate from main form (client DnD) */}
+      {host.sitePageServices ? (
+        <Card className="space-y-4 p-6">
+          <ServicesPageBuilder
+            hostId={host.id}
+            returnTo={returnTo}
+            pageTitle={host.siteServicesTitle || "Other services"}
+            initialBlocks={blocksFromHost({
+              siteServicesBlocks: host.siteServicesBlocks,
+              siteServicesBody: host.siteServicesBody,
+            })}
+          />
+          <p className="text-xs text-stone-500">
+            Guest page:{" "}
+            <Link
+              href={`/h/${host.slug}/services`}
+              target="_blank"
+              className="font-medium text-bonnet hover:underline"
+            >
+              /h/{host.slug}/services →
+            </Link>
+          </p>
+        </Card>
+      ) : (
+        <Card className="p-6 text-sm text-stone-500">
+          Turn on <strong>Other services</strong> under Pages, save brand, then
+          reopen this screen to use the drag-and-drop page builder.
+        </Card>
+      )}
 
       {/* Separate forms — cannot nest inside Save brand */}
       <Card className="space-y-4 p-6">

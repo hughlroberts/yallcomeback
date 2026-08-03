@@ -307,6 +307,57 @@ export async function updateHostProfile(formData: FormData) {
 }
 
 /**
+ * Save Services page builder blocks (JSON). Fixed block types only.
+ */
+export async function saveServicesBlocks(formData: FormData) {
+  const access = await requireHostAdmin();
+  if (!access) throw new Error("Unauthorized");
+
+  const hostId = String(formData.get("hostId") || "");
+  if (!hostId) throw new Error("Missing host");
+  if (!access.isPlatform && access.hostId !== hostId) {
+    throw new Error("Forbidden");
+  }
+
+  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  if (!host) throw new Error("Host not found");
+
+  const raw = String(formData.get("blocksJson") || "[]");
+  let blocks: unknown;
+  try {
+    blocks = JSON.parse(raw);
+  } catch {
+    throw new Error("Invalid blocks JSON");
+  }
+  if (!Array.isArray(blocks)) throw new Error("Blocks must be an array");
+  if (blocks.length > 40) throw new Error("Too many blocks (max 40)");
+
+  // Light sanitize
+  const cleaned = blocks.map((b, i) => {
+    const o = b as Record<string, unknown>;
+    return {
+      id: String(o.id || `b_${i}`).slice(0, 40),
+      type: String(o.type || "text").slice(0, 20),
+      content: String(o.content ?? "").slice(0, 8000),
+      secondary:
+        o.secondary != null ? String(o.secondary).slice(0, 2000) : undefined,
+    };
+  });
+
+  await prisma.host.update({
+    where: { id: hostId },
+    data: {
+      siteServicesBlocks: JSON.stringify(cleaned),
+      sitePageServices: true,
+    },
+  });
+
+  revalidatePath("/admin/brand");
+  revalidatePath(`/h/${host.slug}`);
+  revalidatePath(`/h/${host.slug}/services`);
+}
+
+/**
  * Upload a logo image for the host brand (stored under public/uploads/hosts/{id}).
  * Same pattern as listing photos — path works on the app host; paste URL still OK.
  */

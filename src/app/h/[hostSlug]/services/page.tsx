@@ -2,12 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
+import { blocksFromHost } from "@/lib/services-blocks";
+import { ServicesPageRenderer } from "@/components/services-page-renderer";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Fixed "Other services" page (boats, tours, etc.) — toggle on/off only.
- * Not a freeform page builder.
+ * Fixed "Other services" page — content from simple block builder (not full CMS).
  */
 export default async function HostServicesPage({
   params,
@@ -20,10 +21,10 @@ export default async function HostServicesPage({
 
   const base = await hostPublicBasePath(host.slug);
   const title = host.siteServicesTitle?.trim() || "Other services";
-  const hasBody = Boolean(host.siteServicesBody?.trim());
-  const body =
-    host.siteServicesBody?.trim() ||
-    `Details coming soon. Contact ${host.name} to learn about services beyond the stay.`;
+  const blocks = blocksFromHost({
+    siteServicesBlocks: host.siteServicesBlocks,
+    siteServicesBody: host.siteServicesBody,
+  });
 
   return (
     <div>
@@ -35,22 +36,12 @@ export default async function HostServicesPage({
           <h1 className="mt-2 font-display text-4xl font-medium tracking-tight text-stone-900">
             {title}
           </h1>
-          <p className="mt-3 text-lg text-stone-600">
-            From {host.name}
-          </p>
+          <p className="mt-3 text-lg text-stone-600">From {host.name}</p>
         </div>
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-        <div
-          className={
-            hasBody
-              ? "whitespace-pre-line text-base leading-relaxed text-stone-700"
-              : "rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-5 py-8 text-center text-stone-600"
-          }
-        >
-          {body}
-        </div>
+        <ServicesPageRenderer blocks={blocks} basePath={base} />
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
             href={`${base}/stays`}

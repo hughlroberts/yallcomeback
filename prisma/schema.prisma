@@ -179,6 +179,8 @@ model Host {
   /// Other services page body (boats, tours, etc.)
   siteServicesTitle    String?
   siteServicesBody     String?
+  /// JSON array of simple page blocks for Services builder (not a full CMS)
+  siteServicesBlocks   String              @default("[]")
   /// Social outbound links (optional)
   socialFacebook       String?
   socialX              String?
