@@ -69,14 +69,48 @@ export function hostListsOnMarketplace(
 export function sitePresenceLabel(mode: HostSitePresence): string {
   switch (mode) {
     case "STAYLOCAL":
-      return "Yall Come Back listing URLs";
+      return "Marketplace only";
     case "CUSTOM":
-      return "Own domain / website";
+      return "Custom website only";
     case "BOTH":
-      return "Yall Come Back + own domain";
+      return "Custom website + marketplace";
     default:
       return mode;
   }
+}
+
+/**
+ * Product path for a host brand (drives Brand admin UI).
+ *
+ * 1. marketplace — Airbnb-style listings on the shared platform (no brand site)
+ * 2. website — Yall Come Back–hosted brand site (logo/palette/pages) ± marketplace
+ * 3. open_source — free self-host / remote OSS (AI features not in the OSS tree)
+ */
+export type HostProductPath = "marketplace" | "website" | "open_source";
+
+export function hostProductPath(
+  host: Pick<Host, "hostingMode" | "sitePresence">,
+): HostProductPath {
+  if (host.hostingMode === "SELF") return "open_source";
+  if (host.sitePresence === "STAYLOCAL") return "marketplace";
+  return "website";
+}
+
+/** True when the host gets a customizable guest website (not marketplace-only). */
+export function hostHasBrandedWebsite(
+  host: Pick<Host, "hostingMode" | "sitePresence">,
+): boolean {
+  return hostProductPath(host) !== "marketplace";
+}
+
+/** Public listing path on the shared marketplace (short, listing-centric). */
+export function marketplaceListingPath(
+  propertySlug: string,
+  hostSlug?: string | null,
+): string {
+  const base = `/marketplace/properties/${propertySlug}`;
+  if (!hostSlug) return base;
+  return `${base}?host=${encodeURIComponent(hostSlug)}`;
 }
 
 /**

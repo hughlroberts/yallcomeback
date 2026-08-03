@@ -190,18 +190,18 @@ export function HostSignupForm({
                 [
                   {
                     id: "STAYLOCAL" as const,
-                    label: "Yall Come Back listing URLs",
-                    hint: "Guests book on Yall Come Back marketplace pages",
-                  },
-                  {
-                    id: "CUSTOM" as const,
-                    label: "My own domain",
-                    hint: "Primary site is your website URL",
+                    label: "Marketplace only",
+                    hint: "Shared platform look (like Airbnb). Listing URLs — no custom brand site, logo, or About page.",
                   },
                   {
                     id: "BOTH" as const,
-                    label: "Both",
-                    hint: "Yall Come Back listings + your domain",
+                    label: "Custom website + marketplace",
+                    hint: "Hosted brand site (logo, palette, About, Other services) plus optional marketplace discovery.",
+                  },
+                  {
+                    id: "CUSTOM" as const,
+                    label: "Custom website only",
+                    hint: "Your brand site on Yall Come Back (or your domain). No marketplace unless you add it later.",
                   },
                 ] as const
               ).map((opt) => (

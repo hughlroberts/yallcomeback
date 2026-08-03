@@ -165,30 +165,6 @@ export async function updateHostProfile(formData: FormData) {
 
   const name = String(formData.get("name") || "").trim();
   const tagline = String(formData.get("tagline") || "").trim() || null;
-  const description = String(formData.get("description") || "").trim() || null;
-  const websiteUrl = normalizeWebsiteUrl(
-    String(formData.get("websiteUrl") || ""),
-  );
-  const logoUrlRaw = String(formData.get("logoUrl") || "").trim();
-  // Only http(s) or same-origin relative paths — block javascript:/data: spoof
-  const logoUrl =
-    !logoUrlRaw
-      ? null
-      : logoUrlRaw.startsWith("/") && !logoUrlRaw.startsWith("//")
-        ? logoUrlRaw
-        : /^https?:\/\//i.test(logoUrlRaw)
-          ? logoUrlRaw
-          : null;
-  const primaryColorRaw = String(
-    formData.get("primaryColor") || existing.primaryColor || "#2563eb",
-  ).trim();
-  const primaryColor = /^#[0-9A-Fa-f]{3,8}$/.test(primaryColorRaw)
-    ? primaryColorRaw
-    : existing.primaryColor || "#2563eb";
-  const contactEmail =
-    String(formData.get("contactEmail") || "").trim() || null;
-  const contactPhone =
-    String(formData.get("contactPhone") || "").trim() || null;
   const defaultDisclaimer =
     String(formData.get("defaultDisclaimer") || "").trim() || null;
   const active = formData.get("active") === "on";
@@ -207,35 +183,91 @@ export async function updateHostProfile(formData: FormData) {
     String(formData.get("sitePresence") || existing.sitePresence),
   );
   if (isSelf) {
+    // Open-source / self-host always owns its own site surface
     sitePresence = "CUSTOM";
   }
 
-  const listOnMarketplace = formData.get("listOnMarketplace") === "on";
+  /**
+   * Marketplace-only (STAYLOCAL on platform): shared listing chrome only.
+   * No logo/palette/about/services/domain — those live on listing pages.
+   */
+  const marketplaceOnly = !isSelf && sitePresence === "STAYLOCAL";
 
-  // Fixed hosted-site pages (toggle only — not a freeform CMS)
-  const sitePageAbout = formData.get("sitePageAbout") === "on";
-  const sitePageServices = formData.get("sitePageServices") === "on";
-  const siteAddress = optionalText(formData, "siteAddress", 500);
-  const siteServicesTitle = optionalText(formData, "siteServicesTitle", 120);
-  const siteServicesBody = optionalText(formData, "siteServicesBody", 8000);
-  const socialFacebook = optionalText(formData, "socialFacebook", 300);
-  const socialX = optionalText(formData, "socialX", 300);
-  const socialInstagram = optionalText(formData, "socialInstagram", 300);
-  const socialTiktok = optionalText(formData, "socialTiktok", 300);
-  const customDomain = normalizeCustomDomain(
-    String(formData.get("customDomain") || ""),
-  );
+  // Marketplace-only always lists on the marketplace; custom sites can opt out
+  const listOnMarketplace = marketplaceOnly
+    ? true
+    : formData.get("listOnMarketplace") === "on";
 
-  // Publish lifecycle: UNPUBLISHED (private) → DEMO (shareable) → LIVE (domain)
-  const sitePublishState = parseSitePublishState(
-    String(formData.get("sitePublishState") || existing.sitePublishState),
-  );
+  // Brand-site fields: only accept from form when a branded website is on
+  let description = existing.description;
+  let websiteUrl = existing.websiteUrl;
+  let logoUrl = existing.logoUrl;
+  let primaryColor = existing.primaryColor || "#2563eb";
+  let contactEmail = existing.contactEmail;
+  let contactPhone = existing.contactPhone;
+  let sitePageAbout = existing.sitePageAbout;
+  let sitePageServices = existing.sitePageServices;
+  let siteAddress = existing.siteAddress;
+  let siteServicesTitle = existing.siteServicesTitle;
+  let siteServicesBody = existing.siteServicesBody;
+  let socialFacebook = existing.socialFacebook;
+  let socialX = existing.socialX;
+  let socialInstagram = existing.socialInstagram;
+  let socialTiktok = existing.socialTiktok;
+  let customDomain = existing.customDomain;
+  let sitePublishState = existing.sitePublishState;
+
+  if (!marketplaceOnly) {
+    description = String(formData.get("description") || "").trim() || null;
+    websiteUrl = normalizeWebsiteUrl(String(formData.get("websiteUrl") || ""));
+    const logoUrlRaw = String(formData.get("logoUrl") || "").trim();
+    logoUrl =
+      !logoUrlRaw
+        ? null
+        : logoUrlRaw.startsWith("/") && !logoUrlRaw.startsWith("//")
+          ? logoUrlRaw
+          : /^https?:\/\//i.test(logoUrlRaw)
+            ? logoUrlRaw
+            : null;
+    const primaryColorRaw = String(
+      formData.get("primaryColor") || existing.primaryColor || "#2563eb",
+    ).trim();
+    primaryColor = /^#[0-9A-Fa-f]{3,8}$/.test(primaryColorRaw)
+      ? primaryColorRaw
+      : existing.primaryColor || "#2563eb";
+    contactEmail =
+      String(formData.get("contactEmail") || "").trim() || null;
+    contactPhone =
+      String(formData.get("contactPhone") || "").trim() || null;
+    sitePageAbout = formData.get("sitePageAbout") === "on";
+    sitePageServices = formData.get("sitePageServices") === "on";
+    siteAddress = optionalText(formData, "siteAddress", 500);
+    siteServicesTitle = optionalText(formData, "siteServicesTitle", 120);
+    siteServicesBody = optionalText(formData, "siteServicesBody", 8000);
+    socialFacebook = optionalText(formData, "socialFacebook", 300);
+    socialX = optionalText(formData, "socialX", 300);
+    socialInstagram = optionalText(formData, "socialInstagram", 300);
+    socialTiktok = optionalText(formData, "socialTiktok", 300);
+    customDomain = normalizeCustomDomain(
+      String(formData.get("customDomain") || ""),
+    );
+    sitePublishState = parseSitePublishState(
+      String(formData.get("sitePublishState") || existing.sitePublishState),
+    );
+  } else {
+    // Marketplace-only: no brand website pages / vanity domain
+    sitePageAbout = false;
+    sitePageServices = false;
+    customDomain = null;
+    websiteUrl = null;
+    sitePublishState = "UNPUBLISHED";
+  }
 
   if (!name) redirect(`${HOST_PROFILE_PATH}?error=name`);
 
   // Domain / public URL only required when LIVE with custom domain presence.
-  // STAYLOCAL (Yall Come Back path only) never needs a vanity domain.
   if (
+    !marketplaceOnly &&
     sitePublishState === "LIVE" &&
     (sitePresence === "CUSTOM" || sitePresence === "BOTH") &&
     !websiteUrl &&
@@ -243,7 +275,13 @@ export async function updateHostProfile(formData: FormData) {
   ) {
     redirect(`${HOST_PROFILE_PATH}?error=website`);
   }
-  if (sitePublishState === "LIVE" && isSelf && !websiteUrl && !customDomain) {
+  if (
+    !marketplaceOnly &&
+    sitePublishState === "LIVE" &&
+    isSelf &&
+    !websiteUrl &&
+    !customDomain
+  ) {
     redirect(`${HOST_PROFILE_PATH}?error=website`);
   }
 
@@ -390,6 +428,16 @@ export async function uploadHostLogo(formData: FormData) {
 
   const host = await prisma.host.findUnique({ where: { id: hostId } });
   if (!host) redirect("/admin/brand?error=missing");
+
+  // Marketplace-only hosts use platform chrome — no brand logo
+  if (
+    host.hostingMode !== "SELF" &&
+    host.sitePresence === "STAYLOCAL"
+  ) {
+    redirect(
+      `${returnTo}${returnTo.includes("?") ? "&" : "?"}error=logo_marketplace`,
+    );
+  }
 
   const bytes = Buffer.from(await file.arrayBuffer());
   const extRaw = path.extname(file.name || "").toLowerCase() || ".jpg";
