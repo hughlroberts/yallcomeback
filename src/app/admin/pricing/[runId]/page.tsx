@@ -159,15 +159,15 @@ export default async function AdminPricingRunPage({
           <li className="rounded-2xl bg-white/80 px-3 py-2.5 ring-1 ring-stone-100">
             <span className="font-semibold text-stone-900">1. Compare</span>
             <span className="mt-0.5 block text-xs text-stone-500">
-              Suggested vs current base rate. Primary comps = similar capacity
-              (sleeps N).
+              Suggested vs current. Fair comps match capacity{" "}
+              <em>and</em> location quality (waterfront ≠ inland; pool matters).
             </span>
           </li>
           <li className="rounded-2xl bg-white/80 px-3 py-2.5 ring-1 ring-stone-100">
-            <span className="font-semibold text-stone-900">2. Approve</span>
+            <span className="font-semibold text-stone-900">2. Approve / reject</span>
             <span className="mt-0.5 block text-xs text-stone-500">
-              Marks the suggestion as ready. Does not change guest-facing
-              prices yet.
+              Tag why (wrong comps, location mismatch). Feedback improves next
+              month. No live price change yet.
             </span>
           </li>
           <li className="rounded-2xl bg-white/80 px-3 py-2.5 ring-1 ring-stone-100">

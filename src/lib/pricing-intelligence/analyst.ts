@@ -1,23 +1,37 @@
+import { FAIR_PEER_SCORE_MAX } from "./location-quality";
 import type { AnalystSuggestion, CollectorBundle, PeerComp } from "./types";
 
-const MAX_ABS_CHANGE_PCT = 15; // hard guardrail on suggested swing
-const MIN_CHANGE_PCT = 3; // ignore noise under 3%
+const MAX_ABS_CHANGE_PCT = 15;
+const MIN_CHANGE_PCT = 3;
 
 /**
- * Analyst / pricing model agent.
- * Capacity (maxGuests) is the primary signal unless occupancy/seasonality is stronger.
- * Suggestion-only — never mutates rates.
+ * Analyst / pricing model.
+ * Uses quality-balanced peers (capacity + location tier + pool/dock + distance).
+ * When comps are mixed or thin, lowers confidence and asks for HITL clarification.
  */
 export function analyzePricing(
   bundle: CollectorBundle,
 ): AnalystSuggestion[] {
-  const month = new Date(bundle.periodEnd).getUTCMonth(); // 0-11
+  const month = new Date(bundle.periodEnd).getUTCMonth();
   const seasonFactor = seasonalityFactor(month);
+  const hitl = bundle.hitl;
 
   return bundle.listings.map((listing) => {
-    const peers = bundle.peerCompsByPropertyId[listing.propertyId] || [];
+    const allPeers = bundle.peerCompsByPropertyId[listing.propertyId] || [];
+    const fairPeers = allPeers.filter((p) => p.fair);
+    const peers = fairPeers.length >= 2 ? fairPeers : allPeers;
+    const usedSoftSet = fairPeers.length < 2 && allPeers.length > 0;
+
     const peerRates = peers.map((p) => p.baseNightlyRate).filter((r) => r > 0);
-    const peerMedian = peerRates.length ? median(peerRates) : null;
+    // Weight fairer peers more (inverse match score)
+    const peerMedian = peerRates.length
+      ? weightedMedian(
+          peers.map((p) => ({
+            rate: p.baseNightlyRate,
+            weight: Math.max(0.25, 1 / (1 + p.matchScore / 10)),
+          })),
+        )
+      : null;
     const peerMean = peerRates.length
       ? peerRates.reduce((a, b) => a + b, 0) / peerRates.length
       : null;
@@ -26,120 +40,190 @@ export function analyzePricing(
     let target = current;
     let basis: AnalystSuggestion["basis"] = "CAPACITY";
     const reasons: string[] = [];
-    let confidence = 0.45;
+    let confidence = 0.4;
+    let needsHitlClarification = false;
+    let hitlPrompt: string | undefined;
 
-    // --- Capacity-matched peer anchor (primary) ---
-    if (peerMedian != null && peerMedian > 0) {
+    const q = listing.quality;
+    reasons.push(
+      `Subject profile: sleeps ${listing.maxGuests}, location tier **${q.tier}**` +
+        (q.hasPool ? ", pool" : "") +
+        (q.hasPrivateDock ? ", private dock" : "") +
+        (q.textHints.length ? ` (${q.textHints.slice(0, 3).join("; ")})` : "") +
+        ".",
+    );
+
+    if (peerMedian != null && peerMedian > 0 && peers.length > 0) {
       target = peerMedian;
-      basis = "CAPACITY";
-      confidence = Math.min(0.85, 0.5 + peers.length * 0.04);
-      reasons.push(
-        `Capacity-matched peers (sleeps ~${listing.maxGuests}): median nightly $${peerMedian.toFixed(0)} across ${peers.length} marketplace comps (±1 guest).`,
+      basis = "MIXED";
+      const fairShare = fairPeers.length / Math.max(1, peers.length);
+      confidence = Math.min(
+        0.88,
+        0.42 + fairPeers.length * 0.05 + fairShare * 0.1,
       );
-      if (peerMean != null && Math.abs(peerMean - peerMedian) / peerMedian > 0.12) {
+      reasons.push(
+        `Quality-balanced peers: ${fairPeers.length} fair / ${peers.length} used (capacity ± location tier ± pool/dock` +
+          (peers.some((p) => p.distanceMiles != null) ? " ± distance" : "") +
+          `). Weighted median $${peerMedian.toFixed(0)}.` +
+          (usedSoftSet
+            ? " Fair-comp set was thin — included softer matches; treat carefully."
+            : ""),
+      );
+      if (peerMean != null && Math.abs(peerMean - peerMedian) / peerMedian > 0.15) {
         reasons.push(
-          `Peer mean $${peerMean.toFixed(0)} differs from median — distribution is skewed; median preferred.`,
+          `Peer mean $${peerMean.toFixed(0)} vs median $${peerMedian.toFixed(0)} — spread is wide; mixed location quality likely.`,
         );
+        confidence = Math.max(0.28, confidence - 0.12);
+        needsHitlClarification = true;
       }
     } else {
       reasons.push(
-        `Few capacity-matched marketplace peers for sleeps ${listing.maxGuests}. Holding near current rate with light seasonality only.`,
+        `No usable quality-balanced peers for sleeps ${listing.maxGuests} + tier ${q.tier}. Prefer hold; human judgment needed.`,
       );
-      confidence = 0.35;
+      confidence = 0.28;
       basis = "MIXED";
+      needsHitlClarification = true;
+      hitlPrompt =
+        "No strong comps with similar capacity and location quality (e.g. waterfront vs inland, pool vs no pool). Hold rate or tell us which nearby stays are true comps.";
     }
 
-    // --- Occupancy / demand overlay (can strengthen or override) ---
+    // Flag when best peers still have location mismatch reasons
+    const locationMismatchHeavy = peers.filter((p) =>
+      p.matchReasons.some((r) => r.includes("location tier")),
+    ).length;
+    if (peers.length > 0 && locationMismatchHeavy >= Math.ceil(peers.length * 0.5)) {
+      confidence = Math.max(0.25, confidence - 0.15);
+      needsHitlClarification = true;
+      hitlPrompt =
+        hitlPrompt ||
+        "Many comps differ in location quality (e.g. on the water vs a row back / miles inland). Confirm which peers are fair before changing price.";
+      reasons.push(
+        "Half+ of peer set has location-tier mismatch — beach/lake frontage is not interchangeable with nearby inland.",
+      );
+    }
+
+    // Occupancy overlay (weaker when location comps unclear)
     const occ = listing.occupancyEstimate90d;
-    if (occ >= 0.65 && current > 0) {
-      const lift = 1.06;
-      const occTarget = current * lift;
-      if (peerMedian == null || occTarget > target) {
-        target = Math.max(target, occTarget);
-        basis = peerMedian != null ? "MIXED" : "OCCUPANCY";
-        reasons.push(
-          `High occupancy estimate (~${(occ * 100).toFixed(0)}% of nights booked in window) supports a modest premium.`,
-        );
-        confidence = Math.min(0.9, confidence + 0.08);
-      }
-    } else if (occ < 0.2 && listing.bookingCount90d < 2 && current > 0) {
-      const cut = 0.94;
-      const soft = current * cut;
-      if (peerMedian == null || soft < target) {
-        target = Math.min(target, soft);
-        basis = peerMedian != null ? "MIXED" : "OCCUPANCY";
-        reasons.push(
-          `Soft demand (${listing.bookingCount90d} bookings / ~${(occ * 100).toFixed(0)}% occupancy estimate) suggests testing a small discount or promo.`,
-        );
+    if (!needsHitlClarification || confidence >= 0.45) {
+      if (occ >= 0.65 && current > 0) {
+        const occTarget = current * 1.05;
+        if (peerMedian == null || occTarget > target * 0.98) {
+          target = Math.max(target, Math.min(target * 1.08, occTarget));
+          reasons.push(
+            `High occupancy (~${(occ * 100).toFixed(0)}%) supports a small premium if comps allow.`,
+          );
+          confidence = Math.min(0.9, confidence + 0.05);
+        }
+      } else if (occ < 0.2 && listing.bookingCount90d < 2 && current > 0) {
+        const soft = current * 0.95;
+        if (peerMedian == null || soft < target) {
+          target = Math.min(target, soft);
+          reasons.push(
+            `Soft demand (${listing.bookingCount90d} bookings) — small promo may help; do not slash if you are true waterfront/premium.`,
+          );
+        }
       }
     }
 
-    // --- Seasonality ---
-    if (Math.abs(seasonFactor - 1) >= 0.03) {
+    if (Math.abs(seasonFactor - 1) >= 0.03 && !needsHitlClarification) {
       target = target * seasonFactor;
-      if (basis === "CAPACITY") basis = "MIXED";
-      else if (basis !== "MIXED") basis = "SEASONALITY";
       reasons.push(
-        `Seasonality factor ${seasonFactor.toFixed(2)} for this month (peak summer/holiday vs shoulder).`,
+        `Seasonality factor ${seasonFactor.toFixed(2)} for this month.`,
       );
     }
 
-    // External brief may note competitive pressure — keep as soft note only
-    if (bundle.external.source === "llm" && bundle.external.summary) {
+    // HITL memory: if hosts often said too aggressive, shrink moves
+    if ((hitl.tagCounts.too_aggressive || 0) >= 2) {
+      const mid = (current + target) / 2;
+      target = mid;
       reasons.push(
-        "External market brief (LLM) attached to the run report — use as context, not a hard override of capacity peers.",
+        "Prior host feedback often marked suggestions as too aggressive — halved the step toward peer median.",
       );
-      confidence = Math.min(0.92, confidence + 0.03);
+      confidence = Math.max(0.3, confidence - 0.05);
+    }
+    if ((hitl.tagCounts.too_conservative || 0) >= 2 && peerMedian != null) {
+      target = (target + peerMedian) / 2 + (peerMedian - current) * 0.15;
+      reasons.push(
+        "Prior feedback: suggestions too conservative — nudged further toward peer median.",
+      );
+    }
+
+    if (bundle.external.source === "llm") {
+      reasons.push(
+        "External market brief attached — use for context; never overrides a clear waterfront vs inland mismatch.",
+      );
     }
 
     // Guardrails
-    let changePct =
-      current > 0 ? ((target - current) / current) * 100 : 0;
+    let changePct = current > 0 ? ((target - current) / current) * 100 : 0;
     if (Math.abs(changePct) > MAX_ABS_CHANGE_PCT) {
-      const capped =
+      target =
         current * (1 + (Math.sign(changePct) * MAX_ABS_CHANGE_PCT) / 100);
       reasons.push(
-        `Capped change at ±${MAX_ABS_CHANGE_PCT}% guardrail (raw target was $${target.toFixed(0)}).`,
+        `Capped at ±${MAX_ABS_CHANGE_PCT}% guardrail (raw target was higher/lower).`,
       );
-      target = capped;
       changePct = ((target - current) / current) * 100;
-      confidence = Math.max(0.3, confidence - 0.1);
+      confidence = Math.max(0.28, confidence - 0.08);
     }
 
-    // Round to friendly $5
     target = Math.max(25, Math.round(target / 5) * 5);
     changePct = current > 0 ? ((target - current) / current) * 100 : 0;
 
-    const doNothing = Math.abs(changePct) < MIN_CHANGE_PCT;
-    if (doNothing) {
+    // Prefer hold when unclear
+    let doNothing =
+      Math.abs(changePct) < MIN_CHANGE_PCT || needsHitlClarification;
+    if (needsHitlClarification && Math.abs(changePct) >= MIN_CHANGE_PCT) {
+      // Still show directional suggestion but mark as needs HITL; soft-hold default
+      doNothing = Math.abs(changePct) < 6; // only tiny moves auto-hold
+      if (!doNothing) {
+        reasons.push(
+          "Direction kept for discussion, but confidence is limited — prefer human review before apply.",
+        );
+      } else {
+        target = current;
+        changePct = 0;
+        reasons.push(
+          "Unclear comps — recommending hold until you confirm fair peer set.",
+        );
+      }
+    } else if (doNothing && !needsHitlClarification) {
       target = current;
       changePct = 0;
       reasons.push(
-        `Suggested move under ${MIN_CHANGE_PCT}% — recommend do nothing this cycle.`,
+        `Move under ${MIN_CHANGE_PCT}% — do nothing this cycle.`,
       );
     }
 
     const experimentNote = doNothing
-      ? "No experiment needed. Revisit next month with fresher booking data."
+      ? needsHitlClarification
+        ? "Tag feedback (location/amenity mismatch) if you reject or hold — that teaches the next monthly run."
+        : "No experiment needed. Revisit next month."
       : changePct > 0
-        ? `A/B or time-split: hold current rate 50% of upcoming weekends; test +${Math.abs(changePct).toFixed(0)}% on the other half for 14 days. Watch conversion and booked nights.`
-        : `Test −${Math.abs(changePct).toFixed(0)}% on midweek inventory for 14 days (or a “midweek special” discount) before changing the base rate permanently.`;
+        ? `Test +${Math.abs(changePct).toFixed(0)}% on ~half of upcoming peak nights for 14 days before full base-rate change.`
+        : `Test a midweek promo near −${Math.abs(changePct).toFixed(0)}% for 14 days before cutting base rate.`;
 
     const projectedImpact = doNothing
-      ? "Neutral — insufficient edge to justify a price move."
+      ? "Neutral until comps are clearer or demand data improves."
       : changePct > 0
-        ? `If conversion holds, rough revenue lift on base nights ≈ +${changePct.toFixed(1)}% before elasticity. With elasticity −0.6, expected demand dip ~${(0.6 * changePct).toFixed(1)}% of bookings.`
-        : `Lower rate may improve occupancy; contribution depends on cleaning/tax fixed costs. Track booked nights and ADR together.`;
+        ? `If conversion holds, base ADR +${changePct.toFixed(1)}%. Elasticity −0.6 ⇒ rough demand dip ~${(0.6 * changePct).toFixed(1)}%.`
+        : `Lower base may lift occupancy; watch ADR × nights, not rate alone.`;
 
     const riskNotes = [
-      !listing.published ? "Listing is unpublished — guests will not see the new rate until live." : null,
-      peers.length < 3
-        ? "Thin peer set — confidence is limited; treat as directional."
+      !listing.published ? "Unpublished listing." : null,
+      peers.length < 3 ? "Thin peer set." : null,
+      usedSoftSet ? "Used soft (less fair) comps." : null,
+      needsHitlClarification
+        ? "Needs human confirmation of comps before trusting the number."
         : null,
-      "Human approval required before any catalog change.",
+      "Approve → Apply is required; nothing auto-changes.",
     ]
       .filter(Boolean)
       .join(" ");
+
+    if (!hitlPrompt && needsHitlClarification) {
+      hitlPrompt =
+        "Which nearby stays are true comps for this property? (same waterfront/pool class matters more than sleeps alone.)";
+    }
 
     return {
       propertyId: listing.propertyId,
@@ -155,15 +239,28 @@ export function analyzePricing(
       evidence: {
         maxGuests: listing.maxGuests,
         bedrooms: listing.bedrooms,
+        locationTier: q.tier,
+        hasPool: q.hasPool,
+        hasPrivateDock: q.hasPrivateDock,
         occupancyEstimate90d: listing.occupancyEstimate90d,
         bookingCount90d: listing.bookingCount90d,
         peerMedian,
         peerMean,
         peerCount: peers.length,
-        peers: peers.slice(0, 5).map(summarizePeer),
+        fairPeerCount: fairPeers.length,
+        peers: peers.slice(0, 6).map(summarizePeer),
         seasonFactor,
+        fairScoreMax: FAIR_PEER_SCORE_MAX,
+        hitl: {
+          preferStrictLocation: hitl.preferStrictLocation,
+          preferPoolMatch: hitl.preferPoolMatch,
+          tagCounts: hitl.tagCounts,
+        },
+        needsHitlClarification,
       },
       doNothing,
+      needsHitlClarification,
+      hitlPrompt,
     };
   });
 }
@@ -175,31 +272,33 @@ function summarizePeer(p: PeerComp) {
     rate: p.baseNightlyRate,
     city: p.city,
     region: p.region,
+    tier: p.quality.tier,
+    hasPool: p.quality.hasPool,
+    matchScore: p.matchScore,
+    fair: p.fair,
+    distanceMiles: p.distanceMiles,
+    matchReasons: p.matchReasons.slice(0, 4),
   };
 }
 
-function median(nums: number[]): number {
-  const s = [...nums].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
+function weightedMedian(
+  items: { rate: number; weight: number }[],
+): number | null {
+  const valid = items.filter((i) => i.rate > 0 && i.weight > 0);
+  if (valid.length === 0) return null;
+  const sorted = [...valid].sort((a, b) => a.rate - b.rate);
+  const totalW = sorted.reduce((s, i) => s + i.weight, 0);
+  let acc = 0;
+  for (const item of sorted) {
+    acc += item.weight;
+    if (acc >= totalW / 2) return item.rate;
+  }
+  return sorted[sorted.length - 1]!.rate;
 }
 
-/** Rough US South STR seasonality by calendar month (1.0 = baseline). */
 function seasonalityFactor(monthIndex: number): number {
-  // 0=Jan … 11=Dec
   const table = [
-    0.92, // Jan
-    0.94, // Feb
-    1.0, // Mar spring break
-    1.02, // Apr
-    1.06, // May
-    1.1, // Jun
-    1.12, // Jul
-    1.1, // Aug
-    0.98, // Sep
-    1.0, // Oct
-    0.96, // Nov
-    1.04, // Dec holidays
+    0.92, 0.94, 1.0, 1.02, 1.06, 1.1, 1.12, 1.1, 0.98, 1.0, 0.96, 1.04,
   ];
   return table[monthIndex] ?? 1;
 }
@@ -215,10 +314,11 @@ export function buildReportMarkdown(
     `Collected: ${bundle.collectedAt}`,
     ``,
     `## Method`,
-    `- **Primary anchor:** comparable listings by **house capacity** (\`maxGuests\` ±1).`,
-    `- **Secondary:** occupancy / booking velocity, light seasonality.`,
-    `- **External:** ${bundle.external.source} — ${bundle.external.summary.slice(0, 280)}${bundle.external.summary.length > 280 ? "…" : ""}`,
-    `- **Guardrails:** max ±${15}% per cycle; ignore moves under 3%; human approval before apply.`,
+    `- **Balance:** capacity (sleeps N) **and** location tier (waterfront_prime / water_access / water_view / inland), pool, dock, distance when known.`,
+    `- Beachfront ≠ 1–2 mi inland; lake+pool ≠ lake-only; one row back is not true frontage.`,
+    `- **HITL memory:** ${bundle.hitl.totalDecisions} prior decisions; strict-location=${bundle.hitl.preferStrictLocation}; pool-match=${bundle.hitl.preferPoolMatch}.`,
+    `- **External:** ${bundle.external.source}`,
+    `- **Guardrails:** ±${MAX_ABS_CHANGE_PCT}% max; hold under ${MIN_CHANGE_PCT}% or when comps unclear.`,
     ``,
     `## Collector notes`,
     ...bundle.notes.map((n) => `- ${n}`),
@@ -230,12 +330,12 @@ export function buildReportMarkdown(
     const listing = bundle.listings.find((l) => l.propertyId === s.propertyId);
     lines.push(
       `### ${listing?.title || s.propertyId}`,
-      `- Current: **$${s.currentNightlyRate.toFixed(0)}** → Suggested: **$${s.suggestedNightlyRate.toFixed(0)}** (${s.changePercent >= 0 ? "+" : ""}${s.changePercent}%)`,
-      `- Basis: ${s.basis} · Confidence: ${(s.confidence * 100).toFixed(0)}%`,
+      `- Tier: **${listing?.quality.tier ?? "?"}** · Sleeps ${listing?.maxGuests ?? "?"} · Pool=${listing?.quality.hasPool ? "yes" : "no"}`,
+      `- Current **$${s.currentNightlyRate.toFixed(0)}** → Suggested **$${s.suggestedNightlyRate.toFixed(0)}** (${s.changePercent >= 0 ? "+" : ""}${s.changePercent}%)`,
+      `- Basis: ${s.basis} · Confidence: ${(s.confidence * 100).toFixed(0)}%` +
+        (s.needsHitlClarification ? " · **needs HITL**" : ""),
       `- ${s.rationale}`,
-      `- Experiment: ${s.experimentNote}`,
-      `- Impact: ${s.projectedImpact}`,
-      `- Risks: ${s.riskNotes}`,
+      s.hitlPrompt ? `- HITL prompt: ${s.hitlPrompt}` : "",
       ``,
     );
   }
@@ -245,12 +345,10 @@ export function buildReportMarkdown(
   }
 
   lines.push(
-    `## Next steps`,
-    `1. Review each suggestion in Admin → Pricing intelligence.`,
-    `2. Approve only what you want applied to base nightly rate.`,
-    `3. Prefer running the suggested experiment before large permanent moves.`,
+    `## HITL`,
+    `When you approve, reject, or apply — leave tags/notes (wrong comps, location mismatch, etc.). That feedback tightens next month’s peer set.`,
     ``,
   );
 
-  return lines.join("\n");
+  return lines.filter((l) => l !== "").join("\n");
 }

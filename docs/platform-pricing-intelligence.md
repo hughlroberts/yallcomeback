@@ -118,15 +118,28 @@ idempotent via the 28-day window). Prefer an external monthly job.
 
 - Bookings in lookback window (default 90 days)
 - Confirmed nights / rough occupancy
-- Current `baseNightlyRate`, capacity, city/region
+- Current `baseNightlyRate`, capacity, amenities, coords, title/description
 
-**Peers**
+**Peers (balanced — not capacity-only)**
 
-- Other marketplace listings with similar `maxGuests`, prefer same city/region
+- Similar `maxGuests`, **plus** location tier:
+  - `waterfront_prime` (waterfront / beach / private dock)
+  - `water_access` (lake/beach access, row-back demotion)
+  - `water_view`
+  - `inland`
+- Pool / dock mismatch heavily penalized (lake+pool ≠ lake-only)
+- Distance miles when lat/lng present (same block vs 1–2 mi away)
+- “Fair” vs “soft” comps; soft set only if fair set is thin
+
+**HITL feedback (improves later runs)**
+
+- On approve / reject / apply: tags + free-text notes
+- Tags like `location_mismatch`, `amenity_mismatch`, `wrong_comps` tighten next cycle
+- Prior feedback stored on each recommendation row
 
 **External (optional)**
 
-- LLM summary of STR norms by capacity for the area (no direct OTA scrape in v1)
+- LLM brief that must respect location quality (no direct OTA scrape in v1)
 
 ---
 

@@ -738,6 +738,11 @@ model PricingRecommendation {
   decidedAt            DateTime?
   decidedByUserId      String?
   appliedAt            DateTime?
+  /// HITL: free-text why approve/reject/apply (teaches later runs)
+  feedbackNotes        String?
+  /// HITL: JSON string[] tags e.g. location_mismatch, wrong_comps
+  feedbackTags         String          @default("[]")
+  feedbackAt           DateTime?
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
 

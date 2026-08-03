@@ -1,15 +1,23 @@
 import { prisma } from "@/lib/db";
+import {
+  extractQualitySignals,
+  FAIR_PEER_SCORE_MAX,
+  milesBetween,
+  peerMismatchScore,
+  SOFT_PEER_SCORE_MAX,
+} from "./location-quality";
 import type {
   CollectorBundle,
   ExternalSignalNote,
+  HitlMemory,
   InternalListingStats,
   PeerComp,
 } from "./types";
 
 /**
  * Data Collector agent (platform-only).
- * Pulls internal booking/listing stats and capacity-matched peer comps
- * from the shared marketplace inventory.
+ * Peers balanced by capacity + location tier + amenities (pool/dock) + proximity.
+ * Loads prior HITL feedback to tighten matching next cycle.
  */
 export async function collectHostPricingData(
   hostId: string,
@@ -30,9 +38,7 @@ export async function collectHostPricingData(
     where: {
       property: { hostId },
       createdAt: { gte: periodStart, lte: periodEnd },
-      status: {
-        in: ["CONFIRMED", "COMPLETED", "PENDING_PAYMENT"],
-      },
+      status: { in: ["CONFIRMED", "COMPLETED", "PENDING_PAYMENT"] },
     },
     select: {
       propertyId: true,
@@ -43,6 +49,8 @@ export async function collectHostPricingData(
       createdAt: true,
     },
   });
+
+  const hitl = await loadHitlMemory(hostId);
 
   const windowDays = Math.max(
     1,
@@ -58,15 +66,20 @@ export async function collectHostPricingData(
     const revenue = confirmed.reduce((s, b) => s + b.totalAmount, 0);
     const leadTimes = confirmed
       .map((b) =>
-        Math.round(
-          (b.checkIn.getTime() - b.createdAt.getTime()) / 86400000,
-        ),
+        Math.round((b.checkIn.getTime() - b.createdAt.getTime()) / 86400000),
       )
       .filter((d) => d >= 0 && d < 400);
     const avgLead =
       leadTimes.length > 0
         ? leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length
         : null;
+
+    const quality = extractQualitySignals({
+      amenitiesJson: p.amenities,
+      title: p.title,
+      description: p.description,
+      tagline: p.tagline,
+    });
 
     return {
       propertyId: p.id,
@@ -84,13 +97,16 @@ export async function collectHostPricingData(
       revenue90d: revenue,
       occupancyEstimate90d: Math.min(1, nights / windowDays),
       avgLeadTimeDays: avgLead,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      quality,
     };
   });
 
-  // Peer comps: marketplace peers matched primarily by maxGuests (±1), then region/city
+  // Broader candidate pool, then re-rank by quality balance
   const peerCompsByPropertyId: Record<string, PeerComp[]> = {};
   for (const listing of listings) {
-    const peers = await prisma.property.findMany({
+    const candidates = await prisma.property.findMany({
       where: {
         published: true,
         listOnMarketplace: true,
@@ -102,40 +118,71 @@ export async function collectHostPricingData(
           listOnMarketplace: true,
         },
         maxGuests: {
-          gte: Math.max(1, listing.maxGuests - 1),
-          lte: listing.maxGuests + 1,
+          gte: Math.max(1, listing.maxGuests - 2),
+          lte: listing.maxGuests + 2,
         },
       },
       select: {
         id: true,
         title: true,
+        tagline: true,
+        description: true,
+        amenities: true,
         maxGuests: true,
         bedrooms: true,
         baseNightlyRate: true,
         city: true,
         region: true,
+        latitude: true,
+        longitude: true,
       },
-      take: 40,
+      take: 80,
     });
 
-    const ranked: PeerComp[] = peers
+    const strictLocation =
+      hitl.preferStrictLocation ||
+      listing.quality.tier === "waterfront_prime";
+    const fairMax = strictLocation
+      ? FAIR_PEER_SCORE_MAX - 4
+      : FAIR_PEER_SCORE_MAX;
+    const softMax = hitl.preferStrictLocation
+      ? SOFT_PEER_SCORE_MAX - 6
+      : SOFT_PEER_SCORE_MAX;
+
+    const ranked: PeerComp[] = candidates
       .map((peer) => {
-        const distanceGuests = Math.abs(peer.maxGuests - listing.maxGuests);
-        let score = distanceGuests * 10;
-        if (
-          listing.region &&
-          peer.region &&
-          peer.region.toLowerCase() === listing.region.toLowerCase()
-        ) {
-          score -= 3;
+        const quality = extractQualitySignals({
+          amenitiesJson: peer.amenities,
+          title: peer.title,
+          description: peer.description,
+          tagline: peer.tagline,
+        });
+        if (hitl.preferPoolMatch && listing.quality.hasPool && !quality.hasPool) {
+          // Hard filter when host taught us pool matters
+          return null;
         }
-        if (
-          listing.city &&
-          peer.city &&
-          peer.city.toLowerCase() === listing.city.toLowerCase()
-        ) {
-          score -= 5;
-        }
+        const distanceMiles = milesBetween(listing, peer);
+        const guestDelta = Math.abs(peer.maxGuests - listing.maxGuests);
+        const bedroomDelta = Math.abs(peer.bedrooms - listing.bedrooms);
+        const { score, reasons } = peerMismatchScore(
+          listing.quality,
+          quality,
+          {
+            guestDelta,
+            bedroomDelta,
+            sameCity: Boolean(
+              listing.city &&
+                peer.city &&
+                listing.city.toLowerCase() === peer.city.toLowerCase(),
+            ),
+            sameRegion: Boolean(
+              listing.region &&
+                peer.region &&
+                listing.region.toLowerCase() === peer.region.toLowerCase(),
+            ),
+            distanceMiles,
+          },
+        );
         return {
           propertyId: peer.id,
           title: peer.title,
@@ -144,27 +191,42 @@ export async function collectHostPricingData(
           baseNightlyRate: peer.baseNightlyRate,
           city: peer.city,
           region: peer.region,
-          distanceGuests,
-          _score: score,
-        };
+          distanceGuests: guestDelta,
+          matchScore: score,
+          matchReasons: reasons,
+          quality,
+          distanceMiles,
+          fair: score <= fairMax,
+        } satisfies PeerComp;
       })
-      .sort((a, b) => a._score - b._score)
-      .slice(0, 8)
-      .map(({ _score: _s, ...rest }) => rest);
+      .filter((p): p is PeerComp => p != null)
+      .sort((a, b) => a.matchScore - b.matchScore);
 
-    peerCompsByPropertyId[listing.propertyId] = ranked;
+    const fair = ranked.filter((p) => p.fair);
+    const soft = ranked.filter((p) => p.matchScore <= softMax);
+    // Prefer fair comps; fall back to soft if thin set
+    const chosen =
+      fair.length >= 3 ? fair.slice(0, 8) : soft.slice(0, 8);
+
+    peerCompsByPropertyId[listing.propertyId] = chosen;
   }
 
-  const external = await collectExternalSignals(listings);
+  const external = await collectExternalSignals(listings, hitl);
 
   const notes: string[] = [
-    `Primary matching key: maxGuests (house capacity) ±1 guest.`,
+    `Matching: capacity + location tier (waterfront vs access vs view vs inland) + pool/dock + distance when coords exist.`,
+    `Fair peer score ≤ ${FAIR_PEER_SCORE_MAX}; soft ≤ ${SOFT_PEER_SCORE_MAX}. HITL strict-location=${hitl.preferStrictLocation}, pool-match=${hitl.preferPoolMatch}.`,
     `Period: ${periodStart.toISOString().slice(0, 10)} → ${periodEnd.toISOString().slice(0, 10)} (${windowDays} days).`,
-    `Listings analyzed: ${listings.length}. Bookings in window: ${bookings.length}.`,
+    `Listings: ${listings.length}. Bookings in window: ${bookings.length}. Prior HITL decisions: ${hitl.totalDecisions}.`,
   ];
+  if (hitl.recentNotes.length > 0) {
+    notes.push(
+      `Recent host feedback: ${hitl.recentNotes.slice(0, 3).join(" · ")}`,
+    );
+  }
   if (external.source === "none") {
     notes.push(
-      "External OTA browse not configured (set XAI_API_KEY for richer market notes). Using internal marketplace peers only.",
+      "No XAI_API_KEY — external OTA brief skipped; internal quality-balanced peers only.",
     );
   }
 
@@ -177,16 +239,71 @@ export async function collectHostPricingData(
     listings,
     peerCompsByPropertyId,
     external,
+    hitl,
     notes,
   };
 }
 
-/**
- * Lightweight external signal: optional LLM summary of local STR market.
- * Does not scrape OTAs directly (ToS / cost); asks model for public market norms.
- */
+async function loadHitlMemory(hostId: string): Promise<HitlMemory> {
+  const rows = await prisma.pricingRecommendation.findMany({
+    where: {
+      run: { hostId },
+      status: { in: ["APPROVED", "REJECTED", "APPLIED"] },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 80,
+    select: {
+      status: true,
+      feedbackNotes: true,
+      feedbackTags: true,
+      rationale: true,
+    },
+  });
+
+  const tagCounts: Record<string, number> = {};
+  const recentNotes: string[] = [];
+  let rejectedCount = 0;
+  let approvedCount = 0;
+  let appliedCount = 0;
+
+  for (const r of rows) {
+    if (r.status === "REJECTED") rejectedCount += 1;
+    if (r.status === "APPROVED") approvedCount += 1;
+    if (r.status === "APPLIED") appliedCount += 1;
+    try {
+      const tags = JSON.parse(r.feedbackTags || "[]") as string[];
+      for (const t of tags) {
+        tagCounts[t] = (tagCounts[t] || 0) + 1;
+      }
+    } catch {
+      /* ignore */
+    }
+    if (r.feedbackNotes?.trim()) {
+      recentNotes.push(r.feedbackNotes.trim().slice(0, 200));
+    }
+  }
+
+  const locTags =
+    (tagCounts.location_mismatch || 0) +
+    (tagCounts.wrong_comps || 0) +
+    (tagCounts.capacity_ok_location_wrong || 0);
+  const amenityTags = tagCounts.amenity_mismatch || 0;
+
+  return {
+    totalDecisions: rows.length,
+    rejectedCount,
+    approvedCount,
+    appliedCount,
+    tagCounts,
+    recentNotes: recentNotes.slice(0, 8),
+    preferStrictLocation: locTags >= 2 || locTags / Math.max(1, rows.length) >= 0.25,
+    preferPoolMatch: amenityTags >= 2,
+  };
+}
+
 async function collectExternalSignals(
   listings: InternalListingStats[],
+  hitl: HitlMemory,
 ): Promise<ExternalSignalNote> {
   const key =
     process.env.XAI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim();
@@ -194,7 +311,7 @@ async function collectExternalSignals(
     return {
       source: "none",
       summary:
-        "No external LLM key configured. Recommendations rely on internal capacity-matched peers and occupancy heuristics.",
+        "No external LLM key. Comps use quality-balanced internal peers (tier + pool + distance).",
     };
   }
 
@@ -205,6 +322,10 @@ async function collectExternalSignals(
     city: l.city,
     region: l.region,
     currentRate: l.baseNightlyRate,
+    locationTier: l.quality.tier,
+    hasPool: l.quality.hasPool,
+    hasPrivateDock: l.quality.hasPrivateDock,
+    textHints: l.quality.textHints,
   }));
 
   const isXai = Boolean(process.env.XAI_API_KEY?.trim());
@@ -215,13 +336,23 @@ async function collectExternalSignals(
     process.env.PRICING_INTELLIGENCE_MODEL?.trim() ||
     (isXai ? "grok-4-1-fast-non-reasoning" : "gpt-4o-mini");
 
-  const prompt = `You are a vacation-rental market researcher for Southern US short-term rentals (Airbnb/VRBO/Booking-style comps).
+  const hitlNote =
+    hitl.totalDecisions > 0
+      ? `Prior host feedback tags: ${JSON.stringify(hitl.tagCounts)}. Notes: ${hitl.recentNotes.join(" | ") || "none"}.`
+      : "No prior host feedback yet.";
 
-Given these host listings (JSON), write a short market research brief (max 350 words):
-1) Typical nightly ranges by guest capacity (sleeps N) in the same city/region when known.
-2) Seasonality notes (weekends, lake/holiday peaks) relevant to Texas / South if location fits.
-3) Factors that should OVERRIDE capacity matching only if strong (waterfront, luxury finishes, new listing discount, etc.).
-4) Do NOT invent exact competitor listing URLs. Prefer ranges and qualitative guidance.
+  const prompt = `You are a vacation-rental market researcher (Airbnb/VRBO/Booking-style).
+
+CRITICAL: Do not treat "sleeps N" as enough. Beachfront ≠ 1–2 miles inland. Lake + pool ≠ lake only. One row back from the beach is not the same as on the sand.
+
+Given listings (JSON), write ≤350 words:
+1) Fair nightly ranges for each location tier (waterfront_prime / water_access / water_view / inland) at that capacity.
+2) Pool / dock premiums typical in the area when known.
+3) What would make a bad comp (call out explicitly).
+4) When data is unclear, say "needs human judgment" — do not invent prices.
+5) No fake listing URLs.
+
+${hitlNote}
 
 Listings:
 ${JSON.stringify(sample, null, 2)}`;
@@ -235,13 +366,13 @@ ${JSON.stringify(sample, null, 2)}`;
       },
       body: JSON.stringify({
         model,
-        temperature: 0.3,
-        max_tokens: 700,
+        temperature: 0.25,
+        max_tokens: 800,
         messages: [
           {
             role: "system",
             content:
-              "Be concise, practical, and cautious. Prefer capacity (sleeps N) as the primary pricing anchor.",
+              "Be cautious. Balance capacity with location quality and amenities. Prefer 'hold' when comps are mixed tiers.",
           },
           { role: "user", content: prompt },
         ],

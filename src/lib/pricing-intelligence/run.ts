@@ -87,7 +87,12 @@ export async function runPricingIntelligenceForHost(
         experimentNote: s.experimentNote,
         projectedImpact: s.projectedImpact,
         riskNotes: s.riskNotes,
-        evidenceJson: JSON.stringify(s.evidence),
+        evidenceJson: JSON.stringify({
+          ...s.evidence,
+          needsHitlClarification: s.needsHitlClarification,
+          hitlPrompt: s.hitlPrompt,
+        }),
+        // Unclear comps → SKIPPED (hold) still, but keep PENDING if directional
         status: s.doNothing ? "SKIPPED" : "PENDING",
       })),
     });

@@ -178,6 +178,23 @@ export async function startPricingResearch(formData: FormData) {
   }
 }
 
+function parseFeedbackFromForm(formData: FormData): {
+  feedbackNotes: string | null;
+  feedbackTags: string;
+  feedbackAt: Date;
+} {
+  const notes = String(formData.get("feedbackNotes") || "").trim() || null;
+  const tags = formData
+    .getAll("feedbackTag")
+    .map((t) => String(t).trim())
+    .filter(Boolean);
+  return {
+    feedbackNotes: notes,
+    feedbackTags: JSON.stringify(tags),
+    feedbackAt: new Date(),
+  };
+}
+
 export async function decidePricingRecommendation(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
@@ -185,6 +202,7 @@ export async function decidePricingRecommendation(formData: FormData) {
 
   const id = String(formData.get("id") || "");
   const decision = String(formData.get("decision") || ""); // approve | reject
+  const feedback = parseFeedbackFromForm(formData);
   const rec = await prisma.pricingRecommendation.findUnique({
     where: { id },
     include: {
@@ -203,25 +221,15 @@ export async function decidePricingRecommendation(formData: FormData) {
     redirect(`/admin/pricing/${rec.runId}?error=already_decided`);
   }
 
-  if (decision === "approve") {
-    await prisma.pricingRecommendation.update({
-      where: { id },
-      data: {
-        status: "APPROVED",
-        decidedAt: new Date(),
-        decidedByUserId: access.session.user.id,
-      },
-    });
-  } else {
-    await prisma.pricingRecommendation.update({
-      where: { id },
-      data: {
-        status: "REJECTED",
-        decidedAt: new Date(),
-        decidedByUserId: access.session.user.id,
-      },
-    });
-  }
+  await prisma.pricingRecommendation.update({
+    where: { id },
+    data: {
+      status: decision === "approve" ? "APPROVED" : "REJECTED",
+      decidedAt: new Date(),
+      decidedByUserId: access.session.user.id,
+      ...feedback,
+    },
+  });
 
   revalidatePath(`/admin/pricing/${rec.runId}`);
   revalidatePath("/admin/pricing");
@@ -252,6 +260,8 @@ export async function applyPricingRecommendation(formData: FormData) {
     redirect(`/admin/pricing/${rec.runId}?error=not_approved`);
   }
 
+  const feedback = parseFeedbackFromForm(formData);
+
   await prisma.$transaction([
     prisma.property.update({
       where: { id: rec.propertyId },
@@ -263,6 +273,19 @@ export async function applyPricingRecommendation(formData: FormData) {
         status: "APPLIED",
         appliedAt: new Date(),
         decidedByUserId: access.session.user.id,
+        // Keep earlier decision feedback; append apply notes if provided
+        ...(feedback.feedbackNotes || feedback.feedbackTags !== "[]"
+          ? {
+              feedbackNotes: [rec.feedbackNotes, feedback.feedbackNotes]
+                .filter(Boolean)
+                .join(" · ") || feedback.feedbackNotes,
+              feedbackTags:
+                feedback.feedbackTags !== "[]"
+                  ? feedback.feedbackTags
+                  : rec.feedbackTags,
+              feedbackAt: feedback.feedbackAt,
+            }
+          : {}),
       },
     }),
   ]);
