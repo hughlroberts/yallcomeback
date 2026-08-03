@@ -6,10 +6,12 @@ import {
   hostHasPricingIntelligenceAddon,
   isPricingIntelligenceEnabled,
   pricingAddonStatusLabel,
+  pricingIntelligenceLlmConfigured,
   PRICING_INTELLIGENCE_ADDON_BLURB,
   PRICING_INTELLIGENCE_ADDON_LABEL,
   PRICING_INTELLIGENCE_ADDON_USD,
 } from "@/lib/platform-features";
+import { isStripeConfigured } from "@/lib/stripe";
 import {
   cancelPricingIntelligenceAddon,
   requestPricingIntelligenceAddon,
@@ -203,15 +205,28 @@ export default async function AdminPricingPage({
               </Button>
             </form>
           ) : hostAddon.pricingIntelligenceAddonStatus === "REQUESTED" ? (
-            <p className="text-sm font-medium text-amber-900">
-              Request received — we&apos;ll activate after payment is confirmed.
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-amber-900">
+                Checkout started or request received — finishes when payment
+                succeeds (Stripe) or ops marks Active.
+              </p>
+              <form action={requestPricingIntelligenceAddon}>
+                <input type="hidden" name="hostId" value={hostAddon.id} />
+                <Button type="submit" variant="secondary">
+                  Resume checkout · {formatMoney(addonAmount)}/mo
+                </Button>
+              </form>
+            </div>
           ) : (
             <form action={requestPricingIntelligenceAddon}>
               <input type="hidden" name="hostId" value={hostAddon.id} />
               <Button type="submit">
-                Request add-on · {formatMoney(addonAmount)}/mo
+                Subscribe · {formatMoney(addonAmount)}/mo
               </Button>
+              <p className="mt-2 text-xs text-stone-500">
+                Opens Stripe Checkout when billing is configured; otherwise
+                queues a request for ops.
+              </p>
             </form>
           )}
         </Card>
@@ -255,10 +270,34 @@ export default async function AdminPricingPage({
           Run research
         </h2>
         <p className="text-sm text-stone-600">
-          Collector pulls bookings + marketplace comps by{" "}
-          <strong>guest capacity</strong> (sleeps N). Analyst suggests rate
-          moves with guardrails (±15%). Nothing applies until you approve.
+          Collector pulls bookings + quality-balanced peers (private comps +
+          marketplace). Analyst suggests rate moves with guardrails (±15%).
+          Nothing applies until you approve.
         </p>
+        <ul className="flex flex-wrap gap-2 text-xs">
+          <li
+            className={
+              pricingIntelligenceLlmConfigured()
+                ? "rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-900"
+                : "rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-950"
+            }
+          >
+            {pricingIntelligenceLlmConfigured()
+              ? "XAI/LLM brief: on"
+              : "XAI_API_KEY missing on this service — internal comps only"}
+          </li>
+          <li
+            className={
+              isStripeConfigured()
+                ? "rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-900"
+                : "rounded-full bg-stone-100 px-2.5 py-1 font-medium text-stone-600"
+            }
+          >
+            {isStripeConfigured()
+              ? "Stripe add-on checkout: on"
+              : "Stripe off — request/ops path for $35 add-on"}
+          </li>
+        </ul>
         <form
           action={startPricingResearch}
           className="flex flex-wrap items-end gap-3"

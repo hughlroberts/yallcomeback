@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import {
-  hostSlugForHostname,
+  resolveHostSlugForHostname,
   isPlatformPath,
 } from "./lib/custom-domains";
 import { TENANT_SLUG_HEADER } from "./lib/tenant";
@@ -43,6 +43,8 @@ function rewriteHostGuestPath(
     target = `/h/${hostSlug}`;
   } else if (pathname === "/about" || pathname.startsWith("/about/")) {
     target = `/h/${hostSlug}/about`;
+  } else if (pathname === "/services" || pathname.startsWith("/services/")) {
+    target = `/h/${hostSlug}/services`;
   } else if (pathname === "/contact" || pathname.startsWith("/contact/")) {
     target = `/h/${hostSlug}/contact`;
   } else if (
@@ -117,9 +119,10 @@ function requestHostname(req: NextRequest): string | null {
  * 2) Auth gates for /admin and /account (Auth.js)
  * 3) Strip spoofed x-tenant-* on every request
  */
-export default auth((req) => {
+export default auth(async (req) => {
   const hostname = requestHostname(req);
-  const hostSlug = hostSlugForHostname(hostname);
+  // Env HOST_DOMAIN_MAP + Host.customDomain via /api/domain-map
+  const hostSlug = await resolveHostSlugForHostname(hostname);
 
   if (hostSlug) {
     const rewritten = rewriteHostGuestPath(req, hostSlug);

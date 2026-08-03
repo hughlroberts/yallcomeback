@@ -19,6 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import { Button, Card, Input, Label } from "@/components/ui";
+import { AdminBlockSheet } from "@/components/admin-block-sheet";
 import {
   duplicateProperty,
   updatePropertyPricing,
@@ -166,6 +167,10 @@ export function AdminListingWorkspace({
     return new Date(n.getFullYear(), n.getMonth(), 1);
   });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  /** Range for blocking: start = check-in, end = checkout (exclusive). */
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
+  const [blockSheetOpen, setBlockSheetOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -245,6 +250,70 @@ export function AdminListingWorkspace({
         )
       : null;
   const selectedBlocked = selectedDay != null && blockedSet.has(selectedDay);
+
+  function addDaysYmd(s: string, days: number) {
+    const d = parseYmd(s);
+    d.setDate(d.getDate() + days);
+    return ymd(d);
+  }
+
+  function isInRange(key: string) {
+    if (!rangeStart) return false;
+    const end = rangeEnd || rangeStart;
+    const a = rangeStart <= end ? rangeStart : end;
+    const b = rangeStart <= end ? end : rangeStart;
+    // highlight nights [start, checkout) — if only start, just that night
+    if (!rangeEnd) return key === rangeStart;
+    return key >= a && key < b;
+  }
+
+  function onDayClick(key: string, inMonth: boolean) {
+    if (!inMonth) return;
+    setSelectedDay(key);
+
+    // Range select: 1st click = start, 2nd = checkout end → open sheet
+    if (!rangeStart || (rangeStart && rangeEnd)) {
+      setRangeStart(key);
+      setRangeEnd(null);
+      setBlockSheetOpen(false);
+      return;
+    }
+    // Second click
+    if (key === rangeStart) {
+      // Same day → block 1 night (checkout = next day)
+      setRangeEnd(addDaysYmd(key, 1));
+      setBlockSheetOpen(true);
+      return;
+    }
+    if (key < rangeStart) {
+      // New start earlier
+      setRangeStart(key);
+      setRangeEnd(null);
+      setBlockSheetOpen(false);
+      return;
+    }
+    // key > rangeStart → key is checkout day
+    setRangeEnd(key);
+    setBlockSheetOpen(true);
+  }
+
+  function closeBlockSheet() {
+    setBlockSheetOpen(false);
+  }
+
+  function clearRange() {
+    setRangeStart(null);
+    setRangeEnd(null);
+    setBlockSheetOpen(false);
+  }
+
+  function openSheetForSelection() {
+    if (!rangeStart) return;
+    if (!rangeEnd) {
+      setRangeEnd(addDaysYmd(rangeStart, 1));
+    }
+    setBlockSheetOpen(true);
+  }
 
   function savePricing() {
     setError(null);
@@ -495,7 +564,11 @@ export function AdminListingWorkspace({
                   const isPast = startOfDay(date) < today;
                   const isBlocked = blockedSet.has(key);
                   const isToday = key === ymd(today);
-                  const isSelected = selectedDay === key;
+                  const inRange = inMonth && isInRange(key);
+                  const isRangeEdge =
+                    inMonth &&
+                    (key === rangeStart ||
+                      (rangeEnd != null && key === rangeEnd));
                   const price = priceForDate(
                     date,
                     property.baseNightlyRate,
@@ -509,13 +582,14 @@ export function AdminListingWorkspace({
                       key={key}
                       type="button"
                       disabled={!inMonth}
-                      onClick={() => setSelectedDay(key)}
+                      onClick={() => onDayClick(key, inMonth)}
                       className={cn(
                         "relative flex min-h-[4.75rem] flex-col items-start p-1.5 text-left transition-colors sm:min-h-[5.5rem] sm:p-2",
                         !inMonth && "bg-stone-50 text-stone-300",
-                        inMonth && !isBlocked && "bg-white hover:bg-stone-50",
-                        inMonth && isBlocked && "bg-stone-100",
-                        isSelected && "ring-2 ring-inset ring-stone-900",
+                        inMonth && !isBlocked && !inRange && "bg-white hover:bg-stone-50",
+                        inMonth && isBlocked && !inRange && "bg-stone-100",
+                        inRange && "bg-bonnet/15",
+                        isRangeEdge && "ring-2 ring-inset ring-bonnet",
                         isPast && inMonth && "opacity-55",
                       )}
                     >
@@ -549,41 +623,81 @@ export function AdminListingWorkspace({
                 })}
               </div>
 
-              {selectedDay ? (
+              {rangeStart ? (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm">
                   <div>
                     <p className="font-medium text-stone-900">
-                      {parseYmd(selectedDay).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      {rangeEnd
+                        ? `${parseYmd(rangeStart).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })} → ${parseYmd(rangeEnd).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}`
+                        : parseYmd(rangeStart).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
                     </p>
                     <p className="text-stone-500">
-                      {selectedBlocked
-                        ? "This night is blocked or booked."
-                        : selectedPrice != null
-                          ? `${formatMoney(selectedPrice)} per night`
-                          : " - "}
+                      {rangeEnd
+                        ? "Range selected — block from the sheet or adjust dates."
+                        : selectedBlocked
+                          ? "This night is blocked or booked. Tap another day for checkout, or open block sheet for 1 night."
+                          : selectedPrice != null
+                            ? `${formatMoney(selectedPrice)} / night · tap a second day for checkout, or Block 1 night`
+                            : "Tap a second day (checkout) to finish the range."}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="!px-3 !py-1.5 text-xs"
-                    onClick={() => setTab("blocks")}
-                  >
-                    Manage blocks
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="!px-3 !py-1.5 text-xs"
+                      onClick={clearRange}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      type="button"
+                      className="!px-3 !py-1.5 text-xs"
+                      onClick={openSheetForSelection}
+                    >
+                      {rangeEnd ? "Manage blocks" : "Block 1 night"}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <p className="mt-4 text-center text-sm text-stone-400">
-                  Select a date to see the nightly rate for that night.
+                  Tap a start date, then a checkout day — or one day and{" "}
+                  <strong className="font-medium text-stone-600">
+                    Block 1 night
+                  </strong>
+                  .
                 </p>
               )}
             </div>
           </section>
+
+          <AdminBlockSheet
+            open={blockSheetOpen && Boolean(rangeStart)}
+            propertyId={property.id}
+            baseNightlyRate={property.baseNightlyRate}
+            startDate={rangeStart || ymd(today)}
+            endDate={
+              rangeEnd ||
+              (rangeStart ? addDaysYmd(rangeStart, 1) : ymd(today))
+            }
+            onClose={closeBlockSheet}
+            onOpenFullBlocks={() => {
+              closeBlockSheet();
+              setTab("blocks");
+            }}
+          />
 
           {/* Right pricing sidebar */}
           <aside className="space-y-3">

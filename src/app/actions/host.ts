@@ -15,6 +15,7 @@ import {
   SETUP_SERVICE_FEE_USD,
 } from "@/lib/hosting";
 import { parseSitePublishState } from "@/lib/host-site";
+import { normalizeCustomDomain } from "@/lib/custom-domains";
 
 function parseSitePresence(raw: string): HostSitePresence {
   if (raw === "CUSTOM" || raw === "BOTH" || raw === "STAYLOCAL") return raw;
@@ -221,6 +222,9 @@ export async function updateHostProfile(formData: FormData) {
   const socialX = optionalText(formData, "socialX", 300);
   const socialInstagram = optionalText(formData, "socialInstagram", 300);
   const socialTiktok = optionalText(formData, "socialTiktok", 300);
+  const customDomain = normalizeCustomDomain(
+    String(formData.get("customDomain") || ""),
+  );
 
   // Publish lifecycle: UNPUBLISHED (private) → DEMO (shareable) → LIVE (domain)
   const sitePublishState = parseSitePublishState(
@@ -263,6 +267,7 @@ export async function updateHostProfile(formData: FormData) {
       socialInstagram,
       socialTiktok,
       sitePublishState,
+      customDomain,
       ...(access.isPlatform
         ? {
             active,

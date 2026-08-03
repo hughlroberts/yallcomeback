@@ -7,9 +7,11 @@ import { requireHostAdmin, requirePlatformAdmin } from "@/lib/auth";
 import {
   hostHasPricingIntelligenceAddon,
   isPricingIntelligenceEnabled,
+  PRICING_INTELLIGENCE_ADDON_LABEL,
   PRICING_INTELLIGENCE_ADDON_USD,
 } from "@/lib/platform-features";
 import { runPricingIntelligenceForHost } from "@/lib/pricing-intelligence/run";
+import { getStripe, isStripeConfigured, toStripeAmount } from "@/lib/stripe";
 
 function assertEnabled() {
   if (!isPricingIntelligenceEnabled()) {
@@ -20,8 +22,8 @@ function assertEnabled() {
 }
 
 /**
- * Host requests the $35/mo add-on (ops activates after payment).
- * Only if ops already enabled beta access for this brand.
+ * Host starts $35/mo add-on: Stripe Checkout when configured, else REQUESTED
+ * for ops to activate after manual payment.
  */
 export async function requestPricingIntelligenceAddon(formData: FormData) {
   assertEnabled();
@@ -36,7 +38,10 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
     redirect("/admin/pricing?error=forbidden");
   }
 
-  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  const host = await prisma.host.findUnique({
+    where: { id: hostId },
+    include: { users: { where: { role: "HOST" }, take: 1 } },
+  });
   if (!host) redirect("/admin/pricing?error=missing");
   if (!host.pricingIntelligenceEnabled && !access.isPlatform) {
     redirect("/admin/pricing?error=access_off");
@@ -45,13 +50,89 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
     redirect("/admin/pricing?error=already_active");
   }
 
+  const amount = host.pricingIntelligenceAddonAmount || PRICING_INTELLIGENCE_ADDON_USD;
+  const email =
+    host.billingEmail ||
+    host.contactEmail ||
+    host.users[0]?.email ||
+    access.session.user.email ||
+    null;
+
+  // Prefer Stripe subscription Checkout when keys are live
+  const stripe = getStripe();
+  if (stripe && isStripeConfigured() && email) {
+    const origin =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+      (process.env.RAILWAY_PUBLIC_DOMAIN
+        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+        : "http://localhost:3000");
+
+    let customerId = host.stripeCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email,
+        name: host.name,
+        metadata: { hostId: host.id, slug: host.slug },
+      });
+      customerId = customer.id;
+      await prisma.host.update({
+        where: { id: host.id },
+        data: { stripeCustomerId: customerId },
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: host.id,
+      success_url: `${origin}/admin/pricing?checkout=success`,
+      cancel_url: `${origin}/admin/pricing?checkout=cancel`,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: toStripeAmount(amount),
+            recurring: { interval: "month" },
+            product_data: {
+              name: PRICING_INTELLIGENCE_ADDON_LABEL,
+              description:
+                "Monthly market pricing research add-on — not included in website hosting.",
+            },
+          },
+        },
+      ],
+      metadata: {
+        kind: "pricing_intelligence_addon",
+        hostId: host.id,
+      },
+      subscription_data: {
+        metadata: {
+          kind: "pricing_intelligence_addon",
+          hostId: host.id,
+        },
+      },
+    });
+
+    await prisma.host.update({
+      where: { id: host.id },
+      data: {
+        pricingIntelligenceAddonStatus: "REQUESTED",
+        pricingIntelligenceAddonAmount: amount,
+        pricingIntelligenceAddonNotes: `Stripe Checkout started ${new Date().toISOString().slice(0, 10)} · session ${session.id}`,
+      },
+    });
+
+    if (session.url) redirect(session.url);
+  }
+
+  // Manual path (Stripe off): ops activates after payment
   await prisma.host.update({
     where: { id: hostId },
     data: {
       pricingIntelligenceAddonStatus: "REQUESTED",
-      pricingIntelligenceAddonAmount: PRICING_INTELLIGENCE_ADDON_USD,
-      pricingIntelligenceAddonNotes:
-        `Host requested $${PRICING_INTELLIGENCE_ADDON_USD}/mo pricing intelligence add-on (not included in hosting).`,
+      pricingIntelligenceAddonAmount: amount,
+      pricingIntelligenceAddonNotes: `Host requested $${amount}/mo pricing intelligence add-on (not included in hosting). Stripe not configured — activate in ops after payment.`,
     },
   });
 

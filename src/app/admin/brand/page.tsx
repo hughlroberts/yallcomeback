@@ -490,7 +490,27 @@ export default async function AdminBrandPage({
             Domain & disclaimer
           </h2>
           <div className="space-y-1.5">
-            <Label htmlFor="websiteUrl">Website / custom domain</Label>
+            <Label htmlFor="customDomain">Custom domain (hostname)</Label>
+            <Input
+              id="customDomain"
+              name="customDomain"
+              defaultValue={host.customDomain || ""}
+              placeholder="cherokeelanding.net"
+            />
+            <p className="text-xs text-stone-500">
+              Self-serve routing: guests on this hostname get your brand site.
+              Point DNS (CNAME/A) at this Railway app, set publish to{" "}
+              <strong>Live</strong>, and allow ~1 minute for the domain map to
+              refresh. www and bare domain both work.
+            </p>
+            {host.customDomain ? (
+              <p className="rounded-lg bg-stone-50 px-3 py-2 font-mono text-[11px] text-stone-600">
+                DNS → this app · map entry: {host.customDomain}:{host.slug}
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="websiteUrl">Public website URL</Label>
             <Input
               id="websiteUrl"
               name="websiteUrl"
@@ -499,14 +519,8 @@ export default async function AdminBrandPage({
               placeholder="https://www.cherokeelanding.net"
             />
             <p className="text-xs text-stone-500">
-              Required for <strong>Live</strong> with your own domain. Point DNS
-              here and set{" "}
-              <code className="rounded bg-stone-100 px-1">HOST_DOMAIN_MAP</code>{" "}
-              (e.g.{" "}
-              <code className="rounded bg-stone-100 px-1">
-                cherokeelanding.net:{host.slug}
-              </code>
-              ).
+              Shown to guests as your site link. Required for{" "}
+              <strong>Live</strong> when using a custom domain / self-host.
             </p>
           </div>
           <div className="space-y-1.5">

@@ -188,6 +188,9 @@ model Host {
   sitePublishState     HostSitePublishState @default(UNPUBLISHED)
   /// Own domain or self-hosted app URL (e.g. https://www.example.com)
   websiteUrl           String?
+  /// Bare hostname for guest routing (e.g. cherokeelanding.net).
+  /// Combined with HOST_DOMAIN_MAP / DB map so guests hit this brand.
+  customDomain         String?
   /// STAYLOCAL = use StayLocal listing URLs; CUSTOM = own domain; BOTH = both
   sitePresence         HostSitePresence    @default(STAYLOCAL)
   /// Host-level default: new properties inherit this for marketplace visibility

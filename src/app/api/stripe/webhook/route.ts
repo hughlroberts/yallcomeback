@@ -46,5 +46,65 @@ export async function POST(req: Request) {
     }
   }
 
+  // Pricing intelligence $35/mo add-on (Checkout subscription)
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as {
+      metadata?: { kind?: string; hostId?: string };
+      mode?: string;
+    };
+    if (
+      session.metadata?.kind === "pricing_intelligence_addon" &&
+      session.metadata.hostId
+    ) {
+      const { prisma } = await import("@/lib/db");
+      const {
+        PRICING_INTELLIGENCE_ADDON_USD,
+      } = await import("@/lib/platform-features");
+      await prisma.host.update({
+        where: { id: session.metadata.hostId },
+        data: {
+          pricingIntelligenceAddonStatus: "ACTIVE",
+          pricingIntelligenceAddonAmount: PRICING_INTELLIGENCE_ADDON_USD,
+          pricingIntelligenceAddonStartedAt: new Date(),
+          pricingIntelligenceAddonNotes: `Activated via Stripe Checkout ${new Date().toISOString().slice(0, 10)}`,
+        },
+      });
+    }
+  }
+
+  if (
+    event.type === "customer.subscription.deleted" ||
+    event.type === "customer.subscription.updated"
+  ) {
+    const sub = event.data.object as {
+      status?: string;
+      metadata?: { kind?: string; hostId?: string };
+    };
+    if (
+      sub.metadata?.kind === "pricing_intelligence_addon" &&
+      sub.metadata.hostId
+    ) {
+      const { prisma } = await import("@/lib/db");
+      const status = sub.status;
+      if (status === "canceled" || status === "unpaid" || event.type === "customer.subscription.deleted") {
+        await prisma.host.update({
+          where: { id: sub.metadata.hostId },
+          data: {
+            pricingIntelligenceAddonStatus:
+              status === "unpaid" ? "PAST_DUE" : "CANCELLED",
+            pricingIntelligenceAddonNotes: `Stripe subscription ${status || "ended"} ${new Date().toISOString().slice(0, 10)}`,
+          },
+        });
+      } else if (status === "active" || status === "trialing") {
+        await prisma.host.update({
+          where: { id: sub.metadata.hostId },
+          data: {
+            pricingIntelligenceAddonStatus: "ACTIVE",
+          },
+        });
+      }
+    }
+  }
+
   return NextResponse.json({ received: true });
 }
