@@ -713,73 +713,79 @@ export default async function AdminBrandPage({
         </Card>
       )}
 
-      {/* Syndication — own box, advanced / optional */}
-      <Card className="order-12 space-y-4 border-stone-200 bg-stone-50/50 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-stone-900">
-                Syndication API key
-              </h2>
-              <Link
-                href="/help/syndication-api-key"
-                target="_blank"
-                className="inline-flex size-7 items-center justify-center rounded-full border border-stone-300 bg-white text-xs font-bold text-stone-600 hover:border-bonnet hover:text-bonnet"
-                title="What is this key?"
-                aria-label="About the syndication API key"
-              >
-                i
-              </Link>
+      {/*
+        Syndication only for remote open-source (or if a key already exists).
+        On-platform PLATFORM brands never need this UI.
+      */}
+      {host.hostingMode === "SELF" ||
+      host.syndicationApiKey ||
+      params.synKey ? (
+        <Card className="order-12 space-y-4 border-stone-200 bg-stone-50/50 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-stone-900">
+                  Syndication API key
+                </h2>
+                <Link
+                  href="/help/syndication-api-key"
+                  target="_blank"
+                  className="inline-flex size-7 items-center justify-center rounded-full border border-stone-300 bg-white text-xs font-bold text-stone-600 hover:border-bonnet hover:text-bonnet"
+                  title="What is this key?"
+                  aria-label="About the syndication API key"
+                >
+                  i
+                </Link>
+              </div>
+              <p className="mt-1 text-sm text-stone-600">
+                For a <em>remote</em> open-source install that pushes listings
+                into this marketplace. If you manage listings only in this admin
+                (on-platform hosting), you do not need a key.
+              </p>
             </div>
-            <p className="mt-1 text-sm text-stone-600">
-              <strong>Advanced / optional.</strong> Only if you run a{" "}
-              <em>separate</em> open-source copy of Yall Come Back on your own
-              servers and want to push listings into{" "}
-              <strong>this</strong> marketplace.{" "}
-              <span className="text-stone-500">
-                Normal hosted brands (like a site on this app) do not need this.
-              </span>
-            </p>
+            <span className="shrink-0 rounded-full bg-stone-200/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+              Remote OSS
+            </span>
           </div>
-          <span className="shrink-0 rounded-full bg-stone-200/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
-            Remote OSS only
-          </span>
-        </div>
 
-        {params.synKey ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            <p className="font-semibold">Copy your new key now</p>
-            <p className="mt-1 break-all font-mono text-xs">{params.synKey}</p>
-            <p className="mt-2 text-xs">
-              It will not be shown in full again. Store it in your remote deploy
-              secrets.
+          {params.synKey ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <p className="font-semibold">Copy your new key now</p>
+              <p className="mt-1 break-all font-mono text-xs">{params.synKey}</p>
+              <p className="mt-2 text-xs">
+                It will not be shown in full again. Store it in your remote
+                deploy secrets.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-stone-600">
+              Current key:{" "}
+              <code className="rounded bg-white px-1.5 py-0.5 text-xs ring-1 ring-stone-200">
+                {maskSyndicationKey(host.syndicationApiKey)}
+              </code>
             </p>
-          </div>
-        ) : (
-          <p className="text-sm text-stone-600">
-            Current key:{" "}
-            <code className="rounded bg-white px-1.5 py-0.5 text-xs ring-1 ring-stone-200">
-              {maskSyndicationKey(host.syndicationApiKey)}
-            </code>
-          </p>
-        )}
+          )}
 
-        <form action={rotateSyndicationApiKey} className="flex flex-wrap items-center gap-3">
-          <input type="hidden" name="hostId" value={host.id} />
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <Button type="submit" variant="secondary">
-            {host.syndicationApiKey
-              ? "Rotate syndication API key"
-              : "Generate syndication API key"}
-          </Button>
-          <Link
-            href="/help/syndication-api-key"
-            className="text-sm font-medium text-bonnet hover:underline"
+          <form
+            action={rotateSyndicationApiKey}
+            className="flex flex-wrap items-center gap-3"
           >
-            How this works →
-          </Link>
-        </form>
-      </Card>
+            <input type="hidden" name="hostId" value={host.id} />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <Button type="submit" variant="secondary">
+              {host.syndicationApiKey
+                ? "Rotate syndication API key"
+                : "Generate syndication API key"}
+            </Button>
+            <Link
+              href="/help/syndication-api-key"
+              className="text-sm font-medium text-bonnet hover:underline"
+            >
+              How this works →
+            </Link>
+          </form>
+        </Card>
+      ) : null}
       </div>
     </div>
   );
