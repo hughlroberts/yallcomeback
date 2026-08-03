@@ -93,23 +93,42 @@ function buildEmailBodies(opts: {
   body: string;
   conversationId: string;
   replyPath?: string;
+  /** One-click unsubscribe (always included for marketing compliance) */
+  unsubscribeUrl?: string | null;
 }): { text: string; html: string } {
   const origin = messagingSiteOrigin();
   const path =
     opts.replyPath ||
     `/messages/${opts.conversationId}`;
   const url = `${origin}${path.startsWith("/") ? path : `/${path}`}`;
-  const text = `${opts.body}\n\n—\nReply in your inbox: ${url}\n`;
+  const unsub = opts.unsubscribeUrl?.trim() || null;
+  const prefsUrl = `${origin}/account/settings/notifications`;
+  const text = [
+    opts.body,
+    "",
+    "—",
+    `Reply in your inbox: ${url}`,
+    unsub ? `Stop message emails: ${unsub}` : null,
+    `Notification settings: ${prefsUrl}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
   const html = `<!DOCTYPE html>
 <html><body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.5;color:#1c1917">
   <div style="white-space:pre-wrap;font-size:15px">${escapeHtml(opts.body)}</div>
   <p style="margin-top:24px">
     <a href="${escapeHtml(url)}" style="color:#3a4a86;font-weight:600">Reply in your inbox →</a>
   </p>
-  <p style="margin-top:16px;font-size:12px;color:#78716c">
+  <p style="margin-top:28px;padding-top:16px;border-top:1px solid #e7e5e4;font-size:12px;color:#78716c">
     You received this because someone messaged you on ${escapeHtml(
       process.env.NEXT_PUBLIC_SITE_NAME || "Yall Come Back",
     )}.
+    ${
+      unsub
+        ? `<br/><a href="${escapeHtml(unsub)}" style="color:#78716c">Unsubscribe from message emails</a> · `
+        : "<br/>"
+    }
+    <a href="${escapeHtml(prefsUrl)}" style="color:#78716c">Manage notification settings</a>
   </p>
 </body></html>`;
   return { text, html };
@@ -270,6 +289,8 @@ export async function dispatchEmail(opts: {
   conversationId: string;
   /** Override inbox path (e.g. /admin/messages/id for hosts) */
   replyPath?: string;
+  /** Skip preference checks (rare; default respects opt-out) */
+  force?: boolean;
 }): Promise<DispatchResult> {
   const to = opts.to.trim().toLowerCase();
   if (!to || !to.includes("@")) {
@@ -279,6 +300,23 @@ export async function dispatchEmail(opts: {
       channel: "EMAIL",
       detail: "Invalid recipient email",
     };
+  }
+
+  if (!opts.force) {
+    const { canSendEmailTo, unsubscribeUrl } = await import(
+      "@/lib/notification-prefs"
+    );
+    const allowed = await canSendEmailTo(to);
+    if (!allowed) {
+      return {
+        attempted: false,
+        status: "skipped",
+        channel: "EMAIL",
+        detail: "Recipient opted out of message emails",
+      };
+    }
+    // attach unsub URL via local build below
+    void unsubscribeUrl;
   }
 
   if (!isEmailMessagingEnabled()) {
@@ -301,7 +339,11 @@ export async function dispatchEmail(opts: {
     };
   }
 
-  const { text, html } = buildEmailBodies(opts);
+  const { unsubscribeUrl } = await import("@/lib/notification-prefs");
+  const { text, html } = buildEmailBodies({
+    ...opts,
+    unsubscribeUrl: unsubscribeUrl(to, "email"),
+  });
 
   // Explicit dry-run for staging (default off when a real transport exists)
   if (process.env.MESSAGING_EMAIL_DRY_RUN === "true") {

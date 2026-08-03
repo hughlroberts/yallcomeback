@@ -140,6 +140,12 @@ export type MarketplaceSearchOpts = {
   checkIn?: string;
   /** Check-out YYYY-MM-DD (exclusive end, same as booking). */
   checkOut?: string;
+  /**
+   * ± days flexibility on check-in (Airbnb-style).
+   * Stay matches if any window of the same night count starting in
+   * [checkIn − flex, checkIn + flex] is free of calendar blocks.
+   */
+  dateFlex?: number;
 };
 
 function parseYmd(raw: string | undefined): Date | null {
@@ -173,6 +179,11 @@ export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
         )
       : 0;
   const hasDates = Boolean(checkIn && checkOut && nights >= 1);
+  const dateFlexRaw = opts?.dateFlex ?? 0;
+  const dateFlex =
+    Number.isFinite(dateFlexRaw) && dateFlexRaw > 0
+      ? Math.min(14, Math.floor(dateFlexRaw))
+      : 0;
 
   const listings = await prisma.property.findMany({
     where: {
@@ -229,17 +240,58 @@ export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
       filtered = [];
     } else {
       const ids = capacityOk.map((p) => p.id);
-      // Any block overlapping [checkIn, checkOut) means unavailable
-      const conflicts = await prisma.calendarBlock.findMany({
+      // Load blocks that could touch the flexible search window
+      const windowStart = new Date(checkIn);
+      windowStart.setDate(windowStart.getDate() - dateFlex);
+      const windowEnd = new Date(checkOut);
+      windowEnd.setDate(windowEnd.getDate() + dateFlex);
+
+      const blocks = await prisma.calendarBlock.findMany({
         where: {
           propertyId: { in: ids },
-          startDate: { lt: checkOut },
-          endDate: { gt: checkIn },
+          startDate: { lt: windowEnd },
+          endDate: { gt: windowStart },
         },
-        select: { propertyId: true },
+        select: {
+          propertyId: true,
+          startDate: true,
+          endDate: true,
+        },
       });
-      const blocked = new Set(conflicts.map((c) => c.propertyId));
-      filtered = capacityOk.filter((p) => !blocked.has(p.id));
+
+      const byProp = new Map<string, { start: Date; end: Date }[]>();
+      for (const b of blocks) {
+        const list = byProp.get(b.propertyId) || [];
+        list.push({ start: b.startDate, end: b.endDate });
+        byProp.set(b.propertyId, list);
+      }
+
+      function rangeFree(
+        propId: string,
+        start: Date,
+        end: Date,
+      ): boolean {
+        const propBlocks = byProp.get(propId) || [];
+        for (const b of propBlocks) {
+          if (b.start < end && b.end > start) return false;
+        }
+        return true;
+      }
+
+      filtered = capacityOk.filter((p) => {
+        if (dateFlex === 0) {
+          return rangeFree(p.id, checkIn, checkOut);
+        }
+        // Any same-length window with check-in shifted by up to ±flex
+        for (let d = -dateFlex; d <= dateFlex; d++) {
+          const start = new Date(checkIn);
+          start.setDate(start.getDate() + d);
+          const end = new Date(start);
+          end.setDate(end.getDate() + nights);
+          if (rangeFree(p.id, start, end)) return true;
+        }
+        return false;
+      });
     }
   }
 

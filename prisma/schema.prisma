@@ -330,6 +330,7 @@ model User {
   /// Privacy: allow public listing pages in search engines (hosts)
   includeListingsInSearch Boolean @default(true)
   emailNotifications Boolean @default(true)
+  /// Off by default until SMS product is live; when on, still checks platform SMS config
   smsNotifications   Boolean @default(false)
   /// Display preferences (Texas defaults)
   language       String @default("en-US")
@@ -342,6 +343,24 @@ model User {
   bookings             Booking[]
   sentMessages         Message[]           @relation("MessageSender")
   guestConversations   Conversation[]      @relation("ConversationGuest")
+}
+
+/// Email/SMS suppressions for any address (account or guest-only contact).
+/// In-email unsubscribe and profile toggles write here so delivery always checks both.
+model MessageDeliveryOptOut {
+  id          String   @id @default(cuid())
+  /// Lowercased email when channel is email
+  email       String?  @unique
+  /// E.164-ish phone when channel is SMS
+  phone       String?  @unique
+  emailOptOut Boolean  @default(false)
+  smsOptOut   Boolean  @default(false)
+  source      String?  /// profile | email_link | sms_link | admin
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([emailOptOut])
+  @@index([smsOptOut])
 }
 
 model Location {

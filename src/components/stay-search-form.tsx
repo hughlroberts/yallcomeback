@@ -2,6 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { WhereAutocomplete } from "@/components/where-autocomplete";
+import { SearchDateRangePicker } from "@/components/search-date-range-picker";
+import {
+  addDaysYmd,
+  formatYmd,
+  isYmd,
+  nightsBetweenYmd,
+} from "@/lib/search-dates";
+
+export { addDaysYmd, nightsBetweenYmd } from "@/lib/search-dates";
 
 type Props = {
   /** Optional extra form fields (e.g. campaign tracking). */
@@ -12,40 +21,26 @@ type Props = {
   defaultCheckOut?: string;
   defaultGuests?: string;
   defaultPets?: string;
+  /** ± days flexibility (0 = exact) */
+  defaultDateFlex?: string | number;
   placeSuggestions?: string[];
   /** Compact variant for homepage hero */
   variant?: "page" | "hero";
 };
 
-const YMD = /^\d{4}-\d{2}-\d{2}$/;
-
-function formatYmd(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-/** Add whole days to a YYYY-MM-DD (local calendar). */
-export function addDaysYmd(ymd: string, days: number): string {
-  const d = new Date(`${ymd}T12:00:00`);
-  d.setDate(d.getDate() + days);
-  return formatYmd(d);
-}
-
-/** Nights between check-in and check-out (checkout exclusive). Min valid stay is 1. */
-export function nightsBetweenYmd(checkIn: string, checkOut: string): number {
-  if (!YMD.test(checkIn) || !YMD.test(checkOut)) return 0;
-  const a = new Date(`${checkIn}T12:00:00`);
-  const b = new Date(`${checkOut}T12:00:00`);
-  const ms = b.getTime() - a.getTime();
-  return Math.round(ms / 86400000);
+function parseFlex(raw: string | number | undefined): number {
+  if (raw === undefined || raw === "") return 0;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  const allowed = [1, 2, 3, 7, 14];
+  return allowed.includes(Math.floor(n)) ? Math.floor(n) : 0;
 }
 
 /**
  * Optional marketplace search: Where · When · Who (guests + pets).
  * Empty fields mean no filter (anywhere / any dates / any party size).
  * When dates are used: checkout must be after check-in (minimum 1 night).
+ * dateFlex loosens the window (± days) like Airbnb.
  */
 export function StaySearchForm({
   hiddenFields,
@@ -55,6 +50,7 @@ export function StaySearchForm({
   defaultCheckOut = "",
   defaultGuests = "",
   defaultPets = "",
+  defaultDateFlex = "",
   placeSuggestions = [],
   variant = "page",
 }: Props) {
@@ -69,32 +65,22 @@ export function StaySearchForm({
     ) {
       return defaultCheckOut;
     }
-    if (defaultCheckIn && YMD.test(defaultCheckIn)) {
-      return addDaysYmd(defaultCheckIn, 1);
-    }
-    return defaultCheckOut;
+    return defaultCheckOut && isYmd(defaultCheckOut) ? defaultCheckOut : "";
   });
+  const [dateFlex, setDateFlex] = useState(() => parseFlex(defaultDateFlex));
   const [dateError, setDateError] = useState<string | null>(null);
 
   const todayYmd = useMemo(() => formatYmd(new Date()), []);
-  const checkoutMin = checkIn && YMD.test(checkIn) ? addDaysYmd(checkIn, 1) : todayYmd;
 
-  function onCheckInChange(next: string) {
+  function onDatesChange(next: {
+    checkIn: string;
+    checkOut: string;
+    dateFlex: number;
+  }) {
     setDateError(null);
-    setCheckIn(next);
-    if (!next) return;
-    // Checkout must stay after check-in (at least one night)
-    if (!checkOut || nightsBetweenYmd(next, checkOut) < 1) {
-      setCheckOut(addDaysYmd(next, 1));
-    }
-  }
-
-  function onCheckOutChange(next: string) {
-    setDateError(null);
-    setCheckOut(next);
-    if (checkIn && next && nightsBetweenYmd(checkIn, next) < 1) {
-      setDateError("Check-out must be after check-in (1 night minimum)");
-    }
+    setCheckIn(next.checkIn);
+    setCheckOut(next.checkOut);
+    setDateFlex(next.dateFlex);
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -103,12 +89,12 @@ export function StaySearchForm({
 
     if (!hasIn && !hasOut) {
       setDateError(null);
-      return; // both empty = any dates OK
+      return; // flexible / any dates
     }
 
     if (hasIn !== hasOut) {
       e.preventDefault();
-      setDateError("Choose both check-in and check-out, or leave both blank");
+      setDateError("Choose check-in and check-out in the When calendar, or clear dates");
       return;
     }
 
@@ -154,37 +140,14 @@ export function StaySearchForm({
 
         <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
 
-        <div className="grid grid-cols-2 gap-1 sm:contents">
-          <label className="group flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-none sm:py-2.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-              Check-in
-            </span>
-            <input
-              name="checkIn"
-              type="date"
-              value={checkIn}
-              min={todayYmd}
-              onChange={(e) => onCheckInChange(e.target.value)}
-              className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none sm:text-sm"
-            />
-          </label>
-
-          <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
-
-          <label className="group flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-none sm:py-2.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-              Check-out
-            </span>
-            <input
-              name="checkOut"
-              type="date"
-              value={checkOut}
-              min={checkoutMin}
-              onChange={(e) => onCheckOutChange(e.target.value)}
-              className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none sm:text-sm"
-            />
-          </label>
-        </div>
+        <SearchDateRangePicker
+          checkIn={checkIn}
+          checkOut={checkOut}
+          dateFlex={dateFlex}
+          onChange={onDatesChange}
+          minDate={todayYmd}
+          className="sm:flex-[1.35]"
+        />
 
         <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
 
@@ -234,9 +197,8 @@ export function StaySearchForm({
         </p>
       ) : (
         <p className="mt-2 px-3 text-center text-xs text-stone-500">
-          Dates optional. Check-out must be after check-in (1 night minimum).
-          Stays with a higher minimum night stay won&apos;t appear for shorter
-          trips.
+          Dates optional — use Flexible to browse any stay. With dates, pick
+          check-in then check-out in one calendar; add ± days if you can flex.
         </p>
       )}
     </form>

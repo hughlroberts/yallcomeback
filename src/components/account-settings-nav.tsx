@@ -5,6 +5,7 @@ export type AccountSection =
   | "personal"
   | "login"
   | "privacy"
+  | "notifications"
   | "taxes"
   | "payments"
   | "language";
@@ -32,6 +33,12 @@ const NAV: {
     label: "Privacy",
     href: "/account/settings/privacy",
     icon: "🔒",
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    href: "/account/settings/notifications",
+    icon: "🔔",
   },
   {
     id: "taxes",

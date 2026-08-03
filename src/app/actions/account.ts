@@ -67,29 +67,71 @@ export async function updatePrivacySettings(formData: FormData) {
 
 export async function updateNotificationSettings(formData: FormData) {
   const session = await requireUser();
-  if (!session) redirect("/login?callbackUrl=/messages");
+  if (!session) {
+    redirect("/login?callbackUrl=/account/settings/notifications");
+  }
 
-  const returnRaw = String(formData.get("returnTo") || "/messages").trim();
+  const returnRaw = String(formData.get("returnTo") || "").trim();
+  const allowedReturns = [
+    "/messages",
+    "/admin/messages",
+    "/account/settings/notifications",
+  ];
   const returnTo =
-    returnRaw === "/admin/messages" || returnRaw.startsWith("/admin/messages/")
+    returnRaw === "/admin/messages" ||
+    returnRaw.startsWith("/admin/messages/")
       ? "/admin/messages"
-      : "/messages";
+      : allowedReturns.includes(returnRaw)
+        ? returnRaw
+        : "/account/settings/notifications";
 
-  await prisma.user.update({
+  const emailOn = formData.get("emailNotifications") === "on";
+  const smsOn = formData.has("smsNotifications")
+    ? formData.get("smsNotifications") === "on"
+    : undefined;
+
+  const user = await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      emailNotifications: formData.get("emailNotifications") === "on",
-      // SMS prefs only updated when the field is present (ops product; hidden in UI)
-      ...(formData.has("smsNotifications")
-        ? { smsNotifications: formData.get("smsNotifications") === "on" }
-        : {}),
+      emailNotifications: emailOn,
+      ...(smsOn !== undefined ? { smsNotifications: smsOn } : {}),
     },
+    select: { email: true, phone: true },
   });
+
+  // Keep suppress list in sync so in-email unsubscribe and profile agree
+  const { clearChannelOptOut, applyChannelOptOut } = await import(
+    "@/lib/notification-prefs"
+  );
+  if (user.email) {
+    if (emailOn) {
+      await clearChannelOptOut({ channel: "email", address: user.email });
+    } else {
+      await applyChannelOptOut({
+        channel: "email",
+        address: user.email,
+        source: "profile",
+      });
+    }
+  }
+  if (smsOn !== undefined && user.phone) {
+    if (smsOn) {
+      await clearChannelOptOut({ channel: "sms", address: user.phone });
+    } else {
+      await applyChannelOptOut({
+        channel: "sms",
+        address: user.phone,
+        source: "profile",
+      });
+    }
+  }
 
   revalidateAccount();
   revalidatePath("/messages");
   revalidatePath("/admin/messages");
-  redirect(`${returnTo}?prefs=1`);
+  revalidatePath("/account/settings/notifications");
+  const q = returnTo.includes("notifications") ? "saved=1" : "prefs=1";
+  redirect(`${returnTo}?${q}`);
 }
 
 export async function updateLanguageCurrency(formData: FormData) {

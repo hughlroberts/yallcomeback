@@ -5,12 +5,17 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { dispatchEmail, dispatchSms } from "@/lib/messaging";
+import {
+  canSendEmailTo,
+  canSendSmsTo,
+} from "@/lib/notification-prefs";
 import { ensureHostAccess } from "@/lib/scope";
 
 async function hostNotifyEmails(hostId: string, contactEmail: string | null) {
   const emails = new Set<string>();
   if (contactEmail?.includes("@")) {
-    emails.add(contactEmail.trim().toLowerCase());
+    const e = contactEmail.trim().toLowerCase();
+    if (await canSendEmailTo(e)) emails.add(e);
   }
   const users = await prisma.user.findMany({
     where: {
@@ -21,49 +26,11 @@ async function hostNotifyEmails(hostId: string, contactEmail: string | null) {
     select: { email: true },
   });
   for (const u of users) {
-    if (u.email?.includes("@")) emails.add(u.email.trim().toLowerCase());
+    if (u.email?.includes("@") && (await canSendEmailTo(u.email))) {
+      emails.add(u.email.trim().toLowerCase());
+    }
   }
   return [...emails];
-}
-
-async function guestWantsEmail(
-  guestEmail: string,
-  guestUserId: string | null,
-): Promise<boolean> {
-  if (guestUserId) {
-    const u = await prisma.user.findUnique({
-      where: { id: guestUserId },
-      select: { emailNotifications: true },
-    });
-    if (u) return u.emailNotifications;
-  }
-  const byEmail = await prisma.user.findUnique({
-    where: { email: guestEmail.trim().toLowerCase() },
-    select: { emailNotifications: true },
-  });
-  if (byEmail) return byEmail.emailNotifications;
-  // Unregistered guest who left an email — always try email
-  return true;
-}
-
-async function guestWantsSms(
-  guestUserId: string | null,
-  guestEmail: string,
-): Promise<boolean> {
-  if (guestUserId) {
-    const u = await prisma.user.findUnique({
-      where: { id: guestUserId },
-      select: { smsNotifications: true },
-    });
-    if (u) return u.smsNotifications;
-  }
-  const byEmail = await prisma.user.findUnique({
-    where: { email: guestEmail.trim().toLowerCase() },
-    select: { smsNotifications: true },
-  });
-  if (byEmail) return byEmail.smsNotifications;
-  // Unregistered: only if phone present and SMS enabled at platform — still opt-in false by default
-  return false;
 }
 
 function mergeExternalStatus(
@@ -216,12 +183,8 @@ export async function replyToConversation(formData: FormData) {
   let externalId: string | null = null;
 
   if (senderRole === "HOST") {
-    // Host → guest: email the customer's address on the conversation
-    const wantEmail = await guestWantsEmail(
-      conversation.guestEmail,
-      conversation.guestUserId,
-    );
-    if (wantEmail) {
+    // Host → guest: email the customer's address (respects profile + list opt-out)
+    if (await canSendEmailTo(conversation.guestEmail)) {
       const email = await dispatchEmail({
         to: conversation.guestEmail,
         subject: `Message from ${conversation.host.name}`,
@@ -238,12 +201,15 @@ export async function replyToConversation(formData: FormData) {
       }
     }
 
-    // SMS only when platform ops has enabled it and guest opted in (ops product)
-    const wantSms = await guestWantsSms(
-      conversation.guestUserId,
-      conversation.guestEmail,
-    );
-    if (wantSms && conversation.guestPhone) {
+    // SMS when guest opted in + platform SMS enabled (prefs ready before launch)
+    if (
+      conversation.guestPhone &&
+      (await canSendSmsTo({
+        phone: conversation.guestPhone,
+        email: conversation.guestEmail,
+        userId: conversation.guestUserId,
+      }))
+    ) {
       const sms = await dispatchSms({
         to: conversation.guestPhone,
         body: `${conversation.host.name}: ${body.slice(0, 140)}`,

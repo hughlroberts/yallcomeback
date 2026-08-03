@@ -209,9 +209,19 @@ function ConversationList({
                 className="size-4 rounded border-stone-300"
               />
             </label>
+            <label className="flex items-center justify-between gap-3 text-sm text-stone-800">
+              <span>Text me (SMS)</span>
+              <input
+                type="checkbox"
+                name="smsNotifications"
+                defaultChecked={deliveryPrefs.smsNotifications}
+                className="size-4 rounded border-stone-300"
+              />
+            </label>
             <p className="text-xs text-stone-500">
-              We email the address on your account (or the email you used to
-              start the conversation).
+              Emails go to your account address. Every message email has an
+              unsubscribe link. SMS only sends when the platform has texts
+              enabled and you opt in.
             </p>
             <Button
               type="submit"
@@ -220,6 +230,12 @@ function ConversationList({
             >
               Save
             </Button>
+            <a
+              href="/account/settings/notifications"
+              className="block text-center text-xs font-medium text-bonnet hover:underline"
+            >
+              Full notification settings →
+            </a>
           </form>
         </div>
       ) : null}

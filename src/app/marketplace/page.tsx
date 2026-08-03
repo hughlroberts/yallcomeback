@@ -25,6 +25,7 @@ type SearchFields = {
   pets?: string;
   checkIn?: string;
   checkOut?: string;
+  dateFlex?: string;
 };
 
 function parsePositiveInt(raw: string | undefined): number | undefined {
@@ -47,6 +48,11 @@ export default async function MarketplacePage({
   const pets = parsePositiveInt(params.pets);
   const checkIn = params.checkIn?.trim() || undefined;
   const checkOut = params.checkOut?.trim() || undefined;
+  const dateFlexRaw = Number(params.dateFlex);
+  const dateFlex =
+    Number.isFinite(dateFlexRaw) && dateFlexRaw > 0
+      ? Math.min(14, Math.floor(dateFlexRaw))
+      : 0;
 
   const placeSuggestions = await getMarketplacePlaceSuggestions();
 
@@ -80,6 +86,7 @@ export default async function MarketplacePage({
             defaultWhere={where ?? ""}
             defaultCheckIn={checkIn ?? ""}
             defaultCheckOut={checkOut ?? ""}
+            defaultDateFlex={dateFlex || ""}
             defaultGuests={params.guests ?? ""}
             defaultPets={params.pets ?? ""}
             placeSuggestions={placeSuggestions}
@@ -94,6 +101,7 @@ export default async function MarketplacePage({
           pets={pets}
           checkIn={checkIn}
           checkOut={checkOut}
+          dateFlex={dateFlex}
           rawGuests={params.guests}
           rawPets={params.pets}
         />
@@ -108,6 +116,7 @@ async function StaysPanel({
   pets,
   checkIn,
   checkOut,
+  dateFlex = 0,
   rawGuests,
   rawPets,
 }: {
@@ -116,6 +125,7 @@ async function StaysPanel({
   pets?: number;
   checkIn?: string;
   checkOut?: string;
+  dateFlex?: number;
   rawGuests?: string;
   rawPets?: string;
 }) {
@@ -126,6 +136,7 @@ async function StaysPanel({
       pets,
       checkIn,
       checkOut,
+      dateFlex,
     }),
     marketplaceDiscoveryEnabled(),
   ]);
@@ -133,7 +144,13 @@ async function StaysPanel({
   const filters: string[] = [];
   if (where) filters.push(`near “${where}”`);
   else filters.push("anywhere");
-  if (checkIn && checkOut) filters.push(`${checkIn} → ${checkOut}`);
+  if (checkIn && checkOut) {
+    filters.push(
+      dateFlex > 0
+        ? `${checkIn} → ${checkOut} (±${dateFlex}d)`
+        : `${checkIn} → ${checkOut}`,
+    );
+  }
   if (guests) filters.push(`${guests} guest${guests === 1 ? "" : "s"}`);
   if (pets) filters.push(`${pets} pet${pets === 1 ? "" : "s"}`);
 

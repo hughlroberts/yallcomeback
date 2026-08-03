@@ -32,6 +32,12 @@ const SECTIONS: {
     icon: "🔒",
   },
   {
+    href: "/account/settings/notifications",
+    title: "Notifications",
+    description: "Email and text alerts for new messages. Opt out anytime.",
+    icon: "🔔",
+  },
+  {
     href: "/account/settings/taxes",
     title: "Taxes",
     description: "How lodging tax works on Yall Come Back (hosts).",
