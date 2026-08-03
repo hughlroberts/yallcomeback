@@ -209,15 +209,10 @@ function ConversationList({
                 className="size-4 rounded border-stone-300"
               />
             </label>
-            <label className="flex items-center justify-between gap-3 text-sm text-stone-800">
-              <span>SMS alerts (if configured)</span>
-              <input
-                type="checkbox"
-                name="smsNotifications"
-                defaultChecked={deliveryPrefs.smsNotifications}
-                className="size-4 rounded border-stone-300"
-              />
-            </label>
+            <p className="text-xs text-stone-500">
+              We email the address on your account (or the email you used to
+              start the conversation).
+            </p>
             <Button
               type="submit"
               variant="secondary"

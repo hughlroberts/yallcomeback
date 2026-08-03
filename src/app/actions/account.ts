@@ -79,7 +79,10 @@ export async function updateNotificationSettings(formData: FormData) {
     where: { id: session.user.id },
     data: {
       emailNotifications: formData.get("emailNotifications") === "on",
-      smsNotifications: formData.get("smsNotifications") === "on",
+      // SMS prefs only updated when the field is present (ops product; hidden in UI)
+      ...(formData.has("smsNotifications")
+        ? { smsNotifications: formData.get("smsNotifications") === "on" }
+        : {}),
     },
   });
 

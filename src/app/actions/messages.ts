@@ -7,6 +7,74 @@ import { prisma } from "@/lib/db";
 import { dispatchEmail, dispatchSms } from "@/lib/messaging";
 import { ensureHostAccess } from "@/lib/scope";
 
+async function hostNotifyEmails(hostId: string, contactEmail: string | null) {
+  const emails = new Set<string>();
+  if (contactEmail?.includes("@")) {
+    emails.add(contactEmail.trim().toLowerCase());
+  }
+  const users = await prisma.user.findMany({
+    where: {
+      hostId,
+      role: { in: ["HOST", "ADMIN"] },
+      emailNotifications: true,
+    },
+    select: { email: true },
+  });
+  for (const u of users) {
+    if (u.email?.includes("@")) emails.add(u.email.trim().toLowerCase());
+  }
+  return [...emails];
+}
+
+async function guestWantsEmail(
+  guestEmail: string,
+  guestUserId: string | null,
+): Promise<boolean> {
+  if (guestUserId) {
+    const u = await prisma.user.findUnique({
+      where: { id: guestUserId },
+      select: { emailNotifications: true },
+    });
+    if (u) return u.emailNotifications;
+  }
+  const byEmail = await prisma.user.findUnique({
+    where: { email: guestEmail.trim().toLowerCase() },
+    select: { emailNotifications: true },
+  });
+  if (byEmail) return byEmail.emailNotifications;
+  // Unregistered guest who left an email — always try email
+  return true;
+}
+
+async function guestWantsSms(
+  guestUserId: string | null,
+  guestEmail: string,
+): Promise<boolean> {
+  if (guestUserId) {
+    const u = await prisma.user.findUnique({
+      where: { id: guestUserId },
+      select: { smsNotifications: true },
+    });
+    if (u) return u.smsNotifications;
+  }
+  const byEmail = await prisma.user.findUnique({
+    where: { email: guestEmail.trim().toLowerCase() },
+    select: { smsNotifications: true },
+  });
+  if (byEmail) return byEmail.smsNotifications;
+  // Unregistered: only if phone present and SMS enabled at platform — still opt-in false by default
+  return false;
+}
+
+function mergeExternalStatus(
+  existing: string | null | undefined,
+  next: string,
+): string {
+  if (!existing) return next;
+  if (existing.includes(next)) return existing;
+  return `${existing},${next}`;
+}
+
 export async function startGuestConversation(formData: FormData) {
   const propertyId = String(formData.get("propertyId") || "");
   const bookingId = String(formData.get("bookingId") || "") || null;
@@ -50,14 +118,45 @@ export async function startGuestConversation(formData: FormData) {
     },
   });
 
-  // Optional hosted-portal hooks (no-op when not configured)
-  if (property.host.contactEmail) {
-    await dispatchEmail({
-      to: property.host.contactEmail,
-      subject: subject || `New message · ${property.title}`,
-      body: `${guestName} (${guestEmail}):\n\n${body}`,
+  // Email host(s) about the new guest message
+  const hostEmails = await hostNotifyEmails(
+    property.hostId,
+    property.host.contactEmail,
+  );
+  const emailSubject =
+    subject || `New message · ${property.title}`;
+  const emailBody = `${guestName} (${guestEmail}) wrote about ${property.title}:\n\n${body}`;
+
+  let externalStatus: string | null = null;
+  let externalId: string | null = null;
+  for (const to of hostEmails) {
+    const result = await dispatchEmail({
+      to,
+      subject: emailSubject,
+      body: emailBody,
       conversationId: conversation.id,
+      replyPath: `/admin/messages/${conversation.id}`,
     });
+    if (result.attempted) {
+      externalStatus = mergeExternalStatus(
+        externalStatus,
+        `email:${result.status}`,
+      );
+      if (result.externalId) externalId = result.externalId;
+    }
+  }
+
+  if (externalStatus) {
+    const firstMsg = await prisma.message.findFirst({
+      where: { conversationId: conversation.id },
+      orderBy: { createdAt: "asc" },
+    });
+    if (firstMsg) {
+      await prisma.message.update({
+        where: { id: firstMsg.id },
+        data: { externalStatus, externalId },
+      });
+    }
   }
 
   revalidatePath("/messages");
@@ -113,36 +212,83 @@ export async function replyToConversation(formData: FormData) {
     data: { lastMessageAt: new Date() },
   });
 
-  // Hosted portal: notify the other party via SMS/email hooks when configured
+  let externalStatus: string | null = null;
+  let externalId: string | null = null;
+
   if (senderRole === "HOST") {
-    if (conversation.guestPhone) {
+    // Host → guest: email the customer's address on the conversation
+    const wantEmail = await guestWantsEmail(
+      conversation.guestEmail,
+      conversation.guestUserId,
+    );
+    if (wantEmail) {
+      const email = await dispatchEmail({
+        to: conversation.guestEmail,
+        subject: `Message from ${conversation.host.name}`,
+        body: `${conversation.host.name} wrote:\n\n${body}`,
+        conversationId,
+        replyPath: `/messages/${conversationId}`,
+      });
+      if (email.attempted) {
+        externalStatus = mergeExternalStatus(
+          externalStatus,
+          `email:${email.status}`,
+        );
+        if (email.externalId) externalId = email.externalId;
+      }
+    }
+
+    // SMS only when platform ops has enabled it and guest opted in (ops product)
+    const wantSms = await guestWantsSms(
+      conversation.guestUserId,
+      conversation.guestEmail,
+    );
+    if (wantSms && conversation.guestPhone) {
       const sms = await dispatchSms({
         to: conversation.guestPhone,
-        body: `Message from ${conversation.host.name}: ${body.slice(0, 140)}`,
+        body: `${conversation.host.name}: ${body.slice(0, 140)}`,
         conversationId,
       });
       if (sms.attempted) {
-        await prisma.message.update({
-          where: { id: message.id },
-          data: {
-            externalStatus: sms.status,
-            externalId: sms.externalId,
-          },
-        });
+        externalStatus = mergeExternalStatus(
+          externalStatus,
+          `sms:${sms.status}`,
+        );
+        if (sms.externalId) externalId = sms.externalId;
       }
     }
-    await dispatchEmail({
-      to: conversation.guestEmail,
-      subject: `Reply from ${conversation.host.name}`,
-      body,
-      conversationId,
-    });
-  } else if (conversation.host.contactEmail) {
-    await dispatchEmail({
-      to: conversation.host.contactEmail,
-      subject: `Guest reply · ${conversation.property?.title || "stay"}`,
-      body: `${conversation.guestName}: ${body}`,
-      conversationId,
+  } else {
+    // Guest → host: email host contact + host users
+    const hostEmails = await hostNotifyEmails(
+      conversation.hostId,
+      conversation.host.contactEmail,
+    );
+    const title = conversation.property?.title || "your stay";
+    for (const to of hostEmails) {
+      const email = await dispatchEmail({
+        to,
+        subject: `Guest reply · ${title}`,
+        body: `${conversation.guestName} wrote:\n\n${body}`,
+        conversationId,
+        replyPath: `/admin/messages/${conversationId}`,
+      });
+      if (email.attempted) {
+        externalStatus = mergeExternalStatus(
+          externalStatus,
+          `email:${email.status}`,
+        );
+        if (email.externalId) externalId = email.externalId;
+      }
+    }
+  }
+
+  if (externalStatus) {
+    await prisma.message.update({
+      where: { id: message.id },
+      data: {
+        externalStatus,
+        externalId,
+      },
     });
   }
 

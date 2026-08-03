@@ -103,15 +103,15 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
   },
   {
     category: "Messaging",
-    summary: "Guest ↔ host communication in-app; SMS hooks for hosted portal.",
+    summary: "Guest ↔ host communication in-app, with email to the customer address.",
     items: [
       "In-app conversations from property pages and after booking",
       "Host earnings: Performance, Upcoming, Paid, Reports (Airbnb-style)",
       "Host inbox under Admin → Messages",
       "Per-listing auto messages: on booking, 1 day before, optional 6 hours before",
       "Copy booking message templates to all listings (opt-in)",
-      "SMS/email dispatch hooks (env-gated; dry-run by default)",
-      "Self-host keeps hooks but does not send SMS out of the box",
+      "Email delivery to guest/host addresses when transport is configured",
+      "Self-host can use the same email transport (Resend or SMTP)",
     ],
   },
   {
@@ -173,7 +173,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "Personal information (name, phone, addresses, emergency contact)",
       "Login & security (password change)",
       "Privacy toggles (read receipts, search engines)",
-      "Message alerts (email / SMS preferences under Messages)",
+      "Message alerts (email preferences under Messages)",
       "Taxes (host config link + liability warning)",
       "Payments as links only (Stripe, Bitcoin, hosting invoices, bookings)",
       "Languages & currency (USD / miles defaults)",

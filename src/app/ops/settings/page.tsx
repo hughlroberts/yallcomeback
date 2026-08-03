@@ -7,7 +7,11 @@ import {
   STRIPE_LIVE_READY,
   stripeSetupLabel,
 } from "@/lib/features";
-import { messagingSetupLabel } from "@/lib/messaging";
+import {
+  emailMessagingStatus,
+  messagingSetupLabel,
+  smsMessagingStatus,
+} from "@/lib/messaging";
 import { isStripeConfigured } from "@/lib/stripe";
 import {
   bitcoinSetupLabel,
@@ -229,23 +233,92 @@ BITCOIN_LABEL=Yall Come Back deposit`}
       </Card>
 
       <Card>
-        <h2 className="font-semibold">Messaging</h2>
+        <h2 className="font-semibold">Messaging (platform product)</h2>
         <p className="mt-2 text-sm text-stone-600">
-          Guests and hosts always message <strong>in-app</strong>. SMS and email
-          are optional hooks for the hosted portal - local / open-source
-          deploys keep the same code paths but do not send externally unless
-          you configure a provider.
+          Guests and hosts always have an <strong>in-app</strong> inbox. Host
+          replies and booking auto-messages should also reach the{" "}
+          <strong>customer email</strong> on the conversation/booking when
+          email transport is live. SMS is reserved for full product rollout —
+          configure here only; do not promote SMS in host/guest UI yet.
         </p>
         <p className="mt-3 text-sm font-medium text-stone-800">
           {messagingSetupLabel()}
         </p>
-        <pre className="mt-4 overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">
-{`# Hosted portal only (optional)
-MESSAGING_SMS_ENABLED=true
-MESSAGING_SMS_FROM=+1...
-MESSAGING_SMS_PROVIDER_KEY=...
-MESSAGING_SMS_DRY_RUN=true   # set false when live SMS is ready`}
-        </pre>
+        {(() => {
+          const email = emailMessagingStatus();
+          const sms = smsMessagingStatus();
+          return (
+            <dl className="mt-4 space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-500">Email enabled</dt>
+                <dd className="font-medium">{email.enabled ? "Yes" : "No"}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-500">Email transport</dt>
+                <dd className="font-medium">{email.transport}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-500">Email from</dt>
+                <dd className="max-w-[60%] truncate text-right font-mono text-xs">
+                  {email.from || "—"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-500">Email dry-run</dt>
+                <dd className="font-medium">
+                  {email.dryRun ? "true (log only)" : "false (live)"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-t border-stone-100 pt-2">
+                <dt className="text-stone-500">SMS enabled</dt>
+                <dd className="font-medium">{sms.enabled ? "Yes" : "No"}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-500">SMS from</dt>
+                <dd className="font-mono text-xs">{sms.from || "—"}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-500">SMS account SID set</dt>
+                <dd>{sms.accountSidSet ? "Yes" : "No"}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-500">SMS dry-run</dt>
+                <dd className="font-medium">
+                  {sms.dryRun ? "true (default)" : "false (live Twilio)"}
+                </dd>
+              </div>
+            </dl>
+          );
+        })()}
+        <div className="mt-6 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+            Email env (live customer delivery)
+          </p>
+          <pre className="overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">
+{`# Prefer Resend (simple HTTP API)
+MESSAGING_EMAIL_FROM="Yall Come Back <bookings@yourdomain.com>"
+RESEND_API_KEY="re_..."
+# Optional: MESSAGING_EMAIL_ENABLED=false  to force off
+# Optional: MESSAGING_EMAIL_DRY_RUN=true   staging log-only
+
+# Or SMTP
+# MESSAGING_SMTP_HOST=smtp.example.com
+# MESSAGING_SMTP_PORT=587
+# MESSAGING_SMTP_USER=...
+# MESSAGING_SMTP_PASS=...
+# (install nodemailer if using SMTP)`}
+          </pre>
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+            SMS env (later — Twilio-ready; keep dry-run until launch)
+          </p>
+          <pre className="overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">
+{`MESSAGING_SMS_ENABLED=true
+MESSAGING_SMS_FROM="+1..."
+MESSAGING_SMS_ACCOUNT_SID="AC..."   # or TWILIO_ACCOUNT_SID
+MESSAGING_SMS_PROVIDER_KEY="..."   # Twilio auth token
+MESSAGING_SMS_DRY_RUN=true         # set false only when live`}
+          </pre>
+        </div>
       </Card>
 
       <Card>

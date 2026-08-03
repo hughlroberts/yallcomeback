@@ -636,9 +636,8 @@ function Account({ article }: { article: HelpArticle }) {
             search engine indexing where available.
           </li>
           <li>
-            <strong>Messages</strong> — Inbox plus email and SMS alert
-            preferences. SMS works only when the operator has messaging
-            providers enabled.
+            <strong>Messages</strong> — Inbox plus email alert preferences
+            for new messages.
           </li>
           <li>
             <strong>Payments</strong> — Links to payment methods, Bitcoin
@@ -1214,9 +1213,8 @@ function HostMessages({ article }: { article: HelpArticle }) {
           </li>
         </HelpUl>
         <HelpP>
-          Delivery uses the Yall Come Back in-app inbox. Email or SMS send only when
-          the operator has those providers configured. Self-hosted installs can
-          keep hooks in dry-run by default.
+          Delivery uses the in-app inbox and, when email is configured on the
+          platform, also sends to the guest&apos;s email address on the booking.
         </HelpP>
       </HelpSection>
 

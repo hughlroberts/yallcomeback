@@ -278,12 +278,27 @@ export async function deliverBookingAutoMessage(
     data: { [meta.sentKey]: new Date() },
   });
 
-  await dispatchEmail({
+  const email = await dispatchEmail({
     to: booking.guestEmail,
     subject: `${host.name}: ${meta.subject}`,
-    body: `${body}\n\n— View and reply in your Yall Come Back inbox`,
+    body,
     conversationId,
+    replyPath: `/messages/${conversationId}`,
   });
+
+  if (email.attempted) {
+    await prisma.message.updateMany({
+      where: {
+        conversationId,
+        senderRole: "HOST",
+        externalStatus: "auto",
+      },
+      data: {
+        externalStatus: `auto,email:${email.status}`,
+        externalId: email.externalId ?? null,
+      },
+    });
+  }
 
   return { sent: true, conversationId };
 }
