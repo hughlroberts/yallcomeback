@@ -1,6 +1,9 @@
 "use server";
 
 import { hash } from "bcryptjs";
+import { randomUUID } from "crypto";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { HostSitePresence } from "@prisma/client";
@@ -296,6 +299,62 @@ export async function updateHostProfile(formData: FormData) {
       ? returnTo
       : HOST_PROFILE_PATH;
   redirect(`${safeReturn}${safeReturn.includes("?") ? "&" : "?"}saved=1`);
+}
+
+/**
+ * Upload a logo image for the host brand (stored under public/uploads/hosts/{id}).
+ * Same pattern as listing photos — path works on the app host; paste URL still OK.
+ */
+export async function uploadHostLogo(formData: FormData) {
+  const access = await requireHostAdmin();
+  if (!access) redirect("/login?callbackUrl=/admin/brand");
+
+  const hostId = String(formData.get("hostId") || "");
+  const returnTo = String(formData.get("returnTo") || "/admin/brand").trim();
+  if (!hostId) redirect("/admin/brand?error=missing");
+  if (!access.isPlatform && access.hostId !== hostId) {
+    redirect("/admin/brand?error=forbidden");
+  }
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    redirect(
+      `${returnTo}${returnTo.includes("?") ? "&" : "?"}error=logo_file`,
+    );
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    redirect(
+      `${returnTo}${returnTo.includes("?") ? "&" : "?"}error=logo_size`,
+    );
+  }
+
+  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  if (!host) redirect("/admin/brand?error=missing");
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const extRaw = path.extname(file.name || "").toLowerCase() || ".jpg";
+  const ext = [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(extRaw)
+    ? extRaw
+    : ".jpg";
+  const filename = `${randomUUID()}${ext}`;
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "hosts", hostId);
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(path.join(uploadDir, filename), bytes);
+
+  const logoUrl = `/uploads/hosts/${hostId}/${filename}`;
+  await prisma.host.update({
+    where: { id: hostId },
+    data: { logoUrl },
+  });
+
+  revalidatePath("/admin/brand");
+  revalidatePath(`/h/${host.slug}`);
+  revalidatePath(`/h/${host.slug}/about`);
+  const safe =
+    returnTo.startsWith("/admin") || returnTo.startsWith("/ops")
+      ? returnTo
+      : "/admin/brand";
+  redirect(`${safe}${safe.includes("?") ? "&" : "?"}logo=1`);
 }
 
 /**

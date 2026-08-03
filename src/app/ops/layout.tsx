@@ -20,6 +20,7 @@ export default async function OpsLayout({
   const links = [
     { href: "/ops/hosting", label: "Website hosting" },
     { href: "/ops/hosting/plans", label: "Plans & pricing" },
+    { href: "/ops/pricing-comps", label: "Pricing comps" },
     { href: "/ops/managers", label: "Managers" },
     { href: "/ops/settings", label: "Platform settings" },
   ];

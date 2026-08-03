@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import {
   rotateSyndicationApiKey,
   updateHostProfile,
+  uploadHostLogo,
 } from "@/app/actions/host";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { maskSyndicationKey } from "@/lib/syndication";
@@ -28,6 +29,7 @@ export default async function AdminBrandPage({
     error?: string;
     hostId?: string;
     synKey?: string;
+    logo?: string;
   }>;
 }) {
   const access = await requireHostAdmin();
@@ -131,6 +133,11 @@ export default async function AdminBrandPage({
           Saved. Preview updates on the next request.
         </p>
       ) : null}
+      {params.logo ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          Logo uploaded.
+        </p>
+      ) : null}
       {params.error === "name" ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           Display name is required.
@@ -140,6 +147,16 @@ export default async function AdminBrandPage({
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           Website / domain URL is required when publish status is{" "}
           <strong>Live</strong> with a custom domain.
+        </p>
+      ) : null}
+      {params.error === "logo_file" ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Choose an image file to upload as your logo.
+        </p>
+      ) : null}
+      {params.error === "logo_size" ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Logo must be under 4&nbsp;MB.
         </p>
       ) : null}
 
@@ -224,7 +241,9 @@ export default async function AdminBrandPage({
                 defaultValue={host.logoUrl || ""}
               />
               <p className="text-xs text-stone-500">
-                Square works best (circle in the header).
+                Square works best. Prefer{" "}
+                <strong>Upload logo</strong> in the card below the form, or paste
+                a public URL.
               </p>
             </div>
           </div>
@@ -577,6 +596,35 @@ export default async function AdminBrandPage({
           </Link>
         </div>
       </form>
+
+      {/* Separate forms — cannot nest inside Save brand */}
+      <Card className="space-y-4 p-6">
+        <h2 className="text-lg font-semibold text-stone-900">Upload logo</h2>
+        <p className="text-sm text-stone-500">
+          PNG, JPG, or WebP under 4&nbsp;MB. Updates your logo without saving the
+          rest of the form.
+        </p>
+        <form
+          action={uploadHostLogo}
+          className="flex flex-wrap items-end gap-3"
+        >
+          <input type="hidden" name="hostId" value={host.id} />
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Label htmlFor="logoFile">Image file</Label>
+            <Input
+              id="logoFile"
+              name="file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              required
+            />
+          </div>
+          <Button type="submit" variant="secondary">
+            Upload logo
+          </Button>
+        </form>
+      </Card>
 
       <form action={rotateSyndicationApiKey} className="flex flex-wrap gap-3">
         <input type="hidden" name="hostId" value={host.id} />

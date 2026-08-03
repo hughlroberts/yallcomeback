@@ -44,15 +44,20 @@ export default async function HostStaysPage({
       </p>
 
       {properties.length === 0 ? (
-        <p className="mt-12 text-center text-stone-500">
-          No published stays yet.{" "}
-          <Link
-            href={`${base}/contact`}
-            className="font-semibold text-[var(--color-brand)] hover:underline"
-          >
-            Contact us
-          </Link>
-        </p>
+        <div className="mt-12 rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-12 text-center">
+          <p className="text-stone-600">No published stays yet.</p>
+          {host.sitePageAbout ? (
+            <p className="mt-2 text-sm text-stone-500">
+              Questions?{" "}
+              <Link
+                href={`${base}/about#contact`}
+                className="font-semibold text-[var(--color-brand)] hover:underline"
+              >
+                Contact {host.name}
+              </Link>
+            </p>
+          ) : null}
+        </div>
       ) : (
         <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map((p) => (

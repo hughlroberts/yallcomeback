@@ -20,9 +20,10 @@ export default async function HostServicesPage({
 
   const base = await hostPublicBasePath(host.slug);
   const title = host.siteServicesTitle?.trim() || "Other services";
+  const hasBody = Boolean(host.siteServicesBody?.trim());
   const body =
     host.siteServicesBody?.trim() ||
-    `${host.name} offers additional services beyond stays. Get in touch for details.`;
+    `Details coming soon. Contact ${host.name} to learn about services beyond the stay.`;
 
   return (
     <div>
@@ -41,7 +42,13 @@ export default async function HostServicesPage({
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-        <div className="whitespace-pre-line text-base leading-relaxed text-stone-700">
+        <div
+          className={
+            hasBody
+              ? "whitespace-pre-line text-base leading-relaxed text-stone-700"
+              : "rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-5 py-8 text-center text-stone-600"
+          }
+        >
           {body}
         </div>
         <div className="mt-10 flex flex-wrap gap-3">

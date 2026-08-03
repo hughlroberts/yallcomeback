@@ -20,20 +20,19 @@ type Props = {
  */
 export function HostSiteHeader({ host, basePath = "" }: Props) {
   const home = basePath || "/";
-  const nav = hostSiteNavItems(host, basePath);
-  // Book CTA points at stays catalog
-  const bookHref = `${basePath}/stays` || "/stays";
+  const nav = hostSiteNavItems(host, basePath).filter((item) => !item.primary);
+  const bookHref = basePath ? `${basePath}/stays` : "/stays";
 
   return (
     <header className="sticky top-0 z-[200] border-b border-stone-200/80 bg-white/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
-      <div className="mx-auto flex min-h-16 w-full max-w-6xl items-center justify-between gap-3 px-3 py-2.5 sm:px-6 md:min-h-[4.5rem]">
+      <div className="mx-auto flex min-h-14 w-full max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:min-h-16 sm:gap-3 sm:px-6 sm:py-2.5 md:min-h-[4.5rem]">
         <Link
           href={home}
-          className="flex min-w-0 items-center gap-2.5 sm:gap-3"
+          className="flex min-w-0 items-center gap-2 sm:gap-3"
           aria-label={`${host.name}, home`}
         >
           {host.logoUrl ? (
-            <span className="relative size-10 shrink-0 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200/80 sm:size-12">
+            <span className="relative size-9 shrink-0 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200/80 sm:size-12">
               <Image
                 src={host.logoUrl}
                 alt=""
@@ -46,14 +45,14 @@ export function HostSiteHeader({ host, basePath = "" }: Props) {
             </span>
           ) : (
             <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand,#2563eb)] text-sm font-semibold text-white sm:size-12 sm:text-base"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand,#2563eb)] text-sm font-semibold text-white sm:size-12 sm:text-base"
               aria-hidden
             >
               {host.name.slice(0, 1).toUpperCase()}
             </span>
           )}
           <span className="min-w-0">
-            <span className="block truncate font-display text-lg font-medium tracking-tight text-stone-900 sm:text-xl">
+            <span className="block truncate font-display text-base font-medium tracking-tight text-stone-900 sm:text-xl">
               {host.name}
             </span>
             {host.tagline ? (
@@ -64,25 +63,18 @@ export function HostSiteHeader({ host, basePath = "" }: Props) {
           </span>
         </Link>
 
-        <nav className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-          {nav
-            .filter((item) => !item.primary)
-            .map((item) => (
-              <HeaderNavLink
-                key={item.href}
-                href={item.href}
-                className={
-                  item.label === "About" || item.label === "Services"
-                    ? "hidden sm:inline-flex"
-                    : undefined
-                }
-              >
-                {item.label}
-              </HeaderNavLink>
-            ))}
+        <nav
+          className="flex max-w-[55%] shrink-0 flex-wrap items-center justify-end gap-0.5 sm:max-w-none sm:gap-1"
+          aria-label="Site"
+        >
+          {nav.map((item) => (
+            <HeaderNavLink key={item.href} href={item.href}>
+              {item.label}
+            </HeaderNavLink>
+          ))}
           <Link
             href={bookHref}
-            className="ml-1 rounded-full bg-[var(--color-brand,#2563eb)] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)] sm:px-4"
+            className="ml-0.5 rounded-full bg-[var(--color-brand,#2563eb)] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)] sm:ml-1 sm:px-4 sm:text-sm"
           >
             Book
           </Link>
@@ -95,18 +87,15 @@ export function HostSiteHeader({ host, basePath = "" }: Props) {
 function HeaderNavLink({
   href,
   children,
-  className,
 }: {
   href: string;
   children: React.ReactNode;
-  className?: string;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "rounded-full px-2.5 py-1.5 text-sm font-medium text-stone-600 transition hover:bg-stone-100 hover:text-stone-900 sm:px-3",
-        className,
+        "rounded-full px-2 py-1.5 text-xs font-medium text-stone-600 transition hover:bg-stone-100 hover:text-stone-900 sm:px-3 sm:text-sm",
       )}
     >
       {children}
