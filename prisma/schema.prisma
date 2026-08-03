@@ -212,6 +212,8 @@ model Host {
   setupServicePaidAt   DateTime?
   setupServiceNotes    String?
 
+  /// Beta/rollout: ops toggles who can see Pricing intelligence in admin
+  pricingIntelligenceEnabled        Boolean            @default(false)
   /// Market pricing intelligence add-on ($35/mo extra — not included in hosting)
   pricingIntelligenceAddonStatus    PricingAddonStatus @default(NONE)
   /// Snapshot of monthly fee at subscription time

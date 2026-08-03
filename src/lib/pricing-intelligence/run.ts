@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { PricingRunTrigger, PricingRecBasis } from "@prisma/client";
 import {
-  hostHasPricingIntelligenceAddon,
+  canRunPricingIntelligence,
   isPricingIntelligenceEnabled,
   PRICING_INTELLIGENCE_ADDON_USD,
 } from "@/lib/platform-features";
@@ -13,20 +13,23 @@ export type RunPricingOptions = {
   trigger?: PricingRunTrigger;
   /** Lookback days for internal stats (default 90). */
   lookbackDays?: number;
-  /** Platform admin may force a run without active add-on (support / demo). */
+  /**
+   * Platform admin only: run without beta access + paid add-on
+   * (your own testing / support). Still requires deploy feature flag on.
+   */
   bypassAddonCheck?: boolean;
 };
 
 /**
  * Full agent loop for one host: collect → analyze → recommend (no auto-apply).
- * Platform product only. Requires the $35/mo add-on (unless bypassAddonCheck).
+ * Requires beta access + $35/mo ACTIVE, unless platform bypass.
  */
 export async function runPricingIntelligenceForHost(
   opts: RunPricingOptions,
 ): Promise<{ runId: string; recommendationCount: number }> {
   if (!isPricingIntelligenceEnabled()) {
     throw new Error(
-      "Pricing intelligence is a hosted-platform feature and is disabled on this deploy.",
+      "Pricing intelligence is disabled on this deploy.",
     );
   }
 
@@ -34,16 +37,14 @@ export async function runPricingIntelligenceForHost(
     where: { id: opts.hostId },
     select: {
       id: true,
+      pricingIntelligenceEnabled: true,
       pricingIntelligenceAddonStatus: true,
     },
   });
   if (!hostRow) throw new Error("Host not found");
-  if (
-    !opts.bypassAddonCheck &&
-    !hostHasPricingIntelligenceAddon(hostRow)
-  ) {
+  if (!opts.bypassAddonCheck && !canRunPricingIntelligence(hostRow)) {
     throw new Error(
-      `Market pricing intelligence is a $${PRICING_INTELLIGENCE_ADDON_USD}/mo add-on. Subscribe under Admin → Pricing intelligence (not included in hosting).`,
+      `Pricing intelligence requires ops beta access and the $${PRICING_INTELLIGENCE_ADDON_USD}/mo add-on (ACTIVE). Not included in hosting.`,
     );
   }
 
@@ -136,11 +137,12 @@ export async function runMonthlyPricingIntelligence(): Promise<{
   }
 
   const since = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
-  // Only hosts who pay the $35/mo add-on (separate from core hosting)
+  // Only hosts with beta access + paid add-on (separate from core hosting)
   const hosts = await prisma.host.findMany({
     where: {
       active: true,
       approvalStatus: "APPROVED",
+      pricingIntelligenceEnabled: true,
       pricingIntelligenceAddonStatus: "ACTIVE",
       properties: { some: { published: true } },
     },

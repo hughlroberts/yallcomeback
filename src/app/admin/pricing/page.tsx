@@ -50,6 +50,17 @@ export default async function AdminPricingPage({
   if (!access) redirect("/login?callbackUrl=/admin/pricing");
   const sp = await searchParams;
 
+  // Hosts without beta access never see this tool
+  if (!access.isPlatform && access.hostId) {
+    const gate = await prisma.host.findUnique({
+      where: { id: access.hostId },
+      select: { pricingIntelligenceEnabled: true },
+    });
+    if (!gate?.pricingIntelligenceEnabled) {
+      redirect("/admin?error=pricing_secret");
+    }
+  }
+
   const hostFilter = access.isPlatform ? {} : { hostId: access.hostId! };
 
   const hosts = access.isPlatform
@@ -60,6 +71,7 @@ export default async function AdminPricingPage({
           id: true,
           name: true,
           slug: true,
+          pricingIntelligenceEnabled: true,
           pricingIntelligenceAddonStatus: true,
           pricingIntelligenceAddonAmount: true,
         },
@@ -74,6 +86,7 @@ export default async function AdminPricingPage({
           select: {
             id: true,
             name: true,
+            pricingIntelligenceEnabled: true,
             pricingIntelligenceAddonStatus: true,
             pricingIntelligenceAddonAmount: true,
             pricingIntelligenceAddonStartedAt: true,
@@ -119,15 +132,17 @@ export default async function AdminPricingPage({
         subtitle={`${PRICING_INTELLIGENCE_ADDON_LABEL} — ${formatMoney(PRICING_INTELLIGENCE_ADDON_USD)}/mo optional add-on. Not included in website hosting.`}
       />
 
-      {sp.error === "addon_required" ? (
+      {sp.error === "access_off" ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          This tool requires the{" "}
+          Pricing intelligence is not enabled for this brand yet.
+        </p>
+      ) : sp.error === "addon_required" ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          This tool requires the paid{" "}
           <strong>
-            {formatMoney(PRICING_INTELLIGENCE_ADDON_USD)}/mo pricing intelligence
-            add-on
+            {formatMoney(PRICING_INTELLIGENCE_ADDON_USD)}/mo add-on
           </strong>
-          . It is not part of your hosting fee. Request the add-on below (ops
-          activates after payment).
+          . It is not part of hosting. Request below; we activate after payment.
         </p>
       ) : sp.error ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
@@ -203,19 +218,34 @@ export default async function AdminPricingPage({
       ) : null}
 
       {access.isPlatform ? (
-        <Card className="space-y-2 p-5 text-sm text-stone-600">
+        <Card className="space-y-3 border-stone-300 bg-stone-50 p-5 text-sm text-stone-700">
           <p className="font-semibold text-stone-900">
-            Platform ops · {formatMoney(PRICING_INTELLIGENCE_ADDON_USD)}/mo add-on
+            Ops controls (secret rollout)
           </p>
-          <p>
-            Hosts must have add-on status <strong>ACTIVE</strong> to run research
-            (unless you check “bypass” for support). Activate under{" "}
-            <Link href="/ops/hosting" className="font-semibold text-bonnet hover:underline">
-              Ops → Hosting
-            </Link>{" "}
-            after payment. Amount is{" "}
-            <strong>never</strong> included in core hosting plan price — it is a
-            separate invoice line.
+          <ol className="list-decimal space-y-1.5 pl-5 text-xs leading-relaxed">
+            <li>
+              <Link
+                href="/ops/hosting"
+                className="font-semibold text-bonnet hover:underline"
+              >
+                Ops → Hosting → [host]
+              </Link>
+              : check <strong>Beta access on</strong> to show this nav for that
+              host only.
+            </li>
+            <li>
+              After they pay {formatMoney(PRICING_INTELLIGENCE_ADDON_USD)}/mo,
+              set paid status to <strong>Active</strong> (separate invoice line —
+              not in hosting plan).
+            </li>
+            <li>
+              Your testing: pick your host below and use{" "}
+              <strong>Bypass access / payment</strong> to run without charging
+              yourself.
+            </li>
+          </ol>
+          <p className="text-xs text-stone-500">
+            Not advertised on marketing pages. Not in open source.
           </p>
         </Card>
       ) : null}
@@ -246,16 +276,17 @@ export default async function AdminPricingPage({
                   {hosts.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.name}
+                      {h.pricingIntelligenceEnabled ? " · beta" : " · hidden"}
                       {h.pricingIntelligenceAddonStatus === "ACTIVE"
-                        ? " · add-on active"
-                        : " · no add-on"}
+                        ? " · paid"
+                        : " · unpaid"}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="flex items-center gap-2 text-xs text-stone-600">
                 <input type="checkbox" name="bypassAddon" value="1" />
-                Bypass add-on check (support only)
+                Bypass access / payment (your testing only)
               </label>
             </>
           ) : (

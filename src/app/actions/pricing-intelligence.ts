@@ -19,7 +19,10 @@ function assertEnabled() {
   }
 }
 
-/** Host requests the $35/mo add-on (ops activates after payment / review). */
+/**
+ * Host requests the $35/mo add-on (ops activates after payment).
+ * Only if ops already enabled beta access for this brand.
+ */
 export async function requestPricingIntelligenceAddon(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
@@ -35,6 +38,9 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
 
   const host = await prisma.host.findUnique({ where: { id: hostId } });
   if (!host) redirect("/admin/pricing?error=missing");
+  if (!host.pricingIntelligenceEnabled && !access.isPlatform) {
+    redirect("/admin/pricing?error=access_off");
+  }
   if (host.pricingIntelligenceAddonStatus === "ACTIVE") {
     redirect("/admin/pricing?error=already_active");
   }
@@ -137,14 +143,23 @@ export async function startPricingResearch(formData: FormData) {
 
   const host = await prisma.host.findUnique({
     where: { id: hostId },
-    select: { pricingIntelligenceAddonStatus: true },
+    select: {
+      pricingIntelligenceEnabled: true,
+      pricingIntelligenceAddonStatus: true,
+    },
   });
   if (!host) redirect("/admin/pricing?error=missing");
 
+  // Platform admin may force a run for testing (you) without paid status
   const bypass =
     access.isPlatform && formData.get("bypassAddon") === "1";
-  if (!bypass && !hostHasPricingIntelligenceAddon(host)) {
-    redirect("/admin/pricing?error=addon_required");
+  if (!bypass) {
+    if (!host.pricingIntelligenceEnabled) {
+      redirect("/admin/pricing?error=access_off");
+    }
+    if (!hostHasPricingIntelligenceAddon(host)) {
+      redirect("/admin/pricing?error=addon_required");
+    }
   }
 
   try {

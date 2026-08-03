@@ -1,12 +1,26 @@
-# Platform pricing intelligence (hosted only)
+# Platform pricing intelligence (hosted only · secret rollout)
 
-**Not included in the MIT open-source product.**  
-**Not included in normal website hosting fees.**
+**Not in open source.**  
+**Not in website hosting fees.**  
+**Not advertised publicly.** Admin-only; rolled out host-by-host.
 
-This is a **paid add-on: $35 / month**, billed as its own line item (never
-bundled into plan monthly price). Open-source self-host builds must set
-`YCB_OPEN_SOURCE_BUILD=true` (or leave `PLATFORM_PRODUCT_MODE` unset) so routes
-and cron stay disabled.
+This is a **paid add-on: $35 / month**, billed as its own invoice line.
+
+---
+
+## Rollout (ops)
+
+| Step | Where | What |
+|------|--------|------|
+| 1. Beta access | Ops → Hosting → host | Check **Beta access on** → shows nav for that host only |
+| 2. Collect payment | Your process | $35/mo separate from hosting |
+| 3. Mark paid | Same ops form | Paid add-on status → **Active** |
+| 4. Host uses tool | Admin → Pricing intelligence | Run research → approve → apply |
+
+**Your testing:** as platform ADMIN you always see the nav. On the pricing page,
+check **Bypass access / payment** to run research without charging yourself.
+
+**Hosts without beta access:** no nav item; `/admin/pricing` redirects away.
 
 ---
 
@@ -14,13 +28,11 @@ and cron stay disabled.
 
 | Item | Amount |
 |------|--------|
-| Website hosting (paid platform) | Per plan (e.g. $/listing/mo) |
+| Website hosting (paid platform) | Per plan |
 | Free self-host | $0 / mo platform fee |
-| **Market pricing intelligence add-on** | **+$35 / mo** |
+| **Market pricing intelligence add-on** | **+$35 / mo** (separate line) |
 
-Hosts request the add-on under **Admin → Pricing intelligence**. Ops sets status
-to **ACTIVE** after payment (**Ops → Hosting → host**). When active, the next
-hosting invoice includes a separate Stripe/manual line for the add-on.
+When add-on is ACTIVE, hosting invoices add a separate Stripe/manual line.
 
 ---
 

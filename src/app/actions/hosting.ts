@@ -312,6 +312,9 @@ export async function updateHostOps(formData: FormData) {
     Number(formData.get("setupServiceAmount") || host.setupServiceAmount || 500),
   );
 
+  const pricingIntelligenceEnabled =
+    formData.get("pricingIntelligenceEnabled") === "on";
+
   const pricingAddonStatusRaw = String(
     formData.get("pricingIntelligenceAddonStatus") ||
       host.pricingIntelligenceAddonStatus,
@@ -377,6 +380,7 @@ export async function updateHostOps(formData: FormData) {
     setupServiceAmount: number;
     setupServiceNotes: string | null;
     setupServicePaidAt?: Date | null;
+    pricingIntelligenceEnabled: boolean;
     pricingIntelligenceAddonStatus:
       | "NONE"
       | "REQUESTED"
@@ -406,6 +410,7 @@ export async function updateHostOps(formData: FormData) {
     setupServiceStatus,
     setupServiceAmount,
     setupServiceNotes,
+    pricingIntelligenceEnabled,
     pricingIntelligenceAddonStatus,
     pricingIntelligenceAddonAmount,
     pricingIntelligenceAddonNotes,

@@ -2,8 +2,8 @@
  * Features that ship only on the hosted Yall Come Back platform / marketplace —
  * NOT part of the MIT open-source self-host product.
  *
- * Open-source builds should leave PLATFORM_PRODUCT_MODE unset/false so these
- * routes stay dark and cron jobs no-op.
+ * Pricing intelligence is also a paid $35/mo add-on and is rolled out host-by-host
+ * (secret beta). Not advertised in open-source marketing.
  */
 
 import type { PricingAddonStatus } from "@prisma/client";
@@ -32,7 +32,7 @@ export function isPlatformProductMode(): boolean {
 
 /**
  * Feature exists on this deploy (platform product). Does not mean a given host
- * has paid for the $35/mo add-on — use hostHasPricingIntelligenceAddon for that.
+ * is allowed or paid — use canAccessPricingIntelligence / canRunPricingIntelligence.
  */
 export function isPricingIntelligenceEnabled(): boolean {
   if (process.env.YCB_OPEN_SOURCE_BUILD?.trim().toLowerCase() === "true") {
@@ -44,11 +44,53 @@ export function isPricingIntelligenceEnabled(): boolean {
   return isPlatformProductMode();
 }
 
-/** Host has an active $35/mo pricing intelligence subscription. */
+/** Host has paid $35/mo (ops set ACTIVE after payment). */
 export function hostHasPricingIntelligenceAddon(host: {
   pricingIntelligenceAddonStatus: PricingAddonStatus | string;
 }): boolean {
   return host.pricingIntelligenceAddonStatus === "ACTIVE";
+}
+
+/**
+ * Host is allowed to see Pricing in admin (beta rollout toggle).
+ * Platform ADMIN always can open the tool; hosts need this flag + paid ACTIVE to run.
+ */
+export function hostHasPricingIntelligenceAccess(host: {
+  pricingIntelligenceEnabled?: boolean | null;
+}): boolean {
+  return Boolean(host.pricingIntelligenceEnabled);
+}
+
+/**
+ * Host may start research runs / monthly cron includes them.
+ * Requires: deploy feature on + beta access + paid ACTIVE.
+ * Platform admin can still bypass via run options for support.
+ */
+export function canRunPricingIntelligence(host: {
+  pricingIntelligenceEnabled?: boolean | null;
+  pricingIntelligenceAddonStatus: PricingAddonStatus | string;
+}): boolean {
+  if (!isPricingIntelligenceEnabled()) return false;
+  return (
+    hostHasPricingIntelligenceAccess(host) &&
+    hostHasPricingIntelligenceAddon(host)
+  );
+}
+
+/**
+ * Who sees the Admin nav item and can open /admin/pricing.
+ * - Platform ADMIN: always (secret ops tool)
+ * - HOST: only if ops enabled access for their brand
+ */
+export function canSeePricingIntelligenceNav(opts: {
+  isPlatformAdmin: boolean;
+  host?: {
+    pricingIntelligenceEnabled?: boolean | null;
+  } | null;
+}): boolean {
+  if (!isPricingIntelligenceEnabled()) return false;
+  if (opts.isPlatformAdmin) return true;
+  return hostHasPricingIntelligenceAccess(opts.host ?? {});
 }
 
 export function pricingAddonStatusLabel(
@@ -58,7 +100,7 @@ export function pricingAddonStatusLabel(
     case "NONE":
       return "Not subscribed";
     case "REQUESTED":
-      return "Requested — awaiting activation";
+      return "Requested — awaiting payment";
     case "ACTIVE":
       return "Active (+$35/mo)";
     case "PAST_DUE":
@@ -77,8 +119,10 @@ export function pricingIntelligenceLlmConfigured(): boolean {
   );
 }
 
+/** Internal only — not listed on /open-source FEATURE_GROUPS. */
 export const PLATFORM_ONLY_FEATURE_LABELS = [
   "Market pricing intelligence add-on ($35/mo — not in hosting fee)",
-  "OTA peer comps (Airbnb / VRBO / Booking-style capacity matching)",
-  "Human-approved price apply (suggestion-only by default)",
+  "Per-host beta toggle (ops rollout)",
+  "OTA peer comps (capacity matching)",
+  "Human-approved price apply",
 ] as const;

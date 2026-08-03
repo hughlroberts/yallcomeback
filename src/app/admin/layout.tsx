@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { AdminNav } from "@/components/admin-nav";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { canSeePricingIntelligenceNav } from "@/lib/platform-features";
 
 export default async function AdminLayout({
   children,
@@ -16,11 +18,29 @@ export default async function AdminLayout({
   }
 
   const isPlatform = session.user.role === "ADMIN";
+
+  let hostPricingAccess: { pricingIntelligenceEnabled?: boolean } | null =
+    null;
+  if (!isPlatform && session.user.hostId) {
+    hostPricingAccess = await prisma.host.findUnique({
+      where: { id: session.user.hostId },
+      select: { pricingIntelligenceEnabled: true },
+    });
+  }
+
+  const showPricing = canSeePricingIntelligenceNav({
+    isPlatformAdmin: isPlatform,
+    host: hostPricingAccess,
+  });
+
   const links = [
     { href: "/admin", label: "Dashboard", exact: true },
     { href: "/admin/properties", label: "Properties" },
     { href: "/admin/brand", label: "Brand & website" },
-    { href: "/admin/pricing", label: "Pricing intelligence" },
+    // Secret / paid beta: platform admin always; hosts only if ops toggled access
+    ...(showPricing
+      ? [{ href: "/admin/pricing", label: "Pricing intelligence" }]
+      : []),
     { href: "/admin/magnets", label: "Fridge magnets" },
     { href: "/admin/bookings", label: "Bookings" },
     { href: "/admin/earnings", label: "Earnings" },

@@ -386,13 +386,9 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
               Not in the open-source copy
             </p>
             <p className="mt-1 text-stone-600">
-              Hosted-platform tools such as{" "}
-              <strong>monthly AI market pricing intelligence</strong> (OTA-style
-              research agents and human-approved rate suggestions) ship only on
-              the Yall Come Back marketplace product as a{" "}
-              <strong>$35/mo optional add-on</strong> — not included in website
-              hosting fees and not in this MIT feature inventory. Self-hosts set
-              rates manually or build their own tools.
+              Some hosted-platform tools (billing extras, internal research
+              utilities) are intentionally excluded from this MIT inventory.
+              Self-hosts set rates and operations on their own stack.
             </p>
           </div>
         </section>

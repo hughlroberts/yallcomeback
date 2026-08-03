@@ -285,17 +285,33 @@ export default async function OpsHostDetailPage({
           </div>
           <div className="sm:col-span-2 rounded-xl border border-bonnet/20 bg-petal/50 p-4">
             <p className="text-sm font-semibold text-ink">
-              Pricing intelligence add-on ($35/mo)
+              Pricing intelligence (secret / paid)
             </p>
             <p className="mt-1 text-xs text-ink-muted">
-              Optional market research agents.{" "}
-              <strong>Not included in hosting plan price</strong> — billed as a
-              separate line. Activate only after payment.
+              Not public. Not in open source. Not included in hosting. Use{" "}
+              <strong>beta access</strong> to show Admin → Pricing intelligence
+              for a host; set <strong>ACTIVE</strong> only after they pay
+              $35/mo.
             </p>
+            <label className="mt-3 flex items-start gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                name="pricingIntelligenceEnabled"
+                defaultChecked={host.pricingIntelligenceEnabled}
+                className="mt-1"
+              />
+              <span>
+                <span className="font-medium">Beta access on</span>
+                <span className="mt-0.5 block text-xs text-ink-muted">
+                  Shows Pricing intelligence in this host’s admin nav. Off =
+                  fully hidden for them.
+                </span>
+              </span>
+            </label>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="pricingIntelligenceAddonStatus">
-                  Add-on status
+                  Paid add-on status
                 </Label>
                 <select
                   id="pricingIntelligenceAddonStatus"
@@ -304,8 +320,8 @@ export default async function OpsHostDetailPage({
                   className="mt-1 h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-white px-3 text-sm"
                 >
                   <option value="NONE">Not subscribed</option>
-                  <option value="REQUESTED">Requested</option>
-                  <option value="ACTIVE">Active (+$35/mo)</option>
+                  <option value="REQUESTED">Requested (awaiting $)</option>
+                  <option value="ACTIVE">Active — paid $35/mo</option>
                   <option value="PAST_DUE">Past due</option>
                   <option value="CANCELLED">Cancelled</option>
                 </select>
@@ -332,7 +348,7 @@ export default async function OpsHostDetailPage({
                   name="pricingIntelligenceAddonNotes"
                   rows={2}
                   defaultValue={host.pricingIntelligenceAddonNotes || ""}
-                  placeholder="Invoice #, activation date…"
+                  placeholder="Invoice #, payment received date…"
                 />
               </div>
             </div>
