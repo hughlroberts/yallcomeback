@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { WhereAutocomplete } from "@/components/where-autocomplete";
 import { SearchDateRangePicker } from "@/components/search-date-range-picker";
 import {
-  addDaysYmd,
   formatYmd,
   isYmd,
   nightsBetweenYmd,
