@@ -22,6 +22,7 @@ export type InternalListingStats = {
 };
 
 export type PeerComp = {
+  /** Marketplace property id, or `comp:<PricingMarketComp.id>` for private proxies */
   propertyId: string;
   title: string;
   maxGuests: number;
@@ -36,6 +37,8 @@ export type PeerComp = {
   quality: QualitySignals;
   distanceMiles: number | null;
   fair: boolean;
+  /** True when peer is a private PricingMarketComp (never public) */
+  privateProxy?: boolean;
 };
 
 export type ExternalSignalNote = {

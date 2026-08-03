@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getHostBySlug } from "@/lib/host";
+import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export default async function HostLocationRedirect({
   params: Promise<{ hostSlug: string; slug: string }>;
 }) {
   const { hostSlug, slug } = await params;
-  const host = await getHostBySlug(hostSlug);
+  const host = await getHostForGuestSite(hostSlug);
   if (!host) notFound();
 
   const location = await prisma.location.findFirst({

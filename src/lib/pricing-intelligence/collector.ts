@@ -103,10 +103,57 @@ export async function collectHostPricingData(
     };
   });
 
-  // Broader candidate pool, then re-rank by quality balance
+  // Private PricingMarketComp rows (never public) + optional real marketplace peers.
+  // Guest UI never reads PricingMarketComp; marketplace queries exclude proxy hosts.
+  const { MARKETPLACE_EXCLUDED_HOST_SLUGS } = await import("@/lib/host");
+
+  const privateComps = await prisma.pricingMarketComp.findMany({
+    where: { active: true },
+    take: 200,
+  });
+
   const peerCompsByPropertyId: Record<string, PeerComp[]> = {};
   for (const listing of listings) {
-    const candidates = await prisma.property.findMany({
+    type Candidate = {
+      id: string;
+      title: string;
+      tagline: string | null;
+      description: string | null;
+      amenities: string | null;
+      maxGuests: number;
+      bedrooms: number;
+      baseNightlyRate: number;
+      city: string | null;
+      region: string | null;
+      latitude: number | null;
+      longitude: number | null;
+      privateProxy: boolean;
+    };
+
+    const fromPrivate: Candidate[] = privateComps
+      .filter(
+        (c) =>
+          c.maxGuests >= Math.max(1, listing.maxGuests - 2) &&
+          c.maxGuests <= listing.maxGuests + 2,
+      )
+      .map((c) => ({
+        id: `comp:${c.id}`,
+        title: c.title,
+        tagline: c.tagline,
+        description: c.description,
+        amenities: c.amenitiesJson,
+        maxGuests: c.maxGuests,
+        bedrooms: c.bedrooms,
+        baseNightlyRate: c.baseNightlyRate,
+        city: c.city,
+        region: c.region,
+        latitude: c.latitude,
+        longitude: c.longitude,
+        privateProxy: true,
+      }));
+
+    // Real other-host marketplace listings (never include pricing-proxy hosts)
+    const fromMarketplaceRaw = await prisma.property.findMany({
       where: {
         published: true,
         listOnMarketplace: true,
@@ -116,6 +163,7 @@ export async function collectHostPricingData(
           active: true,
           approvalStatus: "APPROVED",
           listOnMarketplace: true,
+          slug: { notIn: [...MARKETPLACE_EXCLUDED_HOST_SLUGS] },
         },
         maxGuests: {
           gte: Math.max(1, listing.maxGuests - 2),
@@ -139,6 +187,14 @@ export async function collectHostPricingData(
       take: 80,
     });
 
+    const candidates: Candidate[] = [
+      ...fromPrivate,
+      ...fromMarketplaceRaw.map((p) => ({
+        ...p,
+        privateProxy: false,
+      })),
+    ];
+
     const strictLocation =
       hitl.preferStrictLocation ||
       listing.quality.tier === "waterfront_prime";
@@ -149,58 +205,57 @@ export async function collectHostPricingData(
       ? SOFT_PEER_SCORE_MAX - 6
       : SOFT_PEER_SCORE_MAX;
 
-    const ranked: PeerComp[] = candidates
-      .map((peer) => {
-        const quality = extractQualitySignals({
-          amenitiesJson: peer.amenities,
-          title: peer.title,
-          description: peer.description,
-          tagline: peer.tagline,
-        });
-        if (hitl.preferPoolMatch && listing.quality.hasPool && !quality.hasPool) {
-          // Hard filter when host taught us pool matters
-          return null;
-        }
-        const distanceMiles = milesBetween(listing, peer);
-        const guestDelta = Math.abs(peer.maxGuests - listing.maxGuests);
-        const bedroomDelta = Math.abs(peer.bedrooms - listing.bedrooms);
-        const { score, reasons } = peerMismatchScore(
-          listing.quality,
-          quality,
-          {
-            guestDelta,
-            bedroomDelta,
-            sameCity: Boolean(
-              listing.city &&
-                peer.city &&
-                listing.city.toLowerCase() === peer.city.toLowerCase(),
-            ),
-            sameRegion: Boolean(
-              listing.region &&
-                peer.region &&
-                listing.region.toLowerCase() === peer.region.toLowerCase(),
-            ),
-            distanceMiles,
-          },
-        );
-        return {
-          propertyId: peer.id,
-          title: peer.title,
-          maxGuests: peer.maxGuests,
-          bedrooms: peer.bedrooms,
-          baseNightlyRate: peer.baseNightlyRate,
-          city: peer.city,
-          region: peer.region,
-          distanceGuests: guestDelta,
-          matchScore: score,
-          matchReasons: reasons,
-          quality,
+    const ranked: PeerComp[] = [];
+    for (const peer of candidates) {
+      const quality = extractQualitySignals({
+        amenitiesJson: peer.amenities,
+        title: peer.title,
+        description: peer.description,
+        tagline: peer.tagline,
+      });
+      if (hitl.preferPoolMatch && listing.quality.hasPool && !quality.hasPool) {
+        continue;
+      }
+      const distanceMiles = milesBetween(listing, peer);
+      const guestDelta = Math.abs(peer.maxGuests - listing.maxGuests);
+      const bedroomDelta = Math.abs(peer.bedrooms - listing.bedrooms);
+      const { score, reasons } = peerMismatchScore(
+        listing.quality,
+        quality,
+        {
+          guestDelta,
+          bedroomDelta,
+          sameCity: Boolean(
+            listing.city &&
+              peer.city &&
+              listing.city.toLowerCase() === peer.city.toLowerCase(),
+          ),
+          sameRegion: Boolean(
+            listing.region &&
+              peer.region &&
+              listing.region.toLowerCase() === peer.region.toLowerCase(),
+          ),
           distanceMiles,
-          fair: score <= fairMax,
-        } satisfies PeerComp;
-      })
-      .filter((p): p is PeerComp => p != null)
-      .sort((a, b) => a.matchScore - b.matchScore);
+        },
+      );
+      ranked.push({
+        propertyId: peer.id,
+        title: peer.title,
+        maxGuests: peer.maxGuests,
+        bedrooms: peer.bedrooms,
+        baseNightlyRate: peer.baseNightlyRate,
+        city: peer.city,
+        region: peer.region,
+        distanceGuests: guestDelta,
+        matchScore: score,
+        matchReasons: reasons,
+        quality,
+        distanceMiles,
+        fair: score <= fairMax,
+        privateProxy: peer.privateProxy,
+      });
+    }
+    ranked.sort((a, b) => a.matchScore - b.matchScore);
 
     const fair = ranked.filter((p) => p.fair);
     const soft = ranked.filter((p) => p.matchScore <= softMax);
@@ -215,6 +270,7 @@ export async function collectHostPricingData(
 
   const notes: string[] = [
     `Matching: capacity + location tier (waterfront vs access vs view vs inland) + pool/dock + distance when coords exist.`,
+    `Peers: private PricingMarketComp table (${privateComps.length} active) + real marketplace listings (never guest-visible proxies).`,
     `Fair peer score ≤ ${FAIR_PEER_SCORE_MAX}; soft ≤ ${SOFT_PEER_SCORE_MAX}. HITL strict-location=${hitl.preferStrictLocation}, pool-match=${hitl.preferPoolMatch}.`,
     `Period: ${periodStart.toISOString().slice(0, 10)} → ${periodEnd.toISOString().slice(0, 10)} (${windowDays} days).`,
     `Listings: ${listings.length}. Bookings in window: ${bookings.length}. Prior HITL decisions: ${hitl.totalDecisions}.`,

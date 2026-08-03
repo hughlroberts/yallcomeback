@@ -1,21 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getHostBySlug } from "@/lib/host";
+import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
+import { hostSocialLinks } from "@/lib/host-site";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Fixed About page (toggle on/off in Brand admin).
+ * Includes story + phone, address, email, socials — not a freeform CMS page.
+ */
 export default async function HostAboutPage({
   params,
 }: {
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await getHostBySlug(hostSlug);
-  if (!host) notFound();
+  const host = await getHostForGuestSite(hostSlug);
+  if (!host || !host.sitePageAbout) notFound();
 
   const base = await hostPublicBasePath(host.slug);
+  const socials = hostSocialLinks(host);
 
   return (
     <div>
@@ -66,15 +72,90 @@ export default async function HostAboutPage({
               >
                 View stays
               </Link>
-              <Link
-                href={`${base}/contact`}
-                className="rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
-              >
-                Contact
-              </Link>
             </div>
           </div>
         </div>
+
+        {/* Contact block — always part of About when page is on */}
+        <section
+          id="contact"
+          className="mt-14 scroll-mt-24 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8"
+        >
+          <h2 className="text-lg font-semibold text-stone-900">Contact</h2>
+          <p className="mt-1 text-sm text-stone-500">
+            You&apos;re contacting {host.name} directly.
+          </p>
+          <dl className="mt-6 space-y-4 text-sm">
+            {host.siteAddress ? (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+                  Address
+                </dt>
+                <dd className="mt-1 whitespace-pre-line text-base text-stone-800">
+                  {host.siteAddress}
+                </dd>
+              </div>
+            ) : null}
+            {host.contactPhone ? (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+                  Phone
+                </dt>
+                <dd className="mt-1">
+                  <a
+                    href={`tel:${host.contactPhone.replace(/\s+/g, "")}`}
+                    className="text-base font-medium text-stone-900 hover:text-[var(--color-brand)]"
+                  >
+                    {host.contactPhone}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
+            {host.contactEmail ? (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+                  Email
+                </dt>
+                <dd className="mt-1">
+                  <a
+                    href={`mailto:${host.contactEmail}`}
+                    className="text-base font-medium text-[var(--color-brand,#2563eb)] hover:underline"
+                  >
+                    {host.contactEmail}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
+            {!host.siteAddress && !host.contactPhone && !host.contactEmail ? (
+              <p className="text-stone-500">
+                Contact details coming soon. Book a stay to message us after you
+                reserve.
+              </p>
+            ) : null}
+          </dl>
+
+          {socials.length > 0 ? (
+            <div className="mt-8 border-t border-stone-100 pt-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+                Follow
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-3">
+                {socials.map((s) => (
+                  <li key={s.network}>
+                    <a
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm font-medium text-stone-800 hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
+                    >
+                      {s.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </section>
       </div>
     </div>
   );

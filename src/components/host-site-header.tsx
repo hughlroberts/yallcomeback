@@ -2,27 +2,27 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Host } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { hostSiteNavItems } from "@/lib/host-site";
 
 type Props = {
-  host: Pick<Host, "name" | "slug" | "logoUrl" | "tagline">;
+  host: Pick<
+    Host,
+    "name" | "slug" | "logoUrl" | "tagline" | "sitePageAbout" | "sitePageServices"
+  >;
   /** Public paths on custom domain are root-relative (/about); on platform use /h/slug */
   basePath?: string;
 };
 
-function navHref(base: string, path: string) {
-  if (path === "/") return base || "/";
-  return `${base}${path}`;
-}
-
 /**
  * Guest chrome for a host-owned site (custom domain or /h/[slug]).
- * No YCB wordmark — the host owns the customer relationship.
+ * Fixed nav only: Book/Stays always; About & Services when toggled on.
+ * Not a freeform CMS — no arbitrary pages.
  */
 export function HostSiteHeader({ host, basePath = "" }: Props) {
-  const home = navHref(basePath, "/");
-  const about = navHref(basePath, "/about");
-  const contact = navHref(basePath, "/contact");
-  const stays = navHref(basePath, "/stays");
+  const home = basePath || "/";
+  const nav = hostSiteNavItems(host, basePath);
+  // Book CTA points at stays catalog
+  const bookHref = `${basePath}/stays` || "/stays";
 
   return (
     <header className="sticky top-0 z-[200] border-b border-stone-200/80 bg-white/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
@@ -65,13 +65,23 @@ export function HostSiteHeader({ host, basePath = "" }: Props) {
         </Link>
 
         <nav className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-          <HeaderNavLink href={stays}>Stays</HeaderNavLink>
-          <HeaderNavLink href={about} className="hidden sm:inline-flex">
-            About
-          </HeaderNavLink>
-          <HeaderNavLink href={contact}>Contact</HeaderNavLink>
+          {nav
+            .filter((item) => !item.primary)
+            .map((item) => (
+              <HeaderNavLink
+                key={item.href}
+                href={item.href}
+                className={
+                  item.label === "About" || item.label === "Services"
+                    ? "hidden sm:inline-flex"
+                    : undefined
+                }
+              >
+                {item.label}
+              </HeaderNavLink>
+            ))}
           <Link
-            href={stays}
+            href={bookHref}
             className="ml-1 rounded-full bg-[var(--color-brand,#2563eb)] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)] sm:px-4"
           >
             Book

@@ -122,6 +122,14 @@ idempotent via the 28-day window). Prefer an external monthly job.
 
 **Peers (balanced — not capacity-only)**
 
+Sources (never guest-facing proxies):
+
+1. **`PricingMarketComp`** — private table only for the pricing agents. Not a
+   `Property`, not on marketplace, not bookable, not linked from any guest UI.
+2. **Real marketplace listings** from other approved hosts (optional fill-in).
+
+Matching:
+
 - Similar `maxGuests`, **plus** location tier:
   - `waterfront_prime` (waterfront / beach / private dock)
   - `water_access` (lake/beach access, row-back demotion)
@@ -130,6 +138,9 @@ idempotent via the 28-day window). Prefer an external monthly job.
 - Pool / dock mismatch heavily penalized (lake+pool ≠ lake-only)
 - Distance miles when lat/lng present (same block vs 1–2 mi away)
 - “Fair” vs “soft” comps; soft set only if fair set is thin
+
+Seed / maintain private comps: `scripts/migrate-pricing-comps-private.ts`
+(or upsert into `PricingMarketComp` directly).
 
 **HITL feedback (improves later runs)**
 

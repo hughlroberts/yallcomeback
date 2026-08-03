@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getHostBySlug } from "@/lib/host";
+import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function HostCalendarRedirect({
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await getHostBySlug(hostSlug);
+  const host = await getHostForGuestSite(hostSlug);
   if (!host) notFound();
   const base = await hostPublicBasePath(host.slug);
   redirect(`${base}/stays`);

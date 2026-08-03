@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getHostBySlug } from "@/lib/host";
+import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { PropertyCard } from "@/components/property-card";
 
@@ -13,7 +13,7 @@ export default async function HostStaysPage({
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await getHostBySlug(hostSlug);
+  const host = await getHostForGuestSite(hostSlug);
   if (!host) notFound();
 
   const base = await hostPublicBasePath(host.slug);

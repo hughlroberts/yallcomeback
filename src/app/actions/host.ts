@@ -11,10 +11,18 @@ import {
 
   SETUP_SERVICE_FEE_USD,
 } from "@/lib/hosting";
+import { parseSitePublishState } from "@/lib/host-site";
 
 function parseSitePresence(raw: string): HostSitePresence {
   if (raw === "CUSTOM" || raw === "BOTH" || raw === "STAYLOCAL") return raw;
   return "STAYLOCAL";
+}
+
+/** Optional social / free-text field: trim, empty → null. */
+function optionalText(formData: FormData, key: string, max = 500): string | null {
+  const t = String(formData.get(key) || "").trim();
+  if (!t) return null;
+  return t.slice(0, max);
 }
 
 function normalizeWebsiteUrl(raw: string): string | null {
@@ -200,9 +208,28 @@ export async function updateHostProfile(formData: FormData) {
 
   const listOnMarketplace = formData.get("listOnMarketplace") === "on";
 
+  // Fixed hosted-site pages (toggle only — not a freeform CMS)
+  const sitePageAbout = formData.get("sitePageAbout") === "on";
+  const sitePageServices = formData.get("sitePageServices") === "on";
+  const siteAddress = optionalText(formData, "siteAddress", 500);
+  const siteServicesTitle = optionalText(formData, "siteServicesTitle", 120);
+  const siteServicesBody = optionalText(formData, "siteServicesBody", 8000);
+  const socialFacebook = optionalText(formData, "socialFacebook", 300);
+  const socialX = optionalText(formData, "socialX", 300);
+  const socialInstagram = optionalText(formData, "socialInstagram", 300);
+  const socialTiktok = optionalText(formData, "socialTiktok", 300);
+
+  // Publish lifecycle: UNPUBLISHED (private) → DEMO (shareable) → LIVE (domain)
+  const sitePublishState = parseSitePublishState(
+    String(formData.get("sitePublishState") || existing.sitePublishState),
+  );
+
   if (!name) redirect(`${HOST_PROFILE_PATH}?error=name`);
 
+  // Domain required when LIVE with custom domain / self-host.
+  // DEMO / UNPUBLISHED may use /h/[slug] without a domain yet.
   if (
+    sitePublishState === "LIVE" &&
     (sitePresence === "CUSTOM" || sitePresence === "BOTH" || isSelf) &&
     !websiteUrl
   ) {
@@ -223,6 +250,16 @@ export async function updateHostProfile(formData: FormData) {
       defaultDisclaimer,
       sitePresence,
       listOnMarketplace,
+      siteAddress,
+      sitePageAbout,
+      sitePageServices,
+      siteServicesTitle,
+      siteServicesBody,
+      socialFacebook,
+      socialX,
+      socialInstagram,
+      socialTiktok,
+      sitePublishState,
       ...(access.isPlatform
         ? {
             active,
@@ -250,6 +287,7 @@ export async function updateHostProfile(formData: FormData) {
   revalidatePath(`/h/${host.slug}/about`);
   revalidatePath(`/h/${host.slug}/contact`);
   revalidatePath(`/h/${host.slug}/stays`);
+  revalidatePath(`/h/${host.slug}/services`);
   revalidatePath("/marketplace");
   revalidatePath("/hosts");
   revalidatePath("/self-host");

@@ -9,13 +9,16 @@ import {
 } from "@/app/actions/host";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { maskSyndicationKey } from "@/lib/syndication";
+import { sitePublishStateLabel } from "@/lib/host-site";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Brand & website" };
 
 /**
- * Host-owned guest site: logo, name, colors, about, contact.
- * On custom domains (HOST_DOMAIN_MAP) this is what guests see — not YCB chrome.
+ * Limited hosted-website editor — NOT a freeform CMS.
+ * Hosts may change: palette, logos, fixed page toggles (booking always on;
+ * optional About + Services), social links, and publish state
+ * (Unpublished → Demo → Live before domain cutover).
  */
 export default async function AdminBrandPage({
   searchParams,
@@ -32,13 +35,9 @@ export default async function AdminBrandPage({
 
   const params = await searchParams;
 
-  // Hosts: always their brand. Platform: require ?hostId= (never edit "first" host).
   let host = null as Awaited<ReturnType<typeof prisma.host.findUnique>>;
   if (access.isPlatform) {
-    const pick =
-      params.hostId?.trim() ||
-      access.hostId ||
-      null;
+    const pick = params.hostId?.trim() || access.hostId || null;
     if (pick) {
       host = await prisma.host.findUnique({ where: { id: pick } });
     }
@@ -94,6 +93,9 @@ export default async function AdminBrandPage({
   }
 
   const previewPath = `/h/${host.slug}`;
+  const returnTo = access.isPlatform
+    ? `/admin/brand?hostId=${host.id}`
+    : "/admin/brand";
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -102,9 +104,9 @@ export default async function AdminBrandPage({
           Brand & website
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-stone-600">
-          Guests on your own domain see <strong>your</strong> logo, name, colors,
-          about page, and contact info — not Yall Come Back. You own the customer
-          relationship; we just run the booking stack.
+          This is a <strong>hosted site template</strong>, not a full website
+          builder. You can change palette, logos, and which fixed pages are on
+          (booking is always first). Guests see your brand — not Yall Come Back.
         </p>
         <p className="mt-2 text-sm">
           <Link
@@ -114,12 +116,19 @@ export default async function AdminBrandPage({
           >
             Preview guest site →
           </Link>
+          <span className="mx-2 text-stone-300">·</span>
+          <span className="text-stone-500">
+            Status:{" "}
+            <strong className="text-stone-800">
+              {sitePublishStateLabel(host.sitePublishState)}
+            </strong>
+          </span>
         </p>
       </div>
 
       {params.saved ? (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Brand saved. Custom domains pick this up on the next request.
+          Saved. Preview updates on the next request.
         </p>
       ) : null}
       {params.error === "name" ? (
@@ -129,27 +138,64 @@ export default async function AdminBrandPage({
       ) : null}
       {params.error === "website" ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          Website / domain URL is required for custom-domain hosts.
+          Website / domain URL is required when publish status is{" "}
+          <strong>Live</strong> with a custom domain.
         </p>
       ) : null}
 
       <form action={updateHostProfile} className="space-y-6">
         <input type="hidden" name="hostId" value={host.id} />
-        <input
-          type="hidden"
-          name="returnTo"
-          value={
-            access.isPlatform
-              ? `/admin/brand?hostId=${host.id}`
-              : "/admin/brand"
-          }
-        />
-        {/* Preserve ops fields hosts don't edit on this form */}
+        <input type="hidden" name="returnTo" value={returnTo} />
         <input type="hidden" name="sitePresence" value={host.sitePresence} />
         {host.active ? <input type="hidden" name="active" value="on" /> : null}
 
+        {/* —— Publish —— */}
+        <Card className="space-y-4 border-bonnet/20 bg-gradient-to-br from-petal/50 to-white p-6">
+          <div>
+            <h2 className="text-lg font-semibold text-stone-900">Publish</h2>
+            <p className="mt-1 text-sm text-stone-600">
+              Build privately, share a demo, then go live when you point your
+              domain. No arbitrary new pages — only the fixed set below.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sitePublishState">Site visibility</Label>
+            <select
+              id="sitePublishState"
+              name="sitePublishState"
+              defaultValue={host.sitePublishState}
+              className="block w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm font-medium text-stone-900"
+            >
+              <option value="UNPUBLISHED">
+                Unpublished — only you can preview
+              </option>
+              <option value="DEMO">
+                Demo — public at /h/{host.slug} with banner
+              </option>
+              <option value="LIVE">
+                Live — production (domain cutover)
+              </option>
+            </select>
+          </div>
+          <ol className="list-inside list-decimal space-y-1 text-xs text-stone-500">
+            <li>
+              <strong>Unpublished</strong> — build logos, pages, content
+            </li>
+            <li>
+              <strong>Demo</strong> — shareable preview before DNS
+            </li>
+            <li>
+              <strong>Live</strong> — point domain +{" "}
+              <code className="rounded bg-white px-1">HOST_DOMAIN_MAP</code>
+            </li>
+          </ol>
+        </Card>
+
+        {/* —— Identity —— */}
         <Card className="space-y-5 p-6">
-          <h2 className="text-lg font-semibold text-stone-900">Identity</h2>
+          <h2 className="text-lg font-semibold text-stone-900">
+            Identity & palette
+          </h2>
 
           <div className="flex flex-wrap items-center gap-4">
             {host.logoUrl ? (
@@ -178,8 +224,7 @@ export default async function AdminBrandPage({
                 defaultValue={host.logoUrl || ""}
               />
               <p className="text-xs text-stone-500">
-                Square works best (shown as a circle in the header). Paste a
-                public image URL for now.
+                Square works best (circle in the header).
               </p>
             </div>
           </div>
@@ -220,17 +265,86 @@ export default async function AdminBrandPage({
                 className="h-11 w-14 cursor-pointer rounded-lg border border-stone-200 bg-white p-1"
               />
               <p className="text-sm text-stone-500">
-                Buttons, links, and accents on your guest site. Leave as-is if
-                you prefer the default.
+                Buttons, links, and accents on your guest site.
               </p>
             </div>
           </div>
         </Card>
 
+        {/* —— Fixed pages —— */}
         <Card className="space-y-5 p-6">
-          <h2 className="text-lg font-semibold text-stone-900">About page</h2>
+          <div>
+            <h2 className="text-lg font-semibold text-stone-900">
+              Pages (fixed set)
+            </h2>
+            <p className="mt-1 text-sm text-stone-500">
+              You cannot create new pages. Toggle the standard ones only.
+              Booking (home + stays) is always on.
+            </p>
+          </div>
+
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+              <input
+                type="checkbox"
+                checked
+                disabled
+                readOnly
+                className="mt-1"
+                aria-label="Booking always on"
+              />
+              <div>
+                <p className="text-sm font-semibold text-stone-900">
+                  Booking (always on)
+                </p>
+                <p className="text-xs text-stone-500">
+                  Home hero + stays catalog. Guests start here.
+                </p>
+              </div>
+            </li>
+            <li>
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 hover:bg-stone-50">
+                <input
+                  type="checkbox"
+                  name="sitePageAbout"
+                  defaultChecked={host.sitePageAbout}
+                  className="mt-1"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-stone-900">About</p>
+                  <p className="text-xs text-stone-500">
+                    Story + phone, address, email, and socials.
+                  </p>
+                </div>
+              </label>
+            </li>
+            <li>
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 hover:bg-stone-50">
+                <input
+                  type="checkbox"
+                  name="sitePageServices"
+                  defaultChecked={host.sitePageServices}
+                  className="mt-1"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-stone-900">
+                    Other services
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    Boats, tours, etc. — optional second content page.
+                  </p>
+                </div>
+              </label>
+            </li>
+          </ul>
+        </Card>
+
+        {/* —— About content —— */}
+        <Card className="space-y-5 p-6">
+          <h2 className="text-lg font-semibold text-stone-900">About content</h2>
           <p className="text-sm text-stone-500">
-            Shown on your About page and a short teaser on the home page.
+            Shown when the About page is on (and a short teaser on the home
+            page).
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="description">About us</Label>
@@ -239,116 +353,19 @@ export default async function AdminBrandPage({
               name="description"
               rows={8}
               defaultValue={host.description || ""}
-              placeholder="Tell guests who you are, what makes the place special, and what to expect…"
+              placeholder="Tell guests who you are…"
             />
           </div>
-        </Card>
-
-        <Card className="space-y-5 p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Marketplace (optional)
-          </h2>
-          <p className="text-sm text-stone-500">
-            Free self-host and paid hosts both control this. Turn on to appear on
-            the shared Yall Come Back marketplace; leave off for your domain only.
-          </p>
-          <label className="flex items-start gap-2 text-sm text-stone-700">
-            <input
-              type="checkbox"
-              name="listOnMarketplace"
-              defaultChecked={host.listOnMarketplace}
-              className="mt-1"
+          <div className="space-y-1.5">
+            <Label htmlFor="siteAddress">Address</Label>
+            <Textarea
+              id="siteAddress"
+              name="siteAddress"
+              rows={2}
+              defaultValue={host.siteAddress || ""}
+              placeholder="123 Lake Rd&#10;Log Cabin, TX 75148"
             />
-            <span>
-              <span className="font-medium text-stone-900">
-                List this brand on the free marketplace
-              </span>
-              <span className="mt-0.5 block text-xs text-stone-500">
-                Each property also has its own marketplace checkbox. Both must be
-                on for a stay to appear under Find a Place.
-              </span>
-            </span>
-          </label>
-          {host.hostingMode === "SELF" ? (
-            <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
-              Free self-host mode — $0 / month platform fee. Marketplace is still
-              optional.
-            </p>
-          ) : null}
-        </Card>
-
-        <Card className="space-y-5 p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Open-source / remote syndication
-          </h2>
-          <p className="text-sm text-stone-500">
-            If you run a separate open-source copy of Yall Come Back on your own
-            servers, use an API key to push listings into{" "}
-            <strong>this</strong> marketplace. On-platform free self-host (same
-            app, your domain via DNS) does not need this — just publish listings
-            here and toggle marketplace above.
-          </p>
-          {params.synKey ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              <p className="font-semibold">Copy your new key now</p>
-              <p className="mt-1 break-all font-mono text-xs">{params.synKey}</p>
-              <p className="mt-2 text-xs">
-                It will not be shown in full again. Store it in your remote
-                deploy secrets.
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-stone-600">
-              Current key:{" "}
-              <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">
-                {maskSyndicationKey(host.syndicationApiKey)}
-              </code>
-            </p>
-          )}
-          <form action={rotateSyndicationApiKey} className="flex flex-wrap gap-3">
-            <input type="hidden" name="hostId" value={host.id} />
-            <input
-              type="hidden"
-              name="returnTo"
-              value={
-                access.isPlatform
-                  ? `/admin/brand?hostId=${host.id}`
-                  : "/admin/brand"
-              }
-            />
-            <Button type="submit" variant="secondary">
-              {host.syndicationApiKey
-                ? "Rotate syndication API key"
-                : "Generate syndication API key"}
-            </Button>
-          </form>
-          <div className="rounded-xl bg-stone-50 p-3 text-xs leading-relaxed text-stone-600">
-            <p className="font-semibold text-stone-800">Example push</p>
-            <pre className="mt-2 overflow-x-auto whitespace-pre-wrap font-mono text-[11px] text-stone-700">{`curl -X POST "$YCB_ORIGIN/api/syndication/listings" \\
-  -H "Authorization: Bearer $SYNDICATION_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"slug":"lake-cabin","title":"Lake cabin","baseNightlyRate":175,"published":true,"city":"Malakoff","region":"TX","images":[{"url":"https://example.com/cover.jpg","isCover":true}]}'`}</pre>
-            <p className="mt-2">
-              Host marketplace must be on, and the payload should set{" "}
-              <code className="rounded bg-white px-1">published: true</code>.
-              Full guide:{" "}
-              <Link
-                href="/open-source#marketplace"
-                className="font-medium text-bonnet hover:underline"
-              >
-                Open source → List on the marketplace
-              </Link>
-              {" "}(repo:{" "}
-              <code className="rounded bg-white px-1">
-                docs/remote-open-source-marketplace.md
-              </code>
-              ).
-            </p>
           </div>
-        </Card>
-
-        <Card className="space-y-5 p-6">
-          <h2 className="text-lg font-semibold text-stone-900">Contact</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="contactEmail">Public email</Label>
@@ -371,6 +388,88 @@ export default async function AdminBrandPage({
               />
             </div>
           </div>
+        </Card>
+
+        {/* —— Services content —— */}
+        <Card className="space-y-5 p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Other services content
+          </h2>
+          <p className="text-sm text-stone-500">
+            Only shown when the Services page toggle is on.
+          </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="siteServicesTitle">Title</Label>
+            <Input
+              id="siteServicesTitle"
+              name="siteServicesTitle"
+              defaultValue={host.siteServicesTitle || ""}
+              placeholder="Boat rentals & lake extras"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="siteServicesBody">Details</Label>
+            <Textarea
+              id="siteServicesBody"
+              name="siteServicesBody"
+              rows={6}
+              defaultValue={host.siteServicesBody || ""}
+              placeholder="Pontoon rentals next door, kayaks, firewood…"
+            />
+          </div>
+        </Card>
+
+        {/* —— Socials —— */}
+        <Card className="space-y-5 p-6">
+          <h2 className="text-lg font-semibold text-stone-900">Social links</h2>
+          <p className="text-sm text-stone-500">
+            Full URL or handle. Shown in footer and on About.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="socialFacebook">Facebook</Label>
+              <Input
+                id="socialFacebook"
+                name="socialFacebook"
+                defaultValue={host.socialFacebook || ""}
+                placeholder="https://facebook.com/… or page name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="socialX">X (Twitter)</Label>
+              <Input
+                id="socialX"
+                name="socialX"
+                defaultValue={host.socialX || ""}
+                placeholder="https://x.com/… or @handle"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="socialInstagram">Instagram</Label>
+              <Input
+                id="socialInstagram"
+                name="socialInstagram"
+                defaultValue={host.socialInstagram || ""}
+                placeholder="https://instagram.com/… or @handle"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="socialTiktok">TikTok</Label>
+              <Input
+                id="socialTiktok"
+                name="socialTiktok"
+                defaultValue={host.socialTiktok || ""}
+                placeholder="https://tiktok.com/@… or @handle"
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* —— Domain —— */}
+        <Card className="space-y-5 p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Domain & disclaimer
+          </h2>
           <div className="space-y-1.5">
             <Label htmlFor="websiteUrl">Website / custom domain</Label>
             <Input
@@ -381,13 +480,14 @@ export default async function AdminBrandPage({
               placeholder="https://www.cherokeelanding.net"
             />
             <p className="text-xs text-stone-500">
-              Point DNS here and set{" "}
+              Required for <strong>Live</strong> with your own domain. Point DNS
+              here and set{" "}
               <code className="rounded bg-stone-100 px-1">HOST_DOMAIN_MAP</code>{" "}
               (e.g.{" "}
               <code className="rounded bg-stone-100 px-1">
                 cherokeelanding.net:{host.slug}
               </code>
-              ) so guests land on your brand.
+              ).
             </p>
           </div>
           <div className="space-y-1.5">
@@ -397,13 +497,78 @@ export default async function AdminBrandPage({
               name="defaultDisclaimer"
               rows={3}
               defaultValue={host.defaultDisclaimer || ""}
-              placeholder="Optional house rules summary or legal note on bookings…"
+              placeholder="Optional house rules summary on bookings…"
             />
           </div>
         </Card>
 
+        {/* —— Marketplace —— */}
+        <Card className="space-y-5 p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Marketplace (optional)
+          </h2>
+          <p className="text-sm text-stone-500">
+            Separate from your hosted site. Appear on the shared Yall Come Back
+            marketplace or stay on your domain only.
+          </p>
+          <label className="flex items-start gap-2 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              name="listOnMarketplace"
+              defaultChecked={host.listOnMarketplace}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">
+                List this brand on the free marketplace
+              </span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Each property also has its own marketplace checkbox.
+              </span>
+            </span>
+          </label>
+          {host.hostingMode === "SELF" ? (
+            <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
+              Free self-host mode — $0 / month platform fee.
+            </p>
+          ) : null}
+        </Card>
+
+        {/* —— Syndication —— */}
+        <Card className="space-y-5 p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Open-source / remote syndication
+          </h2>
+          <p className="text-sm text-stone-500">
+            If you run a separate open-source copy, use an API key to push
+            listings into this marketplace. On-platform hosting does not need
+            this.
+          </p>
+          {params.synKey ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <p className="font-semibold">Copy your new key now</p>
+              <p className="mt-1 break-all font-mono text-xs">{params.synKey}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-stone-600">
+              Current key:{" "}
+              <code className="rounded bg-stone-100 px-1.5 py-0.5 text-xs">
+                {maskSyndicationKey(host.syndicationApiKey)}
+              </code>
+            </p>
+          )}
+          {/* nested form not valid HTML — use separate form below */}
+        </Card>
+
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit">Save brand</Button>
+          <Button type="submit">Save brand & website</Button>
+          <Link
+            href={previewPath}
+            target="_blank"
+            className="text-sm font-medium text-bonnet hover:underline"
+          >
+            Preview →
+          </Link>
           <Link
             href="/admin"
             className="text-sm font-medium text-stone-600 hover:text-stone-900"
@@ -411,6 +576,16 @@ export default async function AdminBrandPage({
             ← Host dashboard
           </Link>
         </div>
+      </form>
+
+      <form action={rotateSyndicationApiKey} className="flex flex-wrap gap-3">
+        <input type="hidden" name="hostId" value={host.id} />
+        <input type="hidden" name="returnTo" value={returnTo} />
+        <Button type="submit" variant="secondary">
+          {host.syndicationApiKey
+            ? "Rotate syndication API key"
+            : "Generate syndication API key"}
+        </Button>
       </form>
     </div>
   );

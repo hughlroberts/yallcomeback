@@ -101,6 +101,17 @@ enum HostSitePresence {
   BOTH
 }
 
+/// Hosted website publish lifecycle (not a freeform CMS).
+/// Palette, logos, and fixed page toggles only — no arbitrary pages.
+enum HostSitePublishState {
+  /// Not guest-visible (host admin can still preview while building)
+  UNPUBLISHED
+  /// Public demo at /h/[slug] with banner — before domain cutover
+  DEMO
+  /// Production (custom domain / live guest site)
+  LIVE
+}
+
 /// How petFee is applied when guests bring pets
 enum PetFeeUnit {
   /// One flat fee for the whole stay (any number of pets within max)
@@ -160,6 +171,21 @@ model Host {
   primaryColor         String              @default("#2563eb") // blue-600
   contactEmail         String?
   contactPhone         String?
+  /// Physical address shown on About (hosted site is not a freeform CMS)
+  siteAddress          String?
+  /// Fixed hosted-site pages (toggle only — no arbitrary page builder)
+  sitePageAbout        Boolean             @default(true)
+  sitePageServices     Boolean             @default(false)
+  /// Other services page body (boats, tours, etc.)
+  siteServicesTitle    String?
+  siteServicesBody     String?
+  /// Social outbound links (optional)
+  socialFacebook       String?
+  socialX              String?
+  socialInstagram      String?
+  socialTiktok         String?
+  /// UNPUBLISHED = private; DEMO = public at /h/slug with banner; LIVE = domain cutover
+  sitePublishState     HostSitePublishState @default(UNPUBLISHED)
   /// Own domain or self-hosted app URL (e.g. https://www.example.com)
   websiteUrl           String?
   /// STAYLOCAL = use StayLocal listing URLs; CUSTOM = own domain; BOTH = both
@@ -749,4 +775,35 @@ model PricingRecommendation {
   @@index([runId])
   @@index([propertyId, status])
   @@index([status])
+}
+
+/// Private market comps for pricing intelligence ONLY.
+/// Never guest-facing: not Property, not marketplace, not host sites, not booking.
+/// Ops / agents seed anonymized OTA or area proxies here.
+model PricingMarketComp {
+  id               String   @id @default(cuid())
+  /// Stable key for upserts (e.g. "ccl-waterfront-dock-8")
+  key              String   @unique
+  title            String
+  tagline          String?
+  description      String?
+  /// JSON amenity ids / freeform signals for location-quality matching
+  amenitiesJson    String   @default("[]")
+  maxGuests        Int
+  bedrooms         Int      @default(1)
+  bathrooms        Float    @default(1)
+  baseNightlyRate  Float
+  city             String?
+  region           String?
+  country          String?  @default("US")
+  latitude         Float?
+  longitude        Float?
+  /// Optional external source label (e.g. "area proxy", "manual research") — never shown to guests
+  sourceNote       String?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([active, maxGuests])
+  @@index([region, city])
 }

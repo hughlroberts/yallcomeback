@@ -19,6 +19,14 @@ export type PropertyWithHost = Property & {
  * Paid (PLATFORM) hosts also need an active subscription.
  * Free self-host (SELF) may opt in or stay off the marketplace entirely.
  */
+/**
+ * Host slugs that must never appear on the guest marketplace / discovery.
+ * (Legacy demos; pricing comps now live in PricingMarketComp only.)
+ */
+export const MARKETPLACE_EXCLUDED_HOST_SLUGS = [
+  "market-comps-demo",
+] as const;
+
 export function marketplacePropertyWhere() {
   return {
     published: true,
@@ -27,6 +35,8 @@ export function marketplacePropertyWhere() {
       active: true,
       approvalStatus: "APPROVED" as const,
       listOnMarketplace: true,
+      // Never surface pricing-agent proxy hosts (or other internal brands)
+      slug: { notIn: [...MARKETPLACE_EXCLUDED_HOST_SLUGS] },
       OR: [
         { hostingMode: "SELF" as const },
         {
@@ -62,17 +72,60 @@ export function hostSitePropertyWhere(hostId: string) {
   } as const;
 }
 
-export async function getHostBySlug(slug: string) {
+/**
+ * Public host brand for guest-facing site.
+ * Requires live host (approved + paid/self) AND site publish state DEMO or LIVE.
+ * Pass `allowUnpublishedPreview: true` when the viewer is the host admin building the site.
+ */
+export async function getHostBySlug(
+  slug: string,
+  opts?: { allowUnpublishedPreview?: boolean },
+) {
   const host = await prisma.host.findFirst({
     where: { slug, active: true },
   });
   if (!host || !isHostPublicLive(host)) return null;
+  if (
+    host.sitePublishState === "UNPUBLISHED" &&
+    !opts?.allowUnpublishedPreview
+  ) {
+    return null;
+  }
   return host;
 }
 
 /** Host row for admin preview even when not public yet */
 export async function getHostBySlugAny(slug: string) {
   return prisma.host.findFirst({ where: { slug } });
+}
+
+/**
+ * Resolve host for guest site routes: public DEMO/LIVE, or host admin
+ * preview of UNPUBLISHED while still building.
+ */
+export async function getHostForGuestSite(slug: string) {
+  const { auth } = await import("./auth");
+  const session = await auth();
+  const isPlatform = session?.user?.role === "ADMIN";
+  const isOwnHost =
+    session?.user?.role === "HOST" &&
+    session.user.hostId != null;
+
+  // Peek without publish gate first for ownership check
+  const any = await getHostBySlugAny(slug);
+  if (!any || !any.active) return null;
+  if (!isHostPublicLive(any)) {
+    // Still allow own host / platform to preview while pending payment/review
+    if (isPlatform) return any;
+    if (isOwnHost && session!.user.hostId === any.id) return any;
+    return null;
+  }
+
+  if (any.sitePublishState !== "UNPUBLISHED") return any;
+
+  if (isPlatform) return any;
+  if (isOwnHost && session!.user.hostId === any.id) return any;
+  return null;
 }
 
 export type MarketplaceSearchOpts = {

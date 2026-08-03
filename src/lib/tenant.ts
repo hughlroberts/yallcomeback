@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import type { CSSProperties } from "react";
 import type { Host } from "@prisma/client";
-import { getHostBySlug } from "@/lib/host";
+import { getHostForGuestSite } from "@/lib/host";
 
 export type HostTenant = Host;
 
@@ -15,6 +15,8 @@ export const TENANT_SLUG_HEADER = TENANT_HEADER;
  * Only trusts the middleware `x-tenant-slug` header so /admin, /login, etc.
  * on a custom domain still get platform chrome (hosts manage ops as YCB tools).
  *
+ * Uses guest-site visibility: DEMO/LIVE public; UNPUBLISHED only for host admin preview.
+ *
  * Safe during build/static generation: returns null if headers() is unavailable
  * (e.g. opengraph-image collect at build time).
  */
@@ -23,7 +25,7 @@ export async function getRequestTenant(): Promise<HostTenant | null> {
     const h = await headers();
     const fromHeader = h.get(TENANT_HEADER)?.trim().toLowerCase();
     if (!fromHeader) return null;
-    return getHostBySlug(fromHeader);
+    return getHostForGuestSite(fromHeader);
   } catch {
     // Build-time / generateStaticParams — no request context
     return null;

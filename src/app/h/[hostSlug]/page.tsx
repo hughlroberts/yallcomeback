@@ -2,15 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getHostBySlug } from "@/lib/host";
+import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { PropertyCard } from "@/components/property-card";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Host-owned home — logo, name, palette, and their stays only.
- * On custom domain this is rewritten from / (e.g. cherokeelanding.net).
+ * Host-owned home — booking first (stays grid).
+ * Fixed template: palette, logo, optional About teaser — not a freeform CMS.
  */
 export default async function HostSiteHomePage({
   params,
@@ -18,7 +18,7 @@ export default async function HostSiteHomePage({
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await getHostBySlug(hostSlug);
+  const host = await getHostForGuestSite(hostSlug);
   if (!host) notFound();
 
   const base = await hostPublicBasePath(host.slug);
@@ -40,6 +40,10 @@ export default async function HostSiteHomePage({
 
   const cover =
     properties[0]?.images[0]?.url || "/seed/hero/home.jpg";
+
+  const contactHref = host.sitePageAbout
+    ? `${base}/about#contact`
+    : `${base}/stays`;
 
   return (
     <div>
@@ -76,16 +80,19 @@ export default async function HostSiteHomePage({
             >
               View stays
             </Link>
-            <Link
-              href={`${base}/contact`}
-              className="rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/15"
-            >
-              Contact us
-            </Link>
+            {host.sitePageAbout ? (
+              <Link
+                href={contactHref}
+                className="rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/15"
+              >
+                Contact us
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>
 
+      {/* Booking-first: stays always lead the home page */}
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -109,13 +116,18 @@ export default async function HostSiteHomePage({
         {properties.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-12 text-center">
             <p className="text-stone-600">
-              Listings are being prepared. Check back soon, or{" "}
-              <Link
-                href={`${base}/contact`}
-                className="font-semibold text-[var(--color-brand)] hover:underline"
-              >
-                get in touch
-              </Link>
+              Listings are being prepared. Check back soon
+              {host.sitePageAbout ? (
+                <>
+                  , or{" "}
+                  <Link
+                    href={contactHref}
+                    className="font-semibold text-[var(--color-brand)] hover:underline"
+                  >
+                    get in touch
+                  </Link>
+                </>
+              ) : null}
               .
             </p>
           </div>
@@ -133,7 +145,7 @@ export default async function HostSiteHomePage({
         )}
       </section>
 
-      {host.description ? (
+      {host.sitePageAbout && host.description ? (
         <section className="border-t border-stone-200 bg-stone-50">
           <div className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6">
             <h2 className="text-2xl font-semibold text-stone-900">About us</h2>
@@ -147,6 +159,25 @@ export default async function HostSiteHomePage({
               className="mt-6 inline-flex text-sm font-semibold text-[var(--color-brand)] hover:underline"
             >
               Read more →
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      {host.sitePageServices ? (
+        <section className="border-t border-stone-200">
+          <div className="mx-auto max-w-3xl px-4 py-12 text-center sm:px-6">
+            <h2 className="text-xl font-semibold text-stone-900">
+              {host.siteServicesTitle?.trim() || "Other services"}
+            </h2>
+            <p className="mt-2 text-sm text-stone-500">
+              Boats, tours, and more — beyond the stay.
+            </p>
+            <Link
+              href={`${base}/services`}
+              className="mt-4 inline-flex text-sm font-semibold text-[var(--color-brand)] hover:underline"
+            >
+              Learn more →
             </Link>
           </div>
         </section>

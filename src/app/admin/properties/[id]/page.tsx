@@ -431,10 +431,10 @@ export default async function AdminPropertyDetailPage({
     <Card>
       <h2 className="text-lg font-semibold">Min nights & peak holidays</h2>
       <p className="mt-1 text-sm text-stone-500">
-        <strong>Default min nights</strong> is year-round - set it on the
-        Calendar pricing sidebar or Listing tab. Peak holidays start at{" "}
-        <strong>{DEFAULT_PEAK_MIN_NIGHTS} nights</strong> and can be upgraded
-        to 3+ with one click.
+        <strong>Default min nights</strong> is year-round — set it on the
+        Calendar pricing sidebar or Listing tab. Peak holidays are separate
+        date windows; pick the min nights when you apply them (or change them
+        later in the table below).
       </p>
 
       <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
@@ -442,8 +442,9 @@ export default async function AdminPropertyDetailPage({
           <div>
             <h3 className="text-sm font-semibold text-stone-900">Peak holidays</h3>
             <p className="mt-1 text-xs text-stone-600">
-              US long weekends for this year and next. New listings get these at{" "}
-              {DEFAULT_PEAK_MIN_NIGHTS}-night min automatically.
+              US long weekends for this year and next. Choose 2, 3, or more nights
+              when you apply — you can also change any peak after it&apos;s on the
+              listing.
             </p>
           </div>
           {peakSeasons.length > 0 ? (
@@ -476,11 +477,6 @@ export default async function AdminPropertyDetailPage({
         {missing.length > 0 ? (
           <form action={applyPeakHolidays} className="mt-4">
             <input type="hidden" name="propertyId" value={property.id} />
-            <input
-              type="hidden"
-              name="minNights"
-              value={String(DEFAULT_PEAK_MIN_NIGHTS)}
-            />
             <ul className="grid gap-2 sm:grid-cols-2">
               {missing.map((h) => (
                 <li key={h.key}>
@@ -495,21 +491,42 @@ export default async function AdminPropertyDetailPage({
                     <span>
                       <span className="font-medium text-stone-900">{h.name}</span>
                       <span className="mt-0.5 block text-xs text-stone-500">
-                        {h.startDate} → {h.endDate} · {DEFAULT_PEAK_MIN_NIGHTS}
-                        -night min
+                        {h.startDate} → {h.endDate}
                       </span>
                     </span>
                   </label>
                 </li>
               ))}
             </ul>
-            <Button type="submit" className="mt-3">
-              Apply selected peaks ({DEFAULT_PEAK_MIN_NIGHTS}-night min)
-            </Button>
+            <div className="mt-4 flex flex-wrap items-end gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="peakMinNights">Min nights for selected peaks</Label>
+                <select
+                  id="peakMinNights"
+                  name="minNights"
+                  defaultValue={String(DEFAULT_PEAK_MIN_NIGHTS)}
+                  className="block w-full min-w-[10rem] rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-900"
+                >
+                  {[2, 3, 4, 5, 6, 7].map((n) => (
+                    <option key={n} value={n}>
+                      {n}-night minimum
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button type="submit">Apply selected peaks</Button>
+            </div>
+            <p className="mt-2 text-xs text-stone-600">
+              Tip: choose <strong>3-night minimum</strong> here if that&apos;s
+              what you want for holidays — you don&apos;t have to apply at 2 first.
+            </p>
           </form>
         ) : (
           <p className="mt-3 text-xs text-stone-600">
             All upcoming peak holidays are on this listing.
+            {peakSeasons.length > 0
+              ? " Use “All peaks → 3 nights” above, or change min nights per row in the table."
+              : null}
           </p>
         )}
       </div>

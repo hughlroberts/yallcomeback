@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getHostBySlug } from "@/lib/host";
+import { getHostForGuestSite } from "@/lib/host";
 
 type Props = {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export async function generateMetadata({
   params: Promise<{ hostSlug: string }>;
 }): Promise<Metadata> {
   const { hostSlug } = await params;
-  const host = await getHostBySlug(hostSlug);
+  const host = await getHostForGuestSite(hostSlug);
   if (!host) {
     return { title: "Host not found" };
   }

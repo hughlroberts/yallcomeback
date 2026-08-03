@@ -43,7 +43,6 @@ export default async function AdminPricingRunPage({
 
   const { runId } = await params;
   const sp = await searchParams;
-  const view = sp.view || "actionable";
 
   const run = await prisma.pricingIntelligenceRun.findUnique({
     where: { id: runId },
@@ -94,6 +93,12 @@ export default async function AdminPricingRunPage({
   );
   const approved = recs.filter((r) => r.status === "APPROVED");
   const applied = recs.filter((r) => r.status === "APPLIED");
+
+  // Default: actionable when something needs a decision; otherwise all
+  // (so hold-only first runs still show cards instead of an empty list).
+  const defaultView =
+    pending.length + approved.length > 0 ? "actionable" : "all";
+  const view = sp.view || defaultView;
 
   const filtered =
     view === "all"
