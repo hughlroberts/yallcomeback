@@ -91,6 +91,9 @@ export default async function AdminBrandPage({
                     {h.sitePublishState}
                     {!h.active ? " · inactive" : ""}
                   </span>
+                  <span className="mt-0.5 block text-[10px] text-stone-400">
+                    /h/{h.slug}
+                  </span>
                 </span>
               </Link>
             </li>
@@ -192,7 +195,6 @@ export default async function AdminBrandPage({
       >
         <input type="hidden" name="hostId" value={host.id} />
         <input type="hidden" name="returnTo" value={returnTo} />
-        <input type="hidden" name="sitePresence" value={host.sitePresence} />
         {host.active ? <input type="hidden" name="active" value="on" /> : null}
 
         {/* —— Publish —— */}
@@ -507,21 +509,63 @@ export default async function AdminBrandPage({
         {/* —— Domain —— */}
         <Card className="order-8 space-y-5 p-6">
           <h2 className="text-lg font-semibold text-stone-900">
-            Domain & disclaimer
+            Guest site & disclaimer
           </h2>
+
+          <div className="rounded-2xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-stone-700">
+            <p className="font-medium text-stone-900">Your guest site on Yall Come Back</p>
+            <p className="mt-1 text-xs text-stone-500">
+              You can run entirely on this platform — no separate domain required.
+              Guests use your brand path below (and marketplace if you opt in).
+            </p>
+            <p className="mt-2">
+              <Link
+                href={previewPath}
+                target="_blank"
+                className="font-semibold text-bonnet hover:underline"
+              >
+                {previewPath} →
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="sitePresence">Where guests find you</Label>
+            <select
+              id="sitePresence"
+              name="sitePresence"
+              defaultValue={host.sitePresence}
+              className="block w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm font-medium text-stone-900"
+            >
+              <option value="STAYLOCAL">
+                Yall Come Back only (/h/{host.slug} + marketplace)
+              </option>
+              <option value="BOTH">
+                Yall Come Back + my own domain
+              </option>
+              <option value="CUSTOM">
+                My own domain only (advanced)
+              </option>
+            </select>
+            <p className="text-xs text-stone-500">
+              Choose <strong>Yall Come Back only</strong> if you will not point a
+              custom domain — everything stays on this site.
+            </p>
+          </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="customDomain">Custom domain (hostname)</Label>
+            <Label htmlFor="customDomain">
+              Custom domain (optional)
+            </Label>
             <Input
               id="customDomain"
               name="customDomain"
               defaultValue={host.customDomain || ""}
-              placeholder="cherokeelanding.net"
+              placeholder="Leave blank if Yall Come Back only"
             />
             <p className="text-xs text-stone-500">
-              Self-serve routing: guests on this hostname get your brand site.
-              Point DNS (CNAME/A) at this Railway app, set publish to{" "}
-              <strong>Live</strong>, and allow ~1 minute for the domain map to
-              refresh. www and bare domain both work.
+              Only if you want guests at your own hostname (e.g.
+              cherokeelanding.net). Leave empty for platform-only brands.
             </p>
             {host.customDomain ? (
               <p className="rounded-lg bg-stone-50 px-3 py-2 font-mono text-[11px] text-stone-600">
@@ -530,17 +574,22 @@ export default async function AdminBrandPage({
             ) : null}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="websiteUrl">Public website URL</Label>
+            <Label htmlFor="websiteUrl">Public website URL (optional)</Label>
             <Input
               id="websiteUrl"
               name="websiteUrl"
               type="url"
-              defaultValue={host.websiteUrl || ""}
-              placeholder="https://www.cherokeelanding.net"
+              defaultValue={
+                host.websiteUrl && host.websiteUrl !== "none"
+                  ? host.websiteUrl
+                  : ""
+              }
+              placeholder={`https://yallcomeback.com/h/${host.slug}`}
             />
             <p className="text-xs text-stone-500">
-              Shown to guests as your site link. Required for{" "}
-              <strong>Live</strong> when using a custom domain / self-host.
+              Optional link shown in footers/share. Not required for{" "}
+              <strong>Yall Come Back only</strong>. Required when Live with a
+              custom domain.
             </p>
           </div>
           <div className="space-y-1.5">

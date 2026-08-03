@@ -233,13 +233,17 @@ export async function updateHostProfile(formData: FormData) {
 
   if (!name) redirect(`${HOST_PROFILE_PATH}?error=name`);
 
-  // Domain required when LIVE with custom domain / self-host.
-  // DEMO / UNPUBLISHED may use /h/[slug] without a domain yet.
+  // Domain / public URL only required when LIVE with custom domain presence.
+  // STAYLOCAL (Yall Come Back path only) never needs a vanity domain.
   if (
     sitePublishState === "LIVE" &&
-    (sitePresence === "CUSTOM" || sitePresence === "BOTH" || isSelf) &&
-    !websiteUrl
+    (sitePresence === "CUSTOM" || sitePresence === "BOTH") &&
+    !websiteUrl &&
+    !customDomain
   ) {
+    redirect(`${HOST_PROFILE_PATH}?error=website`);
+  }
+  if (sitePublishState === "LIVE" && isSelf && !websiteUrl && !customDomain) {
     redirect(`${HOST_PROFILE_PATH}?error=website`);
   }
 
