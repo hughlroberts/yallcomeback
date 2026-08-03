@@ -23,6 +23,7 @@ export async function collectHostPricingData(
   hostId: string,
   periodStart: Date,
   periodEnd: Date,
+  opts?: { skipExternal?: boolean },
 ): Promise<CollectorBundle> {
   const host = await prisma.host.findUniqueOrThrow({
     where: { id: hostId },
@@ -271,7 +272,12 @@ export async function collectHostPricingData(
     peerCompsByPropertyId[listing.propertyId] = chosen;
   }
 
-  const external = await collectExternalSignals(listings, hitl);
+  const external = opts?.skipExternal
+    ? {
+        source: "none" as const,
+        summary: "Market brief deferred to dedicated agent step.",
+      }
+    : await collectExternalSignals(listings, hitl);
 
   const notes: string[] = [
     `Matching: capacity + location tier (waterfront vs access vs view vs inland) + pool/dock + distance when coords exist.`,
@@ -285,7 +291,7 @@ export async function collectHostPricingData(
       `Recent host feedback: ${hitl.recentNotes.slice(0, 3).join(" · ")}`,
     );
   }
-  if (external.source === "none") {
+  if (!opts?.skipExternal && external.source === "none") {
     notes.push(
       "No XAI_API_KEY — external OTA brief skipped; internal quality-balanced peers only.",
     );

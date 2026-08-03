@@ -10,8 +10,12 @@ import {
   PRICING_INTELLIGENCE_ADDON_LABEL,
   PRICING_INTELLIGENCE_ADDON_USD,
 } from "@/lib/platform-features";
-import { runPricingIntelligenceForHost } from "@/lib/pricing-intelligence/run";
+import {
+  executePricingPipeline,
+  runPricingIntelligenceForHost,
+} from "@/lib/pricing-intelligence/run";
 import { getStripe, isStripeConfigured, toStripeAmount } from "@/lib/stripe";
+import { after } from "next/server";
 
 function assertEnabled() {
   if (!isPricingIntelligenceEnabled()) {
@@ -244,17 +248,38 @@ export async function startPricingResearch(formData: FormData) {
   }
 
   try {
-    const { runId, recommendationCount } = await runPricingIntelligenceForHost({
+    // Create RUNNING row immediately, then execute full multi-agent pipeline
+    // in the background so the UI can show live step progress (~30–90s with LLM).
+    const { runId } = await runPricingIntelligenceForHost({
       hostId,
       trigger: "MANUAL",
       bypassAddonCheck: bypass,
+      deferExecution: true,
     });
+
+    const periodEnd = new Date();
+    const periodStart = new Date(
+      periodEnd.getTime() - 90 * 24 * 60 * 60 * 1000,
+    );
+
+    after(async () => {
+      try {
+        await executePricingPipeline(runId, {
+          hostId,
+          periodStart,
+          periodEnd,
+        });
+        revalidatePath("/admin/pricing");
+        revalidatePath(`/admin/pricing/${runId}`);
+      } catch (err) {
+        console.error("[pricing-intelligence] pipeline failed", err);
+      }
+    });
+
     revalidatePath("/admin/pricing");
     revalidatePath(`/admin/pricing/${runId}`);
     // redirect() throws NEXT_REDIRECT — must not be caught below
-    redirect(
-      `/admin/pricing/${runId}?started=1&n=${recommendationCount}`,
-    );
+    redirect(`/admin/pricing/${runId}?running=1`);
   } catch (e) {
     // Next.js redirect() and notFound() use thrown digests — rethrow them
     if (

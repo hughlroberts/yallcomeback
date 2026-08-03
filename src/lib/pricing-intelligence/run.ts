@@ -7,30 +7,42 @@ import {
 } from "@/lib/platform-features";
 import { collectHostPricingData } from "./collector";
 import { analyzePricing, buildReportMarkdown } from "./analyst";
+import {
+  runAnalystCritiqueAgent,
+  runMarketBriefAgent,
+  runRecommenderAgent,
+} from "./agents";
+import { pricingLlmConfigured } from "./llm";
+import {
+  beginStep,
+  completeStep,
+  failStep,
+  initialAgentSteps,
+  skipStep,
+} from "./steps";
+import type { CollectorBundle } from "./types";
 
 export type RunPricingOptions = {
   hostId: string;
   trigger?: PricingRunTrigger;
-  /** Lookback days for internal stats (default 90). */
   lookbackDays?: number;
-  /**
-   * Platform admin only: run without beta access + paid add-on
-   * (your own testing / support). Still requires deploy feature flag on.
-   */
   bypassAddonCheck?: boolean;
+  /**
+   * When true, only create the RUNNING row and return — caller schedules
+   * executePricingPipeline (e.g. via after()).
+   */
+  deferExecution?: boolean;
 };
 
 /**
- * Full agent loop for one host: collect → analyze → recommend (no auto-apply).
- * Requires beta access + $35/mo ACTIVE, unless platform bypass.
+ * Create a research run and optionally execute the full multi-agent pipeline.
+ * Full pipeline: collect → market brief → analyze → LLM critique → recommend → finalize.
  */
 export async function runPricingIntelligenceForHost(
   opts: RunPricingOptions,
-): Promise<{ runId: string; recommendationCount: number }> {
+): Promise<{ runId: string; recommendationCount: number; deferred?: boolean }> {
   if (!isPricingIntelligenceEnabled()) {
-    throw new Error(
-      "Pricing intelligence is disabled on this deploy.",
-    );
+    throw new Error("Pricing intelligence is disabled on this deploy.");
   }
 
   const hostRow = await prisma.host.findUnique({
@@ -62,21 +74,155 @@ export async function runPricingIntelligenceForHost(
       trigger,
       periodStart,
       periodEnd,
+      agentStepsJson: JSON.stringify(initialAgentSteps()),
+      reportMarkdown:
+        "_Research pipeline started. Agents are working through collect → market → analyze → critique → recommend…_",
     },
   });
 
-  try {
-    const bundle = await collectHostPricingData(
-      opts.hostId,
-      periodStart,
-      periodEnd,
-    );
-    const suggestions = analyzePricing(bundle);
-    const report = buildReportMarkdown(bundle, suggestions);
+  if (opts.deferExecution) {
+    return { runId: run.id, recommendationCount: 0, deferred: true };
+  }
 
+  return executePricingPipeline(run.id, {
+    hostId: opts.hostId,
+    periodStart,
+    periodEnd,
+  });
+}
+
+/**
+ * Multi-agent pipeline with step progress persisted for the UI.
+ * Intended to run in the background (after()) for ~30–90s with LLM steps.
+ */
+export async function executePricingPipeline(
+  runId: string,
+  ctx: { hostId: string; periodStart: Date; periodEnd: Date },
+): Promise<{ runId: string; recommendationCount: number }> {
+  try {
+    // —— 1. Collector (internal + peers) ——
+    await beginStep(runId, "collect_internal");
+    const bundle = await collectHostPricingData(
+      ctx.hostId,
+      ctx.periodStart,
+      ctx.periodEnd,
+      { skipExternal: true },
+    );
+    const peerTotal = Object.values(bundle.peerCompsByPropertyId).reduce(
+      (n, a) => n + a.length,
+      0,
+    );
+    await completeStep(
+      runId,
+      "collect_internal",
+      `${bundle.listings.length} listing(s), ${peerTotal} peer comps, ${bundle.hitl.totalDecisions} prior HITL decisions.`,
+      bundle.notes.join("\n"),
+    );
+    await prisma.pricingIntelligenceRun.update({
+      where: { id: runId },
+      data: { collectorJson: JSON.stringify(bundle) },
+    });
+
+    // —— 2. Market brief agent ——
+    await beginStep(runId, "market_brief");
+    const brief = await runMarketBriefAgent(bundle);
+    const bundleWithBrief: CollectorBundle = {
+      ...bundle,
+      external: {
+        source: brief.source,
+        summary: brief.summary,
+      },
+      notes: [
+        ...bundle.notes,
+        brief.source === "llm"
+          ? `Market brief via LLM${brief.model ? ` (${brief.model})` : ""}.`
+          : "Market brief heuristic (LLM unavailable or failed).",
+      ],
+    };
+    await completeStep(
+      runId,
+      "market_brief",
+      brief.source === "llm"
+        ? `LLM market brief ready (${brief.summary.length} chars).`
+        : "Heuristic market brief (set XAI_API_KEY on the app service for full LLM research).",
+      brief.summary.slice(0, 1500),
+    );
+    await prisma.pricingIntelligenceRun.update({
+      where: { id: runId },
+      data: { collectorJson: JSON.stringify(bundleWithBrief) },
+    });
+
+    // —— 3. Deterministic analyst ——
+    await beginStep(runId, "analyze_rates");
+    let suggestions = analyzePricing(bundleWithBrief);
+    await completeStep(
+      runId,
+      "analyze_rates",
+      `Drafted ${suggestions.length} suggestion(s); ${suggestions.filter((s) => !s.doNothing).length} directional, ${suggestions.filter((s) => s.doNothing).length} hold.`,
+      suggestions
+        .map(
+          (s) =>
+            `${s.propertyId}: $${s.currentNightlyRate} → $${s.suggestedNightlyRate} (${s.changePercent}%) conf=${s.confidence}`,
+        )
+        .join("\n"),
+    );
+
+    // —— 4. LLM critique / refine ——
+    if (pricingLlmConfigured()) {
+      await beginStep(runId, "llm_critique");
+      suggestions = await runAnalystCritiqueAgent(bundleWithBrief, suggestions);
+      await completeStep(
+        runId,
+        "llm_critique",
+        `LLM critique applied to ${suggestions.length} listing(s).`,
+        suggestions
+          .map(
+            (s) =>
+              `${s.propertyId}: $${s.suggestedNightlyRate} (${s.changePercent}%) hitl=${Boolean(s.needsHitlClarification)}`,
+          )
+          .join("\n"),
+      );
+    } else {
+      await skipStep(
+        runId,
+        "llm_critique",
+        "Skipped — XAI_API_KEY not on this service. Deterministic analysis kept.",
+      );
+    }
+
+    // —— 5. Recommender ——
+    let reportExtra = "";
+    if (pricingLlmConfigured()) {
+      await beginStep(runId, "recommend");
+      const rec = await runRecommenderAgent(bundleWithBrief, suggestions);
+      suggestions = rec.suggestions;
+      reportExtra = rec.reportExtra;
+      await completeStep(
+        runId,
+        "recommend",
+        "Executive summary and experiment notes written.",
+        reportExtra.slice(0, 1200),
+      );
+    } else {
+      await skipStep(
+        runId,
+        "recommend",
+        "Skipped — no LLM key. Using template experiment notes from analyst.",
+      );
+    }
+
+    // —— 6. Finalize ——
+    await beginStep(runId, "finalize");
+    let report = buildReportMarkdown(bundleWithBrief, suggestions);
+    if (reportExtra) {
+      report = `${report}\n\n## Executive summary (recommender)\n\n${reportExtra}\n`;
+    }
+    report += `\n\n## Pipeline\n- Multi-agent: collector → market brief → analyst → critique → recommender → human approve.\n- LLM configured: ${pricingLlmConfigured() ? "yes" : "no"}.\n`;
+
+    await prisma.pricingRecommendation.deleteMany({ where: { runId } });
     await prisma.pricingRecommendation.createMany({
       data: suggestions.map((s) => ({
-        runId: run.id,
+        runId,
         propertyId: s.propertyId,
         currentNightlyRate: s.currentNightlyRate,
         suggestedNightlyRate: s.suggestedNightlyRate,
@@ -91,39 +237,59 @@ export async function runPricingIntelligenceForHost(
           ...s.evidence,
           needsHitlClarification: s.needsHitlClarification,
           hitlPrompt: s.hitlPrompt,
+          marketBriefSource: bundleWithBrief.external.source,
         }),
-        // Unclear comps → SKIPPED (hold) still, but keep PENDING if directional
         status: s.doNothing ? "SKIPPED" : "PENDING",
       })),
     });
 
+    const pending = suggestions.filter((s) => !s.doNothing).length;
     await prisma.pricingIntelligenceRun.update({
-      where: { id: run.id },
+      where: { id: runId },
       data: {
         status: "COMPLETED",
         completedAt: new Date(),
-        collectorJson: JSON.stringify(bundle),
+        collectorJson: JSON.stringify(bundleWithBrief),
         analystJson: JSON.stringify({
           suggestionCount: suggestions.length,
-          pending: suggestions.filter((s) => !s.doNothing).length,
+          pending,
+          llmConfigured: pricingLlmConfigured(),
         }),
         reportMarkdown: report,
       },
     });
+    await completeStep(
+      runId,
+      "finalize",
+      `Complete — ${pending} suggestion(s) ready for human review. Nothing applied automatically.`,
+    );
 
-    return {
-      runId: run.id,
-      recommendationCount: suggestions.filter((s) => !s.doNothing).length,
-    };
+    return { runId, recommendationCount: pending };
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
     await prisma.pricingIntelligenceRun.update({
-      where: { id: run.id },
+      where: { id: runId },
       data: {
         status: "FAILED",
         completedAt: new Date(),
-        error: e instanceof Error ? e.message : "Unknown error",
+        error: msg,
       },
     });
+    // Best-effort mark current running step failed
+    try {
+      const run = await prisma.pricingIntelligenceRun.findUnique({
+        where: { id: runId },
+        select: { agentStepsJson: true },
+      });
+      const steps = JSON.parse(run?.agentStepsJson || "[]") as {
+        id: string;
+        status: string;
+      }[];
+      const running = steps.find((s) => s.status === "running");
+      if (running) await failStep(runId, running.id, msg);
+    } catch {
+      /* ignore */
+    }
     throw e;
   }
 }
@@ -142,7 +308,6 @@ export async function runMonthlyPricingIntelligence(): Promise<{
   }
 
   const since = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
-  // Only hosts with beta access + paid add-on (separate from core hosting)
   const hosts = await prisma.host.findMany({
     where: {
       active: true,

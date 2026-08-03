@@ -734,6 +734,8 @@ model PricingIntelligenceRun {
   collectorJson   String            @default("{}")
   /// Analyst notes / model outputs
   analystJson     String            @default("{}")
+  /// Multi-agent pipeline progress (JSON array of AgentStep)
+  agentStepsJson  String            @default("[]")
   /// Human-readable report (markdown)
   reportMarkdown  String?
   error           String?

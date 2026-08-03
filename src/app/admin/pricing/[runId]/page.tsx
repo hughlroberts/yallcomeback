@@ -4,8 +4,13 @@ import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isPricingIntelligenceEnabled } from "@/lib/platform-features";
 import { PricingRecommendationCard } from "@/components/pricing-recommendation-card";
+import {
+  PricingRunProgress,
+  type ClientAgentStep,
+} from "@/components/pricing-run-progress";
 import { Card } from "@/components/ui";
 import { cn, formatMoney } from "@/lib/utils";
+import { initialAgentSteps } from "@/lib/pricing-intelligence/steps";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Research run · Pricing" };
@@ -17,6 +22,7 @@ export default async function AdminPricingRunPage({
   params: Promise<{ runId: string }>;
   searchParams: Promise<{
     started?: string;
+    running?: string;
     decided?: string;
     applied?: string;
     error?: string;
@@ -118,6 +124,18 @@ export default async function AdminPricingRunPage({
 
   const periodLabel = `${run.periodStart.toISOString().slice(0, 10)} → ${run.periodEnd.toISOString().slice(0, 10)}`;
 
+  let agentSteps: ClientAgentStep[] = initialAgentSteps() as ClientAgentStep[];
+  try {
+    const parsed = JSON.parse(run.agentStepsJson || "[]");
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      agentSteps = parsed as ClientAgentStep[];
+    }
+  } catch {
+    /* defaults */
+  }
+
+  const isRunning = run.status === "RUNNING" || run.status === "PENDING";
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       {/* Header */}
@@ -131,7 +149,7 @@ export default async function AdminPricingRunPage({
           </Link>
         </p>
         <h1 className="mt-1 font-display text-2xl font-medium tracking-tight text-stone-900 sm:text-3xl">
-          Research results
+          {isRunning ? "Research in progress" : "Research results"}
         </h1>
         <p className="mt-1 text-sm text-stone-500">
           {run.host.name} · {periodLabel} ·{" "}
@@ -140,8 +158,21 @@ export default async function AdminPricingRunPage({
         </p>
       </div>
 
+      <PricingRunProgress
+        runId={run.id}
+        initialStatus={run.status}
+        initialSteps={agentSteps}
+      />
+
       {/* Flash */}
-      {sp.started ? (
+      {sp.running || isRunning ? (
+        <Banner tone="ok">
+          Full multi-agent pipeline is running (not a quick pass). Leave this
+          page open — steps update live. Expect ~30–90 seconds when the LLM key
+          is configured.
+        </Banner>
+      ) : null}
+      {sp.started && !isRunning ? (
         <Banner tone="ok">
           Research complete
           {sp.n ? ` — ${sp.n} actionable suggestion(s).` : "."} Review cards
@@ -156,6 +187,7 @@ export default async function AdminPricingRunPage({
       {run.error ? <Banner tone="err">Run error: {run.error}</Banner> : null}
 
       {/* How to use this run */}
+      {!isRunning ? (
       <Card className="border-bonnet/15 bg-gradient-to-br from-petal/80 to-white p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-bonnet">
           How to use this research
@@ -184,8 +216,10 @@ export default async function AdminPricingRunPage({
           </li>
         </ol>
       </Card>
+      ) : null}
 
       {/* Summary metrics */}
+      {!isRunning ? (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat
           label="Needs review"
@@ -212,7 +246,10 @@ export default async function AdminPricingRunPage({
           accent="muted"
         />
       </div>
+      ) : null}
 
+      {!isRunning ? (
+        <>
       {(approved.length > 0 || applied.length > 0) ? (
         <p className="text-xs text-stone-500">
           {approved.length > 0 ? (
@@ -305,6 +342,8 @@ export default async function AdminPricingRunPage({
         Add-on product · rates shown as {formatMoney(100)} style base nightly.
         Weekend and seasonal rules are separate.
       </p>
+        </>
+      ) : null}
     </div>
   );
 }
