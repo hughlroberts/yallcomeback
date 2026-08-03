@@ -163,7 +163,8 @@ export function BookingWidget({
         seasons,
         weekendPremiumPercent,
       );
-      minNights = Math.max(minNights, sn || defaultMinNights);
+      // sn === 0 → no peak min (default only); sn > 0 raises stay min
+      if (sn > 0) minNights = Math.max(minNights, sn);
       subtotal += rate;
       cursor.setDate(cursor.getDate() + 1);
     }

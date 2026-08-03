@@ -146,7 +146,8 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
     const base = season?.nightlyRate ?? property.baseNightlyRate;
     const day = startOfDay(night);
     const rate = rateWithWeekend(base, day, weekendPremium);
-    if (season) {
+    // season.minNights === 0 means “no peak min” — keep property default only
+    if (season && season.minNights > 0) {
       minNightsRequired = Math.max(minNightsRequired, season.minNights);
     }
     nightlySubtotal += rate;

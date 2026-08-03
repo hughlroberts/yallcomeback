@@ -894,7 +894,10 @@ export async function addSeason(formData: FormData) {
 }
 
 /**
- * Apply selected peak holidays (default 2-night min). Skips keys that already exist.
+ * Apply selected peak holidays. Skips keys that already exist.
+ * minNights: 0 = no peak min (listing defaultMinNights still applies);
+ * 2–7 = peak minimum (Math.max with default at quote time).
+ * Unchecked holidays are left off entirely (not peak windows).
  */
 export async function applyPeakHolidays(formData: FormData) {
   const access = await ensureHostAccess();
@@ -913,13 +916,11 @@ export async function applyPeakHolidays(formData: FormData) {
     throw new Error("Pick at least one peak holiday");
   }
 
-  const minNights = Math.max(
-    1,
-    Math.min(
-      30,
-      Number(formData.get("minNights") || DEFAULT_PEAK_MIN_NIGHTS),
-    ),
-  );
+  const rawMin = Number(formData.get("minNights"));
+  // 0 = default only (no peak uplift); 1–30 = explicit peak min
+  const minNights = Number.isFinite(rawMin)
+    ? Math.max(0, Math.min(30, Math.floor(rawMin)))
+    : DEFAULT_PEAK_MIN_NIGHTS;
 
   const catalog = upcomingPeakHolidays();
   const existing = await prisma.seasonalPrice.findMany({
@@ -948,17 +949,17 @@ export async function applyPeakHolidays(formData: FormData) {
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 
-/** Upgrade one peak / season min nights (e.g. 2 → 3). */
+/** Upgrade one peak / season min nights (0 = default only; 2 → 3, etc.). */
 export async function updateSeasonMinNights(formData: FormData) {
   const access = await ensureHostAccess();
   const id = String(formData.get("id") || "");
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
 
-  const minNights = Math.max(
-    1,
-    Math.min(30, Number(formData.get("minNights") || 1)),
-  );
+  const rawMin = Number(formData.get("minNights"));
+  const minNights = Number.isFinite(rawMin)
+    ? Math.max(0, Math.min(30, Math.floor(rawMin)))
+    : 1;
 
   const season = await prisma.seasonalPrice.findFirst({
     where: { id, propertyId },
@@ -972,16 +973,16 @@ export async function updateSeasonMinNights(formData: FormData) {
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 
-/** Set min nights on all peak holidays for this property. */
+/** Set min nights on all peak holidays for this property (0 = default only). */
 export async function upgradeAllPeakMinNights(formData: FormData) {
   const access = await ensureHostAccess();
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
 
-  const minNights = Math.max(
-    1,
-    Math.min(30, Number(formData.get("minNights") || 3)),
-  );
+  const rawMin = Number(formData.get("minNights"));
+  const minNights = Number.isFinite(rawMin)
+    ? Math.max(0, Math.min(30, Math.floor(rawMin)))
+    : 3;
 
   await prisma.seasonalPrice.updateMany({
     where: { propertyId, holidayKey: { not: null } },

@@ -431,10 +431,9 @@ export default async function AdminPropertyDetailPage({
     <Card>
       <h2 className="text-lg font-semibold">Min nights & peak holidays</h2>
       <p className="mt-1 text-sm text-stone-500">
-        <strong>Default min nights</strong> is year-round — set it on the
-        Calendar pricing sidebar or Listing tab. Peak holidays are separate
-        date windows; pick the min nights when you apply them (or change them
-        later in the table below).
+        <strong>Default min nights</strong> ({property.defaultMinNights}) is
+        year-round — set it on the Calendar pricing sidebar or Listing tab. Peak
+        holidays can raise that min; they never go below your default.
       </p>
 
       <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
@@ -442,13 +441,21 @@ export default async function AdminPropertyDetailPage({
           <div>
             <h3 className="text-sm font-semibold text-stone-900">Peak holidays</h3>
             <p className="mt-1 text-xs text-stone-600">
-              US long weekends for this year and next. Choose 2, 3, or more nights
-              when you apply — you can also change any peak after it&apos;s on the
-              listing.
+              US long weekends for this year and next.{" "}
+              <strong>Uncheck</strong> any holiday that should not be a peak.
+              Or apply with <strong>default only</strong> (no extra peak min —
+              your year-round default still applies).
             </p>
           </div>
           {peakSeasons.length > 0 ? (
             <div className="flex flex-wrap gap-2">
+              <form action={upgradeAllPeakMinNights}>
+                <input type="hidden" name="propertyId" value={property.id} />
+                <input type="hidden" name="minNights" value="0" />
+                <Button type="submit" variant="secondary" className="!text-xs">
+                  All peaks → default only
+                </Button>
+              </form>
               <form action={upgradeAllPeakMinNights}>
                 <input type="hidden" name="propertyId" value={property.id} />
                 <input type="hidden" name="minNights" value="3" />
@@ -458,16 +465,9 @@ export default async function AdminPropertyDetailPage({
               </form>
               <form action={upgradeAllPeakMinNights}>
                 <input type="hidden" name="propertyId" value={property.id} />
-                <input type="hidden" name="minNights" value="4" />
-                <Button type="submit" variant="secondary" className="!text-xs">
-                  All peaks → 4 nights
-                </Button>
-              </form>
-              <form action={upgradeAllPeakMinNights}>
-                <input type="hidden" name="propertyId" value={property.id} />
                 <input type="hidden" name="minNights" value="2" />
                 <Button type="submit" variant="secondary" className="!text-xs">
-                  Reset peaks → 2 nights
+                  All peaks → 2 nights
                 </Button>
               </form>
             </div>
@@ -505,11 +505,15 @@ export default async function AdminPropertyDetailPage({
                   id="peakMinNights"
                   name="minNights"
                   defaultValue={String(DEFAULT_PEAK_MIN_NIGHTS)}
-                  className="block w-full min-w-[10rem] rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-900"
+                  className="block w-full min-w-[14rem] rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-900"
                 >
+                  <option value="0">
+                    Default only ({property.defaultMinNights} night
+                    {property.defaultMinNights === 1 ? "" : "s"} — no peak min)
+                  </option>
                   {[2, 3, 4, 5, 6, 7].map((n) => (
                     <option key={n} value={n}>
-                      {n}-night minimum
+                      {n}-night peak minimum
                     </option>
                   ))}
                 </select>
@@ -517,15 +521,17 @@ export default async function AdminPropertyDetailPage({
               <Button type="submit">Apply selected peaks</Button>
             </div>
             <p className="mt-2 text-xs text-stone-600">
-              Tip: choose <strong>3-night minimum</strong> here if that&apos;s
-              what you want for holidays — you don&apos;t have to apply at 2 first.
+              Uncheck holidays that should not be peaks at all.{" "}
+              <strong>Default only</strong> keeps the date window (rates still
+              apply if you change them later) but stay min is just your listing
+              default.
             </p>
           </form>
         ) : (
           <p className="mt-3 text-xs text-stone-600">
             All upcoming peak holidays are on this listing.
             {peakSeasons.length > 0
-              ? " Use “All peaks → 3 nights” above, or change min nights per row in the table."
+              ? " Use bulk buttons above, or set min per row (including “Default only”). Remove a row to drop that holiday entirely."
               : null}
           </p>
         )}
@@ -572,11 +578,14 @@ export default async function AdminPropertyDetailPage({
                     <select
                       name="minNights"
                       defaultValue={s.minNights}
-                      className="rounded-lg border border-stone-300 px-2 py-1 text-sm font-semibold"
+                      className="max-w-[11rem] rounded-lg border border-stone-300 px-2 py-1 text-sm font-semibold"
                     >
+                      <option value={0}>
+                        Default only ({property.defaultMinNights})
+                      </option>
                       {[1, 2, 3, 4, 5, 6, 7].map((n) => (
                         <option key={n} value={n}>
-                          {n}
+                          {n}-night peak
                         </option>
                       ))}
                     </select>
@@ -616,8 +625,11 @@ export default async function AdminPropertyDetailPage({
                     <select
                       name="minNights"
                       defaultValue={s.minNights}
-                      className="rounded-lg border border-stone-300 px-2 py-1 text-sm"
+                      className="max-w-[11rem] rounded-lg border border-stone-300 px-2 py-1 text-sm"
                     >
+                      <option value={0}>
+                        Default only ({property.defaultMinNights})
+                      </option>
                       {[1, 2, 3, 4, 5, 6, 7].map((n) => (
                         <option key={n} value={n}>
                           {n}
