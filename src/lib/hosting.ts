@@ -53,8 +53,9 @@ export function isHostPublicLive(host: HostLiveFields): boolean {
  * Kept as a no-op false so older call sites that forced marketplace stop doing so.
  */
 export function hostMustListOnMarketplace(
-  _host: Pick<Host, "hostingMode">,
+  host: Pick<Host, "hostingMode">,
 ): boolean {
+  void host;
   return false;
 }
 

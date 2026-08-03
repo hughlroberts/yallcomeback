@@ -70,7 +70,6 @@ async function platformOgCard() {
           }}
         >
           {sealSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={sealSrc}
               width={280}
@@ -192,7 +191,6 @@ async function hostOgCard(host: {
           }}
         >
           {logoSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoSrc}
               width={220}

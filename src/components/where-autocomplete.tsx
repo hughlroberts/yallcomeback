@@ -7,10 +7,19 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
 
 type Props = {
   name?: string;
@@ -64,9 +73,7 @@ export function WhereAutocomplete({
     left: number;
     width: number;
   } | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useIsClient();
 
   const filtered = useMemo(
     () => filterSuggestions(value, suggestions),

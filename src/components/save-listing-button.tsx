@@ -1,7 +1,7 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { useEffect, useState, type MouseEvent } from "react";
+import { useSyncExternalStore, type MouseEvent } from "react";
 import type { SavedListing } from "@/lib/saved-listings";
 import {
   isListingSaved,
@@ -26,22 +26,16 @@ export function SaveListingButton({
   variant = "text",
   className = "",
 }: Props) {
-  const [saved, setSaved] = useState(false);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setSaved(isListingSaved(listing.id));
-    setReady(true);
-    return subscribeSavedListings(() => {
-      setSaved(isListingSaved(listing.id));
-    });
-  }, [listing.id]);
+  const saved = useSyncExternalStore(
+    subscribeSavedListings,
+    () => isListingSaved(listing.id),
+    () => false,
+  );
 
   function onClick(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const nowSaved = toggleSavedListing(listing);
-    setSaved(nowSaved);
+    toggleSavedListing(listing);
   }
 
   if (variant === "icon") {
@@ -55,7 +49,7 @@ export function SaveListingButton({
       >
         <Heart
           className={`size-[18px] drop-shadow-sm ${
-            ready && saved ? "fill-blue-500 text-blue-500" : "fill-black/20"
+            saved ? "fill-blue-500 text-blue-500" : "fill-black/20"
           }`}
           strokeWidth={2}
         />
@@ -73,11 +67,11 @@ export function SaveListingButton({
     >
       <Heart
         className={`size-4 ${
-          ready && saved ? "fill-blue-500 text-blue-500" : "text-stone-700"
+          saved ? "fill-blue-500 text-blue-500" : "text-stone-700"
         }`}
         strokeWidth={1.75}
       />
-      <span>{ready && saved ? "Saved" : "Save"}</span>
+      <span>{saved ? "Saved" : "Save"}</span>
     </button>
   );
 }

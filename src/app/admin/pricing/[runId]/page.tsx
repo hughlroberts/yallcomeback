@@ -159,6 +159,7 @@ export default async function AdminPricingRunPage({
       </div>
 
       <PricingRunProgress
+        key={`${run.id}:${run.status}:${agentSteps.length}`}
         runId={run.id}
         initialStatus={run.status}
         initialSteps={agentSteps}

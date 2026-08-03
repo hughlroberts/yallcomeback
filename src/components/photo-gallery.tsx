@@ -1,10 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useId, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
 
 type Photo = { id: string; url: string; alt: string | null };
 
@@ -164,7 +178,7 @@ function PhotoLightbox({
   onClose: () => void;
 }) {
   const titleId = useId();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const current = photos[index] ?? photos[0];
 
   const goPrev = useCallback(() => {
@@ -174,10 +188,6 @@ function PhotoLightbox({
   const goNext = useCallback(() => {
     onIndexChange((index + 1) % photos.length);
   }, [index, onIndexChange, photos.length]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const prev = document.body.style.overflow;

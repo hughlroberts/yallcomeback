@@ -3,7 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Home, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import {
   formatContinueSearchText,
   formatSearchLabel,
@@ -19,6 +25,13 @@ import {
 } from "@/lib/browse-history-storage";
 import { listingHrefWithSearch } from "@/lib/listing-href";
 import { formatMoney } from "@/lib/utils";
+
+const emptyViews: RecentView[] = [];
+const emptySearches: RecentSearch[] = [];
+
+function subscribeNoop() {
+  return () => {};
+}
 
 type ApiListing = {
   id: string;
@@ -166,17 +179,26 @@ export function GuestDiscoverySections({
   currentSearch = null,
   className = "",
 }: Props) {
-  const [views, setViews] = useState<RecentView[]>([]);
-  const [searches, setSearches] = useState<RecentSearch[]>([]);
-  const [basedOn, setBasedOn] = useState<ApiListing[]>([]);
-  const [stayIn, setStayIn] = useState<ApiListing[]>([]);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setViews(readRecentViews());
-    setSearches(readRecentSearches());
-    setReady(true);
-  }, []);
+  // localStorage via useSyncExternalStore (no setState-in-effect)
+  const views = useSyncExternalStore(
+    subscribeNoop,
+    readRecentViews,
+    () => emptyViews,
+  );
+  const searches = useSyncExternalStore(
+    subscribeNoop,
+    readRecentSearches,
+    () => emptySearches,
+  );
+  /** Fetched results keyed by request so we never need to clear with setState. */
+  const [basedOnPack, setBasedOnPack] = useState<{
+    key: string;
+    items: ApiListing[];
+  }>({ key: "", items: [] });
+  const [stayInPack, setStayInPack] = useState<{
+    key: string;
+    items: ApiListing[];
+  }>({ key: "", items: [] });
 
   const lastSearch = searches[0] ?? null;
   const activeOnThisSearch =
@@ -194,11 +216,29 @@ export function GuestDiscoverySections({
     [lastSearch, views],
   );
 
-  useEffect(() => {
-    if (!ready || !lastSearch) {
-      setBasedOn([]);
-      return;
+  const basedOnKey = lastSearch
+    ? [
+        lastSearch.where ?? "",
+        lastSearch.checkIn ?? "",
+        lastSearch.checkOut ?? "",
+        lastSearch.guests ?? 0,
+        lastSearch.pets ?? 0,
+      ].join("|")
+    : "";
+
+  const stayInKey = (() => {
+    if (!place) return "";
+    if (
+      lastSearch?.where?.trim() &&
+      place.toLowerCase() === lastSearch.where.trim().toLowerCase()
+    ) {
+      return ""; // skip duplicate of "based on"
     }
+    return place;
+  })();
+
+  useEffect(() => {
+    if (!basedOnKey || !lastSearch) return;
     let cancelled = false;
     const params = new URLSearchParams();
     if (lastSearch.where) params.set("where", lastSearch.where);
@@ -211,51 +251,48 @@ export function GuestDiscoverySections({
     fetch(`/api/marketplace/stays?${params.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { listings?: ApiListing[] } | null) => {
-        if (cancelled || !data?.listings) return;
-        setBasedOn(data.listings);
+        if (cancelled) return;
+        setBasedOnPack({
+          key: basedOnKey,
+          items: data?.listings ?? [],
+        });
       })
       .catch(() => {
-        if (!cancelled) setBasedOn([]);
+        if (!cancelled) setBasedOnPack({ key: basedOnKey, items: [] });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [ready, lastSearch]);
+  }, [basedOnKey, lastSearch]);
 
   useEffect(() => {
-    if (!ready || !place) {
-      setStayIn([]);
-      return;
-    }
-    // Skip duplicate of "based on" when place is the same as last search where
-    if (
-      lastSearch?.where?.trim() &&
-      place.toLowerCase() === lastSearch.where.trim().toLowerCase()
-    ) {
-      setStayIn([]);
-      return;
-    }
+    if (!stayInKey) return;
     let cancelled = false;
     const params = new URLSearchParams({
-      where: place,
+      where: stayInKey,
       take: "12",
     });
     fetch(`/api/marketplace/stays?${params.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { listings?: ApiListing[] } | null) => {
-        if (cancelled || !data?.listings) return;
-        setStayIn(data.listings);
+        if (cancelled) return;
+        setStayInPack({
+          key: stayInKey,
+          items: data?.listings ?? [],
+        });
       })
       .catch(() => {
-        if (!cancelled) setStayIn([]);
+        if (!cancelled) setStayInPack({ key: stayInKey, items: [] });
       });
     return () => {
       cancelled = true;
     };
-  }, [ready, place, lastSearch]);
+  }, [stayInKey]);
 
-  if (!ready) return null;
+  const basedOn =
+    basedOnPack.key === basedOnKey ? basedOnPack.items : [];
+  const stayIn = stayInPack.key === stayInKey ? stayInPack.items : [];
 
   const showContinue = Boolean(lastSearch && !activeOnThisSearch);
   const showViews = views.length > 0;

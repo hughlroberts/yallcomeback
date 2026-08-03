@@ -8,47 +8,65 @@ import {
 import type { RecentSearch, RecentView } from "@/lib/browse-history";
 
 /** Persist a marketplace search when the guest lands on results. */
-export function TrackRecentSearch(
-  props: Omit<RecentSearch, "searchedAt"> & { resultCount?: number },
-) {
+export function TrackRecentSearch({
+  where,
+  checkIn,
+  checkOut,
+  guests,
+  pets,
+  resultCount,
+}: Omit<RecentSearch, "searchedAt"> & { resultCount?: number }) {
   useEffect(() => {
     pushRecentSearch({
-      where: props.where,
-      checkIn: props.checkIn,
-      checkOut: props.checkOut,
-      guests: props.guests,
-      pets: props.pets,
-      resultCount: props.resultCount,
+      where,
+      checkIn,
+      checkOut,
+      guests,
+      pets,
+      resultCount,
     });
-  }, [
-    props.where,
-    props.checkIn,
-    props.checkOut,
-    props.guests,
-    props.pets,
-    props.resultCount,
-  ]);
+  }, [where, checkIn, checkOut, guests, pets, resultCount]);
 
   return null;
 }
 
 /** Persist a listing view when the guest opens a property page. */
-export function TrackRecentlyViewed(
-  props: Omit<RecentView, "viewedAt">,
-) {
+export function TrackRecentlyViewed({
+  id,
+  slug,
+  hostSlug,
+  title,
+  city,
+  region,
+  baseNightlyRate,
+  bedrooms,
+  maxGuests,
+  imageUrl,
+}: Omit<RecentView, "viewedAt">) {
   useEffect(() => {
-    pushRecentView(props);
+    pushRecentView({
+      id,
+      slug,
+      hostSlug,
+      title,
+      city,
+      region,
+      baseNightlyRate,
+      bedrooms,
+      maxGuests,
+      imageUrl,
+    });
   }, [
-    props.id,
-    props.slug,
-    props.hostSlug,
-    props.title,
-    props.city,
-    props.region,
-    props.baseNightlyRate,
-    props.bedrooms,
-    props.maxGuests,
-    props.imageUrl,
+    id,
+    slug,
+    hostSlug,
+    title,
+    city,
+    region,
+    baseNightlyRate,
+    bedrooms,
+    maxGuests,
+    imageUrl,
   ]);
 
   return null;

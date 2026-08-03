@@ -30,14 +30,11 @@ export function PricingRunProgress({
   initialSteps,
 }: Props) {
   const router = useRouter();
+  // State is seeded from server props; remount via key when runId/status changes.
+  // Live updates come only from the poll effect below.
   const [status, setStatus] = useState(initialStatus);
   const [steps, setSteps] = useState(initialSteps);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setStatus(initialStatus);
-    setSteps(initialSteps);
-  }, [initialStatus, initialSteps]);
 
   useEffect(() => {
     if (status !== "RUNNING" && status !== "PENDING") return;

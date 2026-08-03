@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { formatMoney } from "@/lib/utils";
 import { listingHref, type SavedListing } from "@/lib/saved-listings";
 import {
@@ -12,15 +12,14 @@ import {
   toggleSavedListing,
 } from "@/lib/saved-listings-storage";
 
-export default function SavedStaysPage() {
-  const [items, setItems] = useState<SavedListing[]>([]);
-  const [ready, setReady] = useState(false);
+const emptySaved: SavedListing[] = [];
 
-  useEffect(() => {
-    setItems(readSavedListings());
-    setReady(true);
-    return subscribeSavedListings(() => setItems(readSavedListings()));
-  }, []);
+export default function SavedStaysPage() {
+  const items = useSyncExternalStore(
+    subscribeSavedListings,
+    readSavedListings,
+    () => emptySaved,
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -41,9 +40,7 @@ export default function SavedStaysPage() {
         </Link>
       </div>
 
-      {!ready ? (
-        <p className="mt-16 text-center text-stone-400">Loading…</p>
-      ) : items.length === 0 ? (
+      {items.length === 0 ? (
         <div className="mt-16 rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-16 text-center">
           <Heart className="mx-auto size-10 text-stone-300" strokeWidth={1.5} />
           <p className="mt-4 font-medium text-stone-700">No saved stays yet</p>
@@ -104,7 +101,6 @@ export default function SavedStaysPage() {
                   type="button"
                   onClick={() => {
                     toggleSavedListing(item);
-                    setItems(readSavedListings());
                   }}
                   className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-white/95 text-blue-500 shadow-sm ring-1 ring-black/5 hover:bg-white"
                   aria-label="Remove from saved"

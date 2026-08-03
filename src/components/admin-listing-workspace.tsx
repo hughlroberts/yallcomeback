@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  useEffect,
   useMemo,
   useState,
   useTransition,
@@ -71,6 +70,300 @@ type WorkspaceProperty = {
 };
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+/**
+ * Pricing form state is initialized from props. Remount via `key` when
+ * property rates change (after save/refresh) instead of syncing in an effect.
+ */
+function PricingSidebar({
+  property,
+  seasons,
+  onOpenPeaks,
+}: {
+  property: WorkspaceProperty;
+  seasons: Season[];
+  onOpenPeaks: () => void;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [nightly, setNightly] = useState(String(property.baseNightlyRate));
+  const [weekendPct, setWeekendPct] = useState(
+    String(property.weekendPremiumPercent),
+  );
+  const [cleaning, setCleaning] = useState(String(property.cleaningFee));
+  const [pet, setPet] = useState(String(property.petFee));
+  const [petFeeUnit, setPetFeeUnit] = useState(
+    property.petFeeUnit === "PER_PET" ? "PER_PET" : "PER_STAY",
+  );
+  const [maxPets, setMaxPets] = useState(String(property.maxPets ?? 0));
+  const [minNights, setMinNights] = useState(String(property.defaultMinNights));
+
+  function savePricing() {
+    setError(null);
+    const form = new FormData();
+    form.set("propertyId", property.id);
+    form.set("baseNightlyRate", nightly);
+    form.set("weekendPremiumPercent", weekendPct);
+    form.set("cleaningFee", cleaning);
+    form.set("petFee", pet);
+    form.set("petFeeUnit", petFeeUnit);
+    form.set("maxPets", maxPets);
+    form.set("defaultMinNights", minNights);
+    startTransition(async () => {
+      try {
+        await updatePropertyPricing(form);
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not save pricing");
+      }
+    });
+  }
+
+  return (
+    <aside className="space-y-3">
+      <Card className="!p-0 overflow-hidden">
+        <div className="border-b border-stone-100 bg-stone-50/80 px-5 py-3">
+          <h3 className="text-base font-semibold text-stone-900">Pricing</h3>
+          <p className="text-xs text-stone-500">
+            Base rate and weekend premium for this listing.
+          </p>
+        </div>
+        <div className="space-y-4 px-5 py-4">
+          <div>
+            <Label htmlFor="ws-nightly" className="text-xs text-stone-500">
+              Nightly price
+            </Label>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
+                $
+              </span>
+              <Input
+                id="ws-nightly"
+                type="number"
+                min={1}
+                step="0.01"
+                className="h-11 pl-7 text-base font-semibold"
+                value={nightly}
+                onChange={(e) => setNightly(e.target.value)}
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-stone-400">
+              Per night · guests pay this base
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="ws-weekend" className="text-xs text-stone-500">
+              Weekend premium
+            </Label>
+            <div className="relative">
+              <Input
+                id="ws-weekend"
+                type="number"
+                min={0}
+                max={100}
+                step="1"
+                className="h-11 pr-8"
+                value={weekendPct}
+                onChange={(e) => setWeekendPct(e.target.value)}
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
+                %
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-stone-400">
+              Extra on Fri & Sat (shown on calendar)
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="ws-min" className="text-xs text-stone-500">
+              Minimum nights
+            </Label>
+            <Input
+              id="ws-min"
+              type="number"
+              min={1}
+              max={30}
+              className="h-11"
+              value={minNights}
+              onChange={(e) => setMinNights(e.target.value)}
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Card className="!p-0 overflow-hidden">
+        <div className="border-b border-stone-100 bg-stone-50/80 px-5 py-3">
+          <h3 className="text-base font-semibold text-stone-900">
+            Additional charges
+          </h3>
+          <p className="text-[11px] text-stone-500">
+            These fees are added to the trip total at checkout.
+          </p>
+        </div>
+        <div className="space-y-4 px-5 py-4">
+          <div>
+            <Label htmlFor="ws-clean" className="text-xs text-stone-500">
+              Cleaning fee
+            </Label>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
+                $
+              </span>
+              <Input
+                id="ws-clean"
+                type="number"
+                min={0}
+                step="0.01"
+                className="h-11 pl-7"
+                value={cleaning}
+                onChange={(e) => setCleaning(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="ws-pet" className="text-xs text-stone-500">
+              Pet fee amount
+            </Label>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
+                $
+              </span>
+              <Input
+                id="ws-pet"
+                type="number"
+                min={0}
+                step="0.01"
+                className="h-11 pl-7"
+                value={pet}
+                onChange={(e) => setPet(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="ws-pet-unit" className="text-xs text-stone-500">
+              Pet fee unit
+            </Label>
+            <select
+              id="ws-pet-unit"
+              className="mt-1 h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 outline-none focus:border-bonnet focus:ring-2 focus:ring-petal"
+              value={petFeeUnit}
+              onChange={(e) =>
+                setPetFeeUnit(
+                  e.target.value === "PER_PET" ? "PER_PET" : "PER_STAY",
+                )
+              }
+            >
+              <option value="PER_STAY">Per stay (flat)</option>
+              <option value="PER_PET">Per pet (× count)</option>
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="ws-max-pets" className="text-xs text-stone-500">
+              Max pets (dogs)
+            </Label>
+            <Input
+              id="ws-max-pets"
+              type="number"
+              min={0}
+              max={20}
+              step={1}
+              className="h-11"
+              value={maxPets}
+              onChange={(e) => setMaxPets(e.target.value)}
+            />
+            <p className="mt-1 text-[11px] text-stone-400">
+              Default is 2. Raise above 3 if you allow more. 0 = no fixed cap.
+              Pets allowed is set on the listing form.
+              {property.petsAllowed
+                ? " Pets are currently allowed."
+                : " Pets are currently not allowed."}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5 text-xs text-stone-500">
+            <p className="font-medium text-stone-800">Guest total includes</p>
+            <ul className="mt-1 list-inside list-disc space-y-0.5">
+              <li>Nightly rate × nights</li>
+              <li>Cleaning fee</li>
+              <li>
+                Pet fee if pets (
+                {petFeeUnit === "PER_PET" ? "per pet" : "per stay"})
+              </li>
+              <li>Host-wide tax rates (Admin → Taxes), not per listing</li>
+            </ul>
+          </div>
+
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+          <Button
+            type="button"
+            className="w-full"
+            disabled={pending}
+            onClick={savePricing}
+          >
+            {pending ? "Saving…" : "Save pricing"}
+          </Button>
+        </div>
+      </Card>
+
+      {seasons.length > 0 ? (
+        <Card>
+          <h3 className="text-sm font-semibold text-stone-900">
+            Seasonal overrides
+          </h3>
+          <div className="mt-3 space-y-2">
+            {seasons.slice(0, 6).map((s) => (
+              <div
+                key={s.id}
+                className="flex items-start justify-between gap-2 rounded-lg border border-stone-100 px-2.5 py-2 text-xs"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-stone-900">
+                    {s.name}
+                    {s.holidayKey ? (
+                      <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-amber-900">
+                        Peak
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="text-stone-500">
+                    {parseYmd(s.startDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                    {" – "}
+                    {parseYmd(s.endDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="font-semibold tabular-nums text-stone-900">
+                    {formatMoney(s.nightlyRate)}
+                  </p>
+                  <p className="text-stone-500">{s.minNights} nt min</p>
+                </div>
+              </div>
+            ))}
+            {seasons.length > 6 ? (
+              <button
+                type="button"
+                onClick={onOpenPeaks}
+                className="w-full text-center text-xs font-medium text-bonnet hover:underline"
+              >
+                View all ({seasons.length})
+              </button>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
+    </aside>
+  );
+}
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -160,7 +453,6 @@ export function AdminListingWorkspace({
   messagesPanel?: ReactNode;
   initialTab?: TabId;
 }) {
-  const router = useRouter();
   const [tab, setTab] = useState<TabId>(initialTab || "calendar");
   const [cursor, setCursor] = useState(() => {
     const n = new Date();
@@ -171,38 +463,6 @@ export function AdminListingWorkspace({
   const [rangeStart, setRangeStart] = useState<string | null>(null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [blockSheetOpen, setBlockSheetOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  const [nightly, setNightly] = useState(String(property.baseNightlyRate));
-  const [weekendPct, setWeekendPct] = useState(
-    String(property.weekendPremiumPercent),
-  );
-  const [cleaning, setCleaning] = useState(String(property.cleaningFee));
-  const [pet, setPet] = useState(String(property.petFee));
-  const [petFeeUnit, setPetFeeUnit] = useState(
-    property.petFeeUnit === "PER_PET" ? "PER_PET" : "PER_STAY",
-  );
-  const [maxPets, setMaxPets] = useState(String(property.maxPets ?? 0));
-  const [minNights, setMinNights] = useState(String(property.defaultMinNights));
-
-  useEffect(() => {
-    setNightly(String(property.baseNightlyRate));
-    setWeekendPct(String(property.weekendPremiumPercent));
-    setCleaning(String(property.cleaningFee));
-    setPet(String(property.petFee));
-    setPetFeeUnit(property.petFeeUnit === "PER_PET" ? "PER_PET" : "PER_STAY");
-    setMaxPets(String(property.maxPets ?? 0));
-    setMinNights(String(property.defaultMinNights));
-  }, [
-    property.baseNightlyRate,
-    property.weekendPremiumPercent,
-    property.cleaningFee,
-    property.petFee,
-    property.petFeeUnit,
-    property.maxPets,
-    property.defaultMinNights,
-  ]);
 
   const blockedSet = useMemo(() => {
     const local = new Set<string>();
@@ -315,26 +575,15 @@ export function AdminListingWorkspace({
     setBlockSheetOpen(true);
   }
 
-  function savePricing() {
-    setError(null);
-    const form = new FormData();
-    form.set("propertyId", property.id);
-    form.set("baseNightlyRate", nightly);
-    form.set("weekendPremiumPercent", weekendPct);
-    form.set("cleaningFee", cleaning);
-    form.set("petFee", pet);
-    form.set("petFeeUnit", petFeeUnit);
-    form.set("maxPets", maxPets);
-    form.set("defaultMinNights", minNights);
-    startTransition(async () => {
-      try {
-        await updatePropertyPricing(form);
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Could not save pricing");
-      }
-    });
-  }
+  const pricingKey = [
+    property.baseNightlyRate,
+    property.weekendPremiumPercent,
+    property.cleaningFee,
+    property.petFee,
+    property.petFeeUnit,
+    property.maxPets,
+    property.defaultMinNights,
+  ].join(":");
 
   const tabs: { id: TabId; label: string }[] = [
     { id: "calendar", label: "Calendar" },
@@ -699,250 +948,12 @@ export function AdminListingWorkspace({
             }}
           />
 
-          {/* Right pricing sidebar */}
-          <aside className="space-y-3">
-            <Card className="!p-0 overflow-hidden">
-              <div className="border-b border-stone-100 bg-stone-50/80 px-5 py-3">
-                <h3 className="text-base font-semibold text-stone-900">Pricing</h3>
-                <p className="text-xs text-stone-500">
-                  Base rate and weekend premium for this listing.
-                </p>
-              </div>
-              <div className="space-y-4 px-5 py-4">
-                <div>
-                  <Label htmlFor="ws-nightly" className="text-xs text-stone-500">
-                    Nightly price
-                  </Label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
-                      $
-                    </span>
-                    <Input
-                      id="ws-nightly"
-                      type="number"
-                      min={1}
-                      step="0.01"
-                      className="h-11 pl-7 text-base font-semibold"
-                      value={nightly}
-                      onChange={(e) => setNightly(e.target.value)}
-                    />
-                  </div>
-                  <p className="mt-1 text-[11px] text-stone-400">
-                    Per night · guests pay this base
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="ws-weekend" className="text-xs text-stone-500">
-                    Weekend premium
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="ws-weekend"
-                      type="number"
-                      min={0}
-                      max={100}
-                      step="1"
-                      className="h-11 pr-8"
-                      value={weekendPct}
-                      onChange={(e) => setWeekendPct(e.target.value)}
-                    />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
-                      %
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[11px] text-stone-400">
-                    Extra on Fri & Sat (shown on calendar)
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="ws-min" className="text-xs text-stone-500">
-                    Minimum nights
-                  </Label>
-                  <Input
-                    id="ws-min"
-                    type="number"
-                    min={1}
-                    max={30}
-                    className="h-11"
-                    value={minNights}
-                    onChange={(e) => setMinNights(e.target.value)}
-                  />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="!p-0 overflow-hidden">
-              <div className="border-b border-stone-100 bg-stone-50/80 px-5 py-3">
-                <h3 className="text-base font-semibold text-stone-900">
-                  Additional charges
-                </h3>
-                <p className="text-[11px] text-stone-500">
-                  These fees are added to the trip total at checkout.
-                </p>
-              </div>
-              <div className="space-y-4 px-5 py-4">
-                <div>
-                  <Label htmlFor="ws-clean" className="text-xs text-stone-500">
-                    Cleaning fee
-                  </Label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
-                      $
-                    </span>
-                    <Input
-                      id="ws-clean"
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className="h-11 pl-7"
-                      value={cleaning}
-                      onChange={(e) => setCleaning(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="ws-pet" className="text-xs text-stone-500">
-                    Pet fee amount
-                  </Label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
-                      $
-                    </span>
-                    <Input
-                      id="ws-pet"
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className="h-11 pl-7"
-                      value={pet}
-                      onChange={(e) => setPet(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="ws-pet-unit" className="text-xs text-stone-500">
-                    Pet fee unit
-                  </Label>
-                  <select
-                    id="ws-pet-unit"
-                    className="mt-1 h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 outline-none focus:border-bonnet focus:ring-2 focus:ring-petal"
-                    value={petFeeUnit}
-                    onChange={(e) =>
-                      setPetFeeUnit(
-                        e.target.value === "PER_PET" ? "PER_PET" : "PER_STAY",
-                      )
-                    }
-                  >
-                    <option value="PER_STAY">Per stay (flat)</option>
-                    <option value="PER_PET">Per pet (× count)</option>
-                  </select>
-                </div>
-                <div>
-                  <Label htmlFor="ws-max-pets" className="text-xs text-stone-500">
-                    Max pets (dogs)
-                  </Label>
-                  <Input
-                    id="ws-max-pets"
-                    type="number"
-                    min={0}
-                    max={20}
-                    step={1}
-                    className="h-11"
-                    value={maxPets}
-                    onChange={(e) => setMaxPets(e.target.value)}
-                  />
-                  <p className="mt-1 text-[11px] text-stone-400">
-                    Default is 2. Raise above 3 if you allow more. 0 = no fixed
-                    cap. Pets allowed is set on the listing form.
-                    {property.petsAllowed
-                      ? " Pets are currently allowed."
-                      : " Pets are currently not allowed."}
-                  </p>
-                </div>
-
-                <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5 text-xs text-stone-500">
-                  <p className="font-medium text-stone-800">Guest total includes</p>
-                  <ul className="mt-1 list-inside list-disc space-y-0.5">
-                    <li>Nightly rate × nights</li>
-                    <li>Cleaning fee</li>
-                    <li>
-                      Pet fee if pets (
-                      {petFeeUnit === "PER_PET" ? "per pet" : "per stay"})
-                    </li>
-                    <li>Host-wide tax rates (Admin → Taxes), not per listing</li>
-                  </ul>
-                </div>
-
-                {error ? (
-                  <p className="text-sm text-red-600">{error}</p>
-                ) : null}
-
-                <Button
-                  type="button"
-                  className="w-full"
-                  disabled={pending}
-                  onClick={savePricing}
-                >
-                  {pending ? "Saving…" : "Save pricing"}
-                </Button>
-              </div>
-            </Card>
-
-            {seasons.length > 0 ? (
-              <Card>
-                <h3 className="text-sm font-semibold text-stone-900">
-                  Seasonal overrides
-                </h3>
-                <div className="mt-3 space-y-2">
-                  {seasons.slice(0, 6).map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-start justify-between gap-2 rounded-lg border border-stone-100 px-2.5 py-2 text-xs"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-stone-900">
-                          {s.name}
-                          {s.holidayKey ? (
-                            <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-amber-900">
-                              Peak
-                            </span>
-                          ) : null}
-                        </p>
-                        <p className="text-stone-500">
-                          {parseYmd(s.startDate).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                          {" – "}
-                          {parseYmd(s.endDate).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="font-semibold tabular-nums text-stone-900">
-                          {formatMoney(s.nightlyRate)}
-                        </p>
-                        <p className="text-stone-500">{s.minNights} nt min</p>
-                      </div>
-                    </div>
-                  ))}
-                  {seasons.length > 6 ? (
-                    <button
-                      type="button"
-                      onClick={() => setTab("peaks")}
-                      className="w-full text-center text-xs font-medium text-bonnet hover:underline"
-                    >
-                      View all ({seasons.length})
-                    </button>
-                  ) : null}
-                </div>
-              </Card>
-            ) : null}
-          </aside>
+          <PricingSidebar
+            key={pricingKey}
+            property={property}
+            seasons={seasons}
+            onOpenPeaks={() => setTab("peaks")}
+          />
         </div>
       ) : null}
 

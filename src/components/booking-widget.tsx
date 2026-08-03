@@ -139,106 +139,110 @@ export function BookingWidget({
   });
   const [error, setError] = useState<string | null>(null);
 
-  const quote = useMemo(() => {
-    if (!checkIn || !checkOut) return null;
+  // Plain computation (React Compiler); avoid manual useMemo that fights the compiler.
+  let quote: {
+    error?: string;
+    nights?: number;
+    minNights?: number;
+    subtotal?: number;
+    discountAmount?: number;
+    discountLabel?: string | null;
+    cleaningFee?: number;
+    petFee?: number;
+    petFeeUnit?: string;
+    pets?: number;
+    taxLines?: ReturnType<typeof calculateTaxes>["lines"];
+    taxAmount?: number;
+    total?: number;
+    deposit?: number;
+  } | null = null;
+  if (checkIn && checkOut) {
     const nights = nightsBetween(checkIn, checkOut);
-    if (nights < 1) return { error: "Check-out must be after check-in" };
+    if (nights < 1) {
+      quote = { error: "Check-out must be after check-in" };
+    } else {
+      const petCharges = resolvePetCharges(petPolicy, pets);
+      if (petCharges.error) {
+        quote = { error: petCharges.error };
+      } else {
+        let minNights = defaultMinNights;
+        let subtotal = 0;
+        let blockedNight = false;
+        const cursor = new Date(checkIn + "T00:00:00");
+        for (let i = 0; i < nights; i++) {
+          const key = cursor.toISOString().slice(0, 10);
+          if (blocked.has(key)) {
+            blockedNight = true;
+            break;
+          }
+          const { rate, minNights: sn } = rateForNight(
+            key,
+            baseNightlyRate,
+            seasons,
+            weekendPremiumPercent,
+          );
+          // sn === 0 → no peak min (default only); sn > 0 raises stay min
+          if (sn > 0) minNights = Math.max(minNights, sn);
+          subtotal += rate;
+          cursor.setDate(cursor.getDate() + 1);
+        }
+        if (blockedNight) {
+          quote = { error: "Selected dates include unavailable nights" };
+        } else if (nights < minNights) {
+          quote = {
+            error: `Minimum stay is ${minNights} night${minNights === 1 ? "" : "s"}`,
+            nights,
+            minNights,
+          };
+        } else {
+          subtotal = Math.round(subtotal * 100) / 100;
+          const discount = pickBestDiscount(
+            {
+              discountNewListingPercent,
+              discountLastMinutePercent,
+              discountWeeklyPercent,
+              discountMonthlyPercent,
+            },
+            nights,
+            new Date(checkIn + "T00:00:00"),
+          );
+          const discountAmount = discount
+            ? Math.round(subtotal * (discount.percent / 100) * 100) / 100
+            : 0;
+          const afterDiscount =
+            Math.round((subtotal - discountAmount) * 100) / 100;
 
-    const petCharges = resolvePetCharges(petPolicy, pets);
-    if (petCharges.error) {
-      return { error: petCharges.error };
-    }
-
-    let minNights = defaultMinNights;
-    let subtotal = 0;
-    const cursor = new Date(checkIn + "T00:00:00");
-    for (let i = 0; i < nights; i++) {
-      const key = cursor.toISOString().slice(0, 10);
-      if (blocked.has(key)) {
-        return { error: "Selected dates include unavailable nights" };
+          const appliedPetFee = petCharges.petFee;
+          const taxes = calculateTaxes({
+            lodgingAmount: afterDiscount,
+            cleaningFee,
+            petFee: appliedPetFee,
+            taxLines,
+            liabilityAcknowledged: taxLiabilityAcknowledged,
+          });
+          const total =
+            afterDiscount + cleaningFee + appliedPetFee + taxes.taxAmount;
+          const deposit =
+            Math.round(total * (depositPercent / 100) * 100) / 100;
+          quote = {
+            nights,
+            minNights,
+            subtotal,
+            discountAmount,
+            discountLabel: discount?.label ?? null,
+            cleaningFee,
+            petFee: appliedPetFee,
+            petFeeUnit: petCharges.unit,
+            pets: petCharges.pets,
+            taxLines: taxes.lines,
+            taxAmount: taxes.taxAmount,
+            total: Math.round(total * 100) / 100,
+            deposit,
+          };
+        }
       }
-      const { rate, minNights: sn } = rateForNight(
-        key,
-        baseNightlyRate,
-        seasons,
-        weekendPremiumPercent,
-      );
-      // sn === 0 → no peak min (default only); sn > 0 raises stay min
-      if (sn > 0) minNights = Math.max(minNights, sn);
-      subtotal += rate;
-      cursor.setDate(cursor.getDate() + 1);
     }
-
-    if (nights < minNights) {
-      return {
-        error: `Minimum stay is ${minNights} night${minNights === 1 ? "" : "s"}`,
-        nights,
-        minNights,
-      };
-    }
-
-    subtotal = Math.round(subtotal * 100) / 100;
-    const discount = pickBestDiscount(
-      {
-        discountNewListingPercent,
-        discountLastMinutePercent,
-        discountWeeklyPercent,
-        discountMonthlyPercent,
-      },
-      nights,
-      new Date(checkIn + "T00:00:00"),
-    );
-    const discountAmount = discount
-      ? Math.round(subtotal * (discount.percent / 100) * 100) / 100
-      : 0;
-    const afterDiscount =
-      Math.round((subtotal - discountAmount) * 100) / 100;
-
-    const appliedPetFee = petCharges.petFee;
-    const taxes = calculateTaxes({
-      lodgingAmount: afterDiscount,
-      cleaningFee,
-      petFee: appliedPetFee,
-      taxLines,
-      liabilityAcknowledged: taxLiabilityAcknowledged,
-    });
-    const total =
-      afterDiscount + cleaningFee + appliedPetFee + taxes.taxAmount;
-    const deposit = Math.round(total * (depositPercent / 100) * 100) / 100;
-    return {
-      nights,
-      minNights,
-      subtotal,
-      discountAmount,
-      discountLabel: discount?.label ?? null,
-      cleaningFee,
-      petFee: appliedPetFee,
-      petFeeUnit: petCharges.unit,
-      pets: petCharges.pets,
-      taxLines: taxes.lines,
-      taxAmount: taxes.taxAmount,
-      total: Math.round(total * 100) / 100,
-      deposit,
-    };
-  }, [
-    checkIn,
-    checkOut,
-    baseNightlyRate,
-    weekendPremiumPercent,
-    discountNewListingPercent,
-    discountLastMinutePercent,
-    discountWeeklyPercent,
-    discountMonthlyPercent,
-    defaultMinNights,
-    cleaningFee,
-    petPolicy,
-    pets,
-    depositPercent,
-    seasons,
-    blocked,
-    taxLines,
-    taxLiabilityAcknowledged,
-  ]);
+  }
 
   function onBook() {
     setError(null);
