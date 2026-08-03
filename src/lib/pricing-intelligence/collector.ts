@@ -130,11 +130,12 @@ export async function collectHostPricingData(
       privateProxy: boolean;
     };
 
+    // Private proxies: slightly wider guest band so evidence set is rich
     const fromPrivate: Candidate[] = privateComps
       .filter(
         (c) =>
-          c.maxGuests >= Math.max(1, listing.maxGuests - 2) &&
-          c.maxGuests <= listing.maxGuests + 2,
+          c.maxGuests >= Math.max(1, listing.maxGuests - 3) &&
+          c.maxGuests <= listing.maxGuests + 3,
       )
       .map((c) => ({
         id: `comp:${c.id}`,
@@ -258,10 +259,14 @@ export async function collectHostPricingData(
     ranked.sort((a, b) => a.matchScore - b.matchScore);
 
     const fair = ranked.filter((p) => p.fair);
-    const soft = ranked.filter((p) => p.matchScore <= softMax);
-    // Prefer fair comps; fall back to soft if thin set
+    const softOnly = ranked.filter(
+      (p) => !p.fair && p.matchScore <= softMax,
+    );
+    // Rich evidence set: keep many fair + soft for the card (analyst still weights fair)
     const chosen =
-      fair.length >= 3 ? fair.slice(0, 8) : soft.slice(0, 8);
+      fair.length >= 2
+        ? [...fair.slice(0, 12), ...softOnly.slice(0, 8)].slice(0, 16)
+        : ranked.filter((p) => p.matchScore <= softMax).slice(0, 16);
 
     peerCompsByPropertyId[listing.propertyId] = chosen;
   }

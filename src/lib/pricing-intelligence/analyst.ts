@@ -248,7 +248,10 @@ export function analyzePricing(
         peerMean,
         peerCount: peers.length,
         fairPeerCount: fairPeers.length,
-        peers: peers.slice(0, 6).map(summarizePeer),
+        softPeerCount: peers.filter((p) => !p.fair).length,
+        // Full set for UI evidence (capped in collector at ~16)
+        peers: peers.map(summarizePeer),
+        rateBand: rateBandFromPeers(peers),
         seasonFactor,
         fairScoreMax: FAIR_PEER_SCORE_MAX,
         hitl: {
@@ -269,15 +272,42 @@ function summarizePeer(p: PeerComp) {
   return {
     title: p.title,
     maxGuests: p.maxGuests,
+    bedrooms: p.bedrooms,
     rate: p.baseNightlyRate,
     city: p.city,
     region: p.region,
     tier: p.quality.tier,
     hasPool: p.quality.hasPool,
+    hasPrivateDock: p.quality.hasPrivateDock,
     matchScore: p.matchScore,
     fair: p.fair,
+    privateProxy: Boolean(p.privateProxy),
     distanceMiles: p.distanceMiles,
     matchReasons: p.matchReasons.slice(0, 4),
+  };
+}
+
+/** Evidence strip: min / p25 / median / p75 / max of peer rates used */
+function rateBandFromPeers(peers: PeerComp[]) {
+  const rates = peers
+    .map((p) => p.baseNightlyRate)
+    .filter((r) => r > 0)
+    .sort((a, b) => a - b);
+  if (rates.length === 0) return null;
+  const at = (q: number) => {
+    const i = Math.min(
+      rates.length - 1,
+      Math.max(0, Math.floor(q * (rates.length - 1))),
+    );
+    return rates[i]!;
+  };
+  return {
+    min: rates[0]!,
+    p25: at(0.25),
+    median: at(0.5),
+    p75: at(0.75),
+    max: rates[rates.length - 1]!,
+    n: rates.length,
   };
 }
 

@@ -33,26 +33,43 @@ export type PricingRecCardData = {
 type Peer = {
   title?: string;
   maxGuests?: number;
+  bedrooms?: number;
   rate?: number;
   city?: string | null;
   region?: string | null;
   tier?: string;
   hasPool?: boolean;
+  hasPrivateDock?: boolean;
   fair?: boolean;
+  privateProxy?: boolean;
   distanceMiles?: number | null;
   matchScore?: number;
+  matchReasons?: string[];
+};
+
+type RateBand = {
+  min: number;
+  p25: number;
+  median: number;
+  p75: number;
+  max: number;
+  n: number;
 };
 
 function parseEvidence(json: string): {
   peers?: Peer[];
   peerMedian?: number | null;
+  peerMean?: number | null;
   peerCount?: number;
   fairPeerCount?: number;
+  softPeerCount?: number;
+  rateBand?: RateBand | null;
   occupancyEstimate90d?: number;
   bookingCount90d?: number;
   maxGuests?: number;
   locationTier?: string;
   hasPool?: boolean;
+  hasPrivateDock?: boolean;
   needsHitlClarification?: boolean;
   hitlPrompt?: string;
 } {
@@ -60,13 +77,17 @@ function parseEvidence(json: string): {
     return JSON.parse(json) as {
       peers?: Peer[];
       peerMedian?: number | null;
+      peerMean?: number | null;
       peerCount?: number;
       fairPeerCount?: number;
+      softPeerCount?: number;
+      rateBand?: RateBand | null;
       occupancyEstimate90d?: number;
       bookingCount90d?: number;
       maxGuests?: number;
       locationTier?: string;
       hasPool?: boolean;
+      hasPrivateDock?: boolean;
       needsHitlClarification?: boolean;
       hitlPrompt?: string;
     };
@@ -129,6 +150,15 @@ export function PricingRecommendationCard({ rec }: { rec: PricingRecCardData }) 
   const flat = rec.changePercent === 0 || rec.status === "SKIPPED";
   const evidence = parseEvidence(rec.evidenceJson);
   const peers = evidence.peers || [];
+  const fairPeers = peers.filter((p) => p.fair !== false);
+  const softPeers = peers.filter((p) => p.fair === false);
+  // Show more evidence: prefer fair first, then soft — up to 12 rows
+  const peersShown = [
+    ...fairPeers,
+    ...softPeers,
+  ].slice(0, 12);
+  const peersHidden = Math.max(0, peers.length - peersShown.length);
+  const band = evidence.rateBand;
   const cover = rec.property.images?.[0]?.url;
   const confPct = Math.round(Math.min(1, Math.max(0, rec.confidence)) * 100);
   const needsHitl = Boolean(evidence.needsHitlClarification);
@@ -328,13 +358,57 @@ export function PricingRecommendationCard({ rec }: { rec: PricingRecCardData }) 
         {peers.length > 0 ? (
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-400">
-              Balanced comps (sleeps ~{rec.property.maxGuests} + location quality)
+              Evidence · balanced comps (sleeps ~{rec.property.maxGuests} +
+              location quality)
+            </p>
+            {band ? (
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                {(
+                  [
+                    ["Low", band.min],
+                    ["P25", band.p25],
+                    ["Median", band.median],
+                    ["P75", band.p75],
+                    ["High", band.max],
+                  ] as const
+                ).map(([label, val]) => (
+                  <div
+                    key={label}
+                    className="rounded-xl bg-stone-50 px-2.5 py-2 text-center ring-1 ring-stone-100"
+                  >
+                    <p className="text-[10px] font-medium uppercase tracking-wide text-stone-400">
+                      {label}
+                    </p>
+                    <p className="mt-0.5 text-sm font-semibold tabular-nums text-stone-900">
+                      {formatMoney(val)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            <p className="mt-2 text-[11px] text-stone-500">
+              {evidence.fairPeerCount ?? fairPeers.length} fair
+              {typeof evidence.softPeerCount === "number"
+                ? ` · ${evidence.softPeerCount} soft`
+                : softPeers.length
+                  ? ` · ${softPeers.length} soft`
+                  : ""}
+              {typeof evidence.peerCount === "number"
+                ? ` · ${evidence.peerCount} used in model`
+                : ""}
+              {evidence.peerMean != null
+                ? ` · mean ${formatMoney(evidence.peerMean)}`
+                : ""}
+              {evidence.peerMedian != null
+                ? ` · weighted median ${formatMoney(evidence.peerMedian)}`
+                : ""}
             </p>
             <div className="mt-2 overflow-x-auto overflow-hidden rounded-xl border border-stone-100">
-              <table className="w-full min-w-[28rem] text-left text-xs">
+              <table className="w-full min-w-[36rem] text-left text-xs">
                 <thead className="bg-stone-50 text-stone-500">
                   <tr>
                     <th className="px-3 py-2 font-medium">Peer stay</th>
+                    <th className="px-3 py-2 font-medium">Place</th>
                     <th className="px-3 py-2 font-medium">Sleeps</th>
                     <th className="px-3 py-2 font-medium">Location</th>
                     <th className="px-3 py-2 font-medium">Fit</th>
@@ -342,7 +416,7 @@ export function PricingRecommendationCard({ rec }: { rec: PricingRecCardData }) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-50">
-                  {peers.slice(0, 6).map((p, i) => (
+                  {peersShown.map((p, i) => (
                     <tr
                       key={i}
                       className={cn(
@@ -350,21 +424,38 @@ export function PricingRecommendationCard({ rec }: { rec: PricingRecCardData }) 
                         p.fair === false && "bg-amber-50/40",
                       )}
                     >
-                      <td className="max-w-[9rem] truncate px-3 py-2 sm:max-w-[14rem]">
-                        {p.title || "Peer"}
-                        {p.hasPool ? (
-                          <span className="text-sky-700"> · pool</span>
-                        ) : null}
+                      <td className="max-w-[11rem] px-3 py-2 sm:max-w-[16rem]">
+                        <span className="line-clamp-2 font-medium">
+                          {p.title || "Peer"}
+                        </span>
+                        <span className="mt-0.5 block text-[10px] text-stone-400">
+                          {p.hasPrivateDock ? "dock · " : ""}
+                          {p.hasPool ? "pool · " : ""}
+                          {p.privateProxy ? "private proxy" : "marketplace"}
+                          {typeof p.matchScore === "number"
+                            ? ` · score ${p.matchScore}`
+                            : ""}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-[11px] text-stone-600">
+                        {[p.city, p.region].filter(Boolean).join(", ") || "—"}
                       </td>
                       <td className="px-3 py-2 tabular-nums">
                         {p.maxGuests ?? "—"}
+                        {p.bedrooms != null ? (
+                          <span className="text-stone-400">
+                            {" "}
+                            · {p.bedrooms}br
+                          </span>
+                        ) : null}
                       </td>
                       <td className="px-3 py-2 text-[11px] text-stone-600">
                         {(p.tier || "—").replace(/_/g, " ")}
                         {typeof p.distanceMiles === "number" ? (
                           <span className="text-stone-400">
                             {" "}
-                            · {p.distanceMiles < 10
+                            ·{" "}
+                            {p.distanceMiles < 10
                               ? `${p.distanceMiles.toFixed(1)} mi`
                               : `${p.distanceMiles.toFixed(0)} mi`}
                           </span>
@@ -374,12 +465,12 @@ export function PricingRecommendationCard({ rec }: { rec: PricingRecCardData }) 
                         <span
                           className={cn(
                             "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-                            p.fair
+                            p.fair !== false
                               ? "bg-emerald-50 text-emerald-800"
                               : "bg-amber-50 text-amber-900",
                           )}
                         >
-                          {p.fair ? "Fair" : "Soft"}
+                          {p.fair !== false ? "Fair" : "Soft"}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-right font-semibold tabular-nums">
@@ -392,10 +483,17 @@ export function PricingRecommendationCard({ rec }: { rec: PricingRecCardData }) 
                 </tbody>
               </table>
             </div>
-            <p className="mt-1 text-[10px] text-stone-400">
-              Soft comps are shown when fair waterfront/pool matches are scarce —
-              tag Location not comparable if they should not drive price.
-            </p>
+            {peersHidden > 0 ? (
+              <p className="mt-1 text-[10px] text-stone-400">
+                +{peersHidden} more comps in the model (not shown). Soft comps
+                inform caution; fair comps drive the median.
+              </p>
+            ) : (
+              <p className="mt-1 text-[10px] text-stone-400">
+                Soft comps are contrast (e.g. inland/pool or second-row) — tag
+                Location not comparable if they should not drive price.
+              </p>
+            )}
           </div>
         ) : null}
 
