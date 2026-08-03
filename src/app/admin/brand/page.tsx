@@ -50,27 +50,45 @@ export default async function AdminBrandPage({
   if (!host && access.isPlatform) {
     const hosts = await prisma.host.findMany({
       orderBy: { name: "asc" },
-      select: { id: true, name: true, slug: true, active: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        active: true,
+        contactEmail: true,
+        sitePublishState: true,
+      },
       take: 50,
     });
     return (
       <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-2xl font-semibold text-stone-900">Brand & website</h1>
         <p className="text-sm text-stone-600">
-          Platform operators: pick a host brand to edit. Guests on that host&apos;s
-          custom domain see this identity — not Yall Come Back.
+          Platform operators: pick a host brand to edit (backdoor). Each brand is
+          standalone — host users only see their own brand when they log in.
+          Guests on that host&apos;s domain see this identity — not Yall Come Back.
         </p>
         <ul className="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white">
           {hosts.map((h) => (
             <li key={h.id}>
               <Link
                 href={`/admin/brand?hostId=${h.id}`}
-                className="flex items-center justify-between px-4 py-3 text-sm hover:bg-stone-50"
+                className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-stone-50"
               >
-                <span className="font-medium text-stone-900">{h.name}</span>
-                <span className="text-stone-400">
-                  {h.slug}
-                  {!h.active ? " · inactive" : ""}
+                <span>
+                  <span className="font-medium text-stone-900">{h.name}</span>
+                  {h.contactEmail ? (
+                    <span className="mt-0.5 block text-xs text-stone-400">
+                      {h.contactEmail}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="shrink-0 text-right text-stone-400">
+                  <span className="block">{h.slug}</span>
+                  <span className="text-[11px]">
+                    {h.sitePublishState}
+                    {!h.active ? " · inactive" : ""}
+                  </span>
                 </span>
               </Link>
             </li>

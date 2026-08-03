@@ -165,6 +165,96 @@ export default async function OpsHostDetailPage({
         </Card>
       </div>
 
+      {/* Platform backdoor — manage this brand without logging in as the host */}
+      <Card className="border-bonnet/25 bg-gradient-to-br from-petal/40 to-white">
+        <h2 className="text-lg font-semibold text-ink">
+          Platform backdoor
+        </h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          You&apos;re platform admin — use these to update and test this brand
+          without using the host login. Hosts only see their own brand when they
+          sign in with their HOST account.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href={`/admin/brand?hostId=${host.id}`}
+            className="rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover"
+          >
+            Brand &amp; website
+          </Link>
+          <Link
+            href="/admin/properties"
+            className="rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+          >
+            All properties (admin)
+          </Link>
+          <Link
+            href={`/h/${host.slug}`}
+            target="_blank"
+            className="rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+          >
+            Guest site preview →
+          </Link>
+          <Link
+            href={`/admin/pricing`}
+            className="rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+          >
+            Pricing intelligence
+          </Link>
+          {host.properties[0] ? (
+            <Link
+              href={`/admin/properties/${host.properties[0].id}`}
+              className="rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+            >
+              First listing editor
+            </Link>
+          ) : null}
+        </div>
+        <div className="mt-5 border-t border-stone-200/80 pt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+            Host logins for this brand
+          </p>
+          {host.users.length === 0 ? (
+            <p className="mt-2 text-sm text-stone-500">
+              No HOST users linked. Run{" "}
+              <code className="rounded bg-stone-100 px-1 text-xs">
+                scripts/provision-cherokee-host-login.ts
+              </code>{" "}
+              or create a user with role HOST and this hostId.
+            </p>
+          ) : (
+            <ul className="mt-2 space-y-1.5 text-sm">
+              {host.users.map((u) => (
+                <li
+                  key={u.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/80 px-3 py-2 ring-1 ring-stone-100"
+                >
+                  <span>
+                    <span className="font-medium text-stone-900">{u.email}</span>
+                    <span className="ml-2 text-xs text-stone-400">
+                      {u.role}
+                      {u.name ? ` · ${u.name}` : ""}
+                    </span>
+                  </span>
+                  <Link
+                    href="/login"
+                    className="text-xs font-semibold text-bonnet hover:underline"
+                  >
+                    Host login →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-stone-500">
+            Contact / billing on brand:{" "}
+            <strong className="text-stone-700">
+              {host.contactEmail || host.billingEmail || "—"}
+            </strong>
+          </p>
+        </div>
+      </Card>
+
       <Card>
         <h2 className="text-lg font-semibold text-ink">Edit host</h2>
         <p className="mt-1 text-sm text-ink-muted">

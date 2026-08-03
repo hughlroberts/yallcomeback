@@ -61,8 +61,8 @@ async function main() {
       tagline: "Family lakeside stays on Cedar Creek Lake",
       description:
         "Cherokee Landing is a family-owned resort on Cedar Creek Lake in East Texas. Direct booking on your brand — powered by Yall Come Back.",
-      contactEmail: "hughroberts@me.com",
-      billingEmail: "hughroberts@me.com",
+      contactEmail: "cherokeelanding@icloud.com",
+      billingEmail: "cherokeelanding@icloud.com",
       websiteUrl: "https://cherokeelanding.net",
       sitePresence: "BOTH",
       logoUrl: "/seed/host/hugh.jpg",
@@ -94,21 +94,22 @@ Questions? Message us from your listing or booking.`,
       planId: plan.id,
       active: true,
       listOnMarketplace: true,
-      billingEmail: "hughroberts@me.com",
-      contactEmail: "hughroberts@me.com",
+      billingEmail: "cherokeelanding@icloud.com",
+      contactEmail: "cherokeelanding@icloud.com",
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
       reviewedAt: now,
     },
   });
 
-  // Host-scoped user for dogfooding host admin (platform admin still works for everything)
+  // Standalone host login (not platform admin). Prefer provision-cherokee-host-login.ts
+  // for password rotation; keep this upsert in sync with production email.
   const hostPassword = await hash("ChangeMe-Cherokee2026!", 10);
   await prisma.user.upsert({
-    where: { email: "host@cherokeelanding.net" },
+    where: { email: "cherokeelanding@icloud.com" },
     create: {
-      email: "host@cherokeelanding.net",
-      name: "Cherokee Landing Host",
+      email: "cherokeelanding@icloud.com",
+      name: "Cherokee Landing",
       passwordHash: hostPassword,
       role: "HOST",
       hostId: host.id,
@@ -116,7 +117,8 @@ Questions? Message us from your listing or booking.`,
     update: {
       role: "HOST",
       hostId: host.id,
-      passwordHash: hostPassword,
+      // Do not overwrite password on re-run of this script if user already exists
+      name: "Cherokee Landing",
     },
   });
 
