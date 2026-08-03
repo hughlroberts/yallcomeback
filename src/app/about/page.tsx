@@ -197,8 +197,8 @@ export default function AboutPage() {
                 Hugh &amp; Yum Roberts
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Yum also goes by Dung — and together with their three kids,
-                they&apos;re the family behind Yall Come Back.
+                Together with their three kids, they&apos;re the family behind
+                Yall Come Back.
               </p>
 
               <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-slate-600">
@@ -240,7 +240,7 @@ export default function AboutPage() {
                       role: "Product, engineering, and host tools",
                     },
                     {
-                      who: "Yum (Dung)",
+                      who: "Yum",
                       role: "Family operations and the real-world host lens",
                     },
                     {
