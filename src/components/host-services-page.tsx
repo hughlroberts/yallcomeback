@@ -69,7 +69,6 @@ export async function HostServicesPageView({
       : savedBlocks;
 
   const guestBlocks = guestBlocksWithoutDupTitle(savedBlocks, title);
-  const loginHref = `/login?callbackUrl=${encodeURIComponent(pageHref)}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
@@ -96,6 +95,7 @@ export async function HostServicesPageView({
         ) : (
           <>
             <ServicesPageRenderer blocks={guestBlocks} basePath={base} />
+            {/* Guest CTAs only — hosts sign in via platform /admin, not the website */}
             <div className="mt-10 flex flex-wrap items-center gap-3">
               <Link
                 href={`${base}/stays`}
@@ -111,12 +111,6 @@ export async function HostServicesPageView({
                   Contact
                 </Link>
               ) : null}
-              <Link
-                href={loginHref}
-                className="rounded-full border border-sky-200 bg-sky-50 px-5 py-2.5 text-sm font-semibold text-sky-950 hover:bg-sky-100"
-              >
-                Host sign in to edit
-              </Link>
             </div>
           </>
         )}
