@@ -8,6 +8,7 @@ import {
   hostBrandStyle,
 } from "@/lib/tenant";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
 
 /**
@@ -40,6 +41,24 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
     (session?.user?.role === "HOST" &&
       session.user.hostId === tenant.id);
 
+  // Profile face for header fallback (owner avatar preferred)
+  const owner = await prisma.user.findFirst({
+    where: {
+      hostId: tenant.id,
+      role: "HOST",
+      OR: [{ hostAccess: "OWNER" }, { hostAccess: null }],
+    },
+    orderBy: { createdAt: "asc" },
+    select: { avatarUrl: true },
+  });
+  const anyHostUser =
+    owner ||
+    (await prisma.user.findFirst({
+      where: { hostId: tenant.id, role: "HOST" },
+      orderBy: { createdAt: "asc" },
+      select: { avatarUrl: true },
+    }));
+
   return (
     <div className="flex min-h-full flex-1 flex-col" style={hostBrandStyle(tenant)}>
       <HostSiteDemoBanner
@@ -47,7 +66,11 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
         isOwnerPreview={isOwnerPreview}
         isPlatformAdmin={isPlatformAdmin}
       />
-      <HostSiteHeader host={tenant} basePath={basePath} />
+      <HostSiteHeader
+        host={tenant}
+        profileAvatarUrl={anyHostUser?.avatarUrl}
+        basePath={basePath}
+      />
       <main className="flex-1">{children}</main>
       <HostSiteFooter host={tenant} basePath={basePath} />
     </div>

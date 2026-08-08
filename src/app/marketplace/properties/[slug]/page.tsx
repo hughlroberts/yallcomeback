@@ -114,13 +114,22 @@ export default async function MarketplacePropertyPage({
 
   if (!property) notFound();
 
-  const [ranges, staysHosted] = await Promise.all([
+  const [ranges, staysHosted, brandOwner] = await Promise.all([
     getPublicUnavailableRanges(property.id),
     prisma.booking.count({
       where: {
         property: { hostId: property.hostId },
         status: { in: ["CONFIRMED", "COMPLETED"] },
       },
+    }),
+    prisma.user.findFirst({
+      where: {
+        hostId: property.hostId,
+        role: "HOST",
+        OR: [{ hostAccess: "OWNER" }, { hostAccess: null }],
+      },
+      orderBy: { createdAt: "asc" },
+      select: { avatarUrl: true },
     }),
   ]);
   const blockedDates = Array.from(expandBlockedDates(ranges));
@@ -338,6 +347,7 @@ export default async function MarketplacePropertyPage({
             hostingMode: property.host.hostingMode,
             createdAt: property.host.createdAt,
           }}
+          profileAvatarUrl={brandOwner?.avatarUrl}
           staysHosted={staysHosted}
           listingCount={property.host._count.properties}
           propertyId={property.id}

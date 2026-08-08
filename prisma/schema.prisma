@@ -330,6 +330,8 @@ model User {
   preferredName String?
   email        String    @unique
   passwordHash String?
+  /// Personal photo for profile / “meet the host” (not the brand logo)
+  avatarUrl    String?
   role         Role      @default(GUEST)
   phone        String?
   residentialAddress String?

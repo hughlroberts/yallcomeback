@@ -3,12 +3,15 @@ import Link from "next/link";
 import type { Host } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { hostSiteNavItems } from "@/lib/host-site";
+import { hostSiteMarkUrl } from "@/lib/host-images";
 
 type Props = {
   host: Pick<
     Host,
     "name" | "slug" | "logoUrl" | "tagline" | "sitePageAbout" | "sitePageServices"
   >;
+  /** Owner/profile photo when no brand logo is set */
+  profileAvatarUrl?: string | null;
   /** Public paths on custom domain are root-relative (/about); on platform use /h/slug */
   basePath?: string;
 };
@@ -16,12 +19,18 @@ type Props = {
 /**
  * Guest chrome for a host-owned site (custom domain or /h/[slug]).
  * Fixed nav only: Book/Stays always; About & Services when toggled on.
- * Not a freeform CMS — no arbitrary pages.
+ * Mark: brand logo if set, otherwise host profile photo.
  */
-export function HostSiteHeader({ host, basePath = "" }: Props) {
+export function HostSiteHeader({
+  host,
+  profileAvatarUrl = null,
+  basePath = "",
+}: Props) {
   const home = basePath || "/";
   const nav = hostSiteNavItems(host, basePath).filter((item) => !item.primary);
   const bookHref = basePath ? `${basePath}/stays` : "/stays";
+  const markUrl = hostSiteMarkUrl(host, profileAvatarUrl);
+  const markIsLogo = Boolean(host.logoUrl?.trim());
 
   return (
     <header className="sticky top-0 z-[200] border-b border-stone-200/80 bg-white/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
@@ -31,10 +40,15 @@ export function HostSiteHeader({ host, basePath = "" }: Props) {
           className="flex min-w-0 items-center gap-2 sm:gap-3"
           aria-label={`${host.name}, home`}
         >
-          {host.logoUrl ? (
-            <span className="relative size-9 shrink-0 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200/80 sm:size-12">
+          {markUrl ? (
+            <span
+              className={cn(
+                "relative size-9 shrink-0 overflow-hidden bg-stone-100 ring-1 ring-stone-200/80 sm:size-12",
+                markIsLogo ? "rounded-lg" : "rounded-full",
+              )}
+            >
               <Image
-                src={host.logoUrl}
+                src={markUrl}
                 alt=""
                 fill
                 className="object-cover"

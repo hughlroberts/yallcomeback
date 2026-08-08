@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Briefcase, Lock, Phone, ShieldCheck } from "lucide-react";
 import type { HostSitePresence, HostingMode } from "@prisma/client";
 import { hostBrandWebsite } from "@/lib/hosting";
+import { hostProfileFaceUrl } from "@/lib/host-images";
 import { MessageHostButton } from "@/components/message-host-form";
 
 export type MeetYourHostProps = {
@@ -17,6 +18,8 @@ export type MeetYourHostProps = {
     hostingMode?: HostingMode | null;
     createdAt: Date | string;
   };
+  /** Personal photo for the host face (preferred over logo) */
+  profileAvatarUrl?: string | null;
   /** Confirmed / completed stays across the host brand */
   staysHosted?: number;
   /** Live listings count */
@@ -44,6 +47,7 @@ function firstName(name: string): string {
  */
 export function MeetYourHost({
   host,
+  profileAvatarUrl = null,
   staysHosted = 0,
   listingCount = 0,
   propertyId,
@@ -58,6 +62,7 @@ export function MeetYourHost({
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
+  const faceUrl = hostProfileFaceUrl(host, profileAvatarUrl);
 
   const website = hostBrandWebsite({
     websiteUrl: host.websiteUrl ?? null,
@@ -99,14 +104,15 @@ export function MeetYourHost({
         <div className="rounded-3xl border border-stone-200/80 bg-white p-8 shadow-[0_6px_24px_rgba(0,0,0,0.08)]">
           <div className="flex items-center gap-6">
             <div className="relative shrink-0">
-              {host.logoUrl ? (
+              {faceUrl ? (
                 <div className="relative size-28 overflow-hidden rounded-full bg-stone-100 ring-1 ring-black/5">
                   <Image
-                    src={host.logoUrl}
+                    src={faceUrl}
                     alt={host.name}
                     fill
                     className="object-cover"
                     sizes="112px"
+                    unoptimized
                   />
                 </div>
               ) : (

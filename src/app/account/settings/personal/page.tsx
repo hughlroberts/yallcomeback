@@ -1,6 +1,11 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { updatePersonalInfo } from "@/app/actions/account";
+import {
+  clearUserAvatar,
+  updatePersonalInfo,
+  uploadUserAvatar,
+} from "@/app/actions/account";
 import {
   AccountSettingsShell,
   SavedBanner,
@@ -17,7 +22,7 @@ export const metadata = { title: "Profile" };
 export default async function PersonalInfoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; edit?: string }>;
+  searchParams: Promise<{ saved?: string; edit?: string; error?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) {
@@ -41,15 +46,43 @@ export default async function PersonalInfoPage({
       description="Your personal details for bookings and messages. Hosts and guests use the same profile."
     >
       <SavedBanner show={params.saved === "1"} />
+      {params.error === "avatar_file" ? (
+        <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Choose an image file for your profile photo.
+        </p>
+      ) : null}
+      {params.error === "avatar_size" ? (
+        <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Photo must be under 4&nbsp;MB.
+        </p>
+      ) : null}
 
       {!editing ? (
         <div>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-100 bg-stone-50 px-4 py-4">
-            <div>
-              <p className="text-base font-semibold text-stone-900">
-                {user.name || user.preferredName || "Your profile"}
-              </p>
-              <p className="mt-0.5 text-sm text-stone-500">{user.email}</p>
+            <div className="flex min-w-0 items-center gap-3">
+              {user.avatarUrl ? (
+                <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-stone-200 ring-1 ring-stone-200">
+                  <Image
+                    src={user.avatarUrl}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="56px"
+                    unoptimized
+                  />
+                </span>
+              ) : (
+                <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-bonnet text-lg font-semibold text-white">
+                  {(user.name || user.email || "?").slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-stone-900">
+                  {user.name || user.preferredName || "Your profile"}
+                </p>
+                <p className="mt-0.5 text-sm text-stone-500">{user.email}</p>
+              </div>
             </div>
             <Link
               href="/account/settings/personal?edit=1"
@@ -105,7 +138,65 @@ export default async function PersonalInfoPage({
           />
         </div>
       ) : (
-        <form action={updatePersonalInfo} className="max-w-lg space-y-4">
+        <div className="max-w-lg space-y-8">
+          <div className="rounded-2xl border border-stone-200 p-5">
+            <h2 className="text-sm font-semibold text-stone-900">
+              Profile photo
+            </h2>
+            <p className="mt-1 text-xs text-stone-500">
+              Guests see this when they message you and on “Meet your host.” Your
+              guest website uses this too unless you set a brand logo under Brand
+              &amp; website.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              {user.avatarUrl ? (
+                <span className="relative size-20 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200">
+                  <Image
+                    src={user.avatarUrl}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                    unoptimized
+                  />
+                </span>
+              ) : (
+                <span className="flex size-20 items-center justify-center rounded-full bg-stone-200 text-xl font-semibold text-stone-600">
+                  {(user.name || "?").slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <form
+                action={uploadUserAvatar}
+                className="flex min-w-0 flex-1 flex-wrap items-end gap-2"
+              >
+                <div className="min-w-0 flex-1 space-y-1">
+                  <Label htmlFor="avatarFile">Photo</Label>
+                  <Input
+                    id="avatarFile"
+                    name="file"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    required
+                  />
+                </div>
+                <Button type="submit" variant="secondary">
+                  Upload
+                </Button>
+              </form>
+            </div>
+            {user.avatarUrl ? (
+              <form action={clearUserAvatar} className="mt-3">
+                <button
+                  type="submit"
+                  className="text-xs font-medium text-stone-500 underline-offset-2 hover:underline"
+                >
+                  Remove photo
+                </button>
+              </form>
+            ) : null}
+          </div>
+
+        <form action={updatePersonalInfo} className="space-y-4">
           <div>
             <Label htmlFor="name">Legal name</Label>
             <Input id="name" name="name" defaultValue={user.name ?? ""} />
@@ -178,6 +269,7 @@ export default async function PersonalInfoPage({
             </Link>
           </div>
         </form>
+        </div>
       )}
     </AccountSettingsShell>
   );

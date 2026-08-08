@@ -1,5 +1,8 @@
 "use server";
 
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
 import { hash, compare } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -42,6 +45,60 @@ export async function updatePersonalInfo(formData: FormData) {
       mailingAddress,
       emergencyContact,
     },
+  });
+
+  revalidateAccount();
+  redirect("/account/settings/personal?saved=1");
+}
+
+/** Upload personal profile photo (used for “meet host” + default site mark). */
+export async function uploadUserAvatar(formData: FormData) {
+  const session = await requireUser();
+  if (!session) redirect("/login?callbackUrl=/account/settings/personal");
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    redirect("/account/settings/personal?edit=1&error=avatar_file");
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    redirect("/account/settings/personal?edit=1&error=avatar_size");
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const extRaw = path.extname(file.name || "").toLowerCase() || ".jpg";
+  const ext = [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(extRaw)
+    ? extRaw
+    : ".jpg";
+  const filename = `${randomUUID()}${ext}`;
+  const uploadDir = path.join(
+    process.cwd(),
+    "public",
+    "uploads",
+    "avatars",
+    session.user.id,
+  );
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(path.join(uploadDir, filename), bytes);
+
+  const avatarUrl = `/uploads/avatars/${session.user.id}/${filename}`;
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { avatarUrl },
+  });
+
+  revalidateAccount();
+  revalidatePath("/admin/brand");
+  revalidatePath("/marketplace");
+  redirect("/account/settings/personal?saved=1");
+}
+
+export async function clearUserAvatar() {
+  const session = await requireUser();
+  if (!session) redirect("/login?callbackUrl=/account/settings/personal");
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { avatarUrl: null },
   });
 
   revalidateAccount();

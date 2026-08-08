@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { HostSitePresence, HostingMode } from "@prisma/client";
 import { hostBrandWebsite } from "@/lib/hosting";
+import { hostProfileFaceUrl } from "@/lib/host-images";
 import { MessageHostButton } from "@/components/message-host-form";
 
 type HostInfo = {
@@ -20,10 +21,12 @@ type HostInfo = {
  */
 export function ListingHostCard({
   host,
+  profileAvatarUrl = null,
   propertyId,
   propertyTitle,
 }: {
   host: HostInfo;
+  profileAvatarUrl?: string | null;
   propertyId: string;
   propertyTitle: string;
 }) {
@@ -34,6 +37,7 @@ export function ListingHostCard({
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
+  const faceUrl = hostProfileFaceUrl(host, profileAvatarUrl);
   const website = hostBrandWebsite({
     websiteUrl: host.websiteUrl ?? null,
     sitePresence: host.sitePresence ?? "STAYLOCAL",
@@ -47,18 +51,19 @@ export function ListingHostCard({
       </p>
 
       <div className="mt-3 flex items-start gap-3">
-        {host.logoUrl ? (
-          <div className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-100 shadow-sm">
+        {faceUrl ? (
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-stone-200 bg-stone-100 shadow-sm">
             <Image
-              src={host.logoUrl}
+              src={faceUrl}
               alt={host.name}
               fill
               className="object-cover"
               sizes="56px"
+              unoptimized
             />
           </div>
         ) : (
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-bonnet text-sm font-bold text-white shadow-sm">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white shadow-sm">
             {initials || "H"}
           </div>
         )}

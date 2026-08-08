@@ -221,15 +221,22 @@ export async function updateHostProfile(formData: FormData) {
   if (!marketplaceOnly) {
     description = String(formData.get("description") || "").trim() || null;
     websiteUrl = normalizeWebsiteUrl(String(formData.get("websiteUrl") || ""));
-    const logoUrlRaw = String(formData.get("logoUrl") || "").trim();
-    logoUrl =
-      !logoUrlRaw
-        ? null
-        : logoUrlRaw.startsWith("/") && !logoUrlRaw.startsWith("//")
-          ? logoUrlRaw
-          : /^https?:\/\//i.test(logoUrlRaw)
+    // Logo is optional brand mark for the guest website only.
+    // Unchecked = use profile photo on the site (clear logoUrl).
+    const useCustomLogo = formData.get("useCustomLogo") === "on";
+    if (!useCustomLogo) {
+      logoUrl = null;
+    } else {
+      const logoUrlRaw = String(formData.get("logoUrl") || "").trim();
+      logoUrl =
+        !logoUrlRaw
+          ? existing.logoUrl
+          : logoUrlRaw.startsWith("/") && !logoUrlRaw.startsWith("//")
             ? logoUrlRaw
-            : null;
+            : /^https?:\/\//i.test(logoUrlRaw)
+              ? logoUrlRaw
+              : existing.logoUrl;
+    }
     const primaryColorRaw = String(
       formData.get("primaryColor") || existing.primaryColor || "#2563eb",
     ).trim();
@@ -479,6 +486,35 @@ export async function uploadHostLogo(formData: FormData) {
       ? returnTo
       : "/admin/brand";
   redirect(`${safe}${safe.includes("?") ? "&" : "?"}logo=1`);
+}
+
+/** Remove brand logo so guest site falls back to profile photo. */
+export async function clearHostLogo(formData: FormData) {
+  const access = await requireHostAdmin();
+  if (!access) redirect("/login?callbackUrl=/admin/brand");
+
+  const hostId = String(formData.get("hostId") || "");
+  const returnTo = String(formData.get("returnTo") || "/admin/brand").trim();
+  if (!hostId) redirect("/admin/brand?error=missing");
+  if (!access.isPlatform && access.hostId !== hostId) {
+    redirect("/admin/brand?error=forbidden");
+  }
+
+  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  if (!host) redirect("/admin/brand?error=missing");
+
+  await prisma.host.update({
+    where: { id: hostId },
+    data: { logoUrl: null },
+  });
+
+  revalidatePath("/admin/brand");
+  revalidatePath(`/h/${host.slug}`);
+  const safe =
+    returnTo.startsWith("/admin") || returnTo.startsWith("/ops")
+      ? returnTo
+      : "/admin/brand";
+  redirect(`${safe}${safe.includes("?") ? "&" : "?"}logo=cleared`);
 }
 
 /**

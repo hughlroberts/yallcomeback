@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
+  clearHostLogo,
   rotateSyndicationApiKey,
   updateHostProfile,
   uploadHostLogo,
@@ -19,6 +20,10 @@ import {
   hostProductPath,
   marketplaceListingPath,
 } from "@/lib/hosting";
+import {
+  hostProfileFaceUrl,
+  hostSiteMarkUrl,
+} from "@/lib/host-images";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Brand & website" };
@@ -172,6 +177,20 @@ export default async function AdminBrandPage({
     },
     take: 40,
   });
+
+  const brandOwner = await prisma.user.findFirst({
+    where: {
+      hostId: host.id,
+      role: "HOST",
+      OR: [{ hostAccess: "OWNER" }, { hostAccess: null }],
+    },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, name: true, avatarUrl: true, email: true },
+  });
+  const profileAvatarUrl = brandOwner?.avatarUrl ?? null;
+  const hasLogo = Boolean(host.logoUrl?.trim());
+  const facePreview = hostProfileFaceUrl(host, profileAvatarUrl);
+  const siteMarkPreview = hostSiteMarkUrl(host, profileAvatarUrl);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -409,36 +428,106 @@ export default async function AdminBrandPage({
             </div>
 
             {branded ? (
-              <div className="flex flex-wrap items-center gap-4">
-                {host.logoUrl ? (
-                  <span className="relative size-16 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200">
-                    <Image
-                      src={host.logoUrl}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                      unoptimized
-                    />
-                  </span>
-                ) : (
-                  <span className="flex size-16 items-center justify-center rounded-full bg-stone-200 text-lg font-semibold text-stone-600">
-                    {host.name.slice(0, 1)}
-                  </span>
-                )}
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input
-                    id="logoUrl"
-                    name="logoUrl"
-                    type="url"
-                    placeholder="https://… or /uploads/…"
-                    defaultValue={host.logoUrl || ""}
-                  />
-                  <p className="text-xs text-stone-500">
-                    Square works best. Or upload a file in the card directly
-                    below.
+              <div className="space-y-5">
+                <div className="rounded-2xl border border-stone-200 bg-stone-50/80 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Profile photo (guests &amp; messages)
                   </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    {facePreview ? (
+                      <span className="relative size-16 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200">
+                        <Image
+                          src={facePreview}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                          unoptimized
+                        />
+                      </span>
+                    ) : (
+                      <span className="flex size-16 items-center justify-center rounded-full bg-stone-200 text-lg font-semibold text-stone-600">
+                        {host.name.slice(0, 1)}
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1 text-sm text-stone-600">
+                      <p>
+                        Guests see this face when they message you and on “Meet
+                        your host.”
+                      </p>
+                      <p className="mt-1 text-xs text-stone-500">
+                        {profileAvatarUrl
+                          ? "Using the brand owner’s account photo."
+                          : "No profile photo yet — add one under Account → Profile."}
+                      </p>
+                      <Link
+                        href="/account/settings/personal?edit=1"
+                        className="mt-2 inline-block text-sm font-semibold text-bonnet hover:underline"
+                      >
+                        Edit profile photo →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-stone-200 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Guest website mark
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    {siteMarkPreview ? (
+                      <span
+                        className={`relative size-14 overflow-hidden bg-stone-100 ring-1 ring-stone-200 ${
+                          hasLogo ? "rounded-lg" : "rounded-full"
+                        }`}
+                      >
+                        <Image
+                          src={siteMarkPreview}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="56px"
+                          unoptimized
+                        />
+                      </span>
+                    ) : (
+                      <span className="flex size-14 items-center justify-center rounded-full bg-bonnet text-lg font-semibold text-white">
+                        {host.name.slice(0, 1)}
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-stone-600">
+                        {hasLogo
+                          ? "Using a brand logo in the website header."
+                          : "Header uses your profile photo until you add a logo."}
+                      </p>
+                      <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-stone-800">
+                        <input
+                          type="checkbox"
+                          name="useCustomLogo"
+                          defaultChecked={hasLogo}
+                          className="mt-1"
+                          id="useCustomLogo"
+                        />
+                        <span>
+                          <span className="font-medium">
+                            Use a brand logo on the website
+                          </span>
+                          <span className="mt-0.5 block text-xs text-stone-500">
+                            Optional. Profile photo still appears on listings
+                            and messages.
+                          </span>
+                        </span>
+                      </label>
+                      {hasLogo ? (
+                        <input
+                          type="hidden"
+                          name="logoUrl"
+                          value={host.logoUrl || ""}
+                        />
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -899,13 +988,15 @@ export default async function AdminBrandPage({
           </div>
         </form>
 
-        {/* Logo upload under identity — branded only */}
+        {/* Optional brand logo upload — only needed if “use logo” is checked */}
         {branded ? (
           <Card className="order-4 space-y-4 border-stone-200 p-6">
-            <h2 className="text-lg font-semibold text-stone-900">Upload logo</h2>
+            <h2 className="text-lg font-semibold text-stone-900">
+              Brand logo (optional)
+            </h2>
             <p className="text-sm text-stone-500">
-              PNG, JPG, or WebP under 4&nbsp;MB. Saves the logo without submitting
-              the rest of the brand form.
+              Upload only if you want a logo in the guest website header instead
+              of your profile photo. Square PNG or JPG under 4&nbsp;MB.
             </p>
             <form
               action={uploadHostLogo}
@@ -914,7 +1005,7 @@ export default async function AdminBrandPage({
               <input type="hidden" name="hostId" value={host.id} />
               <input type="hidden" name="returnTo" value={returnTo} />
               <div className="min-w-0 flex-1 space-y-1.5">
-                <Label htmlFor="logoFile">Image file</Label>
+                <Label htmlFor="logoFile">Logo file</Label>
                 <Input
                   id="logoFile"
                   name="file"
@@ -927,6 +1018,18 @@ export default async function AdminBrandPage({
                 Upload logo
               </Button>
             </form>
+            {hasLogo ? (
+              <form action={clearHostLogo} className="pt-1">
+                <input type="hidden" name="hostId" value={host.id} />
+                <input type="hidden" name="returnTo" value={returnTo} />
+                <button
+                  type="submit"
+                  className="text-sm font-medium text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline"
+                >
+                  Remove logo (use profile photo on site)
+                </button>
+              </form>
+            ) : null}
           </Card>
         ) : null}
 
