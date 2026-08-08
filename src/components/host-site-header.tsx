@@ -52,17 +52,21 @@ export function HostSiteHeader({
           {markUrl ? (
             <span
               className={cn(
-                "relative size-9 shrink-0 overflow-hidden ring-1 ring-stone-200/80 sm:size-12",
+                "relative size-9 shrink-0 sm:size-12",
                 markIsLogo
-                  ? "rounded-full bg-white"
-                  : "rounded-full bg-stone-100",
+                  ? "overflow-visible"
+                  : "overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200/80",
               )}
             >
               <Image
                 src={markUrl}
                 alt=""
                 fill
-                className={markFit === "contain" ? "object-contain p-0.5" : "object-cover"}
+                className={
+                  markIsLogo || markFit === "contain"
+                    ? "object-contain"
+                    : "object-cover"
+                }
                 sizes="48px"
                 priority
                 unoptimized

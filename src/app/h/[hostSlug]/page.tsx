@@ -75,13 +75,14 @@ export default async function HostSiteHomePage({
         <div className="relative z-10 mx-auto flex min-h-[44vh] max-w-6xl flex-col justify-end px-4 pb-10 pt-10 sm:min-h-[46vh] sm:px-6 sm:pb-12 sm:pt-12">
           {logoUrl ? (
             <div className="mb-5 sm:mb-6">
-              <div className="relative mx-auto size-36 overflow-hidden rounded-full bg-white/95 shadow-2xl ring-2 ring-white/40 sm:mx-0 sm:size-44 md:size-52">
+              {/* Full circular seal — no crop, transparent bg, soft ring only */}
+              <div className="relative mx-auto size-36 sm:mx-0 sm:size-44 md:size-52">
                 <Image
                   src={logoUrl}
                   alt={host.name}
                   fill
                   priority
-                  className="object-contain p-2 sm:p-2.5"
+                  className="object-contain drop-shadow-2xl"
                   sizes="(max-width: 640px) 144px, 208px"
                   unoptimized
                 />

@@ -54,14 +54,20 @@ export function HostSiteFooter({
         <div className="grid gap-10 sm:grid-cols-2">
           <div className="flex flex-row items-start gap-4">
             {markUrl ? (
-              <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-stone-200">
+              <span
+                className={
+                  markIsLogo
+                    ? "relative size-14 shrink-0"
+                    : "relative size-14 shrink-0 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200"
+                }
+              >
                 <Image
                   src={markUrl}
                   alt=""
                   fill
                   className={
-                    markFit === "contain" || markIsLogo
-                      ? "object-contain p-0.5"
+                    markIsLogo || markFit === "contain"
+                      ? "object-contain"
                       : "object-cover"
                   }
                   sizes="56px"
