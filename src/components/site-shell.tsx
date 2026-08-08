@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HostSiteHeader } from "@/components/host-site-header";
+import { HostSiteHeaderGate } from "@/components/host-site-header-gate";
 import { HostSiteFooter } from "@/components/host-site-footer";
 import { HostSiteDemoBanner } from "@/components/host-site-demo-banner";
 import {
@@ -33,12 +34,6 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
   const h = await headers();
   const mode = h.get("x-tenant-mode");
   const basePath = mode === "custom" ? "" : `/h/${tenant.slug}`;
-  const pathname = (h.get("x-pathname") || "").replace(/\/$/, "") || "/";
-  // Landing page only: full-bleed hero, no sticky header (nav lives in hero)
-  const isHostHome =
-    mode === "custom"
-      ? pathname === "/" || pathname === ""
-      : pathname === basePath || pathname === `/h/${tenant.slug}`;
 
   const session = await auth();
   const isPlatformAdmin = session?.user?.role === "ADMIN";
@@ -72,13 +67,14 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
         isOwnerPreview={isOwnerPreview}
         isPlatformAdmin={isPlatformAdmin}
       />
-      {!isHostHome ? (
+      {/* Client gate: hide sticky nav only on landing home; restore on Stays/About/… */}
+      <HostSiteHeaderGate basePath={basePath}>
         <HostSiteHeader
           host={tenant}
           profileAvatarUrl={anyHostUser?.avatarUrl}
           basePath={basePath}
         />
-      ) : null}
+      </HostSiteHeaderGate>
       <main className="flex-1">{children}</main>
       <HostSiteFooter
         host={tenant}
