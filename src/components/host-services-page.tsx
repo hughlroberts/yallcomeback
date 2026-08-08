@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import type { Host } from "@prisma/client";
@@ -93,26 +92,7 @@ export async function HostServicesPageView({
             returnTo={pageHref}
           />
         ) : (
-          <>
-            <ServicesPageRenderer blocks={guestBlocks} basePath={base} />
-            {/* Guest CTAs only — hosts sign in via platform /admin, not the website */}
-            <div className="mt-10 flex flex-wrap items-center gap-3">
-              <Link
-                href={`${base}/stays`}
-                className="rounded-full bg-[var(--color-brand,#2563eb)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)]"
-              >
-                Book a stay
-              </Link>
-              {host.sitePageAbout ? (
-                <Link
-                  href={`${base}/about#contact`}
-                  className="rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
-                >
-                  Contact
-                </Link>
-              ) : null}
-            </div>
-          </>
+          <ServicesPageRenderer blocks={guestBlocks} basePath={base} />
         )}
       </div>
     </div>
