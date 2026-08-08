@@ -91,6 +91,8 @@ export function HostSiteHeader({
           className="flex max-w-[55%] shrink-0 flex-wrap items-center justify-end gap-0.5 sm:max-w-none sm:gap-1"
           aria-label="Site"
         >
+          {/* Explicit Home (logo also links home) */}
+          <HeaderNavLink href={home}>Home</HeaderNavLink>
           {nav.map((item) => (
             <HeaderNavLink key={item.href} href={item.href}>
               {item.label}
