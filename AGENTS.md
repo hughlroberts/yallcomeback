@@ -41,3 +41,30 @@ Full project guidance: [`docs/help-writing-ste.md`](docs/help-writing-ste.md).
 - When you add or edit help text, rewrite it to STE before finishing.
 - Do not leave non-STE help copy for “later cleanup.”
 - If you copy wording from UI marketing pages into help, convert it to STE first.
+
+## Agent-native API (continuous)
+
+The platform must stay **agent-ready**. External AIs discover stays via public JSON, not HTML scraping.
+
+### Public surface (keep in sync)
+
+| Resource | Path |
+| --- | --- |
+| Agent brief | `/llms.txt` |
+| Agent guide | `/agents.md` |
+| OpenAPI 3.1 | `/api/v1/openapi.json` |
+| Search | `/api/v1/search` |
+| Listing detail | `/api/v1/listings/{slug}` |
+| Availability | `/api/v1/listings/{slug}/availability` |
+| Plugin hint | `/.well-known/ai-plugin.json` |
+
+Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`.
+
+### Rules when you change product code
+
+1. If you add a marketplace search filter or listing field for humans, expose it on the agent API the same change (or immediately after).
+2. Update `/llms.txt`, `/agents.md`, and OpenAPI in the same PR/commit when behavior changes.
+3. Prefer additive, non-breaking query params and JSON fields.
+4. Keep v1 read endpoints public (CORS `*`, no auth) unless there is a strong reason.
+5. Flexible dates (`flexible`, `flexibilityDays` / `dateFlex`) are first-class — match homepage search semantics.
+6. After shipping search/listing/availability changes, smoke-test as an agent: fetch llms.txt → search with ± flex → open listing API → check deep links.
