@@ -4,7 +4,10 @@ import { auth } from "@/lib/auth";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
-import { blocksFromHost } from "@/lib/services-blocks";
+import {
+  blocksFromHost,
+  boatRentalsStarterBlocks,
+} from "@/lib/services-blocks";
 import { ServicesPageLiveEditor } from "@/components/services-page-live-editor";
 import { ServicesPageRenderer } from "@/components/services-page-renderer";
 
@@ -25,7 +28,7 @@ export default async function HostServicesPage({
 
   const base = await hostPublicBasePath(host.slug);
   const title = host.siteServicesTitle?.trim() || "Other services";
-  const blocks = blocksFromHost({
+  const savedBlocks = blocksFromHost({
     siteServicesBlocks: host.siteServicesBlocks,
     siteServicesBody: host.siteServicesBody,
   });
@@ -42,6 +45,14 @@ export default async function HostServicesPage({
   const canEdit =
     (isPlatformAdmin || isThisHost) && canManageBrand(accessInfo);
 
+  // Empty page + editor → seed 5 boat slots in the client so hosts can edit immediately
+  const editorBlocks =
+    canEdit && savedBlocks.length === 0
+      ? boatRentalsStarterBlocks()
+      : savedBlocks;
+
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(`${base}/services`)}`;
+
   return (
     <div>
       <div className="border-b border-stone-200 bg-stone-50">
@@ -54,9 +65,8 @@ export default async function HostServicesPage({
           </h1>
           <p className="mt-3 text-lg text-stone-600">From {host.name}</p>
           {canEdit ? (
-            <p className="mt-3 text-sm text-sky-900">
-              You&apos;re signed in as the host — edit boats, photos, and
-              pricing on this page.
+            <p className="mt-4 inline-flex rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-950">
+              Edit mode — change boats, photos &amp; pricing below, then Save
             </p>
           ) : null}
         </div>
@@ -68,31 +78,36 @@ export default async function HostServicesPage({
             hostId={host.id}
             basePath={base}
             pageTitle={title}
-            initialBlocks={blocks}
+            initialBlocks={editorBlocks}
             returnTo={`${base}/services`}
           />
         ) : (
-          <ServicesPageRenderer blocks={blocks} basePath={base} />
-        )}
-
-        {!canEdit ? (
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Link
-              href={`${base}/stays`}
-              className="rounded-full bg-[var(--color-brand,#2563eb)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)]"
-            >
-              Book a stay
-            </Link>
-            {host.sitePageAbout ? (
+          <>
+            <ServicesPageRenderer blocks={savedBlocks} basePath={base} />
+            <div className="mt-10 flex flex-wrap items-center gap-3">
               <Link
-                href={`${base}/about#contact`}
-                className="rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+                href={`${base}/stays`}
+                className="rounded-full bg-[var(--color-brand,#2563eb)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)]"
               >
-                Contact
+                Book a stay
               </Link>
-            ) : null}
-          </div>
-        ) : null}
+              {host.sitePageAbout ? (
+                <Link
+                  href={`${base}/about#contact`}
+                  className="rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+                >
+                  Contact
+                </Link>
+              ) : null}
+              <Link
+                href={loginHref}
+                className="rounded-full border border-sky-200 bg-sky-50 px-5 py-2.5 text-sm font-semibold text-sky-950 hover:bg-sky-100"
+              >
+                Host sign in to edit
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

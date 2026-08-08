@@ -131,9 +131,9 @@ function OwnerEditLinks({
       {host.sitePageServices ? (
         <Link
           href={servicesLive}
-          className="font-semibold underline underline-offset-2"
+          className="inline-flex items-center rounded-full bg-sky-700 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-sky-800 sm:text-sm"
         >
-          Edit boat rentals (live on site)
+          Edit Services page
         </Link>
       ) : (
         <Link
