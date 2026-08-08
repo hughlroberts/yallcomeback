@@ -7,6 +7,14 @@ type Props = {
 };
 
 /**
+ * Optional dedicated tab icons (small mark). Full seal stays for OG/logo.
+ * Files live under public/brand/hosts/{slug}-favicon.png
+ */
+const HOST_FAVICONS: Record<string, string> = {
+  "cherokee-landing": "/brand/hosts/cherokee-landing-favicon.png",
+};
+
+/**
  * Host microsite metadata — title/description/OG use host brand, not YCB.
  * (Root layout still supplies platform defaults when host is unknown.)
  */
@@ -27,6 +35,10 @@ export async function generateMetadata({
     host.description?.slice(0, 160) ||
     `Book direct with ${host.name}`;
 
+  const faviconUrl =
+    HOST_FAVICONS[host.slug] || host.logoUrl || undefined;
+  const ogImage = host.logoUrl || faviconUrl;
+
   return {
     title: {
       default: title,
@@ -39,12 +51,11 @@ export async function generateMetadata({
       description,
       siteName: host.name,
       type: "website",
-      // Prefer host logo when set; else omit so we do not force YCB seal
-      ...(host.logoUrl
+      ...(ogImage
         ? {
             images: [
               {
-                url: host.logoUrl,
+                url: ogImage,
                 alt: host.name,
               },
             ],
@@ -55,12 +66,13 @@ export async function generateMetadata({
       card: "summary",
       title,
       description,
-      ...(host.logoUrl ? { images: [host.logoUrl] } : {}),
+      ...(ogImage ? { images: [ogImage] } : {}),
     },
-    icons: host.logoUrl
+    icons: faviconUrl
       ? {
-          icon: [{ url: host.logoUrl }],
-          apple: [{ url: host.logoUrl }],
+          icon: [{ url: faviconUrl, type: "image/png" }],
+          apple: [{ url: faviconUrl }],
+          shortcut: faviconUrl,
         }
       : undefined,
   };
