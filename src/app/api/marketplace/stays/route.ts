@@ -13,15 +13,21 @@ export async function GET(req: NextRequest) {
   const guestsRaw = sp.get("guests");
   const petsRaw = sp.get("pets");
   const takeRaw = sp.get("take");
+  const dateFlexRaw = sp.get("dateFlex") || sp.get("flexibilityDays");
 
   const guests = guestsRaw ? Number(guestsRaw) : undefined;
   const pets = petsRaw ? Number(petsRaw) : undefined;
   const take = takeRaw ? Math.min(24, Math.max(1, Number(takeRaw) || 12)) : 12;
+  const dateFlex = dateFlexRaw ? Number(dateFlexRaw) : undefined;
 
   const listings = await getMarketplaceListings({
     q: where,
     checkIn,
     checkOut,
+    dateFlex:
+      dateFlex != null && Number.isFinite(dateFlex) && dateFlex > 0
+        ? Math.min(14, Math.floor(dateFlex))
+        : undefined,
     guests:
       guests != null && Number.isFinite(guests) && guests > 0
         ? Math.floor(guests)

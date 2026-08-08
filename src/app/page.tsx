@@ -9,11 +9,13 @@ import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
 import { GuestDiscoverySections } from "@/components/guest-discovery-sections";
 import { prisma } from "@/lib/db";
+import { getSiteOrigin } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const showDiscovery = await marketplaceDiscoveryEnabled();
+  const origin = await getSiteOrigin();
 
   const [listings, liveHosts, featuredHost, placeSuggestions] =
     await Promise.all([
@@ -47,8 +49,30 @@ export default async function HomePage() {
       getMarketplacePlaceSuggestions(),
     ]);
 
+  const websiteLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Yall Come Back",
+    url: origin,
+    description:
+      "Book-direct vacation rentals. Search stays with exact or flexible dates.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${origin}/marketplace?where={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
+      />
       {/* Hero — photo stays; brand only affects chrome/palette */}
       <section className="relative min-h-[72vh] overflow-hidden bg-stone-900">
         <div className="absolute inset-0">

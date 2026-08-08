@@ -25,6 +25,9 @@ import { MeetYourHost } from "@/components/meet-your-host";
 import { ThingsToKnow } from "@/components/things-to-know";
 import { TrackRecentlyViewed } from "@/components/track-browse-history";
 import { TrackListingView } from "@/components/track-listing-view";
+import { ListingJsonLd } from "@/components/listing-json-ld";
+import { getSiteOrigin } from "@/lib/site-url";
+import { listingPublicPath } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -151,8 +154,39 @@ export default async function MarketplacePropertyPage({
     6,
   );
 
+  const origin = await getSiteOrigin();
+  const listingUrl = `${origin}${listingPublicPath(property.slug, property.host.slug)}`;
+  const absImages = property.images.map((img) =>
+    img.url.startsWith("http") ? img.url : `${origin}${img.url}`,
+  );
+
   return (
     <div>
+      <ListingJsonLd
+        origin={origin}
+        name={property.title}
+        description={property.description || property.tagline}
+        url={listingUrl}
+        imageUrls={absImages}
+        city={property.city}
+        region={property.region}
+        country={property.country}
+        postalCode={property.postalCode}
+        latitude={
+          property.showPreciseLocation ? property.latitude : null
+        }
+        longitude={
+          property.showPreciseLocation ? property.longitude : null
+        }
+        guests={property.maxGuests}
+        bedrooms={property.bedrooms}
+        bathrooms={property.bathrooms}
+        petsAllowed={property.petsAllowed}
+        checkInTime={property.checkInTime}
+        checkOutTime={property.checkOutTime}
+        priceNightly={property.baseNightlyRate}
+        hostName={property.host.name}
+      />
       <TrackRecentlyViewed
         id={property.id}
         slug={property.slug}
