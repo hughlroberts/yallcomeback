@@ -8,6 +8,7 @@ import {
   updateHostProfile,
   uploadHostLogo,
 } from "@/app/actions/host";
+import { setAdminBrandContext } from "@/app/actions/admin-brand";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { ServicesPageBuilder } from "@/components/services-page-builder";
 import { maskSyndicationKey } from "@/lib/syndication";
@@ -46,6 +47,7 @@ export default async function AdminBrandPage({
 
   let host = null as Awaited<ReturnType<typeof prisma.host.findUnique>>;
   if (access.isPlatform) {
+    // Query hostId or admin brand cookie (access.hostId)
     const pick = params.hostId?.trim() || access.hostId || null;
     if (pick) {
       host = await prisma.host.findUnique({ where: { id: pick } });
@@ -73,41 +75,50 @@ export default async function AdminBrandPage({
       <div className="mx-auto max-w-2xl space-y-4">
         <h1 className="text-2xl font-semibold text-stone-900">Brand & website</h1>
         <p className="text-sm text-stone-600">
-          Platform operators: pick a host brand to edit (backdoor). Each brand is
-          standalone — host users only see their own brand when they log in.
+          Platform operators: pick a host brand. Use the amber brand switcher at
+          the top of Admin so Properties, Bookings, and Brand stay on one brand
+          (e.g. Cherokee vs your personal listings).
         </p>
         <ul className="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white">
           {hosts.map((h) => {
             const path = hostProductPath(h);
             return (
               <li key={h.id}>
-                <Link
-                  href={`/admin/brand?hostId=${h.id}`}
-                  className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-stone-50"
-                >
-                  <span>
-                    <span className="font-medium text-stone-900">{h.name}</span>
-                    {h.contactEmail ? (
-                      <span className="mt-0.5 block text-xs text-stone-400">
-                        {h.contactEmail}
+                <form action={setAdminBrandContext}>
+                  <input type="hidden" name="hostId" value={h.id} />
+                  <input
+                    type="hidden"
+                    name="returnTo"
+                    value={`/admin/brand?hostId=${h.id}`}
+                  />
+                  <button
+                    type="submit"
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-stone-50"
+                  >
+                    <span>
+                      <span className="font-medium text-stone-900">{h.name}</span>
+                      {h.contactEmail ? (
+                        <span className="mt-0.5 block text-xs text-stone-400">
+                          {h.contactEmail}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="shrink-0 text-right text-stone-400">
+                      <span className="block text-[11px] font-medium text-stone-600">
+                        {path === "marketplace"
+                          ? "Marketplace only"
+                          : path === "open_source"
+                            ? "Open source"
+                            : "Custom website"}
                       </span>
-                    ) : null}
-                  </span>
-                  <span className="shrink-0 text-right text-stone-400">
-                    <span className="block text-[11px] font-medium text-stone-600">
-                      {path === "marketplace"
-                        ? "Marketplace only"
-                        : path === "open_source"
-                          ? "Open source"
-                          : "Custom website"}
+                      <span className="block">{h.slug}</span>
+                      <span className="text-[11px]">
+                        {h.sitePublishState}
+                        {!h.active ? " · inactive" : ""}
+                      </span>
                     </span>
-                    <span className="block">{h.slug}</span>
-                    <span className="text-[11px]">
-                      {h.sitePublishState}
-                      {!h.active ? " · inactive" : ""}
-                    </span>
-                  </span>
-                </Link>
+                  </button>
+                </form>
               </li>
             );
           })}
@@ -518,7 +529,7 @@ export default async function AdminBrandPage({
 
           {/* —— Fixed pages (branded) —— */}
           {branded ? (
-            <Card className="order-6 space-y-5 p-6">
+            <Card id="pages" className="order-6 scroll-mt-24 space-y-5 p-6">
               <div>
                 <h2 className="text-lg font-semibold text-stone-900">
                   Pages (fixed set)
@@ -909,7 +920,10 @@ export default async function AdminBrandPage({
 
         {/* Services builder — branded + page on */}
         {branded && host.sitePageServices ? (
-          <Card className="order-14 space-y-4 p-6">
+          <Card
+            id="services-builder"
+            className="order-14 scroll-mt-24 space-y-4 p-6"
+          >
             <ServicesPageBuilder
               hostId={host.id}
               returnTo={returnTo}
@@ -928,13 +942,21 @@ export default async function AdminBrandPage({
               >
                 /h/{host.slug}/services →
               </Link>
+              {" · "}
+              Drag blocks to build boat rentals, camping, tours, etc.
             </p>
           </Card>
         ) : branded ? (
-          <Card className="order-14 p-6 text-sm text-stone-500">
-            Turn on <strong>Other services</strong> under Pages, save, then
-            reopen this screen to use the drag-and-drop page builder (photos,
-            pricing, copy for boats, camping, etc.).
+          <Card
+            id="services-builder"
+            className="order-14 scroll-mt-24 p-6 text-sm text-stone-500"
+          >
+            Turn on <strong>Other services</strong> under{" "}
+            <a href="#pages" className="font-medium text-bonnet hover:underline">
+              Pages
+            </a>
+            , save, then reopen this screen to use the drag-and-drop page
+            builder (boat rentals, camping, photos, pricing copy).
           </Card>
         ) : null}
 

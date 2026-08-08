@@ -82,10 +82,9 @@ function paymentMethodLabel(method: string, notes?: string | null): string {
 }
 
 export async function getHostListings(access: HostAccess) {
+  const { propertyScopeWhere } = await import("@/lib/scope");
   return prisma.property.findMany({
-    where: access.isPlatform
-      ? {}
-      : { hostId: access.hostId! },
+    where: propertyScopeWhere(access),
     select: { id: true, title: true },
     orderBy: { title: "asc" },
   });

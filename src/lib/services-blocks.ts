@@ -39,6 +39,48 @@ export function newBlockId(): string {
   return `b_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/** Starter layout for a boat rentals / lake extras page. */
+export function boatRentalsStarterBlocks(): ServicesBlock[] {
+  return [
+    {
+      id: newBlockId(),
+      type: "heading",
+      content: "Boat rentals & lake extras",
+    },
+    {
+      id: newBlockId(),
+      type: "text",
+      content:
+        "Make the most of Cedar Creek Lake. Reserve boats and lake gear when you book your stay — or ask us for the season’s rates.",
+    },
+    {
+      id: newBlockId(),
+      type: "card",
+      content: "Pontoon boat",
+      secondary:
+        "Half-day and full-day rentals. Perfect for families and slow lake days. Capacity and rates available on request.",
+    },
+    {
+      id: newBlockId(),
+      type: "card",
+      content: "Kayaks & paddle gear",
+      secondary:
+        "Explore the shoreline at your own pace. Ask about daily rates and life jackets.",
+    },
+    {
+      id: newBlockId(),
+      type: "list",
+      content: "Life jackets included\nLocal launch guidance\nBook with your stay or message us",
+    },
+    {
+      id: newBlockId(),
+      type: "button",
+      content: "Message us to book",
+      secondary: "/about#contact",
+    },
+  ];
+}
+
 export function createBlock(type: ServicesBlockType): ServicesBlock {
   switch (type) {
     case "heading":

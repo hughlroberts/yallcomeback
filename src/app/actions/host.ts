@@ -285,6 +285,20 @@ export async function updateHostProfile(formData: FormData) {
     redirect(`${HOST_PROFILE_PATH}?error=website`);
   }
 
+  // Seed boat-rentals starter blocks the first time Other services is turned on
+  let seedBlocksJson: string | undefined;
+  if (
+    sitePageServices &&
+    !existing.sitePageServices &&
+    !existing.siteServicesBlocks?.trim()
+  ) {
+    const { boatRentalsStarterBlocks } = await import("@/lib/services-blocks");
+    seedBlocksJson = JSON.stringify(boatRentalsStarterBlocks());
+    if (!siteServicesTitle) {
+      siteServicesTitle = "Boat rentals & lake extras";
+    }
+  }
+
   const host = await prisma.host.update({
     where: { id: hostId },
     data: {
@@ -304,6 +318,7 @@ export async function updateHostProfile(formData: FormData) {
       sitePageServices,
       siteServicesTitle,
       siteServicesBody,
+      ...(seedBlocksJson ? { siteServicesBlocks: seedBlocksJson } : {}),
       socialFacebook,
       socialX,
       socialInstagram,

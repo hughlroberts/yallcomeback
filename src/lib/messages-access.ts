@@ -15,7 +15,17 @@ export type MessagesViewer = {
 export async function getMessagesViewer(): Promise<MessagesViewer | null> {
   const session = await auth();
   if (!session?.user?.id) return null;
-  return viewerFromSession(session);
+  const base = viewerFromSession(session);
+  if (!base) return null;
+  // Platform admin: use brand-scope cookie so Cherokee inbox ≠ Hugh inbox
+  if (base.isPlatform) {
+    const { getAdminBrandHostId } = await import("@/lib/admin-brand-context");
+    const brandId = await getAdminBrandHostId();
+    if (brandId) {
+      return { ...base, hostId: brandId };
+    }
+  }
+  return base;
 }
 
 export function viewerFromSession(session: Session): MessagesViewer | null {
@@ -42,8 +52,16 @@ export function conversationAccessWhere(
     asGuest.push({ guestEmail: viewer.email });
   }
 
+  // Platform admin brand cookie (or host account) scopes inbox to that brand
+  if (viewer.isPlatform && viewer.hostId) {
+    return {
+      OR: [{ hostId: viewer.hostId }, ...asGuest],
+    };
+  }
+
   if (viewer.isPlatform) {
-    return {};
+    // No brand selected — empty host side (guest threads still via asGuest only if needed)
+    return { OR: asGuest };
   }
 
   if (viewer.isHost && viewer.hostId) {

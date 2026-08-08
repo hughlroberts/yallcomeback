@@ -145,13 +145,27 @@ export async function requirePlatformAdmin() {
   return session;
 }
 
-/** Host owner OR platform admin. Returns hostId scope (null = all hosts for platform admin). */
+/**
+ * Host owner OR platform admin.
+ * Platform admins may be brand-scoped via the ycb_admin_brand cookie
+ * (or an explicit hostId argument). When scoped, hostId is set so admin
+ * lists only show that brand — not every host’s listings mixed together.
+ */
 export async function requireHostAdmin(hostId?: string) {
   const session = await auth();
   if (!session?.user) return null;
 
   if (session.user.role === "ADMIN") {
-    return { session, hostId: hostId ?? null, isPlatform: true as const };
+    let resolved = hostId ?? null;
+    if (!resolved) {
+      const { getAdminBrandHostId } = await import("@/lib/admin-brand-context");
+      resolved = await getAdminBrandHostId();
+    }
+    return {
+      session,
+      hostId: resolved,
+      isPlatform: true as const,
+    };
   }
 
   if (session.user.role === "HOST" && session.user.hostId) {

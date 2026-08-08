@@ -34,14 +34,19 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
   const basePath = mode === "custom" ? "" : `/h/${tenant.slug}`;
 
   const session = await auth();
+  const isPlatformAdmin = session?.user?.role === "ADMIN";
   const isOwnerPreview =
-    session?.user?.role === "ADMIN" ||
+    isPlatformAdmin ||
     (session?.user?.role === "HOST" &&
       session.user.hostId === tenant.id);
 
   return (
     <div className="flex min-h-full flex-1 flex-col" style={hostBrandStyle(tenant)}>
-      <HostSiteDemoBanner host={tenant} isOwnerPreview={isOwnerPreview} />
+      <HostSiteDemoBanner
+        host={tenant}
+        isOwnerPreview={isOwnerPreview}
+        isPlatformAdmin={isPlatformAdmin}
+      />
       <HostSiteHeader host={tenant} basePath={basePath} />
       <main className="flex-1">{children}</main>
       <HostSiteFooter host={tenant} basePath={basePath} />
