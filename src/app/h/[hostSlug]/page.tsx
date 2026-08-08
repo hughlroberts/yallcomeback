@@ -62,7 +62,7 @@ export default async function HostSiteHomePage({
 
   return (
     <div>
-      <section className="relative min-h-[88vh] overflow-hidden bg-stone-900 sm:min-h-[92vh]">
+      <section className="relative min-h-[44vh] overflow-hidden bg-stone-900 sm:min-h-[46vh]">
         <Image
           src={cover}
           alt=""
@@ -72,9 +72,9 @@ export default async function HostSiteHomePage({
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-stone-900/35" />
-        <div className="relative z-10 mx-auto flex min-h-[88vh] max-w-6xl flex-col justify-end px-4 pb-14 pt-16 sm:min-h-[92vh] sm:px-6 sm:pb-20">
+        <div className="relative z-10 mx-auto flex min-h-[44vh] max-w-6xl flex-col justify-end px-4 pb-10 pt-10 sm:min-h-[46vh] sm:px-6 sm:pb-12 sm:pt-12">
           {logoUrl ? (
-            <div className="mb-8 sm:mb-10">
+            <div className="mb-5 sm:mb-6">
               <div className="relative mx-auto size-36 overflow-hidden rounded-full bg-white/95 shadow-2xl ring-2 ring-white/40 sm:mx-0 sm:size-44 md:size-52">
                 <Image
                   src={logoUrl}
