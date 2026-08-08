@@ -20,6 +20,7 @@ type Props = {
     | "sitePageAbout"
     | "sitePageServices"
     | "siteServicesTitle"
+    | "siteServicesPath"
     | "socialFacebook"
     | "socialX"
     | "socialInstagram"

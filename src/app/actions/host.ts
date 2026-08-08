@@ -210,6 +210,7 @@ export async function updateHostProfile(formData: FormData) {
   let sitePageServices = existing.sitePageServices;
   let siteAddress = existing.siteAddress;
   let siteServicesTitle = existing.siteServicesTitle;
+  let siteServicesPath = existing.siteServicesPath;
   let siteServicesBody = existing.siteServicesBody;
   let socialFacebook = existing.socialFacebook;
   let socialX = existing.socialX;
@@ -251,6 +252,10 @@ export async function updateHostProfile(formData: FormData) {
     sitePageServices = formData.get("sitePageServices") === "on";
     siteAddress = optionalText(formData, "siteAddress", 500);
     siteServicesTitle = optionalText(formData, "siteServicesTitle", 120);
+    const { normalizeServicesPathInput } = await import("@/lib/host-site");
+    siteServicesPath = normalizeServicesPathInput(
+      String(formData.get("siteServicesPath") || ""),
+    );
     siteServicesBody = optionalText(formData, "siteServicesBody", 8000);
     socialFacebook = optionalText(formData, "socialFacebook", 300);
     socialX = optionalText(formData, "socialX", 300);
@@ -305,6 +310,9 @@ export async function updateHostProfile(formData: FormData) {
     if (!siteServicesTitle) {
       siteServicesTitle = "Boat rentals & lake extras";
     }
+    if (!siteServicesPath) {
+      siteServicesPath = "boat-rentals";
+    }
   }
 
   const host = await prisma.host.update({
@@ -325,6 +333,7 @@ export async function updateHostProfile(formData: FormData) {
       sitePageAbout,
       sitePageServices,
       siteServicesTitle,
+      siteServicesPath,
       siteServicesBody,
       ...(seedBlocksJson ? { siteServicesBlocks: seedBlocksJson } : {}),
       socialFacebook,

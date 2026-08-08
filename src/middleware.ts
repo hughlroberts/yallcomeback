@@ -57,6 +57,37 @@ function rewriteHostGuestPath(
     // Host-native listing path → microsite property (then booking UI)
     const slug = pathname.slice("/properties/".length).split("/")[0];
     if (slug) target = `/h/${hostSlug}/properties/${slug}`;
+  } else {
+    // Single-segment custom path (e.g. /boat-rentals) → host page slug route
+    // Reserved fixed pages above take priority; dynamic page 404s if not configured.
+    const m = pathname.match(/^\/([a-z0-9][a-z0-9-]{0,79})\/?$/i);
+    const seg = m?.[1]?.toLowerCase();
+    const reserved = new Set([
+      "stays",
+      "about",
+      "contact",
+      "services",
+      "properties",
+      "marketplace",
+      "book",
+      "login",
+      "register",
+      "account",
+      "messages",
+      "admin",
+      "ops",
+      "api",
+      "help",
+      "saved",
+      "calendar",
+      "locations",
+      "favicon.ico",
+      "robots.txt",
+      "sitemap.xml",
+    ]);
+    if (seg && !reserved.has(seg)) {
+      target = `/h/${hostSlug}/${seg}`;
+    }
   }
   // /marketplace/properties/* stays as-is with tenant chrome (booking UI).
   // Do not rewrite it back to /h/.../properties or we loop with the host property redirect.

@@ -15,6 +15,7 @@ type Props = {
     | "sitePageAbout"
     | "sitePageServices"
     | "siteServicesTitle"
+    | "siteServicesPath"
   >;
   /** Owner/profile photo when no brand logo is set */
   profileAvatarUrl?: string | null;

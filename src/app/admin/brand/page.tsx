@@ -12,7 +12,11 @@ import {
 import { setAdminBrandContext } from "@/app/actions/admin-brand";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { maskSyndicationKey } from "@/lib/syndication";
-import { sitePublishStateLabel } from "@/lib/host-site";
+import {
+  hostServicesHref,
+  hostServicesPathSegment,
+  sitePublishStateLabel,
+} from "@/lib/host-site";
 import {
   hostHasBrandedWebsite,
   hostProductPath,
@@ -805,7 +809,7 @@ export default async function AdminBrandPage({
               </p>
               <div className="space-y-1.5">
                 <Label htmlFor="siteServicesTitle">
-                  Page name (nav, hero button, footer)
+                  Page name (nav, hero button)
                 </Label>
                 <Input
                   id="siteServicesTitle"
@@ -814,7 +818,35 @@ export default async function AdminBrandPage({
                   placeholder="Boat rentals & lake extras"
                 />
                 <p className="text-xs text-stone-500">
-                  Shown in the site header and home hero instead of “Services”.
+                  Label shown in the site header and home hero.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="siteServicesPath">Page URL</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-stone-500">
+                    /h/{host.slug}/
+                  </span>
+                  <Input
+                    id="siteServicesPath"
+                    name="siteServicesPath"
+                    className="max-w-xs font-mono text-sm"
+                    defaultValue={host.siteServicesPath || "services"}
+                    placeholder="boat-rentals"
+                  />
+                </div>
+                <p className="text-xs text-stone-500">
+                  Letters, numbers, and hyphens only. Examples:{" "}
+                  <code className="rounded bg-stone-100 px-1">boat-rentals</code>
+                  ,{" "}
+                  <code className="rounded bg-stone-100 px-1">boat-rental</code>
+                  . Default is{" "}
+                  <code className="rounded bg-stone-100 px-1">services</code>.
+                  On your own domain this is{" "}
+                  <code className="rounded bg-stone-100 px-1">
+                    /{host.siteServicesPath || "services"}
+                  </code>
+                  .
                 </p>
               </div>
               <input
@@ -1095,13 +1127,13 @@ export default async function AdminBrandPage({
             </p>
             <div className="flex flex-wrap gap-2">
               <Link
-                href={`/h/${host.slug}/services`}
+                href={hostServicesHref(host, `/h/${host.slug}`)}
                 className="inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
               >
                 Open live services editor →
               </Link>
               <Link
-                href={`/h/${host.slug}/services`}
+                href={hostServicesHref(host, `/h/${host.slug}`)}
                 target="_blank"
                 className="inline-flex rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50"
               >
@@ -1109,11 +1141,16 @@ export default async function AdminBrandPage({
               </Link>
             </div>
             <p className="text-xs text-stone-500">
-              Page title above:{" "}
+              Page name:{" "}
               <strong>
                 {host.siteServicesTitle?.trim() || "Other services"}
               </strong>
-              . Change it under Pages, then save brand settings.
+              {" · "}
+              URL:{" "}
+              <code className="rounded bg-stone-100 px-1 text-[11px]">
+                /h/{host.slug}/{hostServicesPathSegment(host)}
+              </code>
+              . Edit under Other services page above, then save brand settings.
             </p>
           </Card>
         ) : branded ? (

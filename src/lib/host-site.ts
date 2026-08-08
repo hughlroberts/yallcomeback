@@ -1,4 +1,5 @@
 import type { Host, HostSitePublishState } from "@prisma/client";
+import { slugify } from "@/lib/utils";
 
 /**
  * Hosted websites are NOT a freeform CMS.
@@ -14,6 +15,7 @@ export type HostSiteConfig = Pick<
   | "sitePageAbout"
   | "sitePageServices"
   | "siteServicesTitle"
+  | "siteServicesPath"
   | "siteServicesBody"
   | "siteAddress"
   | "contactEmail"
@@ -39,14 +41,74 @@ export type HostSiteNavItem = {
   primary?: boolean;
 };
 
+/** Paths reserved on host sites (cannot be the services page URL). */
+export const HOST_SITE_RESERVED_PATHS = new Set([
+  "",
+  "stays",
+  "about",
+  "contact",
+  "properties",
+  "marketplace",
+  "book",
+  "login",
+  "register",
+  "account",
+  "messages",
+  "admin",
+  "ops",
+  "api",
+  "help",
+  "saved",
+  "calendar",
+  "locations",
+  "h",
+]);
+
+/**
+ * Public URL segment for the services page (e.g. "boat-rentals").
+ * Defaults to "services". Always a safe single path segment.
+ */
+export function hostServicesPathSegment(
+  host: Pick<Host, "siteServicesPath">,
+): string {
+  const raw = host.siteServicesPath?.trim() || "";
+  const seg = slugify(raw) || "services";
+  if (HOST_SITE_RESERVED_PATHS.has(seg)) return "services";
+  return seg;
+}
+
+/** Normalize admin form input for siteServicesPath. Empty → null (default services). */
+export function normalizeServicesPathInput(
+  raw: string | null | undefined,
+): string | null {
+  const seg = slugify(String(raw || "").trim());
+  if (!seg || seg === "services") return null;
+  if (HOST_SITE_RESERVED_PATHS.has(seg)) return null;
+  return seg.slice(0, 80);
+}
+
+/** Guest href for the services page under basePath ("" on custom domain). */
+export function hostServicesHref(
+  host: Pick<Host, "siteServicesPath" | "sitePageServices">,
+  basePath = "",
+): string {
+  const seg = hostServicesPathSegment(host);
+  const base = basePath || "";
+  return `${base}/${seg}` || `/${seg}`;
+}
+
 /**
  * Fixed guest-site nav pages (load under sticky header chrome).
  * Services label comes from host.siteServicesTitle when set.
+ * Services URL comes from host.siteServicesPath when set.
  */
 export function hostSiteNavItems(
   host: Pick<
     Host,
-    "sitePageAbout" | "sitePageServices" | "siteServicesTitle"
+    | "sitePageAbout"
+    | "sitePageServices"
+    | "siteServicesTitle"
+    | "siteServicesPath"
   >,
   basePath = "",
 ): HostSiteNavItem[] {
@@ -62,7 +124,7 @@ export function hostSiteNavItems(
     const servicesLabel =
       host.siteServicesTitle?.trim() || "Services";
     items.push({
-      href: `${base}/services` || "/services",
+      href: hostServicesHref(host, basePath),
       label: servicesLabel,
     });
   }

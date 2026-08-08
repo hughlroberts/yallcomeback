@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Host } from "@prisma/client";
+import { hostServicesHref } from "@/lib/host-site";
 
 type Props = {
   host: Pick<
@@ -11,6 +12,7 @@ type Props = {
     | "websiteUrl"
     | "sitePageAbout"
     | "sitePageServices"
+    | "siteServicesPath"
   >;
   /** True when the current viewer is host admin / platform (private preview). */
   isOwnerPreview?: boolean;
@@ -110,15 +112,19 @@ function OwnerEditLinks({
 }: {
   host: Pick<
     Host,
-    "id" | "slug" | "sitePageAbout" | "sitePageServices"
+    | "id"
+    | "slug"
+    | "sitePageAbout"
+    | "sitePageServices"
+    | "siteServicesPath"
   >;
   isPlatformAdmin?: boolean;
 }) {
   const brand = isPlatformAdmin
     ? `/admin/brand?hostId=${host.id}`
     : "/admin/brand";
-  /** Live editor is on the guest services page itself */
-  const servicesLive = `/h/${host.slug}/services`;
+  /** Live editor is on the guest services page itself (path may be customized) */
+  const servicesLive = hostServicesHref(host, `/h/${host.slug}`);
 
   return (
     <>

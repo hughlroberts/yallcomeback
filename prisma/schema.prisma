@@ -188,6 +188,8 @@ model Host {
   sitePageServices     Boolean             @default(false)
   /// Other services page body (boats, tours, etc.)
   siteServicesTitle    String?
+  /// Public URL segment for the services page (e.g. "boat-rentals"). Default "services".
+  siteServicesPath     String?
   siteServicesBody     String?
   /// JSON array of simple page blocks for Services builder (not a full CMS)
   siteServicesBlocks   String              @default("[]")
