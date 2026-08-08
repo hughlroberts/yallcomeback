@@ -15,11 +15,7 @@ function id() {
 /** Fleet content — mirrors cherokeelanding.net/boat-rental/ */
 function boatRentalsBlocks() {
   return [
-    {
-      id: id(),
-      type: "heading",
-      content: "Boat rentals",
-    },
+    // Page title comes from siteServicesTitle — no extra heading block
     {
       id: id(),
       type: "text",

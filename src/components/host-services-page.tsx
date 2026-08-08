@@ -10,14 +10,33 @@ import {
 import {
   blocksFromHost,
   boatRentalsStarterBlocks,
+  type ServicesBlock,
 } from "@/lib/services-blocks";
 import { ServicesPageLiveEditor } from "@/components/services-page-live-editor";
 import { ServicesPageRenderer } from "@/components/services-page-renderer";
 
 type HostForServices = Host;
 
+/** Drop a leading heading that only repeats the page title (avoids double headers). */
+function guestBlocksWithoutDupTitle(
+  blocks: ServicesBlock[],
+  pageTitle: string,
+): ServicesBlock[] {
+  if (blocks.length === 0) return blocks;
+  const first = blocks[0]!;
+  if (first.type !== "heading") return blocks;
+  const a = first.content.trim().toLowerCase().replace(/\s+/g, " ");
+  const b = pageTitle.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!a) return blocks.slice(1);
+  if (a === b || b.includes(a) || a.includes(b)) {
+    return blocks.slice(1);
+  }
+  return blocks;
+}
+
 /**
  * Shared Services / boat rentals page body (used by /services and custom path).
+ * Layout matches Stays: one title band, full-width content (no double headers).
  */
 export async function HostServicesPageView({
   host,
@@ -49,28 +68,23 @@ export async function HostServicesPageView({
       ? boatRentalsStarterBlocks()
       : savedBlocks;
 
+  const guestBlocks = guestBlocksWithoutDupTitle(savedBlocks, title);
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pageHref)}`;
 
   return (
-    <div>
-      <div className="border-b border-stone-200 bg-stone-50">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <p className="text-sm font-semibold uppercase tracking-wide text-[var(--color-brand,#2563eb)]">
-            {title}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
-            {title}
-          </h1>
-          <p className="mt-3 max-w-2xl text-stone-600">From {host.name}</p>
-          {canEdit ? (
-            <p className="mt-4 inline-flex rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-950">
-              Edit mode — change boats, photos &amp; pricing below, then Save
-            </p>
-          ) : null}
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+      {/* Single page title (Stays-style) — content blocks should not repeat it */}
+      <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+        {title}
+      </h1>
+      <p className="mt-3 max-w-2xl text-stone-600">From {host.name}</p>
+      {canEdit ? (
+        <p className="mt-4 inline-flex rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-950">
+          Edit mode — change boats, photos &amp; pricing below, then Save
+        </p>
+      ) : null}
 
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="mt-10">
         {canEdit ? (
           <ServicesPageLiveEditor
             hostId={host.id}
@@ -81,7 +95,7 @@ export async function HostServicesPageView({
           />
         ) : (
           <>
-            <ServicesPageRenderer blocks={savedBlocks} basePath={base} />
+            <ServicesPageRenderer blocks={guestBlocks} basePath={base} />
             <div className="mt-10 flex flex-wrap items-center gap-3">
               <Link
                 href={`${base}/stays`}
