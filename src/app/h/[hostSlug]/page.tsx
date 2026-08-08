@@ -8,14 +8,15 @@ import {
   hostServicesPageLabel,
   hostSiteNavItems,
 } from "@/lib/host-site";
+import { hostSiteMarkUrl } from "@/lib/host-images";
 import { PropertyCard } from "@/components/property-card";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Host-owned home — hero + stays below banner, optional About teaser.
- * Page links are separate routes under the sticky site header.
+ * Host-owned home — full-bleed hero (no sticky header).
+ * Large brand mark + BOOK DIRECT + page CTAs in the overlay.
  */
 export default async function HostSiteHomePage({
   params,
@@ -28,30 +29,40 @@ export default async function HostSiteHomePage({
 
   const base = await hostPublicBasePath(host.slug);
 
-  const properties = await prisma.property.findMany({
-    where: {
-      hostId: host.id,
-      published: true,
-    },
-    include: {
-      images: {
-        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-        take: 1,
+  const [properties, owner] = await Promise.all([
+    prisma.property.findMany({
+      where: {
+        hostId: host.id,
+        published: true,
       },
-      host: { select: { name: true, slug: true } },
-    },
-    orderBy: [{ featured: "desc" }, { title: "asc" }],
-  });
+      include: {
+        images: {
+          orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+          take: 1,
+        },
+        host: { select: { name: true, slug: true } },
+      },
+      orderBy: [{ featured: "desc" }, { title: "asc" }],
+    }),
+    prisma.user.findFirst({
+      where: {
+        hostId: host.id,
+        role: "HOST",
+        OR: [{ hostAccess: "OWNER" }, { hostAccess: null }],
+      },
+      orderBy: { createdAt: "asc" },
+      select: { avatarUrl: true },
+    }),
+  ]);
 
   const cover = properties[0]?.images[0]?.url || "/seed/hero/home.jpg";
-
-  // Hero CTAs = the same page links (Book + Stays + optional About + Services)
   const pageButtons = hostSiteNavItems(host, base);
   const servicesLabel = hostServicesPageLabel(host);
+  const logoUrl = hostSiteMarkUrl(host, owner?.avatarUrl);
 
   return (
     <div>
-      <section className="relative min-h-[52vh] overflow-hidden bg-stone-900 sm:min-h-[58vh]">
+      <section className="relative min-h-[88vh] overflow-hidden bg-stone-900 sm:min-h-[92vh]">
         <Image
           src={cover}
           alt=""
@@ -60,20 +71,36 @@ export default async function HostSiteHomePage({
           className="object-cover opacity-70"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/55 to-stone-900/30" />
-        <div className="relative z-10 mx-auto flex min-h-[52vh] max-w-6xl flex-col justify-end px-4 pb-12 pt-24 sm:min-h-[58vh] sm:px-6 sm:pb-16">
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-stone-900/35" />
+        <div className="relative z-10 mx-auto flex min-h-[88vh] max-w-6xl flex-col justify-end px-4 pb-14 pt-16 sm:min-h-[92vh] sm:px-6 sm:pb-20">
+          {logoUrl ? (
+            <div className="mb-8 sm:mb-10">
+              <div className="relative mx-auto size-36 overflow-hidden rounded-full bg-white/95 shadow-2xl ring-2 ring-white/40 sm:mx-0 sm:size-44 md:size-52">
+                <Image
+                  src={logoUrl}
+                  alt={host.name}
+                  fill
+                  priority
+                  className="object-contain p-2 sm:p-2.5"
+                  sizes="(max-width: 640px) 144px, 208px"
+                  unoptimized
+                />
+              </div>
+            </div>
+          ) : null}
+
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/80">
             Book direct
           </p>
-          <h1 className="mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight text-white sm:text-5xl">
+          <h1 className="mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight text-white sm:text-5xl md:text-6xl">
             {host.name}
           </h1>
           {host.tagline ? (
-            <p className="mt-3 max-w-2xl text-lg text-stone-200">
+            <p className="mt-3 max-w-2xl text-lg text-stone-200 sm:text-xl">
               {host.tagline}
             </p>
           ) : (
-            <p className="mt-3 max-w-2xl text-lg text-stone-200">
+            <p className="mt-3 max-w-2xl text-lg text-stone-200 sm:text-xl">
               Stay with us — book direct, no marketplace middleman.
             </p>
           )}
@@ -105,7 +132,6 @@ export default async function HostSiteHomePage({
         </div>
       </section>
 
-      {/* Stays section below the banner (home overview) */}
       <section
         id="stays"
         className="mx-auto max-w-6xl scroll-mt-24 px-4 py-14 sm:px-6"

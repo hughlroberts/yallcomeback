@@ -33,6 +33,12 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
   const h = await headers();
   const mode = h.get("x-tenant-mode");
   const basePath = mode === "custom" ? "" : `/h/${tenant.slug}`;
+  const pathname = (h.get("x-pathname") || "").replace(/\/$/, "") || "/";
+  // Landing page only: full-bleed hero, no sticky header (nav lives in hero)
+  const isHostHome =
+    mode === "custom"
+      ? pathname === "/" || pathname === ""
+      : pathname === basePath || pathname === `/h/${tenant.slug}`;
 
   const session = await auth();
   const isPlatformAdmin = session?.user?.role === "ADMIN";
@@ -66,11 +72,13 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
         isOwnerPreview={isOwnerPreview}
         isPlatformAdmin={isPlatformAdmin}
       />
-      <HostSiteHeader
-        host={tenant}
-        profileAvatarUrl={anyHostUser?.avatarUrl}
-        basePath={basePath}
-      />
+      {!isHostHome ? (
+        <HostSiteHeader
+          host={tenant}
+          profileAvatarUrl={anyHostUser?.avatarUrl}
+          basePath={basePath}
+        />
+      ) : null}
       <main className="flex-1">{children}</main>
       <HostSiteFooter
         host={tenant}

@@ -88,6 +88,8 @@ function withTenant(
   requestHeaders.set(TENANT_SLUG_HEADER, hostSlug);
   // custom = root paths on host domain; path = /h/slug preview on platform
   requestHeaders.set("x-tenant-mode", opts?.mode ?? "custom");
+  // Original browser path (before rewrite) — used to hide header on home only
+  requestHeaders.set("x-pathname", req.nextUrl.pathname);
 
   if (opts?.rewriteUrl) {
     return NextResponse.rewrite(opts.rewriteUrl, {
