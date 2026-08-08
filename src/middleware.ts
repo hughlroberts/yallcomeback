@@ -6,7 +6,7 @@ import {
   resolveHostSlugForHostname,
   isPlatformPath,
 } from "./lib/custom-domains";
-import { TENANT_SLUG_HEADER } from "./lib/tenant";
+import { TENANT_SLUG_HEADER } from "./lib/tenant-constants";
 
 const { auth } = NextAuth(authConfig);
 

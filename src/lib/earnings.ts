@@ -7,6 +7,13 @@
 import { prisma } from "@/lib/db";
 import type { HostAccess } from "@/lib/scope";
 import { bookingScopeWhere } from "@/lib/scope";
+import {
+  MONTH_LABELS,
+  type MonthlyBucket,
+} from "@/lib/earnings-shared";
+
+export type { MonthlyBucket } from "@/lib/earnings-shared";
+export { MONTH_LABELS } from "@/lib/earnings-shared";
 
 export type EarningsFilters = {
   /** YYYY or empty */
@@ -14,14 +21,6 @@ export type EarningsFilters = {
   propertyId?: string;
   q?: string;
   method?: string;
-};
-
-export type MonthlyBucket = {
-  month: number; // 0–11
-  label: string;
-  paid: number;
-  upcoming: number;
-  total: number;
 };
 
 export type PaidRow = {
@@ -52,21 +51,6 @@ export type UpcomingRow = {
   checkOut: Date;
   status: string;
 };
-
-const MONTH_LABELS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
 
 function paymentMethodLabel(method: string, notes?: string | null): string {
   switch (method) {
@@ -269,7 +253,7 @@ export async function getMonthlyPerformance(
     include: { payments: true },
   });
 
-  const buckets: MonthlyBucket[] = MONTH_LABELS.map((label, month) => ({
+  const buckets: MonthlyBucket[] = [...MONTH_LABELS].map((label, month) => ({
     month,
     label,
     paid: 0,
@@ -322,5 +306,3 @@ export function availableYears(): number[] {
   const y = new Date().getFullYear();
   return [y, y - 1, y - 2];
 }
-
-export { MONTH_LABELS };

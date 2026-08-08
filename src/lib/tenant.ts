@@ -2,13 +2,12 @@ import { headers } from "next/headers";
 import type { CSSProperties } from "react";
 import type { Host } from "@prisma/client";
 import { getHostForGuestSite } from "@/lib/host";
+import { TENANT_SLUG_HEADER } from "@/lib/tenant-constants";
 
 export type HostTenant = Host;
 
-const TENANT_HEADER = "x-tenant-slug";
-
-/** Header name middleware sets when the request is on a host custom domain. */
-export const TENANT_SLUG_HEADER = TENANT_HEADER;
+/** Re-export for server modules; Edge middleware imports tenant-constants instead. */
+export { TENANT_SLUG_HEADER };
 
 /**
  * Resolve the public host brand for this request.
@@ -23,7 +22,7 @@ export const TENANT_SLUG_HEADER = TENANT_HEADER;
 export async function getRequestTenant(): Promise<HostTenant | null> {
   try {
     const h = await headers();
-    const fromHeader = h.get(TENANT_HEADER)?.trim().toLowerCase();
+    const fromHeader = h.get(TENANT_SLUG_HEADER)?.trim().toLowerCase();
     if (!fromHeader) return null;
     return getHostForGuestSite(fromHeader);
   } catch {

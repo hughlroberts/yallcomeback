@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { formatMoney } from "@/lib/utils";
-import type { MonthlyBucket } from "@/lib/earnings";
-import { MONTH_LABELS } from "@/lib/earnings";
+import type { MonthlyBucket } from "@/lib/earnings-shared";
+import { MONTH_LABELS } from "@/lib/earnings-shared";
 
 type Props = {
   year: number;
