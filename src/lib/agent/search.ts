@@ -47,6 +47,7 @@ export type AgentListingSummary = {
   petsAllowed: boolean;
   maxPets: number;
   defaultMinNights: number;
+  amenities: string[];
   coverImage: string | null;
   host: { id: string; name: string; slug: string };
   /** Deep link into marketplace UI (with search params when known) */
@@ -295,6 +296,7 @@ export async function agentSearch(
       petsAllowed: p.petsAllowed,
       maxPets: p.maxPets,
       defaultMinNights: p.defaultMinNights,
+      amenities: parseAmenities(p.amenities),
       coverImage: p.images[0]?.url
         ? absoluteUrl(origin, p.images[0].url)
         : null,

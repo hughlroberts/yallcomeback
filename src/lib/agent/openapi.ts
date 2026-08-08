@@ -156,6 +156,48 @@ export function buildOpenApiDocument(origin: string) {
           },
         },
       },
+      "/api/v1/listings/{slug}/availability": {
+        get: {
+          operationId: "getListingAvailability",
+          summary: "Available windows + blocked ranges",
+          parameters: [
+            {
+              name: "slug",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+            {
+              name: "nights",
+              in: "query",
+              schema: { type: "integer", minimum: 1 },
+              description: "Stay length (default max(2, listing min nights))",
+            },
+            {
+              name: "from",
+              in: "query",
+              schema: { type: "string", format: "date" },
+              description: "Start of search horizon (default today)",
+            },
+            {
+              name: "days",
+              in: "query",
+              schema: { type: "integer" },
+              description: "Look-ahead days (default 90, max 180)",
+            },
+            {
+              name: "maxWindows",
+              in: "query",
+              schema: { type: "integer" },
+              description: "Max free windows to return (default 10)",
+            },
+          ],
+          responses: {
+            "200": { description: "Availability payload" },
+            "404": { description: "Not found" },
+          },
+        },
+      },
       "/api/v1/openapi.json": {
         get: {
           operationId: "getOpenApi",

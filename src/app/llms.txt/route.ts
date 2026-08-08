@@ -50,6 +50,12 @@ GET ${origin}/api/v1/listings/{slug}?checkIn=2026-08-15&checkOut=2026-08-18&pets
 
 Returns description, amenities, house rules, photos, host contact, nextWindows, and a quote when dates are given.
 
+## Calendar / next free windows
+
+GET ${origin}/api/v1/listings/{slug}/availability?nights=3&from=2026-08-01&days=90
+
+Returns availableWindows plus blockedRanges for agents that need calendar reasoning.
+
 ## Deep links for humans
 
 - Search UI: ${origin}/marketplace?where=...&checkIn=...&checkOut=...&dateFlex=3&guests=4
