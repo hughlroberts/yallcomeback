@@ -11,10 +11,8 @@ import {
 } from "@/app/actions/host";
 import { setAdminBrandContext } from "@/app/actions/admin-brand";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
-import { ServicesPageBuilder } from "@/components/services-page-builder";
 import { maskSyndicationKey } from "@/lib/syndication";
 import { sitePublishStateLabel } from "@/lib/host-site";
-import { blocksFromHost } from "@/lib/services-blocks";
 import {
   hostHasBrandedWebsite,
   hostProductPath,
@@ -1038,32 +1036,41 @@ export default async function AdminBrandPage({
           </Card>
         ) : null}
 
-        {/* Services builder — branded + page on */}
+        {/* Services — edit live on the guest demo page */}
         {branded && host.sitePageServices ? (
           <Card
             id="services-builder"
-            className="order-14 scroll-mt-24 space-y-4 p-6"
+            className="order-14 scroll-mt-24 space-y-3 p-6"
           >
-            <ServicesPageBuilder
-              hostId={host.id}
-              returnTo={returnTo}
-              pageTitle={host.siteServicesTitle || "Other services"}
-              initialBlocks={blocksFromHost({
-                siteServicesBlocks: host.siteServicesBlocks,
-                siteServicesBody: host.siteServicesBody,
-              })}
-            />
-            <p className="text-xs text-stone-500">
-              Guest page:{" "}
+            <h2 className="text-lg font-semibold text-stone-900">
+              Boat rentals / other services
+            </h2>
+            <p className="text-sm text-stone-600">
+              Edit boats, photos, details, and pricing{" "}
+              <strong>live on the guest page</strong> — changes preview as you
+              type, then Save. Best for fleets (e.g. five boats with rates).
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/h/${host.slug}/services`}
+                className="inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
+              >
+                Open live services editor →
+              </Link>
               <Link
                 href={`/h/${host.slug}/services`}
                 target="_blank"
-                className="font-medium text-bonnet hover:underline"
+                className="inline-flex rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50"
               >
-                /h/{host.slug}/services →
+                Preview as guest
               </Link>
-              {" · "}
-              Drag blocks to build boat rentals, camping, tours, etc.
+            </div>
+            <p className="text-xs text-stone-500">
+              Page title above:{" "}
+              <strong>
+                {host.siteServicesTitle?.trim() || "Other services"}
+              </strong>
+              . Change it under Pages, then save brand settings.
             </p>
           </Card>
         ) : branded ? (
@@ -1075,8 +1082,8 @@ export default async function AdminBrandPage({
             <a href="#pages" className="font-medium text-bonnet hover:underline">
               Pages
             </a>
-            , save, then reopen this screen to use the drag-and-drop page
-            builder (boat rentals, camping, photos, pricing copy).
+            , save, then open the guest services page to add boat cards, photos,
+            and pricing live on the site.
           </Card>
         ) : null}
 

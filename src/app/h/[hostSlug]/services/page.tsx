@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { blocksFromHost } from "@/lib/services-blocks";
+import { ServicesPageLiveEditor } from "@/components/services-page-live-editor";
 import { ServicesPageRenderer } from "@/components/services-page-renderer";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Fixed "Other services" page — content from simple block builder (not full CMS).
+ * Fixed "Other services" page — boat fleet / extras.
+ * Hosts & platform admins edit live on this page (not only in /admin/brand).
  */
 export default async function HostServicesPage({
   params,
@@ -26,6 +30,18 @@ export default async function HostServicesPage({
     siteServicesBody: host.siteServicesBody,
   });
 
+  const session = await auth();
+  const isPlatformAdmin = session?.user?.role === "ADMIN";
+  const isThisHost =
+    session?.user?.role === "HOST" && session.user.hostId === host.id;
+  const accessInfo = resolveHostAccessInfo({
+    isPlatform: isPlatformAdmin,
+    hostId: isThisHost ? host.id : isPlatformAdmin ? host.id : null,
+    hostAccess: session?.user?.hostAccess,
+  });
+  const canEdit =
+    (isPlatformAdmin || isThisHost) && canManageBrand(accessInfo);
+
   return (
     <div>
       <div className="border-b border-stone-200 bg-stone-50">
@@ -37,27 +53,46 @@ export default async function HostServicesPage({
             {title}
           </h1>
           <p className="mt-3 text-lg text-stone-600">From {host.name}</p>
+          {canEdit ? (
+            <p className="mt-3 text-sm text-sky-900">
+              You&apos;re signed in as the host — edit boats, photos, and
+              pricing on this page.
+            </p>
+          ) : null}
         </div>
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-        <ServicesPageRenderer blocks={blocks} basePath={base} />
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Link
-            href={`${base}/stays`}
-            className="rounded-full bg-[var(--color-brand,#2563eb)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)]"
-          >
-            Book a stay
-          </Link>
-          {host.sitePageAbout ? (
+        {canEdit ? (
+          <ServicesPageLiveEditor
+            hostId={host.id}
+            basePath={base}
+            pageTitle={title}
+            initialBlocks={blocks}
+            returnTo={`${base}/services`}
+          />
+        ) : (
+          <ServicesPageRenderer blocks={blocks} basePath={base} />
+        )}
+
+        {!canEdit ? (
+          <div className="mt-10 flex flex-wrap gap-3">
             <Link
-              href={`${base}/about#contact`}
-              className="rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+              href={`${base}/stays`}
+              className="rounded-full bg-[var(--color-brand,#2563eb)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)]"
             >
-              Contact
+              Book a stay
             </Link>
-          ) : null}
-        </div>
+            {host.sitePageAbout ? (
+              <Link
+                href={`${base}/about#contact`}
+                className="rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+              >
+                Contact
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

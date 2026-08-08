@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Legacy admin-side services builder.
+ * Primary editing is now on the guest site via ServicesPageLiveEditor.
+ * Kept for optional reuse; brand admin links to the live page instead.
+ */
+
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -29,10 +35,6 @@ type Props = {
   pageTitle: string;
 };
 
-/**
- * Simple Services page builder: add fixed block types, reorder by drag or arrows.
- * Not a full website CMS.
- */
 export function ServicesPageBuilder({
   hostId,
   returnTo,
@@ -132,8 +134,8 @@ export function ServicesPageBuilder({
             Services page builder
           </h2>
           <p className="mt-0.5 text-sm text-stone-500">
-            Drag blocks to reorder. Fixed pieces only — not a full website
-            builder. Page title: <strong>{pageTitle || "Other services"}</strong>
+            Prefer editing live on the guest page. Page title:{" "}
+            <strong>{pageTitle || "Other services"}</strong>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -178,7 +180,6 @@ export function ServicesPageBuilder({
         </p>
       ) : null}
 
-      {/* Add blocks palette */}
       <div className="rounded-2xl border border-stone-200 bg-stone-50/80 p-3">
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-stone-400">
           Add a block
@@ -210,7 +211,7 @@ export function ServicesPageBuilder({
         <ul className="space-y-3">
           {blocks.length === 0 ? (
             <li className="rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-10 text-center text-sm text-stone-500">
-              No blocks yet. Add a heading, service card, or text above.
+              No blocks yet. Add a heading, boat card, or text above.
             </li>
           ) : null}
           {blocks.map((b) => (
@@ -232,10 +233,7 @@ export function ServicesPageBuilder({
               )}
             >
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span
-                  className="cursor-grab text-stone-400 active:cursor-grabbing"
-                  title="Drag to reorder"
-                >
+                <span className="cursor-grab text-stone-400 active:cursor-grabbing">
                   <GripVertical className="size-5" />
                 </span>
                 <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
@@ -294,7 +292,7 @@ export function ServicesPageBuilder({
               ) : null}
 
               {b.type === "card" ? (
-                <div className="grid gap-3 sm:grid-cols-1">
+                <div className="grid gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs text-stone-500">Title</Label>
                     <Input
@@ -305,12 +303,32 @@ export function ServicesPageBuilder({
                     />
                   </div>
                   <div className="space-y-1">
+                    <Label className="text-xs text-stone-500">Pricing</Label>
+                    <Input
+                      value={b.price || ""}
+                      placeholder="Half day $175 · Full day $275"
+                      onChange={(e) =>
+                        updateBlock(b.id, { price: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
                     <Label className="text-xs text-stone-500">Details</Label>
                     <Textarea
                       rows={3}
                       value={b.secondary || ""}
                       onChange={(e) =>
                         updateBlock(b.id, { secondary: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-stone-500">Photo URL</Label>
+                    <Input
+                      value={b.imageUrl || ""}
+                      placeholder="/uploads/… or https://…"
+                      onChange={(e) =>
+                        updateBlock(b.id, { imageUrl: e.target.value })
                       }
                     />
                   </div>
@@ -333,18 +351,21 @@ export function ServicesPageBuilder({
               ) : null}
 
               {b.type === "image" ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1 sm:col-span-2">
+                <div className="grid gap-3">
+                  <div className="space-y-1">
                     <Label className="text-xs text-stone-500">Image URL</Label>
                     <Input
-                      value={b.content}
+                      value={b.imageUrl || b.content}
                       placeholder="https://… or /uploads/…"
                       onChange={(e) =>
-                        updateBlock(b.id, { content: e.target.value })
+                        updateBlock(b.id, {
+                          imageUrl: e.target.value,
+                          content: e.target.value,
+                        })
                       }
                     />
                   </div>
-                  <div className="space-y-1 sm:col-span-2">
+                  <div className="space-y-1">
                     <Label className="text-xs text-stone-500">
                       Caption (optional)
                     </Label>
@@ -355,14 +376,6 @@ export function ServicesPageBuilder({
                       }
                     />
                   </div>
-                  {b.content ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={b.content}
-                      alt=""
-                      className="max-h-40 rounded-xl object-cover sm:col-span-2"
-                    />
-                  ) : null}
                 </div>
               ) : null}
 

@@ -397,15 +397,28 @@ export async function saveServicesBlocks(formData: FormData) {
   if (!Array.isArray(blocks)) throw new Error("Blocks must be an array");
   if (blocks.length > 40) throw new Error("Too many blocks (max 40)");
 
-  // Light sanitize
+  // Light sanitize (title/details/price/photo for cards)
   const cleaned = blocks.map((b, i) => {
     const o = b as Record<string, unknown>;
+    const type = String(o.type || "text").slice(0, 20);
+    const imageUrl =
+      o.imageUrl != null && String(o.imageUrl).trim()
+        ? String(o.imageUrl).trim().slice(0, 2000)
+        : type === "image" && o.content
+          ? String(o.content).trim().slice(0, 2000)
+          : undefined;
+    const price =
+      o.price != null && String(o.price).trim()
+        ? String(o.price).trim().slice(0, 200)
+        : undefined;
     return {
       id: String(o.id || `b_${i}`).slice(0, 40),
-      type: String(o.type || "text").slice(0, 20),
+      type,
       content: String(o.content ?? "").slice(0, 8000),
       secondary:
         o.secondary != null ? String(o.secondary).slice(0, 2000) : undefined,
+      ...(imageUrl ? { imageUrl } : {}),
+      ...(price ? { price } : {}),
     };
   });
 
@@ -420,6 +433,56 @@ export async function saveServicesBlocks(formData: FormData) {
   revalidatePath("/admin/brand");
   revalidatePath(`/h/${host.slug}`);
   revalidatePath(`/h/${host.slug}/services`);
+  revalidatePath("/services");
+}
+
+/**
+ * Upload a photo for Services page blocks (cards / image blocks).
+ * Returns URL for client-side live editor (no redirect).
+ */
+export async function uploadServicesImage(
+  formData: FormData,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const access = await requireHostAdmin();
+  if (!access) return { ok: false, error: "Unauthorized" };
+
+  const hostId = String(formData.get("hostId") || "");
+  if (!hostId) return { ok: false, error: "Missing host" };
+  if (!access.isPlatform && access.hostId !== hostId) {
+    return { ok: false, error: "Forbidden" };
+  }
+
+  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  if (!host) return { ok: false, error: "Host not found" };
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, error: "Choose an image file" };
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return { ok: false, error: "Image must be under 5 MB" };
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const extRaw = path.extname(file.name || "").toLowerCase() || ".jpg";
+  const ext = [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(extRaw)
+    ? extRaw
+    : ".jpg";
+  const filename = `${randomUUID()}${ext}`;
+  const uploadDir = path.join(
+    process.cwd(),
+    "public",
+    "uploads",
+    "hosts",
+    hostId,
+    "services",
+  );
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(path.join(uploadDir, filename), bytes);
+
+  const url = `/uploads/hosts/${hostId}/services/${filename}`;
+  revalidatePath(`/h/${host.slug}/services`);
+  return { ok: true, url };
 }
 
 /**

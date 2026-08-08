@@ -117,7 +117,8 @@ function OwnerEditLinks({
   const brand = isPlatformAdmin
     ? `/admin/brand?hostId=${host.id}`
     : "/admin/brand";
-  const services = `${brand}#services-builder`;
+  /** Live editor is on the guest services page itself */
+  const servicesLive = `/h/${host.slug}/services`;
 
   return (
     <>
@@ -129,10 +130,10 @@ function OwnerEditLinks({
       </Link>
       {host.sitePageServices ? (
         <Link
-          href={services}
+          href={servicesLive}
           className="font-semibold underline underline-offset-2"
         >
-          Edit Other services (boat rentals, etc.)
+          Edit boat rentals (live on site)
         </Link>
       ) : (
         <Link

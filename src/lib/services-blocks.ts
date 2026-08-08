@@ -1,6 +1,7 @@
 /**
  * Simple block model for the host "Other services" page.
  * Fixed block types only — not a freeform CMS.
+ * Designed for fleets (e.g. 5 boat rentals) with photo + details + pricing.
  */
 
 export type ServicesBlockType =
@@ -17,8 +18,12 @@ export type ServicesBlock = {
   type: ServicesBlockType;
   /** heading / text / button label / card title / list as newline-separated */
   content: string;
-  /** image URL, button href, or card body */
+  /** button href, or card body/details */
   secondary?: string;
+  /** image URL for image blocks and service cards */
+  imageUrl?: string;
+  /** card pricing line, e.g. "$175 half day · $275 full day" */
+  price?: string;
 };
 
 export const SERVICES_BLOCK_CATALOG: {
@@ -28,9 +33,13 @@ export const SERVICES_BLOCK_CATALOG: {
 }[] = [
   { type: "heading", label: "Heading", hint: "Section title" },
   { type: "text", label: "Text", hint: "Paragraph" },
-  { type: "card", label: "Service card", hint: "Title + details" },
+  {
+    type: "card",
+    label: "Boat / service card",
+    hint: "Photo, title, details, pricing",
+  },
   { type: "list", label: "Bullet list", hint: "One item per line" },
-  { type: "image", label: "Image", hint: "Photo URL" },
+  { type: "image", label: "Image", hint: "Full-width photo" },
   { type: "button", label: "Button / link", hint: "Label + URL" },
   { type: "divider", label: "Divider", hint: "Horizontal line" },
 ];
@@ -39,38 +48,68 @@ export function newBlockId(): string {
   return `b_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Starter layout for a boat rentals / lake extras page. */
+function boatCard(
+  name: string,
+  details: string,
+  price = "Add pricing",
+): ServicesBlock {
+  return {
+    id: newBlockId(),
+    type: "card",
+    content: name,
+    secondary: details,
+    price,
+    imageUrl: "",
+  };
+}
+
+/**
+ * Starter layout for a boat rentals fleet page (Cherokee-style: ~5 boats).
+ * Hosts fill in photos, real names, details, and rates on the live page.
+ */
 export function boatRentalsStarterBlocks(): ServicesBlock[] {
   return [
     {
       id: newBlockId(),
       type: "heading",
-      content: "Boat rentals & lake extras",
+      content: "Boat rentals",
     },
     {
       id: newBlockId(),
       type: "text",
       content:
-        "Make the most of Cedar Creek Lake. Reserve boats and lake gear when you book your stay — or ask us for the season’s rates.",
+        "Make the most of the lake. Pick a boat, check the rate, and message us to reserve with your stay.",
     },
-    {
-      id: newBlockId(),
-      type: "card",
-      content: "Pontoon boat",
-      secondary:
-        "Half-day and full-day rentals. Perfect for families and slow lake days. Capacity and rates available on request.",
-    },
-    {
-      id: newBlockId(),
-      type: "card",
-      content: "Kayaks & paddle gear",
-      secondary:
-        "Explore the shoreline at your own pace. Ask about daily rates and life jackets.",
-    },
+    boatCard(
+      "Boat 1 — name this pontoon or ski boat",
+      "Capacity, length, what’s included (life jackets, cooler, etc.).",
+      "Half day $— · Full day $—",
+    ),
+    boatCard(
+      "Boat 2",
+      "Short description for guests — who it’s best for, key features.",
+      "Half day $— · Full day $—",
+    ),
+    boatCard(
+      "Boat 3",
+      "Short description for guests — who it’s best for, key features.",
+      "Half day $— · Full day $—",
+    ),
+    boatCard(
+      "Boat 4",
+      "Short description for guests — who it’s best for, key features.",
+      "Half day $— · Full day $—",
+    ),
+    boatCard(
+      "Boat 5",
+      "Short description for guests — who it’s best for, key features.",
+      "Half day $— · Full day $—",
+    ),
     {
       id: newBlockId(),
       type: "list",
-      content: "Life jackets included\nLocal launch guidance\nBook with your stay or message us",
+      content:
+        "Life jackets included\nLocal launch guidance\nBook with your stay or message us",
     },
     {
       id: newBlockId(),
@@ -95,8 +134,11 @@ export function createBlock(type: ServicesBlockType): ServicesBlock {
       return {
         id: newBlockId(),
         type,
-        content: "Pontoon boat rental",
-        secondary: "Half-day and full-day options. Book when you reserve your stay.",
+        content: "New boat or service",
+        secondary:
+          "Add capacity, features, and what’s included. Guests see this on your site.",
+        price: "Half day $— · Full day $—",
+        imageUrl: "",
       };
     case "list":
       return {
@@ -109,7 +151,8 @@ export function createBlock(type: ServicesBlockType): ServicesBlock {
         id: newBlockId(),
         type,
         content: "",
-        secondary: "Photo of our pontoon",
+        secondary: "Photo caption",
+        imageUrl: "",
       };
     case "button":
       return {
@@ -125,7 +168,9 @@ export function createBlock(type: ServicesBlockType): ServicesBlock {
   }
 }
 
-export function parseServicesBlocks(raw: string | null | undefined): ServicesBlock[] {
+export function parseServicesBlocks(
+  raw: string | null | undefined,
+): ServicesBlock[] {
   if (!raw?.trim()) return [];
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -138,12 +183,24 @@ export function parseServicesBlocks(raw: string | null | undefined): ServicesBlo
           typeof (b as ServicesBlock).id === "string" &&
           typeof (b as ServicesBlock).type === "string",
       )
-      .map((b) => ({
-        id: b.id,
-        type: b.type as ServicesBlockType,
-        content: String(b.content ?? ""),
-        secondary: b.secondary != null ? String(b.secondary) : undefined,
-      }));
+      .map((b) => {
+        const type = b.type as ServicesBlockType;
+        // Legacy image blocks stored URL in content
+        const imageUrl =
+          b.imageUrl != null
+            ? String(b.imageUrl)
+            : type === "image" && b.content
+              ? String(b.content)
+              : undefined;
+        return {
+          id: b.id,
+          type,
+          content: String(b.content ?? ""),
+          secondary: b.secondary != null ? String(b.secondary) : undefined,
+          imageUrl: imageUrl || undefined,
+          price: b.price != null ? String(b.price) : undefined,
+        };
+      });
   } catch {
     return [];
   }
@@ -164,5 +221,18 @@ export function blocksFromHost(opts: {
 }
 
 export function serializeServicesBlocks(blocks: ServicesBlock[]): string {
-  return JSON.stringify(blocks);
+  return JSON.stringify(
+    blocks.map((b) => ({
+      id: b.id,
+      type: b.type,
+      content: b.content,
+      ...(b.secondary != null && b.secondary !== ""
+        ? { secondary: b.secondary }
+        : {}),
+      ...(b.imageUrl != null && b.imageUrl !== ""
+        ? { imageUrl: b.imageUrl }
+        : {}),
+      ...(b.price != null && b.price !== "" ? { price: b.price } : {}),
+    })),
+  );
 }
