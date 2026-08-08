@@ -102,8 +102,14 @@ export function canManageHostingBilling(info: HostAccessInfo): boolean {
   return info.isPlatform || info.level === "OWNER";
 }
 
+/** True for any resolved host-access level (caller already gated HOST/ADMIN). */
 export function canAccessAdmin(info: HostAccessInfo): boolean {
-  return true; // only called when already HOST/ADMIN
+  return (
+    info.isPlatform ||
+    info.level === "OWNER" ||
+    info.level === "FULL" ||
+    info.level === "LIMITED"
+  );
 }
 
 /** Extend HostAccess with permission flags for pages */

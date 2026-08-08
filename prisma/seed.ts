@@ -55,7 +55,7 @@ async function main() {
     },
   });
 
-  const planListing = await prisma.hostingPlan.create({
+  await prisma.hostingPlan.create({
     data: {
       name: "Listing hosting",
       slug: "listing",

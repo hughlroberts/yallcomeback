@@ -70,7 +70,6 @@ export default async function HomePage() {
     <div>
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
       />
       {/* Hero — photo stays; brand only affects chrome/palette */}
