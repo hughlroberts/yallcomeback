@@ -771,13 +771,18 @@ export default async function AdminBrandPage({
                 websites even when it is not lodging.
               </p>
               <div className="space-y-1.5">
-                <Label htmlFor="siteServicesTitle">Page title</Label>
+                <Label htmlFor="siteServicesTitle">
+                  Page name (nav, hero button, footer)
+                </Label>
                 <Input
                   id="siteServicesTitle"
                   name="siteServicesTitle"
                   defaultValue={host.siteServicesTitle || ""}
                   placeholder="Boat rentals & lake extras"
                 />
+                <p className="text-xs text-stone-500">
+                  Shown in the site header and home hero instead of “Services”.
+                </p>
               </div>
               <input
                 type="hidden"

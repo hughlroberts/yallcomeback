@@ -8,7 +8,13 @@ import { hostSiteMarkUrl } from "@/lib/host-images";
 type Props = {
   host: Pick<
     Host,
-    "name" | "slug" | "logoUrl" | "tagline" | "sitePageAbout" | "sitePageServices"
+    | "name"
+    | "slug"
+    | "logoUrl"
+    | "tagline"
+    | "sitePageAbout"
+    | "sitePageServices"
+    | "siteServicesTitle"
   >;
   /** Owner/profile photo when no brand logo is set */
   profileAvatarUrl?: string | null;
@@ -18,7 +24,7 @@ type Props = {
 
 /**
  * Guest chrome for a host-owned site (custom domain or /h/[slug]).
- * Fixed nav only: Book/Stays always; About & Services when toggled on.
+ * Fixed nav: Stays, About, Services (custom label), Book.
  * Mark: brand logo if set, otherwise host profile photo.
  */
 export function HostSiteHeader({

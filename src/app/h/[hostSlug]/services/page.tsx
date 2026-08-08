@@ -31,7 +31,7 @@ export default async function HostServicesPage({
       <div className="border-b border-stone-200 bg-stone-50">
         <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
           <p className="text-sm font-semibold uppercase tracking-wide text-[var(--color-brand,#2563eb)]">
-            Services
+            {title}
           </p>
           <h1 className="mt-2 font-display text-4xl font-medium tracking-tight text-stone-900">
             {title}

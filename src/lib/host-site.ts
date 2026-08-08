@@ -39,9 +39,15 @@ export type HostSiteNavItem = {
   primary?: boolean;
 };
 
-/** Fixed nav: booking always first; optional About + Services only. */
+/**
+ * Fixed guest-site nav pages (load under sticky header chrome).
+ * Services label comes from host.siteServicesTitle when set.
+ */
 export function hostSiteNavItems(
-  host: Pick<Host, "sitePageAbout" | "sitePageServices">,
+  host: Pick<
+    Host,
+    "sitePageAbout" | "sitePageServices" | "siteServicesTitle"
+  >,
   basePath = "",
 ): HostSiteNavItem[] {
   const base = basePath || "";
@@ -53,9 +59,21 @@ export function hostSiteNavItems(
     items.push({ href: `${base}/about` || "/about", label: "About" });
   }
   if (host.sitePageServices) {
-    items.push({ href: `${base}/services` || "/services", label: "Services" });
+    const servicesLabel =
+      host.siteServicesTitle?.trim() || "Services";
+    items.push({
+      href: `${base}/services` || "/services",
+      label: servicesLabel,
+    });
   }
   return items;
+}
+
+/** Short label for hero/footer CTAs (Services page display name). */
+export function hostServicesPageLabel(
+  host: Pick<Host, "siteServicesTitle">,
+): string {
+  return host.siteServicesTitle?.trim() || "Services";
 }
 
 export type HostSocialLink = {

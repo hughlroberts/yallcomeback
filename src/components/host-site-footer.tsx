@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Host } from "@prisma/client";
-import { hostSiteNavItems, hostSocialLinks } from "@/lib/host-site";
+import { hostSiteMarkUrl } from "@/lib/host-images";
+import { hostSocialLinks } from "@/lib/host-site";
 
 type Props = {
   host: Pick<
@@ -16,33 +17,43 @@ type Props = {
     | "siteAddress"
     | "sitePageAbout"
     | "sitePageServices"
+    | "siteServicesTitle"
     | "socialFacebook"
     | "socialX"
     | "socialInstagram"
     | "socialTiktok"
   >;
+  profileAvatarUrl?: string | null;
   /** Empty on custom domain; `/h/slug` when previewing on the platform. */
   basePath?: string;
 };
 
 /**
- * Host-owned footer. Fixed pages + contact + socials only.
- * Tiny “Powered by” keeps stack credit without stealing the customer.
+ * Host-owned footer: brand + contact + socials only.
+ * Page links live in the header / hero (not duplicated under Explore).
  */
-export function HostSiteFooter({ host, basePath = "" }: Props) {
-  const home = basePath || "/";
-  const nav = hostSiteNavItems(host, basePath).filter((i) => !i.primary);
+export function HostSiteFooter({
+  host,
+  profileAvatarUrl = null,
+  basePath = "",
+}: Props) {
   const socials = hostSocialLinks(host);
+  const markUrl = hostSiteMarkUrl(host, profileAvatarUrl);
+  const markIsLogo = Boolean(host.logoUrl?.trim());
 
   return (
     <footer className="mt-auto border-t border-stone-200 bg-stone-50 pb-[env(safe-area-inset-bottom,0px)] text-stone-700">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="flex flex-row items-start gap-4 sm:col-span-2 lg:col-span-1">
-            {host.logoUrl ? (
-              <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-stone-200">
+        <div className="grid gap-10 sm:grid-cols-2">
+          <div className="flex flex-row items-start gap-4">
+            {markUrl ? (
+              <span
+                className={`relative size-14 shrink-0 overflow-hidden bg-white ring-1 ring-stone-200 ${
+                  markIsLogo ? "rounded-lg" : "rounded-full"
+                }`}
+              >
                 <Image
-                  src={host.logoUrl}
+                  src={markUrl}
                   alt=""
                   fill
                   className="object-cover"
@@ -63,29 +74,6 @@ export function HostSiteFooter({ host, basePath = "" }: Props) {
                 </p>
               )}
             </div>
-          </div>
-
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">
-              Explore
-            </p>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li>
-                <Link href={home} className="hover:text-[var(--color-brand)]">
-                  Book
-                </Link>
-              </li>
-              {nav.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="hover:text-[var(--color-brand)]"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
           </div>
 
           <div>

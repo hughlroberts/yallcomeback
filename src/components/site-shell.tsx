@@ -72,7 +72,11 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
         basePath={basePath}
       />
       <main className="flex-1">{children}</main>
-      <HostSiteFooter host={tenant} basePath={basePath} />
+      <HostSiteFooter
+        host={tenant}
+        profileAvatarUrl={anyHostUser?.avatarUrl}
+        basePath={basePath}
+      />
     </div>
   );
 }
