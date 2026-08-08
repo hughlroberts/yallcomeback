@@ -34,8 +34,9 @@ export function HostSiteHeader({
   basePath = "",
 }: Props) {
   const home = basePath || "/";
+  // Header: Home + page links (Stays, About, Services). No separate Book —
+  // Book was a duplicate of Stays.
   const nav = hostSiteNavItems(host, basePath).filter((item) => !item.primary);
-  const bookHref = basePath ? `${basePath}/stays` : "/stays";
   const markUrl = hostSiteMarkUrl(host, profileAvatarUrl);
   const markIsLogo = Boolean(host.logoUrl?.trim());
   const markFit = hostSiteMarkObjectFit(host);
@@ -98,12 +99,6 @@ export function HostSiteHeader({
               {item.label}
             </HeaderNavLink>
           ))}
-          <Link
-            href={bookHref}
-            className="ml-0.5 rounded-full bg-[var(--color-brand,#2563eb)] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[var(--color-brand-hover,#1d4ed8)] sm:ml-1 sm:px-4 sm:text-sm"
-          >
-            Book
-          </Link>
         </nav>
       </div>
     </header>
