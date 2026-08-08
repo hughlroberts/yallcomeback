@@ -518,11 +518,20 @@ export default async function AdminBrandPage({
                         </span>
                       </label>
                       {hasLogo ? (
-                        <input
-                          type="hidden"
-                          name="logoUrl"
-                          value={host.logoUrl || ""}
-                        />
+                        <div className="mt-3 space-y-1.5">
+                          <Label htmlFor="logoUrl" className="text-xs text-stone-500">
+                            Logo URL or path
+                          </Label>
+                          <Input
+                            id="logoUrl"
+                            name="logoUrl"
+                            defaultValue={host.logoUrl || ""}
+                            placeholder="/brand/hosts/your-logo.png"
+                          />
+                          <p className="text-[11px] text-stone-400">
+                            Prefer a path under /brand/… so deploys keep the file.
+                          </p>
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -1026,6 +1035,14 @@ export default async function AdminBrandPage({
             <p className="text-sm text-stone-500">
               Upload only if you want a logo in the guest website header instead
               of your profile photo. Square PNG or JPG under 4&nbsp;MB.
+            </p>
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              Note: files uploaded here are stored on the app server and can be
+              lost when the site redeploys. For a permanent logo, put the file
+              under <code className="font-mono">public/brand/hosts/</code> in
+              the project and paste that path (e.g.{" "}
+              <code className="font-mono">/brand/hosts/cherokee-landing-logo.png</code>
+              ), or re-upload after deploy.
             </p>
             <form
               action={uploadHostLogo}

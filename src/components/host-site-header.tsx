@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Host } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { hostSiteNavItems } from "@/lib/host-site";
-import { hostSiteMarkUrl } from "@/lib/host-images";
+import { hostSiteMarkObjectFit, hostSiteMarkUrl } from "@/lib/host-images";
 
 type Props = {
   host: Pick<
@@ -37,6 +37,7 @@ export function HostSiteHeader({
   const bookHref = basePath ? `${basePath}/stays` : "/stays";
   const markUrl = hostSiteMarkUrl(host, profileAvatarUrl);
   const markIsLogo = Boolean(host.logoUrl?.trim());
+  const markFit = hostSiteMarkObjectFit(host);
 
   return (
     <header className="sticky top-0 z-[200] border-b border-stone-200/80 bg-white/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
@@ -49,15 +50,17 @@ export function HostSiteHeader({
           {markUrl ? (
             <span
               className={cn(
-                "relative size-9 shrink-0 overflow-hidden bg-stone-100 ring-1 ring-stone-200/80 sm:size-12",
-                markIsLogo ? "rounded-lg" : "rounded-full",
+                "relative size-9 shrink-0 overflow-hidden ring-1 ring-stone-200/80 sm:size-12",
+                markIsLogo
+                  ? "rounded-full bg-white"
+                  : "rounded-full bg-stone-100",
               )}
             >
               <Image
                 src={markUrl}
                 alt=""
                 fill
-                className="object-cover"
+                className={markFit === "contain" ? "object-contain p-0.5" : "object-cover"}
                 sizes="48px"
                 priority
                 unoptimized

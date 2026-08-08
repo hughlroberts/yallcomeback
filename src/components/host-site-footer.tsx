@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Host } from "@prisma/client";
 import { MessageHostButton } from "@/components/message-host-form";
-import { hostSiteMarkUrl } from "@/lib/host-images";
+import { hostSiteMarkObjectFit, hostSiteMarkUrl } from "@/lib/host-images";
 import { hostSocialLinks } from "@/lib/host-site";
 
 type Props = {
@@ -42,6 +42,7 @@ export function HostSiteFooter({
   const socials = hostSocialLinks(host);
   const markUrl = hostSiteMarkUrl(host, profileAvatarUrl);
   const markIsLogo = Boolean(host.logoUrl?.trim());
+  const markFit = hostSiteMarkObjectFit(host);
   const hasDirectContact = Boolean(
     host.siteAddress || host.contactPhone || host.contactEmail,
   );
@@ -52,16 +53,16 @@ export function HostSiteFooter({
         <div className="grid gap-10 sm:grid-cols-2">
           <div className="flex flex-row items-start gap-4">
             {markUrl ? (
-              <span
-                className={`relative size-14 shrink-0 overflow-hidden bg-white ring-1 ring-stone-200 ${
-                  markIsLogo ? "rounded-lg" : "rounded-full"
-                }`}
-              >
+              <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-stone-200">
                 <Image
                   src={markUrl}
                   alt=""
                   fill
-                  className="object-cover"
+                  className={
+                    markFit === "contain" || markIsLogo
+                      ? "object-contain p-0.5"
+                      : "object-cover"
+                  }
                   sizes="56px"
                   unoptimized
                 />
