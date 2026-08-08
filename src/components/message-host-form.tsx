@@ -17,8 +17,12 @@ function useIsClient() {
 }
 
 type FormProps = {
-  propertyId: string;
-  propertyTitle: string;
+  /** Listing thread (book / marketplace). Optional if hostId is set. */
+  propertyId?: string;
+  propertyTitle?: string;
+  /** Brand-site contact (About / footer) without a specific listing. */
+  hostId?: string;
+  hostName?: string;
   bookingId?: string;
   defaultName?: string;
   defaultEmail?: string;
@@ -33,6 +37,8 @@ type FormProps = {
 function MessageHostFields({
   propertyId,
   propertyTitle,
+  hostId,
+  hostName,
   bookingId,
   defaultName = "",
   defaultEmail = "",
@@ -43,17 +49,27 @@ function MessageHostFields({
 }: FormProps & { onCancel?: () => void }) {
   const hideContact =
     hideContactFields && Boolean(defaultName.trim() && defaultEmail.trim());
+  const aboutLabel =
+    propertyTitle?.trim() ||
+    hostName?.trim() ||
+    "this host";
 
   return (
     <form action={startGuestConversation} className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold text-stone-900">Message host</h3>
         <p className="mt-1 text-sm text-stone-500">
-          About {propertyTitle}. Completely optional. Your thread opens in
-          Messages after you send.
+          {propertyTitle
+            ? `About ${propertyTitle}. Optional — your thread opens in Messages after you send.`
+            : `Message ${aboutLabel} through Yall Come Back. Prefer this if you don’t want to call or email. Your thread opens in Messages after you send.`}
         </p>
       </div>
-      <input type="hidden" name="propertyId" value={propertyId} />
+      {propertyId ? (
+        <input type="hidden" name="propertyId" value={propertyId} />
+      ) : null}
+      {hostId && !propertyId ? (
+        <input type="hidden" name="hostId" value={hostId} />
+      ) : null}
       {bookingId ? (
         <input type="hidden" name="bookingId" value={bookingId} />
       ) : null}
@@ -104,7 +120,7 @@ function MessageHostFields({
           <Input
             id="subject"
             name="subject"
-            placeholder="Dates, pets, arrival…"
+            placeholder="Dates, boats, arrival…"
             defaultValue={defaultSubject}
           />
         </div>
@@ -126,12 +142,14 @@ function MessageHostFields({
 }
 
 /**
- * Blue “Message host” control that opens a compact dialog.
- * Replaces the old full-width email-style card on listing pages.
+ * “Message host” control — listing pages or host-site contact (About / footer).
+ * Opens the same messaging tools guests use on listings.
  */
 export function MessageHostButton({
   propertyId,
   propertyTitle,
+  hostId,
+  hostName,
   bookingId,
   defaultName,
   defaultEmail,
@@ -144,11 +162,12 @@ export function MessageHostButton({
 }: FormProps & {
   label?: string;
   className?: string;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "link";
 }) {
   const titleId = useId();
   const [open, setOpen] = useState(false);
   const mounted = useIsClient();
+  const aboutLabel = propertyTitle?.trim() || hostName?.trim() || "host";
 
   useEffect(() => {
     if (!open) return;
@@ -170,10 +189,12 @@ export function MessageHostButton({
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet",
-          variant === "secondary"
-            ? "border border-lupine/40 bg-white text-bonnet hover:bg-petal"
-            : "bg-bonnet text-white hover:bg-bonnet-hover",
+          "inline-flex items-center justify-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet",
+          variant === "link"
+            ? "rounded-none p-0 text-sm font-medium text-[var(--color-brand,#2563eb)] underline-offset-2 hover:underline"
+            : variant === "secondary"
+              ? "rounded-lg border border-lupine/40 bg-white px-6 py-3 text-sm font-semibold text-bonnet shadow-sm hover:bg-petal"
+              : "rounded-lg bg-bonnet px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover",
           className,
         )}
       >
@@ -206,11 +227,13 @@ export function MessageHostButton({
                   </button>
                 </div>
                 <div id={titleId} className="sr-only">
-                  Message host about {propertyTitle}
+                  Message {aboutLabel}
                 </div>
                 <MessageHostFields
                   propertyId={propertyId}
                   propertyTitle={propertyTitle}
+                  hostId={hostId}
+                  hostName={hostName}
                   bookingId={bookingId}
                   defaultName={defaultName}
                   defaultEmail={defaultEmail}

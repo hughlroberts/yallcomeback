@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Host } from "@prisma/client";
+import { MessageHostButton } from "@/components/message-host-form";
 import { hostSiteMarkUrl } from "@/lib/host-images";
 import { hostSocialLinks } from "@/lib/host-site";
 
 type Props = {
   host: Pick<
     Host,
+    | "id"
     | "name"
     | "slug"
     | "logoUrl"
@@ -29,7 +31,7 @@ type Props = {
 };
 
 /**
- * Host-owned footer: brand + contact + socials only.
+ * Host-owned footer: brand + contact (address/phone/email) + message + socials.
  * Page links live in the header / hero (not duplicated under Explore).
  */
 export function HostSiteFooter({
@@ -40,6 +42,9 @@ export function HostSiteFooter({
   const socials = hostSocialLinks(host);
   const markUrl = hostSiteMarkUrl(host, profileAvatarUrl);
   const markIsLogo = Boolean(host.logoUrl?.trim());
+  const hasDirectContact = Boolean(
+    host.siteAddress || host.contactPhone || host.contactEmail,
+  );
 
   return (
     <footer className="mt-auto border-t border-stone-200 bg-stone-50 pb-[env(safe-area-inset-bottom,0px)] text-stone-700">
@@ -86,16 +91,6 @@ export function HostSiteFooter({
                   {host.siteAddress}
                 </li>
               ) : null}
-              {host.contactEmail ? (
-                <li>
-                  <a
-                    href={`mailto:${host.contactEmail}`}
-                    className="hover:text-[var(--color-brand)]"
-                  >
-                    {host.contactEmail}
-                  </a>
-                </li>
-              ) : null}
               {host.contactPhone ? (
                 <li>
                   <a
@@ -106,24 +101,35 @@ export function HostSiteFooter({
                   </a>
                 </li>
               ) : null}
-              {!host.contactEmail &&
-              !host.contactPhone &&
-              !host.siteAddress &&
-              host.sitePageAbout ? (
-                <li className="text-stone-500">
-                  <Link
-                    href={`${basePath}/about` || "/about"}
+              {host.contactEmail ? (
+                <li>
+                  <a
+                    href={`mailto:${host.contactEmail}`}
                     className="hover:text-[var(--color-brand)]"
                   >
-                    Get in touch →
-                  </Link>
+                    {host.contactEmail}
+                  </a>
                 </li>
               ) : null}
-              {!host.contactEmail &&
-              !host.contactPhone &&
-              !host.siteAddress &&
-              !host.sitePageAbout ? (
-                <li className="text-stone-500">Book a stay to message us.</li>
+              <li>
+                <MessageHostButton
+                  hostId={host.id}
+                  hostName={host.name}
+                  label="Send a message"
+                  variant="link"
+                  defaultSubject={`Question for ${host.name}`}
+                  className="font-medium"
+                />
+              </li>
+              {!hasDirectContact && host.sitePageAbout ? (
+                <li className="text-stone-500">
+                  <Link
+                    href={`${basePath}/about#contact` || "/about#contact"}
+                    className="hover:text-[var(--color-brand)]"
+                  >
+                    More contact options →
+                  </Link>
+                </li>
               ) : null}
             </ul>
 

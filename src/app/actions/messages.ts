@@ -42,8 +42,14 @@ function mergeExternalStatus(
   return `${existing},${next}`;
 }
 
+/**
+ * Start a guest → host conversation.
+ * - Listing / booking: pass propertyId (optional bookingId)
+ * - Host website contact: pass hostId only (no listing required)
+ */
 export async function startGuestConversation(formData: FormData) {
-  const propertyId = String(formData.get("propertyId") || "");
+  const propertyId = String(formData.get("propertyId") || "").trim();
+  const hostIdRaw = String(formData.get("hostId") || "").trim();
   const bookingId = String(formData.get("bookingId") || "") || null;
   const guestName = String(formData.get("guestName") || "").trim();
   const guestEmail = String(formData.get("guestEmail") || "").trim();
@@ -51,28 +57,54 @@ export async function startGuestConversation(formData: FormData) {
   const subject = String(formData.get("subject") || "").trim() || null;
   const body = String(formData.get("body") || "").trim();
 
-  if (!propertyId || !guestName || !guestEmail || !body) {
+  if (!guestName || !guestEmail || !body) {
     throw new Error("Name, email, and message are required");
   }
+  if (!propertyId && !hostIdRaw) {
+    throw new Error("Host or listing is required");
+  }
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
-    include: { host: true },
-  });
-  if (!property || !property.published) throw new Error("Property not found");
+  let hostId: string;
+  let propertyTitle: string | null = null;
+  let resolvedPropertyId: string | null = null;
+  let hostContactEmail: string | null = null;
+  let hostName = "your host";
+
+  if (propertyId) {
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+      include: { host: true },
+    });
+    if (!property || !property.published) throw new Error("Property not found");
+    hostId = property.hostId;
+    propertyTitle = property.title;
+    resolvedPropertyId = property.id;
+    hostContactEmail = property.host.contactEmail;
+    hostName = property.host.name;
+  } else {
+    const host = await prisma.host.findUnique({ where: { id: hostIdRaw } });
+    if (!host || !host.active) throw new Error("Host not found");
+    hostId = host.id;
+    hostContactEmail = host.contactEmail;
+    hostName = host.name;
+  }
 
   const session = await auth();
 
   const conversation = await prisma.conversation.create({
     data: {
-      hostId: property.hostId,
-      propertyId: property.id,
+      hostId,
+      propertyId: resolvedPropertyId,
       bookingId,
       guestUserId: session?.user?.id,
       guestName,
       guestEmail,
       guestPhone,
-      subject: subject || `Question about ${property.title}`,
+      subject:
+        subject ||
+        (propertyTitle
+          ? `Question about ${propertyTitle}`
+          : `Message for ${hostName}`),
       lastMessageAt: new Date(),
       messages: {
         create: {
@@ -86,13 +118,15 @@ export async function startGuestConversation(formData: FormData) {
   });
 
   // Email host(s) about the new guest message
-  const hostEmails = await hostNotifyEmails(
-    property.hostId,
-    property.host.contactEmail,
-  );
+  const hostEmails = await hostNotifyEmails(hostId, hostContactEmail);
   const emailSubject =
-    subject || `New message · ${property.title}`;
-  const emailBody = `${guestName} (${guestEmail}) wrote about ${property.title}:\n\n${body}`;
+    subject ||
+    (propertyTitle
+      ? `New message · ${propertyTitle}`
+      : `New message · ${hostName}`);
+  const emailBody = propertyTitle
+    ? `${guestName} (${guestEmail}) wrote about ${propertyTitle}:\n\n${body}`
+    : `${guestName} (${guestEmail}) messaged ${hostName} from the website contact form:\n\n${body}`;
 
   let externalStatus: string | null = null;
   let externalId: string | null = null;

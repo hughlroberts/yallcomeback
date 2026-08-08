@@ -702,7 +702,7 @@ export default async function AdminBrandPage({
             </Card>
           ) : null}
 
-          {/* —— About content (branded) —— */}
+          {/* —— About story (branded) —— */}
           {branded ? (
             <Card className="order-7 space-y-5 p-6">
               <h2 className="text-lg font-semibold text-stone-900">
@@ -722,6 +722,22 @@ export default async function AdminBrandPage({
                   placeholder="Tell guests who you are…"
                 />
               </div>
+            </Card>
+          ) : null}
+
+          {/* —— Public contact → About + footer —— */}
+          {branded ? (
+            <Card id="contact-details" className="order-7 space-y-5 p-6">
+              <h2 className="text-lg font-semibold text-stone-900">
+                Contact details
+              </h2>
+              <p className="text-sm text-stone-500">
+                Address, phone, and email appear on the{" "}
+                <strong>About → Contact</strong> section and in the{" "}
+                <strong>site footer</strong>. Guests can also use{" "}
+                <strong>Send a message</strong> (same Messages tools as
+                listings) if they prefer not to call or email.
+              </p>
               <div className="space-y-1.5">
                 <Label htmlFor="siteAddress">Address</Label>
                 <Textarea
@@ -729,20 +745,10 @@ export default async function AdminBrandPage({
                   name="siteAddress"
                   rows={2}
                   defaultValue={host.siteAddress || ""}
-                  placeholder="123 Lake Rd&#10;Log Cabin, TX 75148"
+                  placeholder={"123 Lake Rd\nLog Cabin, TX 75148"}
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="contactEmail">Public email</Label>
-                  <Input
-                    id="contactEmail"
-                    name="contactEmail"
-                    type="email"
-                    defaultValue={host.contactEmail || ""}
-                    placeholder="stay@example.com"
-                  />
-                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="contactPhone">Public phone</Label>
                   <Input
@@ -753,7 +759,27 @@ export default async function AdminBrandPage({
                     placeholder="(903) 555-0100"
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="contactEmail">Public email</Label>
+                  <Input
+                    id="contactEmail"
+                    name="contactEmail"
+                    type="email"
+                    defaultValue={host.contactEmail || ""}
+                    placeholder="stay@example.com"
+                  />
+                </div>
               </div>
+              <p className="text-xs text-stone-500">
+                After save, open{" "}
+                <Link
+                  href={`/h/${host.slug}/about#contact`}
+                  className="font-medium text-bonnet hover:underline"
+                >
+                  /h/{host.slug}/about#contact
+                </Link>{" "}
+                to preview. Messaging works even if phone/email are blank.
+              </p>
             </Card>
           ) : null}
 

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MessageHostButton } from "@/components/message-host-form";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { hostSocialLinks } from "@/lib/host-site";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Fixed About page (toggle on/off in Brand admin).
- * Includes story + phone, address, email, socials — not a freeform CMS page.
+ * Story + address, phone, email, in-app message, socials — not a freeform CMS.
  */
 export default async function HostAboutPage({
   params,
@@ -22,6 +23,9 @@ export default async function HostAboutPage({
 
   const base = await hostPublicBasePath(host.slug);
   const socials = hostSocialLinks(host);
+  const hasDirectContact = Boolean(
+    host.siteAddress || host.contactPhone || host.contactEmail,
+  );
 
   return (
     <div>
@@ -76,15 +80,17 @@ export default async function HostAboutPage({
           </div>
         </div>
 
-        {/* Contact block — always part of About when page is on */}
+        {/* Contact — address / phone / email + platform messaging */}
         <section
           id="contact"
           className="mt-14 scroll-mt-24 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8"
         >
           <h2 className="text-lg font-semibold text-stone-900">Contact</h2>
           <p className="mt-1 text-sm text-stone-500">
-            You&apos;re contacting {host.name} directly.
+            You&apos;re contacting {host.name} directly. Call, email, or send a
+            message here — same messaging tools as on a listing.
           </p>
+
           <dl className="mt-6 space-y-4 text-sm">
             {host.siteAddress ? (
               <div>
@@ -126,13 +132,25 @@ export default async function HostAboutPage({
                 </dd>
               </div>
             ) : null}
-            {!host.siteAddress && !host.contactPhone && !host.contactEmail ? (
+            {!hasDirectContact ? (
               <p className="text-stone-500">
-                Contact details coming soon. Book a stay to message us after you
-                reserve.
+                Prefer not to call? Send a message below — we reply in Messages.
               </p>
             ) : null}
           </dl>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-stone-100 pt-6">
+            <MessageHostButton
+              hostId={host.id}
+              hostName={host.name}
+              label="Send a message"
+              defaultSubject={`Question for ${host.name}`}
+            />
+            <p className="text-sm text-stone-500">
+              Optional alternative to phone or email. Opens a thread you can both
+              use in Messages.
+            </p>
+          </div>
 
           {socials.length > 0 ? (
             <div className="mt-8 border-t border-stone-100 pt-6">
