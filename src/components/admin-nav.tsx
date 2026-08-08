@@ -2,7 +2,12 @@
 
 import { NavLink } from "@/components/nav-link";
 
-type LinkItem = { href: string; label: string; exact?: boolean };
+type LinkItem = {
+  href: string;
+  label: string;
+  exact?: boolean;
+  excludePrefixes?: string[];
+};
 
 export function AdminNav({
   label,
@@ -18,7 +23,13 @@ export function AdminNav({
       </span>
       <div className="-mx-1 flex items-center gap-0.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden">
         {links.map((l) => (
-          <NavLink key={l.href} href={l.href} exact={l.exact}>
+          <NavLink
+            key={l.href}
+            href={l.href}
+            exact={l.exact}
+            excludePrefixes={l.excludePrefixes}
+            variant="solid"
+          >
             {l.label}
           </NavLink>
         ))}

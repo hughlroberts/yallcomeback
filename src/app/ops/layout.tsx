@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { OpsNav } from "@/components/ops-nav";
 import { requirePlatformAdmin } from "@/lib/auth";
 
 /**
@@ -18,7 +19,12 @@ export default async function OpsLayout({
   }
 
   const links = [
-    { href: "/ops/hosting", label: "Website hosting" },
+    {
+      href: "/ops/hosting",
+      label: "Website hosting",
+      // Don't stay "active" on /ops/hosting/plans
+      excludePrefixes: ["/ops/hosting/plans"],
+    },
     { href: "/ops/hosting/plans", label: "Plans & pricing" },
     { href: "/ops/users", label: "Users" },
     { href: "/ops/pricing-comps", label: "Pricing comps" },
@@ -41,21 +47,11 @@ export default async function OpsLayout({
               Yall Come Back ops
             </Link>
           </div>
-          <nav className="flex flex-wrap items-center gap-0.5">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              >
-                {l.label}
-              </Link>
-            ))}
-          </nav>
+          <OpsNav links={links} />
           <div className="ml-auto flex items-center gap-3 text-sm">
             <Link
               href="/admin"
-              className="font-medium text-bonnet hover:text-bonnet"
+              className="font-medium text-bonnet hover:text-bonnet-hover"
             >
               ← Host admin
             </Link>
