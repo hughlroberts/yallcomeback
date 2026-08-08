@@ -6,6 +6,10 @@ import { requireHostAdmin } from "@/lib/auth";
 import { propertyScopeWhere } from "@/lib/scope";
 import { listingTypeLabel } from "@/lib/listing-types";
 import { duplicateProperty } from "@/app/actions/properties";
+import {
+  canCreateListings,
+  resolveHostAccessInfo,
+} from "@/lib/host-access";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Properties · Admin" };
@@ -13,6 +17,13 @@ export const metadata = { title: "Properties · Admin" };
 export default async function AdminPropertiesPage() {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/properties");
+
+  const accessInfo = resolveHostAccessInfo({
+    isPlatform: access.isPlatform,
+    hostId: access.hostId,
+    hostAccess: access.hostAccess,
+  });
+  const allowCreate = canCreateListings(accessInfo);
 
   const properties = await prisma.property.findMany({
     where: propertyScopeWhere(access),
@@ -32,16 +43,19 @@ export default async function AdminPropertiesPage() {
             Properties
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Create listings step by step, then edit anytime. Duplicate to spin up
-            a similar stay quickly.
+            {allowCreate
+              ? "Create listings step by step, then edit anytime. Duplicate to spin up a similar stay quickly."
+              : "Update calendars, photos, and details. Creating new listings requires full co-host access."}
           </p>
         </div>
-        <Link
-          href="/admin/properties/new"
-          className="rounded-[var(--radius-control)] bg-bonnet px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover"
-        >
-          Create / import listing
-        </Link>
+        {allowCreate ? (
+          <Link
+            href="/admin/properties/new"
+            className="rounded-[var(--radius-control)] bg-bonnet px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover"
+          >
+            Create / import listing
+          </Link>
+        ) : null}
       </div>
 
       <div className="space-y-3">
@@ -109,15 +123,17 @@ export default async function AdminPropertiesPage() {
                 >
                   Fridge magnet
                 </Link>
-                <form action={duplicateProperty}>
-                  <input type="hidden" name="propertyId" value={p.id} />
-                  <button
-                    type="submit"
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                  >
-                    Duplicate
-                  </button>
-                </form>
+                {allowCreate ? (
+                  <form action={duplicateProperty}>
+                    <input type="hidden" name="propertyId" value={p.id} />
+                    <button
+                      type="submit"
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                    >
+                      Duplicate
+                    </button>
+                  </form>
+                ) : null}
                 <Link
                   href={editHref}
                   className="rounded-[var(--radius-control)] bg-bonnet px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"

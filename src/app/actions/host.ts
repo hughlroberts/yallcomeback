@@ -136,6 +136,7 @@ export async function registerHost(formData: FormData) {
         passwordHash,
         role: "HOST",
         hostId: host.id,
+        hostAccess: "OWNER",
       },
     });
   });

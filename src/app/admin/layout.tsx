@@ -2,9 +2,15 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminBrandSwitcher } from "@/components/admin-brand-switcher";
-import { auth } from "@/lib/auth";
+import { auth, requireHostAdmin } from "@/lib/auth";
 import { getAdminBrandHostId } from "@/lib/admin-brand-context";
 import { prisma } from "@/lib/db";
+import {
+  canManageBrand,
+  canManageTeam,
+  canViewEarnings,
+  resolveHostAccessInfo,
+} from "@/lib/host-access";
 import { canSeePricingIntelligenceNav } from "@/lib/platform-features";
 
 export default async function AdminLayout({
@@ -21,6 +27,12 @@ export default async function AdminLayout({
   }
 
   const isPlatform = session.user.role === "ADMIN";
+  const access = await requireHostAdmin();
+  const accessInfo = resolveHostAccessInfo({
+    isPlatform,
+    hostId: access?.hostId ?? null,
+    hostAccess: access?.hostAccess ?? session.user.hostAccess,
+  });
 
   let hostPricingAccess: { pricingIntelligenceEnabled?: boolean } | null =
     null;
@@ -57,16 +69,23 @@ export default async function AdminLayout({
   const links = [
     { href: "/admin", label: "Dashboard", exact: true },
     { href: "/admin/properties", label: "Properties" },
-    { href: "/admin/brand", label: "Brand & website" },
+    ...(canManageBrand(accessInfo)
+      ? [{ href: "/admin/brand", label: "Brand & website" }]
+      : []),
     // Secret / paid beta: platform admin always; hosts only if ops toggled access
-    ...(showPricing
+    ...(showPricing && canManageBrand(accessInfo)
       ? [{ href: "/admin/pricing", label: "Pricing intelligence" }]
       : []),
     { href: "/admin/magnets", label: "Fridge magnets" },
     { href: "/admin/bookings", label: "Bookings" },
-    { href: "/admin/earnings", label: "Earnings" },
+    ...(canViewEarnings(accessInfo)
+      ? [{ href: "/admin/earnings", label: "Earnings" }]
+      : []),
     { href: "/admin/messages", label: "Messages" },
     { href: "/admin/guest-messages", label: "Message templates" },
+    ...(canManageTeam(accessInfo)
+      ? [{ href: "/admin/team", label: "Team" }]
+      : []),
   ];
 
   const h = await headers();

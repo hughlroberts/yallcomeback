@@ -43,6 +43,18 @@ export default async function AdminBrandPage({
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/brand");
 
+  const { resolveHostAccessInfo, canManageBrand } = await import(
+    "@/lib/host-access"
+  );
+  const accessInfo = resolveHostAccessInfo({
+    isPlatform: access.isPlatform,
+    hostId: access.hostId,
+    hostAccess: access.hostAccess,
+  });
+  if (!canManageBrand(accessInfo)) {
+    redirect("/admin?error=limited");
+  }
+
   const params = await searchParams;
 
   let host = null as Awaited<ReturnType<typeof prisma.host.findUnique>>;

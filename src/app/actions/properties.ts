@@ -72,6 +72,17 @@ export async function createProperty(formData: FormData) {
  */
 export async function duplicateProperty(formData: FormData) {
   const access = await ensureHostAccess();
+  const { canCreateListings, resolveHostAccessInfo } = await import(
+    "@/lib/host-access"
+  );
+  const info = resolveHostAccessInfo({
+    isPlatform: access.isPlatform,
+    hostId: access.hostId,
+    hostAccess: access.hostAccess,
+  });
+  if (!canCreateListings(info)) {
+    throw new Error("Your access level cannot create or duplicate listings");
+  }
   const id = String(formData.get("propertyId") || formData.get("id") || "");
   await assertPropertyAccess(id, access);
 
@@ -838,6 +849,17 @@ export async function updateProperty(formData: FormData) {
 
 export async function deleteProperty(formData: FormData) {
   const access = await ensureHostAccess();
+  const { canDeleteListings, resolveHostAccessInfo } = await import(
+    "@/lib/host-access"
+  );
+  const info = resolveHostAccessInfo({
+    isPlatform: access.isPlatform,
+    hostId: access.hostId,
+    hostAccess: access.hostAccess,
+  });
+  if (!canDeleteListings(info)) {
+    throw new Error("Your access level cannot delete listings");
+  }
   const id = String(formData.get("id") || "");
   await assertPropertyAccess(id, access);
   await prisma.property.delete({ where: { id } });

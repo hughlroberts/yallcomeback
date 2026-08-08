@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "./db";
 import { authConfig } from "@/auth.config";
-import type { Role } from "@prisma/client";
+import type { HostAccessLevel, Role } from "@prisma/client";
 
 /** How often to re-read role/hostId from the database (ms). */
 const ROLE_REFRESH_MS = 60_000;
@@ -12,6 +12,7 @@ declare module "next-auth" {
   interface User {
     role: Role;
     hostId?: string | null;
+    hostAccess?: HostAccessLevel | null;
   }
   interface Session {
     user: {
@@ -20,6 +21,7 @@ declare module "next-auth" {
       name?: string | null;
       role: Role;
       hostId?: string | null;
+      hostAccess?: HostAccessLevel | null;
     };
   }
 }
@@ -29,6 +31,7 @@ declare module "@auth/core/jwt" {
     id?: string;
     role?: Role;
     hostId?: string | null;
+    hostAccess?: HostAccessLevel | null;
     /** Last time role/hostId were loaded from the DB */
     roleCheckedAt?: number;
   }
@@ -38,6 +41,7 @@ async function refreshRoleFromDb(token: {
   id?: string;
   role?: Role;
   hostId?: string | null;
+  hostAccess?: HostAccessLevel | null;
   roleCheckedAt?: number;
   name?: string | null;
   email?: string | null;
@@ -54,6 +58,7 @@ async function refreshRoleFromDb(token: {
     select: {
       role: true,
       hostId: true,
+      hostAccess: true,
       name: true,
       email: true,
     },
@@ -63,12 +68,15 @@ async function refreshRoleFromDb(token: {
     // Account removed — demote so gates fail closed
     token.role = "GUEST";
     token.hostId = null;
+    token.hostAccess = null;
     token.roleCheckedAt = now;
     return token;
   }
 
   token.role = dbUser.role;
   token.hostId = dbUser.hostId;
+  token.hostAccess =
+    dbUser.role === "HOST" ? dbUser.hostAccess ?? "OWNER" : null;
   token.name = dbUser.name;
   token.email = dbUser.email;
   token.roleCheckedAt = now;
@@ -101,6 +109,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           role: user.role,
           hostId: user.hostId,
+          hostAccess:
+            user.role === "HOST" ? user.hostAccess ?? "OWNER" : null,
         };
       },
     }),
@@ -113,6 +123,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id!;
         token.role = user.role;
         token.hostId = user.hostId ?? null;
+        token.hostAccess = user.hostAccess ?? null;
         token.roleCheckedAt = Date.now();
         return token;
       }
@@ -126,6 +137,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = (token.id as string) ?? token.sub ?? "";
         session.user.role = (token.role as Role) ?? "GUEST";
         session.user.hostId = (token.hostId as string | null) ?? null;
+        session.user.hostAccess =
+          (token.hostAccess as HostAccessLevel | null) ?? null;
         if (token.name !== undefined) {
           session.user.name = token.name as string | null;
         }
@@ -165,6 +178,7 @@ export async function requireHostAdmin(hostId?: string) {
       session,
       hostId: resolved,
       isPlatform: true as const,
+      hostAccess: null as HostAccessLevel | null,
     };
   }
 
@@ -174,6 +188,7 @@ export async function requireHostAdmin(hostId?: string) {
       session,
       hostId: session.user.hostId,
       isPlatform: false as const,
+      hostAccess: (session.user.hostAccess ?? "OWNER") as HostAccessLevel,
     };
   }
 

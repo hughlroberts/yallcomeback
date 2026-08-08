@@ -13,8 +13,18 @@ datasource db {
 
 enum Role {
   ADMIN // platform operator (marketplace owner)
-  HOST // property host / site owner
+  HOST // property host / co-host on a brand
   GUEST // booker
+}
+
+/// Access within a host brand (only meaningful when role = HOST).
+enum HostAccessLevel {
+  /// Primary owner: full admin + invite team + brand/billing
+  OWNER
+  /// Co-host with full listing/booking/message/brand access (no platform ops)
+  FULL
+  /// Helper: day-to-day hosting (calendar, bookings, messages, listing content)
+  LIMITED
 }
 
 enum BlockSource {
@@ -338,11 +348,16 @@ model User {
   /// Hosts belong to one Host org; ADMIN/GUEST usually null
   hostId       String?
   host         Host?     @relation(fields: [hostId], references: [id], onDelete: SetNull)
+  /// OWNER / FULL / LIMITED when role = HOST; null otherwise
+  hostAccess   HostAccessLevel?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   bookings             Booking[]
   sentMessages         Message[]           @relation("MessageSender")
   guestConversations   Conversation[]      @relation("ConversationGuest")
+
+  @@index([hostId, role])
+  @@index([role])
 }
 
 /// Email/SMS suppressions for any address (account or guest-only contact).

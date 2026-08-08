@@ -16,6 +16,18 @@ export default async function NewListingWizardPage({
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/properties/new");
 
+  const { canCreateListings, resolveHostAccessInfo } = await import(
+    "@/lib/host-access"
+  );
+  const info = resolveHostAccessInfo({
+    isPlatform: access.isPlatform,
+    hostId: access.hostId,
+    hostAccess: access.hostAccess,
+  });
+  if (!canCreateListings(info)) {
+    redirect("/admin/properties?error=limited");
+  }
+
   const sp = await searchParams;
 
   const hosts = access.isPlatform
