@@ -64,7 +64,7 @@ export function ServicesPageRenderer({
       nodes.push(
         <div
           key={`cards-${cardGroup[0]!.id}`}
-          className="grid gap-5 sm:grid-cols-2"
+          className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
         >
           {cardGroup.map((card) => (
             <ServiceCard key={card.id} block={card} />

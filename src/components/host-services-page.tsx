@@ -54,14 +54,14 @@ export async function HostServicesPageView({
   return (
     <div>
       <div className="border-b border-stone-200 bg-stone-50">
-        <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
           <p className="text-sm font-semibold uppercase tracking-wide text-[var(--color-brand,#2563eb)]">
             {title}
           </p>
-          <h1 className="mt-2 font-display text-4xl font-medium tracking-tight text-stone-900">
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-3 text-lg text-stone-600">From {host.name}</p>
+          <p className="mt-3 max-w-2xl text-stone-600">From {host.name}</p>
           {canEdit ? (
             <p className="mt-4 inline-flex rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-950">
               Edit mode — change boats, photos &amp; pricing below, then Save
@@ -70,7 +70,7 @@ export async function HostServicesPageView({
         </div>
       </div>
 
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         {canEdit ? (
           <ServicesPageLiveEditor
             hostId={host.id}
