@@ -18,12 +18,6 @@ type PlanOption = {
   isDefault: boolean;
 };
 
-function planPriceLabel(p: PlanOption) {
-  return p.pricingModel === "PER_PROPERTY"
-    ? `$${p.monthlyPrice}/property/mo`
-    : `$${p.monthlyPrice}/mo`;
-}
-
 type Path = "paid" | "self";
 
 export function HostSignupForm({
