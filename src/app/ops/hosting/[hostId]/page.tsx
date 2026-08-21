@@ -257,8 +257,10 @@ export default async function OpsHostDetailPage({
         <h2 className="text-lg font-semibold text-ink">Edit host</h2>
         <p className="mt-1 text-sm text-ink-muted">
           Use <strong>Complimentary</strong> for your own brand (any number of
-          listings, never billed). Paying customers get Listing hosting at
-          $40/published listing.
+          listings, never billed). Paying customers:{" "}
+          <strong>Marketplace only</strong> $5 / published listing, or{" "}
+          <strong>Branded website</strong> $15 / published listing (marketplace
+          included).
         </p>
         <form action={updateHostOps} className="mt-6 grid gap-4 sm:grid-cols-2">
           <input type="hidden" name="hostId" value={host.id} />

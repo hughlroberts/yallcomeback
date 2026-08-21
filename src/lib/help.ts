@@ -149,9 +149,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Branded website on your domain",
-    body: "Keep your brand on your domain. Yall Come Back hosts the site. Listings can also show on the marketplace.",
+    body: "$15 per published listing / month. Your brand on your domain. Marketplace listing included.",
     description:
-      "How platform hosting puts your brand on your domain with Yall Come Back infrastructure, marketplace listings, and DNS steps.",
+      "Branded website plan ($15/listing/mo): your domain, Yall Come Back hosting, marketplace included, and DNS steps.",
     related: [
       "how-yall-come-back-works",
       "become-a-host",

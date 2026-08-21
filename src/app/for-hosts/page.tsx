@@ -99,7 +99,7 @@ export default async function ForHostsPage({
               className="group flex flex-col rounded-3xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-black/5 transition hover:border-bonnet/30 hover:shadow-md"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                1 · Marketplace only
+                1 · Marketplace only · $5/listing/mo
               </p>
               <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
                 List on Yall Come Back. Keep more of every stay.
@@ -111,13 +111,14 @@ export default async function ForHostsPage({
                 <strong className="font-semibold text-stone-800">
                   no cut of the booking
                 </strong>
-                , just a simple monthly fee per published stay. Perfect if you
-                want discovery without building a website.
+                — just <strong className="font-semibold text-stone-800">$5 per
+                published listing / month</strong>. Perfect if you want discovery
+                without a separate brand website.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                <li>✓ Platform look and feel guests already trust</li>
+                <li>✓ $5 / published listing / month</li>
                 <li>✓ Listing-first URLs (not a host mini-site)</li>
-                <li>✓ Zero commission · monthly hosting only</li>
+                <li>✓ Zero commission · marketplace only</li>
               </ul>
               <p className="mt-5 text-sm font-semibold text-bonnet">
                 Start on the marketplace →
@@ -129,7 +130,7 @@ export default async function ForHostsPage({
               className="group flex flex-col rounded-3xl border border-bonnet/25 bg-gradient-to-br from-petal/60 to-white p-6 shadow-sm ring-1 ring-bonnet/10 transition hover:border-bonnet/40 hover:shadow-md"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                2 · Custom website
+                2 · Branded website · $15/listing/mo
               </p>
               <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
                 Your brand, your domain. We host the site.
@@ -141,14 +142,15 @@ export default async function ForHostsPage({
                   Other services
                 </strong>{" "}
                 page (boat rentals, camping, tours, even when it is not lodging).
-                Point your own custom domain when you are ready. Marketplace
-                listing stays{" "}
-                <strong className="font-semibold text-stone-800">optional</strong>
-                .
+                Point your own custom domain when you are ready.{" "}
+                <strong className="font-semibold text-stone-800">
+                  Marketplace listing is included
+                </strong>{" "}
+                — same stays can appear on Find a Place with no second fee.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                <li>✓ Branded site guests remember as yours</li>
-                <li>✓ Fixed pages and services builder, not a full CMS maze</li>
+                <li>✓ $15 / published listing / month (includes marketplace)</li>
+                <li>✓ Branded site + DNS on your domain</li>
                 <li>✓ Demo to Live publish before DNS cutover</li>
               </ul>
               <p className="mt-5 text-sm font-semibold text-bonnet">

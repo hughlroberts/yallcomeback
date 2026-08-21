@@ -190,18 +190,18 @@ export function HostSignupForm({
                 [
                   {
                     id: "STAYLOCAL" as const,
-                    label: "Marketplace only",
-                    hint: "Shared platform look (like Airbnb). Listing URLs — no custom brand site, logo, or About page.",
+                    label: "Marketplace only · $5/listing/mo",
+                    hint: "Shared Find a Place look. Listing URLs — no custom brand site, logo, or About page.",
                   },
                   {
                     id: "BOTH" as const,
-                    label: "Custom website + marketplace",
-                    hint: "Hosted brand site (logo, palette, About, Other services) plus optional marketplace discovery.",
+                    label: "Branded website · $15/listing/mo",
+                    hint: "Hosted brand site on your domain (logo, palette, About, services). Marketplace listing included — no second fee.",
                   },
                   {
                     id: "CUSTOM" as const,
-                    label: "Custom website only",
-                    hint: "Your brand site on Yall Come Back (or your domain). No marketplace unless you add it later.",
+                    label: "Branded website only · $15/listing/mo",
+                    hint: "Same branded plan without marketplace discovery. Rare — most hosts choose Branded website above.",
                   },
                 ] as const
               ).map((opt) => (
@@ -266,8 +266,9 @@ export function HostSignupForm({
               List on the free Yall Come Back marketplace
             </span>
             <span className="mt-0.5 block text-xs text-stone-500">
-              Optional. Leave unchecked to keep stays only on your own website.
-              You can change this later for each listing.
+              Included on the branded website plan (no second fee). Marketplace
+              only hosts should leave this on. You can change this later per
+              listing.
             </span>
           </span>
         </label>

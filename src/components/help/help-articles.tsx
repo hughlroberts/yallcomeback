@@ -229,10 +229,9 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting vs self-host">
         <HelpUl>
           <li>
-            <strong>PLATFORM (paid)</strong> — Yall Come Back runs the stack for you.
-            You pay a monthly hosting plan (per property or flat). You choose
-            marketplace visibility and set Brand &amp; website (logo, colors,
-            about, contact, domain). Full brand-domain guide:{" "}
+            <strong>PLATFORM (paid)</strong> — Marketplace only at $5 per
+            published listing / month, or branded website at $15 per published
+            listing / month (marketplace included). Full brand-domain guide:{" "}
             <Link
               href="/help/branded-website"
               className="font-semibold text-bonnet"
@@ -722,17 +721,17 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting (paid)">
         <HelpUl>
           <li>
-            Yall Come Back runs the stack for your guest site. You pay a monthly
-            hosting fee (per published property or flat plan). See current plans
-            on Host a Place.
+            <strong>Marketplace only</strong> — $5 per published listing /
+            month. Guests book on Find a Place. No custom brand site.
+          </li>
+          <li>
+            <strong>Branded website</strong> — $15 per published listing /
+            month. Yall Come Back hosts your brand site on your domain.{" "}
+            Marketplace listing is included (no second fee).
           </li>
           <li>
             This is not a booking commission. You keep guest payments under your
             own deposit and payout process.
-          </li>
-          <li>
-            Choose marketplace opt-in and set Brand &amp; website (logo, colors,
-            about, contact, custom domain).
           </li>
           <li>
             Domain cutover and what guests see vs Admin:{" "}
@@ -1405,31 +1404,39 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
       <HelpSection title="Three different host paths">
         <HelpP>
           Choose one path. Do not mix the names — they are different products.
+          Prices are per published listing per month. There is no cut of each
+          booking.
         </HelpP>
         <HelpUl>
           <li>
-            <strong>1 · Marketplace-only (optional discovery)</strong> — Publish
-            listings on Find a Place. You do not need a custom domain. Guests
-            book through the shared marketplace. This path is for hosts who do
+            <strong>1 · Marketplace only — $5 / listing / month</strong> —
+            Publish listings on Find a Place. You do not need a custom domain.
+            Guests book through the shared marketplace. Use this path if you do
             not keep a separate brand website.
           </li>
           <li>
-            <strong>2 · Branded website (this article)</strong> — Paid platform
-            hosting. Yall Come Back hosts a site that looks like your brand.
-            Point your domain with DNS. Listings can show on your site{" "}
-            <em>and</em> on the marketplace. You pay for hosting infrastructure,
-            not a cut of each booking.
+            <strong>2 · Branded website — $15 / listing / month</strong> — Yall
+            Come Back hosts a site that looks like your brand. Point your domain
+            with DNS. This plan{" "}
+            <strong>includes marketplace listing</strong> for the same stays —
+            you do not pay $5 again on top. Guests can book on your domain or on
+            Find a Place.
           </li>
           <li>
-            <strong>3 · Free self-host / open source</strong> — You run the MIT
-            code on your own servers (or free self-host mode). Different setup.
-            See{" "}
+            <strong>3 · Free self-host / open source — $0 platform fee</strong> —
+            You run the MIT code on your own servers (or free self-host mode).
+            Different setup. See{" "}
             <Link href="/help/self-host" className="font-semibold text-bonnet">
               Free self-host website
             </Link>
             .
           </li>
         </HelpUl>
+        <HelpP>
+          Example: three published stays on the branded plan cost{" "}
+          <strong>$45 / month</strong> total ($15 × 3). The same three stays on
+          marketplace only cost <strong>$15 / month</strong> ($5 × 3).
+        </HelpP>
       </HelpSection>
 
       <HelpSection title="What guests see vs what you use">
@@ -1440,9 +1447,10 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             booking flow still runs on Yall Come Back infrastructure.
           </li>
           <li>
-            <strong>Guests on the marketplace</strong> — Same listings can appear
-            on Find a Place for extra discovery. Turn marketplace listing on or
-            off per property in Admin.
+            <strong>Guests on the marketplace</strong> — On the branded plan,
+            marketplace listing is included for those same stays. Guests can
+            find you on Find a Place without a second fee. You can still hide a
+            stay from the marketplace in Admin if you need to.
           </li>
           <li>
             <strong>You (the host)</strong> — Always manage on{" "}
@@ -1579,9 +1587,9 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             show on your domain after save and publish.
           </li>
           <li>
-            Marketplace visibility stays separate. Turn{" "}
-            <strong>list on marketplace</strong> on for each stay you want on
-            Find a Place.
+            Marketplace listing is included in the branded plan. Keep{" "}
+            <strong>list on marketplace</strong> on for stays you want on Find a
+            Place (default for most hosts).
           </li>
           <li>
             Guests who book on your domain still create bookings in your Admin

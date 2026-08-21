@@ -57,17 +57,33 @@ async function main() {
 
   await prisma.hostingPlan.create({
     data: {
-      name: "Listing hosting",
-      slug: "listing",
+      name: "Marketplace only",
+      slug: "marketplace",
       description:
-        "Flat $40 per published listing / month for website hosting on Yall Come Back. Not a booking commission.",
-      monthlyPrice: 40,
+        "$5 per published listing / month. List on Find a Place. No custom brand website. Not a booking commission.",
+      monthlyPrice: 5,
+      pricingModel: "PER_PROPERTY",
+      minProperties: 1,
+      currency: "USD",
+      isActive: true,
+      isDefault: false,
+      sortOrder: 1,
+    },
+  });
+
+  await prisma.hostingPlan.create({
+    data: {
+      name: "Branded website",
+      slug: "branded",
+      description:
+        "$15 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
+      monthlyPrice: 15,
       pricingModel: "PER_PROPERTY",
       minProperties: 1,
       currency: "USD",
       isActive: true,
       isDefault: true,
-      sortOrder: 1,
+      sortOrder: 2,
     },
   });
 
@@ -84,7 +100,7 @@ async function main() {
       currency: "USD",
       isActive: true,
       isDefault: false,
-      sortOrder: 2,
+      sortOrder: 99,
     },
   });
 

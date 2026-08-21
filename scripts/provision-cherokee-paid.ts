@@ -10,26 +10,64 @@ import { hash } from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const plan = await prisma.hostingPlan.upsert({
-    where: { slug: "listing" },
+  await prisma.hostingPlan.upsert({
+    where: { slug: "marketplace" },
     create: {
-      name: "Listing hosting",
-      slug: "listing",
+      name: "Marketplace only",
+      slug: "marketplace",
       description:
-        "Flat $40 per published listing / month for website hosting on Yall Come Back. Not a booking commission.",
-      monthlyPrice: 40,
+        "$5 per published listing / month. List on Find a Place. No custom brand website. Not a booking commission.",
+      monthlyPrice: 5,
+      pricingModel: "PER_PROPERTY",
+      minProperties: 1,
+      currency: "USD",
+      isActive: true,
+      isDefault: false,
+      sortOrder: 1,
+    },
+    update: {
+      name: "Marketplace only",
+      description:
+        "$5 per published listing / month. List on Find a Place. No custom brand website. Not a booking commission.",
+      monthlyPrice: 5,
+      pricingModel: "PER_PROPERTY",
+      isActive: true,
+      isDefault: false,
+      sortOrder: 1,
+    },
+  });
+
+  const plan = await prisma.hostingPlan.upsert({
+    where: { slug: "branded" },
+    create: {
+      name: "Branded website",
+      slug: "branded",
+      description:
+        "$15 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
+      monthlyPrice: 15,
       pricingModel: "PER_PROPERTY",
       minProperties: 1,
       currency: "USD",
       isActive: true,
       isDefault: true,
-      sortOrder: 1,
+      sortOrder: 2,
     },
     update: {
-      monthlyPrice: 40,
+      name: "Branded website",
+      description:
+        "$15 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
+      monthlyPrice: 15,
+      pricingModel: "PER_PROPERTY",
       isActive: true,
       isDefault: true,
+      sortOrder: 2,
     },
+  });
+
+  // Retire legacy single $40 plan if present
+  await prisma.hostingPlan.updateMany({
+    where: { slug: "listing" },
+    data: { isActive: false, isDefault: false },
   });
 
   await prisma.hostingPlan.upsert({
@@ -44,9 +82,9 @@ async function main() {
       currency: "USD",
       isActive: true,
       isDefault: false,
-      sortOrder: 2,
+      sortOrder: 99,
     },
-    update: {},
+    update: { sortOrder: 99 },
   });
 
   const now = new Date();
