@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/host";
 import { setAdminBrandContext } from "@/app/actions/admin-brand";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { maskSyndicationKey } from "@/lib/syndication";
 import {
   hostServicesHref,
@@ -1031,7 +1032,7 @@ export default async function AdminBrandPage({
           </Card>
 
           <div className="order-13 flex flex-wrap items-center gap-3">
-            <Button type="submit">Save</Button>
+            <SubmitButton>Save</SubmitButton>
             {branded ? (
               <Link
                 href={previewPath}

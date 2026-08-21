@@ -7,6 +7,9 @@ import type {
   SelectHTMLAttributes,
 } from "react";
 
+const buttonBase =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] px-5 py-2.5 text-sm font-medium transition-[color,background-color,transform,box-shadow,opacity] duration-100 ease-out will-change-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] active:brightness-95";
+
 export function Button({
   className,
   variant = "primary",
@@ -16,20 +19,17 @@ export function Button({
 }) {
   const styles = {
     primary:
-      "bg-bonnet text-white hover:bg-bonnet-hover active:bg-bonnet-active",
+      "bg-bonnet text-white shadow-sm hover:bg-bonnet-hover active:bg-bonnet-active active:shadow-inner",
     secondary:
-      "border border-lupine/50 bg-porcelain text-bonnet hover:bg-petal",
+      "border border-lupine/50 bg-porcelain text-bonnet shadow-sm hover:bg-petal active:bg-petal active:shadow-inner",
     danger:
-      "border border-lupine/50 bg-porcelain text-bonnet hover:bg-petal",
-    ghost: "border border-hairline bg-transparent text-bonnet hover:bg-petal",
+      "border border-red-200 bg-red-50 text-red-800 shadow-sm hover:bg-red-100 active:bg-red-100 active:shadow-inner",
+    ghost:
+      "border border-hairline bg-transparent text-bonnet hover:bg-petal active:bg-petal/80 active:shadow-inner",
   };
   return (
     <button
-      className={cn(
-        "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] px-5 py-2.5 text-sm font-medium transition-[color,background-color] duration-150 ease-out disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet",
-        styles[variant],
-        className,
-      )}
+      className={cn(buttonBase, styles[variant], className)}
       {...props}
     />
   );
