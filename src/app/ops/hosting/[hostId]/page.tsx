@@ -8,6 +8,7 @@ import {
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { OpsHostDomainGuide } from "@/components/ops-host-domain-guide";
 import {
   approvalLabel,
   formatPlanPrice,
@@ -127,6 +128,8 @@ export default async function OpsHostDetailPage({
           </div>
         </div>
       </div>
+
+      <OpsHostDomainGuide host={host} />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>

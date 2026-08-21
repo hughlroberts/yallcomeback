@@ -937,12 +937,20 @@ export default async function AdminBrandPage({
                   placeholder="e.g. cherokeelanding.net"
                 />
                 <p className="text-xs text-stone-500">
-                  Point DNS here when Live. Leave empty while testing at{" "}
-                  <code className="rounded bg-white px-1">/h/{host.slug}</code>.
+                  Bare hostname only (no https://). While testing, leave Demo
+                  publish and use{" "}
+                  <code className="rounded bg-white px-1">/h/{host.slug}</code>
+                  . To go Live: (1) Save this field, (2) platform adds the domain
+                  in Railway for SSL, (3) at your registrar set CNAME{" "}
+                  <code className="rounded bg-white px-1">www</code> to the
+                  target Railway shows — not a guess. Apex can 301-forward to
+                  www.
                 </p>
                 {host.customDomain ? (
                   <p className="rounded-lg bg-stone-50 px-3 py-2 font-mono text-[11px] text-stone-600">
-                    DNS → this app · map entry: {host.customDomain}:{host.slug}
+                    App map: {host.customDomain}:{host.slug}
+                    {" · "}
+                    Preview still: /h/{host.slug}
                   </p>
                 ) : null}
               </div>
