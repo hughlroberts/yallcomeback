@@ -71,7 +71,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
     body: "Hosts own the guest. The marketplace is optional discovery. Bookings go to the host.",
     description:
       "Yall Come Back model: host-branded websites, optional marketplace, and direct booking without a cut of each stay.",
-    related: ["getting-started", "become-a-host", "search-and-book"],
+    related: [
+      "getting-started",
+      "become-a-host",
+      "branded-website",
+      "search-and-book",
+    ],
   },
   {
     slug: "search-and-book",
@@ -131,7 +136,28 @@ export const HELP_ARTICLES: HelpArticle[] = [
     body: "Apply for paid platform hosting or free self-host. Get approval. Go online.",
     description:
       "How to host on Yall Come Back: platform hosting, self-host, plans, and approval.",
-    related: ["listings", "self-host", "how-yall-come-back-works", "pricing"],
+    related: [
+      "listings",
+      "branded-website",
+      "self-host",
+      "how-yall-come-back-works",
+      "pricing",
+    ],
+  },
+  {
+    slug: "branded-website",
+    category: "Host guide",
+    categoryId: "hosts",
+    title: "Branded website on your domain",
+    body: "Keep your brand on your domain. Yall Come Back hosts the site. Listings can also show on the marketplace.",
+    description:
+      "How platform hosting puts your brand on your domain with Yall Come Back infrastructure, marketplace listings, and DNS steps.",
+    related: [
+      "how-yall-come-back-works",
+      "become-a-host",
+      "listings",
+      "self-host",
+    ],
   },
   {
     slug: "listings",
@@ -141,7 +167,13 @@ export const HELP_ARTICLES: HelpArticle[] = [
     body: "Add photos, amenities, house rules, publish status, marketplace options, and fridge magnets.",
     description:
       "How hosts set up listings on Yall Come Back for their website and the marketplace.",
-    related: ["calendar", "pricing", "cancellation-policies", "host-messages"],
+    related: [
+      "branded-website",
+      "calendar",
+      "pricing",
+      "cancellation-policies",
+      "host-messages",
+    ],
   },
   {
     slug: "calendar",
@@ -201,7 +233,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
     body: "Run Yall Come Back on your domain. Optionally list on the free marketplace. Keep your brand.",
     description:
       "Host Yall Come Back free under MIT. Optional marketplace via central account or remote syndication API.",
-    related: ["become-a-host", "how-yall-come-back-works", "listings"],
+    related: [
+      "become-a-host",
+      "branded-website",
+      "how-yall-come-back-works",
+      "listings",
+    ],
   },
   {
     slug: "cancellation-policies",

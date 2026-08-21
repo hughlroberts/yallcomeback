@@ -263,6 +263,17 @@ export function OpsHostDomainGuide({ host }: Props) {
         otherwise HTTPS/Host routing will fail. Always add the domain in Railway
         first, then paste <em>that</em> CNAME at the registrar.
       </div>
+
+      <p className="text-sm text-stone-600">
+        Full host-facing playbook (marketplace + brand domain + DNS):{" "}
+        <Link
+          href="/help/branded-website"
+          className="font-semibold text-bonnet hover:underline"
+        >
+          Help · Branded website on your domain
+        </Link>
+        .
+      </p>
     </div>
   );
 }

@@ -944,7 +944,14 @@ export default async function AdminBrandPage({
                   in Railway for SSL, (3) at your registrar set CNAME{" "}
                   <code className="rounded bg-white px-1">www</code> to the
                   target Railway shows — not a guess. Apex can 301-forward to
-                  www.
+                  www. Full guide:{" "}
+                  <Link
+                    href="/help/branded-website"
+                    className="font-semibold text-bonnet underline"
+                  >
+                    Help · Branded website
+                  </Link>
+                  .
                 </p>
                 {host.customDomain ? (
                   <p className="rounded-lg bg-stone-50 px-3 py-2 font-mono text-[11px] text-stone-600">

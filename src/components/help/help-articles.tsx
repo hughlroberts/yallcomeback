@@ -51,6 +51,8 @@ export function HelpArticleBody({ article }: { article: HelpArticle }) {
       return <HostMessages article={article} />;
     case "earnings":
       return <Earnings article={article} />;
+    case "branded-website":
+      return <BrandedWebsite article={article} />;
     case "self-host":
       return <SelfHost article={article} />;
     case "cancellation-policies":
@@ -230,7 +232,14 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
             <strong>PLATFORM (paid)</strong> — Yall Come Back runs the stack for you.
             You pay a monthly hosting plan (per property or flat). You choose
             marketplace visibility and set Brand &amp; website (logo, colors,
-            about, contact, domain).
+            about, contact, domain). Full brand-domain guide:{" "}
+            <Link
+              href="/help/branded-website"
+              className="font-semibold text-bonnet"
+            >
+              Branded website on your domain
+            </Link>
+            .
           </li>
           <li>
             <strong>SELF (free self-host)</strong> — You run the open-source app
@@ -724,6 +733,16 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
           <li>
             Choose marketplace opt-in and set Brand &amp; website (logo, colors,
             about, contact, custom domain).
+          </li>
+          <li>
+            Domain cutover and what guests see vs Admin:{" "}
+            <Link
+              href="/help/branded-website"
+              className="font-semibold text-bonnet"
+            >
+              Branded website on your domain
+            </Link>
+            .
           </li>
         </HelpUl>
       </HelpSection>
@@ -1329,6 +1348,251 @@ function Earnings({ article }: { article: HelpArticle }) {
   );
 }
 
+function BrandedWebsite({ article }: { article: HelpArticle }) {
+  return (
+    <HelpArticleLayout
+      article={article}
+      extraRelated={[
+        {
+          href: "/for-hosts?path=paid",
+          title: "Host a Place · platform hosting",
+          description: "Apply for paid hosting with a branded site.",
+        },
+        {
+          href: "/admin/brand",
+          title: "Brand & website (Admin)",
+          description: "Logo, colors, domain, and publish state.",
+        },
+      ]}
+    >
+      <HelpLead>
+        Platform hosting puts <strong>your brand</strong> on{" "}
+        <strong>your domain</strong>. Yall Come Back runs the website and
+        booking tools. Guests see your name and look. They do not need to know
+        the infrastructure brand. You manage listings and site content in Admin
+        on yallcomeback.app.
+      </HelpLead>
+
+      <HelpSection title="Example: Cherokee Landing">
+        <HelpUl>
+          <li>
+            <strong>Guest brand site:</strong>{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              cherokeelanding.net
+            </code>{" "}
+            (or{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              www.cherokeelanding.net
+            </code>
+            ). Guests see Cherokee Landing logo, colors, about, and stays.
+          </li>
+          <li>
+            <strong>Same listings on the marketplace:</strong> Guests can also
+            find those stays on{" "}
+            <Link href="/marketplace" className="font-semibold text-bonnet">
+              Find a Place
+            </Link>{" "}
+            under Yall Come Back discovery. Each listing still shows the host.
+          </li>
+          <li>
+            <strong>Host work happens here:</strong> Sign in at yallcomeback.app
+            → Admin. Edit listings, calendar, brand, and messages in one place.
+            The public brand domain only shows the guest site.
+          </li>
+        </HelpUl>
+      </HelpSection>
+
+      <HelpSection title="Three different host paths">
+        <HelpP>
+          Choose one path. Do not mix the names — they are different products.
+        </HelpP>
+        <HelpUl>
+          <li>
+            <strong>1 · Marketplace-only (optional discovery)</strong> — Publish
+            listings on Find a Place. You do not need a custom domain. Guests
+            book through the shared marketplace. This path is for hosts who do
+            not keep a separate brand website.
+          </li>
+          <li>
+            <strong>2 · Branded website (this article)</strong> — Paid platform
+            hosting. Yall Come Back hosts a site that looks like your brand.
+            Point your domain with DNS. Listings can show on your site{" "}
+            <em>and</em> on the marketplace. You pay for hosting infrastructure,
+            not a cut of each booking.
+          </li>
+          <li>
+            <strong>3 · Free self-host / open source</strong> — You run the MIT
+            code on your own servers (or free self-host mode). Different setup.
+            See{" "}
+            <Link href="/help/self-host" className="font-semibold text-bonnet">
+              Free self-host website
+            </Link>
+            .
+          </li>
+        </HelpUl>
+      </HelpSection>
+
+      <HelpSection title="What guests see vs what you use">
+        <HelpUl>
+          <li>
+            <strong>Guests on your domain</strong> — Your logo, colors, about,
+            services, contact, and stays. The site feels like your business. The
+            booking flow still runs on Yall Come Back infrastructure.
+          </li>
+          <li>
+            <strong>Guests on the marketplace</strong> — Same listings can appear
+            on Find a Place for extra discovery. Turn marketplace listing on or
+            off per property in Admin.
+          </li>
+          <li>
+            <strong>You (the host)</strong> — Always manage on{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              yallcomeback.app
+            </code>{" "}
+            under Admin (Brand, Properties, Bookings, Messages, Earnings). You
+            do not edit a separate WordPress site.
+          </li>
+        </HelpUl>
+      </HelpSection>
+
+      <HelpSection title="Before you change DNS">
+        <HelpUl>
+          <li>
+            Finish brand setup: logo, colors, about, contact, and at least one
+            published listing.
+          </li>
+          <li>
+            Preview the site under{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              /h/[your-slug]
+            </code>{" "}
+            on yallcomeback.app (Demo publish). Fix content before cutover.
+          </li>
+          <li>
+            Keep your old website online until the new site looks correct.
+          </li>
+        </HelpUl>
+      </HelpSection>
+
+      <HelpSection title="Step-by-step: point your domain">
+        <HelpH3>1. Save the domain in Brand</HelpH3>
+        <HelpUl>
+          <li>
+            Open Admin →{" "}
+            <Link href="/admin/brand" className="font-semibold text-bonnet">
+              Brand &amp; website
+            </Link>
+            .
+          </li>
+          <li>
+            Set <strong>Custom domain</strong> to the bare hostname only (example:{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              cherokeelanding.net
+            </code>
+            ). Do not add https://.
+          </li>
+          <li>
+            Keep publish on <strong>Demo</strong> while you test. Switch to{" "}
+            <strong>Live</strong> when you are ready for guests on that domain.
+          </li>
+          <li>Select Save. This only maps the domain inside the app.</li>
+        </HelpUl>
+
+        <HelpH3>2. Platform adds the domain for SSL</HelpH3>
+        <HelpP>
+          Yall Come Back (or Ops) registers your hostname on the hosting
+          provider (Railway) so HTTPS works. The platform copies a{" "}
+          <strong>CNAME</strong> target and sometimes a <strong>TXT</strong>{" "}
+          verify record. You cannot skip this step. Pointing DNS alone is not
+          enough.
+        </HelpP>
+
+        <HelpH3>3. Update DNS at your registrar</HelpH3>
+        <HelpP>
+          Log in where you bought the domain (GoDaddy, Namecheap, Cloudflare, or
+          similar). Use the exact values from step 2.
+        </HelpP>
+        <HelpUl>
+          <li>
+            Add a <strong>CNAME</strong> for{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              www
+            </code>{" "}
+            that points to the Railway target you received.
+          </li>
+          <li>Add the TXT verify record if the platform asked for one.</li>
+          <li>
+            Optional: forward the apex (example: cherokeelanding.net) to{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              https://www.cherokeelanding.net
+            </code>{" "}
+            with a 301 redirect. Many registrars cannot use CNAME on the apex.
+          </li>
+          <li>
+            Remove old A or CNAME records that still point at your previous
+            website host.
+          </li>
+        </HelpUl>
+
+        <HelpH3>4. Verify</HelpH3>
+        <HelpUl>
+          <li>Wait for DNS to update (often minutes; sometimes up to 24–48 hours).</li>
+          <li>
+            Open{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              https://www.your-domain.com
+            </code>
+            . You should see your brand site, not the Yall Come Back marketplace
+            home.
+          </li>
+          <li>
+            Until DNS is ready, keep using the Demo preview under{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              /h/[your-slug]
+            </code>
+            .
+          </li>
+        </HelpUl>
+      </HelpSection>
+
+      <HelpSection title="Who does each DNS step">
+        <HelpUl>
+          <li>
+            <strong>Host (or your web person)</strong> — Save the domain in Brand.
+            Edit DNS at the registrar when Ops sends the CNAME and TXT values.
+          </li>
+          <li>
+            <strong>Yall Come Back Ops</strong> — Add the hostname on Railway for
+            SSL. Send you the exact DNS records to paste.
+          </li>
+        </HelpUl>
+        <HelpP>
+          Dogfood tip: do not point your domain at www.yallcomeback.app unless
+          Ops tells you that value. Always paste the CNAME target from Railway.
+        </HelpP>
+      </HelpSection>
+
+      <HelpSection title="After go-live">
+        <HelpUl>
+          <li>
+            Edit brand and listings only in Admin on yallcomeback.app. Changes
+            show on your domain after save and publish.
+          </li>
+          <li>
+            Marketplace visibility stays separate. Turn{" "}
+            <strong>list on marketplace</strong> on for each stay you want on
+            Find a Place.
+          </li>
+          <li>
+            Guests who book on your domain still create bookings in your Admin
+            inbox and calendar.
+          </li>
+        </HelpUl>
+      </HelpSection>
+    </HelpArticleLayout>
+  );
+}
+
 function SelfHost({ article }: { article: HelpArticle }) {
   return (
     <HelpArticleLayout
@@ -1350,7 +1614,11 @@ function SelfHost({ article }: { article: HelpArticle }) {
         Yall Come Back is open source (MIT). Run it as{" "}
         <strong>your own rental website</strong> on your domain. This is normal
         website hosting, not a separate app-store product. Keep your brand. List
-        stays on the free marketplace.
+        stays on the free marketplace. This path is different from{" "}
+        <Link href="/help/branded-website" className="font-semibold text-bonnet">
+          platform branded hosting
+        </Link>
+        , where Yall Come Back runs the site for you.
       </HelpLead>
 
       <HelpSection title="Who self-host is for">
