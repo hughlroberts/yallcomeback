@@ -35,7 +35,7 @@ type GqlCustomDomain = {
   } | null;
 };
 
-const API_URL = "https://backboard.railway.app/graphql/v2";
+const API_URL = "https://backboard.railway.com/graphql/v2";
 
 function apiToken(): string | null {
   return (
