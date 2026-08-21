@@ -600,8 +600,8 @@ export default async function AdminBrandPage({
               <div>
                 <h2 className="text-lg font-semibold text-stone-900">Publish</h2>
                 <p className="mt-1 text-sm text-stone-600">
-                  Build privately, share a demo, then go live when you point your
-                  domain. Fixed pages only — not a freeform CMS.
+                  Controls who can see your guest site on Yall Come Back. This
+                  does not change DNS or move your old domain by itself.
                 </p>
               </div>
               <div className="space-y-2">
@@ -618,8 +618,18 @@ export default async function AdminBrandPage({
                   <option value="DEMO">
                     Demo — public at /h/{host.slug} with banner
                   </option>
-                  <option value="LIVE">Live — production (domain cutover)</option>
+                  <option value="LIVE">
+                    Live — ready for your domain (after DNS)
+                  </option>
                 </select>
+                <p className="text-xs text-stone-500">
+                  Choose <strong>Live</strong> when SSL + DNS for your custom
+                  domain are done. Until then, stay on Demo and use{" "}
+                  <code className="rounded bg-stone-100 px-1">
+                    /h/{host.slug}
+                  </code>
+                  .
+                </p>
               </div>
               <p className="text-sm">
                 <Link
@@ -911,12 +921,32 @@ export default async function AdminBrandPage({
           {/* —— Domain (branded) —— */}
           {branded ? (
             <Card className="order-10 space-y-5 p-6">
-              <h2 className="text-lg font-semibold text-stone-900">
-                Domain & guest site
-              </h2>
+              <div>
+                <h2 className="text-lg font-semibold text-stone-900">
+                  Domain & guest site
+                </h2>
+                <p className="mt-1 text-sm text-stone-600">
+                  Tell us which domain you want. Saving here does{" "}
+                  <strong className="font-semibold text-stone-800">not</strong>{" "}
+                  move your old website or change DNS by itself.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                <p className="font-semibold">
+                  Save on this page ≠ domain cutover
+                </p>
+                <p className="mt-1 text-xs leading-relaxed">
+                  Filling in a custom domain only teaches Yall Come Back which
+                  brand owns that hostname. Guests keep using your old site until
+                  Ops enables SSL and you (or they) update DNS at the registrar.
+                  Until then, use the preview link below.
+                </p>
+              </div>
+
               <div className="rounded-2xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-stone-700">
                 <p className="font-medium text-stone-900">
-                  Preview on Yall Come Back
+                  Preview on Yall Come Back (works now)
                 </p>
                 <p className="mt-2">
                   <Link
@@ -927,9 +957,70 @@ export default async function AdminBrandPage({
                     {previewPath} →
                   </Link>
                 </p>
+                <p className="mt-2 text-xs text-stone-500">
+                  Keep Site visibility on <strong>Demo</strong> while you build.
+                  Switch to <strong>Live</strong> only after DNS works.
+                </p>
               </div>
+
+              <ol className="space-y-3 rounded-xl border border-stone-200 bg-white px-4 py-4 text-sm text-stone-700">
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bonnet text-[11px] font-bold text-white">
+                    1
+                  </span>
+                  <div>
+                    <p className="font-semibold text-stone-900">
+                      This form — save your domain name
+                    </p>
+                    <p className="mt-0.5 text-xs text-stone-500">
+                      You are here. Enter the bare hostname below and Save brand.
+                      Nothing moves on the public internet yet.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-200 text-[11px] font-bold text-stone-700">
+                    2
+                  </span>
+                  <div>
+                    <p className="font-semibold text-stone-900">
+                      Ops — enable the domain for SSL
+                    </p>
+                    <p className="mt-0.5 text-xs text-stone-500">
+                      Not on this page. Yall Come Back Ops registers the hostname
+                      and sends you the exact CNAME / TXT values to paste.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-200 text-[11px] font-bold text-stone-700">
+                    3
+                  </span>
+                  <div>
+                    <p className="font-semibold text-stone-900">
+                      You — update DNS at your registrar
+                    </p>
+                    <p className="mt-0.5 text-xs text-stone-500">
+                      Not on this page. At the place you bought the domain, set
+                      CNAME <code className="rounded bg-stone-100 px-1">www</code>{" "}
+                      to the target Ops sent. Optional: forward the apex to www.
+                      Full guide:{" "}
+                      <Link
+                        href="/help/branded-website"
+                        className="font-semibold text-bonnet underline"
+                      >
+                        Help · Branded website
+                      </Link>
+                      .
+                    </p>
+                  </div>
+                </li>
+              </ol>
+
               <div className="space-y-1.5">
-                <Label htmlFor="customDomain">Custom domain (optional)</Label>
+                <Label htmlFor="customDomain">
+                  Domain name to connect (does not change DNS)
+                </Label>
                 <Input
                   id="customDomain"
                   name="customDomain"
@@ -937,32 +1028,32 @@ export default async function AdminBrandPage({
                   placeholder="e.g. cherokeelanding.net"
                 />
                 <p className="text-xs text-stone-500">
-                  Bare hostname only (no https://). While testing, leave Demo
-                  publish and use{" "}
-                  <code className="rounded bg-white px-1">/h/{host.slug}</code>
-                  . To go Live: (1) Save this field, (2) Ops enables the domain
-                  on the platform for SSL and sends you DNS values, (3) at your
-                  registrar set CNAME{" "}
-                  <code className="rounded bg-white px-1">www</code> to that
-                  target — not a guess. Apex can 301-forward to www. Full guide:{" "}
-                  <Link
-                    href="/help/branded-website"
-                    className="font-semibold text-bonnet underline"
-                  >
-                    Help · Branded website
-                  </Link>
-                  .
+                  Bare hostname only (no https://). Example:{" "}
+                  <code className="rounded bg-stone-100 px-1">
+                    cherokeelanding.net
+                  </code>
+                  . Leave empty to stay on preview only.
                 </p>
                 {host.customDomain ? (
-                  <p className="rounded-lg bg-stone-50 px-3 py-2 font-mono text-[11px] text-stone-600">
-                    App map: {host.customDomain}:{host.slug}
-                    {" · "}
-                    Preview still: /h/{host.slug}
+                  <p className="rounded-lg border border-emerald-100 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-950">
+                    <strong className="font-semibold">Step 1 done in app:</strong>{" "}
+                    mapped{" "}
+                    <code className="rounded bg-white px-1 font-mono text-[11px]">
+                      {host.customDomain}
+                    </code>{" "}
+                    → this brand. Steps 2–3 (SSL + DNS) still happen outside this
+                    form. Preview remains{" "}
+                    <code className="rounded bg-white px-1 font-mono text-[11px]">
+                      {previewPath}
+                    </code>{" "}
+                    until DNS is live.
                   </p>
                 ) : null}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="websiteUrl">Public website URL</Label>
+                <Label htmlFor="websiteUrl">
+                  Public website URL (what you tell guests)
+                </Label>
                 <Input
                   id="websiteUrl"
                   name="websiteUrl"
@@ -974,10 +1065,18 @@ export default async function AdminBrandPage({
                   }
                   placeholder={
                     host.customDomain
-                      ? `https://${host.customDomain}`
-                      : `https://yallcomeback.com/h/${host.slug}`
+                      ? `https://www.${host.customDomain.replace(/^www\./, "")}`
+                      : `https://www.yallcomeback.app/h/${host.slug}`
                   }
                 />
+                <p className="text-xs text-stone-500">
+                  Usually{" "}
+                  <code className="rounded bg-stone-100 px-1">
+                    https://www.your-domain.com
+                  </code>{" "}
+                  after cutover. This is a display / booking link field — it also
+                  does not change DNS.
+                </p>
               </div>
             </Card>
           ) : null}

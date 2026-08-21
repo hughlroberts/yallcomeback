@@ -1484,6 +1484,10 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
 
       <HelpSection title="Step-by-step: point your domain">
         <HelpH3>1. Save the domain in Brand</HelpH3>
+        <HelpP>
+          Saving Brand does <strong>not</strong> move your old website or change
+          DNS. It only tells Yall Come Back which brand owns the hostname.
+        </HelpP>
         <HelpUl>
           <li>
             Open Admin →{" "}
@@ -1493,7 +1497,8 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             .
           </li>
           <li>
-            Set <strong>Custom domain</strong> to the bare hostname only (example:{" "}
+            Set <strong>Domain name to connect</strong> to the bare hostname only
+            (example:{" "}
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               cherokeelanding.net
             </code>
@@ -1501,9 +1506,15 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
           </li>
           <li>
             Keep publish on <strong>Demo</strong> while you test. Switch to{" "}
-            <strong>Live</strong> when you are ready for guests on that domain.
+            <strong>Live</strong> only after SSL and DNS work.
           </li>
-          <li>Select Save. This only maps the domain inside the app.</li>
+          <li>
+            Select Save brand. Guests still use your old site and the{" "}
+            <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+              /h/[your-slug]
+            </code>{" "}
+            preview until steps 2 and 3 are done.
+          </li>
         </HelpUl>
 
         <HelpH3>2. Platform enables the domain for SSL</HelpH3>
