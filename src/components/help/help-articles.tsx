@@ -1463,6 +1463,16 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         </HelpUl>
       </HelpSection>
 
+      <HelpSection title="Already on marketplace only?">
+        <HelpP>
+          Open Admin → Brand &amp; website and select{" "}
+          <strong>Create my branded website</strong>. That switches you to the
+          $15 plan (marketplace stays included), unlocks logo and domain fields,
+          and keeps your listings. Then buy a domain at your registrar and enter
+          it under Domain &amp; guest site.
+        </HelpP>
+      </HelpSection>
+
       <HelpSection title="Before you change DNS">
         <HelpUl>
           <li>

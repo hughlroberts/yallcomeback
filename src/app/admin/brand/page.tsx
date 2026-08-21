@@ -12,6 +12,7 @@ import {
 import { setAdminBrandContext } from "@/app/actions/admin-brand";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { DomainDnsPanel } from "@/components/domain-dns-panel";
+import { MarketplaceToWebsiteUpgrade } from "@/components/marketplace-to-website-upgrade";
 import { SubmitButton } from "@/components/submit-button";
 import { maskSyndicationKey } from "@/lib/syndication";
 import {
@@ -47,6 +48,7 @@ export default async function AdminBrandPage({
     hostId?: string;
     synKey?: string;
     logo?: string;
+    upgraded?: string;
   }>;
 }) {
   const access = await requireHostAdmin();
@@ -215,6 +217,21 @@ export default async function AdminBrandPage({
           Saved.
         </p>
       ) : null}
+      {params.upgraded === "website" ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          Branded website is on. Next: set logo and colors, then enter your
+          domain under <strong>Domain &amp; guest site</strong> (buy the domain
+          at your registrar first). Preview stays at{" "}
+          <code className="rounded bg-white px-1">/h/{host.slug}</code> until
+          DNS is live.{" "}
+          <Link
+            href="/help/branded-website"
+            className="font-semibold underline"
+          >
+            Domain help
+          </Link>
+        </p>
+      ) : null}
       {params.logo ? (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
           Logo uploaded.
@@ -302,18 +319,18 @@ export default async function AdminBrandPage({
                   [
                     {
                       id: "STAYLOCAL" as const,
-                      title: "1 · Marketplace only",
+                      title: "1 · Marketplace only · $5/listing/mo",
                       body: "Same look and feel as every other stay on Yall Come Back (like Airbnb). Guests use listing URLs — no separate brand website, logo, palette, About, or Other services page.",
                     },
                     {
                       id: "BOTH" as const,
-                      title: "2 · Custom website + marketplace (optional)",
-                      body: "Yall Come Back hosts your brand site: logo, palette, stays, About, and a custom Other services page (boat rentals, camping, etc.). Marketplace listing is optional.",
+                      title: "2 · Branded website · $15/listing/mo",
+                      body: "Yall Come Back hosts your brand site: logo, palette, stays, About, and Other services. Marketplace listing is included (no second fee). Point your own domain when ready.",
                     },
                     {
                       id: "CUSTOM" as const,
-                      title: "2b · Custom website only",
-                      body: "Same branded site as above, without marketplace discovery. Point your domain when you go live.",
+                      title: "2b · Branded website only · $15/listing/mo",
+                      body: "Same branded site without marketplace discovery. Point your domain when you go live.",
                     },
                   ] as const
                 ).map((opt) => (
@@ -347,9 +364,20 @@ export default async function AdminBrandPage({
             )}
           </Card>
 
+          {/* —— Marketplace → branded upgrade —— */}
+          {!branded && host.hostingMode === "PLATFORM" ? (
+            <div className="order-2">
+              <MarketplaceToWebsiteUpgrade
+                hostId={host.id}
+                hostName={host.name}
+                previewPath={`/h/${host.slug}`}
+              />
+            </div>
+          ) : null}
+
           {/* —— Marketplace-only: listing URLs —— */}
           {!branded ? (
-            <Card className="order-2 space-y-4 p-6">
+            <Card className="order-3 space-y-4 p-6">
               <div>
                 <h2 className="text-lg font-semibold text-stone-900">
                   Your listing URLs
@@ -921,7 +949,7 @@ export default async function AdminBrandPage({
 
           {/* —— Domain (branded) —— */}
           {branded ? (
-            <Card className="order-10 space-y-5 p-6">
+            <Card id="domain-setup" className="order-10 scroll-mt-24 space-y-5 p-6">
               <div>
                 <h2 className="text-lg font-semibold text-stone-900">
                   Domain & guest site

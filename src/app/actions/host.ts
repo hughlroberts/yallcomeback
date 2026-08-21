@@ -89,17 +89,27 @@ export async function registerHost(formData: FormData) {
   }
 
   let resolvedPlanId = planId;
-  if (hostingMode === "PLATFORM" && !resolvedPlanId) {
-    const defaultPlan = await prisma.hostingPlan.findFirst({
-      where: { isActive: true, isDefault: true },
+  if (hostingMode === "PLATFORM") {
+    // Couple plan to guest-facing product so $5 marketplace vs $15 branded stays consistent
+    const { planSlugForSitePresence } = await import("@/lib/hosting");
+    const wantSlug = planSlugForSitePresence(sitePresence);
+    const matched = await prisma.hostingPlan.findFirst({
+      where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
     });
-    resolvedPlanId = defaultPlan?.id ?? null;
-    if (!resolvedPlanId) {
-      const anyPlan = await prisma.hostingPlan.findFirst({
-        where: { isActive: true },
-        orderBy: { sortOrder: "asc" },
+    if (matched) {
+      resolvedPlanId = matched.id;
+    } else if (!resolvedPlanId) {
+      const defaultPlan = await prisma.hostingPlan.findFirst({
+        where: { isActive: true, isDefault: true },
       });
-      resolvedPlanId = anyPlan?.id ?? null;
+      resolvedPlanId = defaultPlan?.id ?? null;
+      if (!resolvedPlanId) {
+        const anyPlan = await prisma.hostingPlan.findFirst({
+          where: { isActive: true },
+          orderBy: { sortOrder: "asc" },
+        });
+        resolvedPlanId = anyPlan?.id ?? null;
+      }
     }
   }
 
@@ -317,6 +327,30 @@ export async function updateHostProfile(formData: FormData) {
 
   const previousCustomDomain = existing.customDomain;
 
+  // Keep paid plan aligned with product path (skip complimentary / self-host)
+  let planIdUpdate: string | null | undefined;
+  if (!isSelf && hostingMode === "PLATFORM") {
+    const currentPlan = existing.planId
+      ? await prisma.hostingPlan.findUnique({
+          where: { id: existing.planId },
+          select: { monthlyPrice: true, slug: true },
+        })
+      : null;
+    const isComplimentary = Boolean(
+      currentPlan && currentPlan.monthlyPrice <= 0,
+    );
+    if (!isComplimentary) {
+      const { planSlugForSitePresence } = await import("@/lib/hosting");
+      const wantSlug = planSlugForSitePresence(sitePresence);
+      const matched = await prisma.hostingPlan.findFirst({
+        where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
+      });
+      if (matched && matched.id !== existing.planId) {
+        planIdUpdate = matched.id;
+      }
+    }
+  }
+
   const host = await prisma.host.update({
     where: { id: hostId },
     data: {
@@ -344,6 +378,7 @@ export async function updateHostProfile(formData: FormData) {
       socialTiktok,
       sitePublishState,
       customDomain,
+      ...(planIdUpdate !== undefined ? { planId: planIdUpdate } : {}),
       ...(access.isPlatform
         ? {
             active,
@@ -394,6 +429,64 @@ export async function updateHostProfile(formData: FormData) {
       ? returnTo
       : HOST_PROFILE_PATH;
   redirect(`${safeReturn}${safeReturn.includes("?") ? "&" : "?"}saved=1`);
+}
+
+/**
+ * One-click upgrade: marketplace-only → branded website (BOTH) + branded plan.
+ * Unlocks logo/domain/pages. Host still buys the domain at their registrar.
+ */
+export async function upgradeToBrandedWebsite(formData: FormData) {
+  const access = await requireHostAdmin();
+  if (!access) redirect(`/login?callbackUrl=/admin/brand`);
+
+  const hostId = String(formData.get("hostId") || "");
+  if (!hostId) redirect(`/admin/brand?error=missing`);
+  if (!access.isPlatform && access.hostId !== hostId) {
+    redirect(`/admin/brand?error=forbidden`);
+  }
+
+  const existing = await prisma.host.findUnique({
+    where: { id: hostId },
+    include: { plan: { select: { monthlyPrice: true, slug: true } } },
+  });
+  if (!existing) redirect(`/admin/brand?error=missing`);
+  if (existing.hostingMode === "SELF") {
+    redirect(`/admin/brand?hostId=${hostId}&error=self_host`);
+  }
+
+  const brandedPlan = await prisma.hostingPlan.findFirst({
+    where: { slug: "branded", isActive: true, monthlyPrice: { gt: 0 } },
+  });
+
+  const isComplimentary = Boolean(
+    existing.plan && existing.plan.monthlyPrice <= 0,
+  );
+
+  await prisma.host.update({
+    where: { id: hostId },
+    data: {
+      sitePresence: "BOTH",
+      listOnMarketplace: true,
+      sitePublishState:
+        existing.sitePublishState === "LIVE"
+          ? "LIVE"
+          : existing.sitePublishState === "DEMO"
+            ? "DEMO"
+            : "DEMO",
+      sitePageAbout: true,
+      ...(isComplimentary || !brandedPlan
+        ? {}
+        : { planId: brandedPlan.id }),
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/brand");
+  revalidatePath("/ops/hosting");
+  revalidatePath(`/h/${existing.slug}`);
+  redirect(
+    `/admin/brand?hostId=${hostId}&upgraded=website#domain-setup`,
+  );
 }
 
 /**

@@ -103,6 +103,13 @@ export function hostHasBrandedWebsite(
   return hostProductPath(host) !== "marketplace";
 }
 
+/** Public plan slug for marketplace-only vs branded website. */
+export function planSlugForSitePresence(
+  sitePresence: Host["sitePresence"] | string,
+): "marketplace" | "branded" {
+  return sitePresence === "STAYLOCAL" ? "marketplace" : "branded";
+}
+
 /** Public listing path on the shared marketplace (short, listing-centric). */
 export function marketplaceListingPath(
   propertySlug: string,

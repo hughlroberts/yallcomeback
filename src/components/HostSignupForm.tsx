@@ -40,8 +40,19 @@ export function HostSignupForm({
   const [sitePresence, setSitePresence] = useState<
     "STAYLOCAL" | "CUSTOM" | "BOTH"
   >("STAYLOCAL");
-  const defaultPlanId =
-    plans.find((p) => p.isDefault)?.id || plans[0]?.id || "";
+
+  const marketplacePlanId =
+    plans.find((p) => p.monthlyPrice === 5)?.id ||
+    plans.find((p) => /marketplace/i.test(p.name))?.id ||
+    "";
+  const brandedPlanId =
+    plans.find((p) => p.monthlyPrice === 15)?.id ||
+    plans.find((p) => /branded/i.test(p.name))?.id ||
+    plans.find((p) => p.isDefault)?.id ||
+    plans[0]?.id ||
+    "";
+  const syncedPlanId =
+    sitePresence === "STAYLOCAL" ? marketplacePlanId || brandedPlanId : brandedPlanId;
 
   async function onSubmit(formData: FormData) {
     setPending(true);
@@ -51,6 +62,7 @@ export function HostSignupForm({
       formData.set("sitePresence", "CUSTOM");
     } else {
       formData.set("sitePresence", sitePresence);
+      if (syncedPlanId) formData.set("planId", syncedPlanId);
     }
     // listOnMarketplace comes from the checkbox (optional for both paths)
     const result = await registerHost(formData);
@@ -150,41 +162,26 @@ export function HostSignupForm({
 
         {path === "paid" ? (
           <>
-            {plans.filter((p) => p.monthlyPrice > 0).length > 0 ? (
-              <label className="block text-sm">
-                <span className="font-medium text-stone-700">
-                  Preferred hosting plan
-                </span>
-                <select
-                  name="planId"
-                  defaultValue={
-                    plans.find((p) => p.isDefault && p.monthlyPrice > 0)?.id ||
-                    plans.find((p) => p.monthlyPrice > 0)?.id ||
-                    defaultPlanId
-                  }
-                  className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2"
-                >
-                  {plans
-                    .filter((p) => p.monthlyPrice > 0)
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} - {planPriceLabel(p)}
-                      </option>
-                    ))}
-                </select>
-                <span className="mt-1 block text-xs text-stone-500">
-                  Billed monthly after approval based on published listings.
-                  Complimentary (free) plans are assigned by the platform only.
-                </span>
-              </label>
+            {syncedPlanId ? (
+              <input type="hidden" name="planId" value={syncedPlanId} />
             ) : null}
+            <p className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600">
+              Plan follows your choice below:{" "}
+              <strong className="text-stone-800">
+                {sitePresence === "STAYLOCAL"
+                  ? "Marketplace only · $5 / listing / month"
+                  : "Branded website · $15 / listing / month (marketplace included)"}
+              </strong>
+              . You can upgrade or change later in Brand &amp; website.
+            </p>
 
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium text-stone-700">
-                Guest-facing site
+                How guests find you
               </legend>
               <p className="text-xs text-stone-500">
-                You can change this anytime in Host admin.
+                Marketplace-only hosts can add a branded site + domain later in
+                Admin → Brand &amp; website.
               </p>
               {(
                 [
