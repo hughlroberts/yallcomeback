@@ -189,7 +189,16 @@ function Block({
       );
     }
     case "divider":
-      return <hr className="border-0 border-t border-stone-200" />;
+      return (
+        <div className="relative py-4" aria-hidden>
+          <hr className="border-0 border-t-2 border-stone-200" />
+          {b.content?.trim() ? (
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--color-surface,#fff)] px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+              {b.content.trim()}
+            </p>
+          ) : null}
+        </div>
+      );
     default:
       return null;
   }
