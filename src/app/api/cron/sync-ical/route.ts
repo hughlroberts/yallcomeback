@@ -4,7 +4,7 @@ import { runIcalSync } from "@/lib/cron-jobs";
 /**
  * External cron entry (optional if in-process scheduler is on).
  *   curl -H "Authorization: Bearer $CRON_SECRET" \
- *     https://yallcomeback-production.up.railway.app/api/cron/sync-ical
+ *     https://www.yallcomeback.app/api/cron/sync-ical
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET?.trim();

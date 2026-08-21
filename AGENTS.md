@@ -6,6 +6,18 @@ This version has breaking changes - APIs, conventions, and file structure may al
 
 # Yall Come Back agent rules
 
+## Never name underlying infrastructure (required)
+
+Do **not** mention hosting vendors, PaaS brands, databases, frameworks, or other internal tools in **any guest-, host-, or Ops-facing UI copy** (help, marketing, Admin, Ops, emails, signup).
+
+Examples of names to avoid in product copy: Railway, Vercel, Render, Fly, Cloudflare (as *our* host), Postgres, Prisma, Next.js, Docker, Stripe (prefer “card” for guests unless the UI is explicitly payment-provider settings).
+
+Say instead: **the platform**, **Yall Come Back**, **Ops**, **custom domain**, **SSL**, **CNAME / TXT**, **registrar**, **card payments**.
+
+Hosts may use their own registrar names (where they bought the domain). That is fine.
+
+Internal code comments and private `README` deploy notes may keep technical names for developers — never surface them on the website.
+
 ## Help documentation: ASD-STE100 (required)
 
 All **current and future** help documentation must use **ASD-STE100 Simplified Technical English**.

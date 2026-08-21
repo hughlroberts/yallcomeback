@@ -940,11 +940,11 @@ export default async function AdminBrandPage({
                   Bare hostname only (no https://). While testing, leave Demo
                   publish and use{" "}
                   <code className="rounded bg-white px-1">/h/{host.slug}</code>
-                  . To go Live: (1) Save this field, (2) platform adds the domain
-                  in Railway for SSL, (3) at your registrar set CNAME{" "}
-                  <code className="rounded bg-white px-1">www</code> to the
-                  target Railway shows — not a guess. Apex can 301-forward to
-                  www. Full guide:{" "}
+                  . To go Live: (1) Save this field, (2) Ops enables the domain
+                  on the platform for SSL and sends you DNS values, (3) at your
+                  registrar set CNAME{" "}
+                  <code className="rounded bg-white px-1">www</code> to that
+                  target — not a guess. Apex can 301-forward to www. Full guide:{" "}
                   <Link
                     href="/help/branded-website"
                     className="font-semibold text-bonnet underline"

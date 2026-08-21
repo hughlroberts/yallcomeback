@@ -78,6 +78,8 @@ STE makes help text:
 | marketplace | shared catalog (except once for definition) |
 | platform hosting | paid hosting |
 | self-host | free self-host website |
+| the platform / Ops | Railway, Vercel, Render, Postgres, Next.js, or other infra brand names |
+| card payment | Stripe (except ops payment-settings screens) |
 | Admin | host dashboard (UI label is Admin) |
 
 ## Before you publish a help change

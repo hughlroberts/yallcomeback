@@ -25,7 +25,7 @@ const siteName = process.env.NEXT_PUBLIC_SITE_NAME || PRODUCT_NAME;
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.AUTH_URL ||
-  "https://yallcomeback-production.up.railway.app";
+  "https://www.yallcomeback.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

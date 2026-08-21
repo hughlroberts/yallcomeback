@@ -19,7 +19,7 @@ export const PRICING_INTELLIGENCE_ADDON_BLURB =
 
 /**
  * Hosted YCB marketplace product (not a vanilla open-source self-host).
- * Set PLATFORM_PRODUCT_MODE=true on Railway / main product deploys.
+ * Set PLATFORM_PRODUCT_MODE=true on main product deploys.
  * Set YCB_OPEN_SOURCE_BUILD=true on MIT self-host builds to force off.
  */
 export function isPlatformProductMode(): boolean {

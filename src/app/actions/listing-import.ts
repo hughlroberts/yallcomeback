@@ -115,7 +115,7 @@ export async function importListingFromUrl(
     });
 
     // Photos: try download to /uploads; fall back to remote CDN URLs (needed on
-    // ephemeral hosts like Railway when local disk is not durable).
+    // ephemeral hosts when local disk is not durable).
     const downloaded = await downloadListingImages(
       property.id,
       draft.imageUrls,

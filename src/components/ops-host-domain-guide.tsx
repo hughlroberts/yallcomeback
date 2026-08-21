@@ -24,7 +24,8 @@ type Props = {
 
 /**
  * Dogfood-friendly DNS + go-live checklist for a managed host brand.
- * Two layers: (1) app routing via customDomain, (2) DNS/SSL at Railway + registrar.
+ * Two layers: (1) app routing via customDomain, (2) platform SSL + registrar DNS.
+ * Never name hosting vendors or other internal infrastructure in this UI.
  */
 export function OpsHostDomainGuide({ host }: Props) {
   const domain = host.customDomain?.trim() || null;
@@ -64,15 +65,15 @@ export function OpsHostDomainGuide({ host }: Props) {
             </p>
           </div>
           <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs">
-            <p className="font-semibold text-sky-900">You (Railway)</p>
+            <p className="font-semibold text-sky-900">You (platform SSL)</p>
             <p className="mt-0.5 text-stone-600">
-              Register hostname for SSL; copy CNAME / TXT
+              Register the hostname; copy the CNAME / TXT values to send
             </p>
           </div>
           <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs">
             <p className="font-semibold text-sky-900">Host (registrar)</p>
             <p className="mt-0.5 text-stone-600">
-              Paste those records at GoDaddy / Namecheap / etc. — or you do it
+              Paste those records where they bought the domain — or you do it
               for them
             </p>
           </div>
@@ -106,7 +107,7 @@ export function OpsHostDomainGuide({ host }: Props) {
         </div>
         <div>
           <dt className="text-xs font-semibold uppercase tracking-wide text-stone-400">
-            Platform target
+            Platform site
           </dt>
           <dd className="mt-0.5 font-mono text-xs text-stone-900">
             {PLATFORM_HOST}
@@ -126,8 +127,7 @@ export function OpsHostDomainGuide({ host }: Props) {
               className="font-semibold text-bonnet hover:underline"
             >
               Brand &amp; website
-            </Link>
-            {" "}
+            </Link>{" "}
             (host can also edit this if they have Brand access). Set{" "}
             <strong>Custom domain</strong> to the bare hostname (e.g.{" "}
             <code className="rounded bg-white px-1">cherokeelanding.net</code>
@@ -150,36 +150,33 @@ export function OpsHostDomainGuide({ host }: Props) {
 
         <li>
           <p className="font-semibold text-stone-900">
-            2. You — add the domain on Railway (SSL)
+            2. You — enable the domain on the platform (SSL)
           </p>
           <p className="mt-1">
-            Railway only serves hostnames registered on the{" "}
-            <strong>yallcomeback</strong> service. Hosts never see this step —
-            it is platform-only:
+            Hosts never see this step. In platform hosting settings, register
+            the hostname so HTTPS works, then copy the DNS values to send:
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-stone-600">
-            <li>
-              Railway → service <strong>yallcomeback</strong> → Settings →
-              Networking → <strong>Custom Domain</strong>
-            </li>
             <li>
               Add{" "}
               <code className="rounded bg-white px-1">
                 {wwwHost || "www.their-domain.com"}
               </code>{" "}
-              (apex later if the plan allows, or via Cloudflare)
+              as a custom domain on the Yall Come Back service
             </li>
             <li>
-              Copy the <strong>CNAME</strong> target Railway shows (looks like{" "}
-              <code className="rounded bg-white px-1">xxxx.up.railway.app</code>
-              ) plus any <strong>TXT</strong> verify record — you will paste
-              these at the registrar next
+              Copy the <strong>CNAME</strong> target the platform shows, plus
+              any <strong>TXT</strong> verify record
+            </li>
+            <li>
+              Keep those values private to Ops + the host — do not publish
+              internal hostnames in help or marketing
             </li>
           </ul>
           <p className="mt-2 text-xs text-stone-500">
-            Hobby plans have a low custom-domain limit. For many host sites you
-            will need Pro (or Cloudflare in front). The platform itself already
-            uses <code className="rounded bg-white px-1">{PLATFORM_HOST}</code>.
+            The public platform site is{" "}
+            <code className="rounded bg-white px-1">{PLATFORM_HOST}</code>. Host
+            brand domains are separate registrations.
           </p>
         </li>
 
@@ -189,19 +186,18 @@ export function OpsHostDomainGuide({ host }: Props) {
           </p>
           <p className="mt-1">
             This is the only step that lives outside Yall Come Back. Log into
-            GoDaddy / Namecheap / Cloudflare for{" "}
+            where they bought{" "}
             <strong>{bare || "their domain"}</strong> and:
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-stone-600">
             <li>
               <strong>CNAME</strong> name{" "}
               <code className="rounded bg-white px-1">www</code> → the exact
-              Railway target from step 2 (do not invent{" "}
-              <code className="rounded bg-white px-1">{PLATFORM_HOST}</code>{" "}
-              unless that is what Railway literally shows)
+              target from step 2 (do not invent a value — paste what Ops
+              provides)
             </li>
             <li>
-              Add Railway&apos;s <strong>TXT</strong> verify record if shown
+              Add the <strong>TXT</strong> verify record if Ops included one
             </li>
             <li>
               Optional: forward apex{" "}
@@ -212,19 +208,19 @@ export function OpsHostDomainGuide({ host }: Props) {
               <code className="rounded bg-white px-1">
                 https://{wwwHost || "www.domain.com"}
               </code>{" "}
-              (301) — GoDaddy often cannot CNAME the apex
+              (301) — many registrars cannot CNAME the apex
             </li>
             <li>
               Remove old A/CNAME records that still point at their previous
-              WordPress / parking host
+              website host
             </li>
           </ul>
           <p className="mt-2 rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs text-stone-600">
             <strong className="text-stone-800">What to send the host:</strong>{" "}
             “Add a CNAME for <code className="rounded bg-sky-50 px-1">www</code>{" "}
-            pointing to <em>[paste Railway value]</em>, plus this TXT if
-            Railway asks for it: <em>[paste]</em>. Then forward the bare domain
-            to https://{wwwHost || "www.…"}.”
+            pointing to <em>[paste the CNAME target from step 2]</em>, plus this
+            TXT if we asked for it: <em>[paste]</em>. Then forward the bare
+            domain to https://{wwwHost || "www.…"}.”
           </p>
         </li>
 
@@ -232,7 +228,7 @@ export function OpsHostDomainGuide({ host }: Props) {
           <p className="font-semibold text-stone-900">4. Either of you — verify</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-stone-600">
             <li>
-              Railway domain shows Verified + certificate valid
+              Platform shows the domain as verified with a valid certificate
             </li>
             <li>
               Open{" "}
@@ -256,12 +252,13 @@ export function OpsHostDomainGuide({ host }: Props) {
       </ol>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-950">
-        <strong className="font-semibold">Dogfood tip:</strong> You do{" "}
+        <strong className="font-semibold">Dogfood tip:</strong> Do{" "}
         <em>not</em> point their domain at{" "}
         <code className="rounded bg-white/80 px-1">{PLATFORM_HOST}</code> as a
-        permanent shortcut unless Railway also has their hostname registered —
-        otherwise HTTPS/Host routing will fail. Always add the domain in Railway
-        first, then paste <em>that</em> CNAME at the registrar.
+        shortcut unless Ops explicitly gave that as the CNAME target — and the
+        hostname must already be registered on the platform for SSL. Always
+        enable the domain on the platform first, then paste{" "}
+        <em>those</em> DNS values at the registrar.
       </div>
 
       <p className="text-sm text-stone-600">

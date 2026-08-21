@@ -307,7 +307,7 @@ export default async function OpsHostDetailPage({
               className="mt-1 h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-white px-3 text-sm"
             >
               <option value="PLATFORM">
-                Platform-hosted (on this Railway app)
+                Platform-hosted (Yall Come Back runs it)
               </option>
               <option value="SELF">Self-hosted (their own stack)</option>
             </select>

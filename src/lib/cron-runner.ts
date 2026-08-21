@@ -1,5 +1,5 @@
 /**
- * In-process scheduler for Railway / long-running Node server.
+ * In-process scheduler for long-running Node server.
  * Runs the same work as /api/cron/* so you don't need an external pinger.
  *
  * Control with env:
@@ -18,7 +18,7 @@ function cronEnabled(): boolean {
   const raw = process.env.CRON_IN_PROCESS?.trim().toLowerCase();
   if (raw === "true" || raw === "1") return true;
   if (raw === "false" || raw === "0") return false;
-  // Default: production only (Railway)
+  // Default: production only
   return process.env.NODE_ENV === "production";
 }
 

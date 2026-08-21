@@ -3,7 +3,7 @@
  * - Profile/avatar: person guests message and “meet”
  * - Logo: optional mark for the guest website header only
  *
- * Note: files under /uploads on Railway are ephemeral (lost on redeploy).
+ * Note: files under /uploads on ephemeral disk are lost on redeploy.
  * Prefer durable paths under /public/brand or external URLs for logos.
  */
 

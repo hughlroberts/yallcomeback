@@ -7,7 +7,7 @@ import { runMonthlyPricingIntelligence } from "@/lib/pricing-intelligence/run";
  *   curl -H "Authorization: Bearer $CRON_SECRET" \
  *     https://yallcomeback.com/api/cron/pricing-intelligence
  *
- * Prefer an external monthly scheduler (GitHub Actions / Railway cron).
+ * Prefer an external monthly scheduler.
  * In-process cron only runs this when PRICING_INTELLIGENCE_MONTHLY_IN_PROCESS=true
  * (see cron-jobs) — default is off so we do not re-run every 20 minutes.
  */

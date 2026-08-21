@@ -2,7 +2,7 @@
  * Map custom hostnames → host slug for multi-tenant domain routing.
  *
  * Sources (merged):
- * 1) HOST_DOMAIN_MAP env (comma-separated domain:slug) — ops / Railway
+ * 1) HOST_DOMAIN_MAP env (comma-separated domain:slug) — ops / deploy env
  * 2) Host.customDomain rows via /api/domain-map (self-serve brand admin)
  *
  * Format (env):

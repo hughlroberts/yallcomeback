@@ -141,7 +141,7 @@ function passthrough(req: NextRequest): NextResponse {
 }
 
 /**
- * Prefer the public hostname (Railway / reverse proxies set x-forwarded-host).
+ * Prefer the public hostname (proxies often set x-forwarded-host).
  */
 function requestHostname(req: NextRequest): string | null {
   const forwarded = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim();

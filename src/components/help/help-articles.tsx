@@ -1506,19 +1506,18 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
           <li>Select Save. This only maps the domain inside the app.</li>
         </HelpUl>
 
-        <HelpH3>2. Platform adds the domain for SSL</HelpH3>
+        <HelpH3>2. Platform enables the domain for SSL</HelpH3>
         <HelpP>
-          Yall Come Back (or Ops) registers your hostname on the hosting
-          provider (Railway) so HTTPS works. The platform copies a{" "}
-          <strong>CNAME</strong> target and sometimes a <strong>TXT</strong>{" "}
-          verify record. You cannot skip this step. Pointing DNS alone is not
-          enough.
+          Yall Come Back Ops registers your hostname on the platform so HTTPS
+          works. Ops then sends you a <strong>CNAME</strong> target and
+          sometimes a <strong>TXT</strong> verify record. You cannot skip this
+          step. Pointing DNS alone is not enough.
         </HelpP>
 
         <HelpH3>3. Update DNS at your registrar</HelpH3>
         <HelpP>
-          Log in where you bought the domain (GoDaddy, Namecheap, Cloudflare, or
-          similar). Use the exact values from step 2.
+          Log in where you bought the domain. Use the exact values Ops sent in
+          step 2.
         </HelpP>
         <HelpUl>
           <li>
@@ -1526,9 +1525,9 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               www
             </code>{" "}
-            that points to the Railway target you received.
+            that points to the target Ops sent you.
           </li>
-          <li>Add the TXT verify record if the platform asked for one.</li>
+          <li>Add the TXT verify record if Ops asked for one.</li>
           <li>
             Optional: forward the apex (example: cherokeelanding.net) to{" "}
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
@@ -1570,13 +1569,14 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             Edit DNS at the registrar when Ops sends the CNAME and TXT values.
           </li>
           <li>
-            <strong>Yall Come Back Ops</strong> — Add the hostname on Railway for
-            SSL. Send you the exact DNS records to paste.
+            <strong>Yall Come Back Ops</strong> — Enable the hostname on the
+            platform for SSL. Send you the exact DNS records to paste.
           </li>
         </HelpUl>
         <HelpP>
-          Dogfood tip: do not point your domain at www.yallcomeback.app unless
-          Ops tells you that value. Always paste the CNAME target from Railway.
+          Do not invent DNS targets. Always paste the CNAME and TXT values Ops
+          sends. Do not point your domain at www.yallcomeback.app unless Ops
+          tells you that is the correct target.
         </HelpP>
       </HelpSection>
 
