@@ -44,7 +44,9 @@ export async function upsertHostingPlan(formData: FormData) {
   const description = String(formData.get("description") || "").trim() || null;
   const currency = String(formData.get("currency") || "USD").trim() || "USD";
   const isActive = formData.get("isActive") === "on";
-  const isDefault = formData.get("isDefault") === "on";
+  // Complimentary ($0) plans are internal — never default for public signup
+  const isDefault =
+    monthlyPrice > 0 && formData.get("isDefault") === "on";
   const sortOrder = Number(formData.get("sortOrder") || 0);
 
   if (id) {

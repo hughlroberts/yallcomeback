@@ -24,8 +24,9 @@ export default async function ForHostsPage({
   const initialPath =
     params.path === "self" || params.path === "paid" ? params.path : "paid";
 
+  // Public catalog only — complimentary ($0) plans are platform-assigned in Ops
   const plans = await prisma.hostingPlan.findMany({
-    where: { isActive: true },
+    where: { isActive: true, monthlyPrice: { gt: 0 } },
     orderBy: { sortOrder: "asc" },
   });
 
