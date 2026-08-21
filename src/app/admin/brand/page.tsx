@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/host";
 import { setAdminBrandContext } from "@/app/actions/admin-brand";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { DomainDnsPanel } from "@/components/domain-dns-panel";
 import { SubmitButton } from "@/components/submit-button";
 import { maskSyndicationKey } from "@/lib/syndication";
 import {
@@ -1052,66 +1053,7 @@ export default async function AdminBrandPage({
               </div>
 
               {host.customDomain ? (
-                <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/70 px-4 py-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-stone-900">
-                      DNS records to paste at your registrar
-                    </p>
-                    <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-stone-700">
-                      {host.domainProvisionStatus || "PENDING"}
-                    </span>
-                  </div>
-                  {host.domainDnsCnameTarget ? (
-                    <dl className="space-y-2 text-sm">
-                      <div className="rounded-lg bg-white/90 px-3 py-2">
-                        <dt className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-                          CNAME
-                        </dt>
-                        <dd className="mt-1 font-mono text-xs text-stone-800">
-                          name{" "}
-                          <strong>{host.domainDnsCnameHost || "www"}</strong>
-                          {" → "}
-                          <strong className="break-all">
-                            {host.domainDnsCnameTarget}
-                          </strong>
-                        </dd>
-                      </div>
-                      {host.domainDnsTxtHost && host.domainDnsTxtValue ? (
-                        <div className="rounded-lg bg-white/90 px-3 py-2">
-                          <dt className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-                            TXT (verify)
-                          </dt>
-                          <dd className="mt-1 font-mono text-xs text-stone-800">
-                            name <strong>{host.domainDnsTxtHost}</strong>
-                            {" → "}
-                            <strong className="break-all">
-                              {host.domainDnsTxtValue}
-                            </strong>
-                          </dd>
-                        </div>
-                      ) : null}
-                      <p className="text-xs text-stone-600">
-                        Optional: forward{" "}
-                        <code className="rounded bg-white px-1">
-                          {host.customDomain.replace(/^www\./, "")}
-                        </code>{" "}
-                        →{" "}
-                        <code className="rounded bg-white px-1">
-                          https://
-                          {host.domainSslHostname ||
-                            `www.${host.customDomain.replace(/^www\./, "")}`}
-                        </code>
-                        .
-                      </p>
-                    </dl>
-                  ) : (
-                    <p className="text-xs leading-relaxed text-stone-700">
-                      {host.domainProvisionError
-                        ? host.domainProvisionError
-                        : "DNS values are not ready yet. Ops was notified in Messages — they will enable SSL and this card will show the records to paste."}
-                    </p>
-                  )}
-                </div>
+                <DomainDnsPanel host={host} variant="brand" />
               ) : null}
 
               <div className="space-y-1.5">

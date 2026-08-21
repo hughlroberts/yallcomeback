@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Host } from "@prisma/client";
+import { DomainDnsPanel } from "@/components/domain-dns-panel";
 import { domainMapSnippet } from "@/lib/custom-domains";
 import { sitePublishStateLabel } from "@/lib/host-site";
 
@@ -19,6 +20,13 @@ type Props = {
     | "websiteUrl"
     | "sitePublishState"
     | "sitePresence"
+    | "domainProvisionStatus"
+    | "domainProvisionError"
+    | "domainSslHostname"
+    | "domainDnsCnameHost"
+    | "domainDnsCnameTarget"
+    | "domainDnsTxtHost"
+    | "domainDnsTxtValue"
   >;
 };
 
@@ -55,7 +63,7 @@ export function OpsHostDomainGuide({ host }: Props) {
             {previewPath}
           </Link>
           . Pointing a real domain here needs <strong>three</strong> pieces —
-          none of them alone is enough.
+          none of them alone is enough. DNS values below stay saved until cutover.
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs">
@@ -116,6 +124,8 @@ export function OpsHostDomainGuide({ host }: Props) {
         </div>
       </dl>
 
+      {domain ? <DomainDnsPanel host={host} variant="ops" /> : null}
+
       <ol className="list-decimal space-y-4 pl-5 text-sm text-stone-700">
         <li>
           <p className="font-semibold text-stone-900">
@@ -158,20 +168,15 @@ export function OpsHostDomainGuide({ host }: Props) {
             <code className="rounded bg-white px-1">
               {wwwHost || "www.their-domain.com"}
             </code>{" "}
-            and stores CNAME/TXT on the host. You always get an Ops{" "}
+            and stores CNAME/TXT on the host (card above). You always get an Ops{" "}
             <Link
               href="/admin/messages"
               className="font-semibold text-bonnet hover:underline"
             >
               Messages
             </Link>{" "}
-            alert (even when automation works). If status is FAILED, enable the
-            hostname manually and reply in that thread with the DNS values.
-          </p>
-          <p className="mt-2 text-xs text-stone-500">
-            Requires <code className="rounded bg-white px-1">PLATFORM_DOMAIN_API_TOKEN</code>{" "}
-            (or token fallback) on the service. Without it, Save still maps the
-            domain and still alerts you — DNS values stay empty until you act.
+            alert. If status is FAILED, enable the hostname manually and refresh
+            provision.
           </p>
         </li>
 
@@ -180,42 +185,10 @@ export function OpsHostDomainGuide({ host }: Props) {
             3. Host (or you for them) — DNS at the registrar
           </p>
           <p className="mt-1">
-            This is the only step that lives outside Yall Come Back. Log into
-            where they bought{" "}
-            <strong>{bare || "their domain"}</strong> and:
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-stone-600">
-            <li>
-              <strong>CNAME</strong> name{" "}
-              <code className="rounded bg-white px-1">www</code> → the exact
-              target from step 2 (do not invent a value — paste what Ops
-              provides)
-            </li>
-            <li>
-              Add the <strong>TXT</strong> verify record if Ops included one
-            </li>
-            <li>
-              Optional: forward apex{" "}
-              <code className="rounded bg-white px-1">
-                {bare || "domain.com"}
-              </code>{" "}
-              →{" "}
-              <code className="rounded bg-white px-1">
-                https://{wwwHost || "www.domain.com"}
-              </code>{" "}
-              (301) — many registrars cannot CNAME the apex
-            </li>
-            <li>
-              Remove old A/CNAME records that still point at their previous
-              website host
-            </li>
-          </ul>
-          <p className="mt-2 rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs text-stone-600">
-            <strong className="text-stone-800">What to send the host:</strong>{" "}
-            “Add a CNAME for <code className="rounded bg-sky-50 px-1">www</code>{" "}
-            pointing to <em>[paste the CNAME target from step 2]</em>, plus this
-            TXT if we asked for it: <em>[paste]</em>. Then forward the bare
-            domain to https://{wwwHost || "www.…"}.”
+            Use the saved table above. Log into where they bought{" "}
+            <strong>{bare || "their domain"}</strong> and paste CNAME + TXT.
+            Optional apex → www 301. Remove old A/CNAME records pointing at the
+            previous website host.
           </p>
         </li>
 
@@ -246,18 +219,8 @@ export function OpsHostDomainGuide({ host }: Props) {
         </li>
       </ol>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-950">
-        <strong className="font-semibold">Dogfood tip:</strong> Do{" "}
-        <em>not</em> point their domain at{" "}
-        <code className="rounded bg-white/80 px-1">{PLATFORM_HOST}</code> as a
-        shortcut unless Ops explicitly gave that as the CNAME target — and the
-        hostname must already be registered on the platform for SSL. Always
-        enable the domain on the platform first, then paste{" "}
-        <em>those</em> DNS values at the registrar.
-      </div>
-
       <p className="text-sm text-stone-600">
-        Full host-facing playbook (marketplace + brand domain + DNS):{" "}
+        Full host-facing playbook:{" "}
         <Link
           href="/help/branded-website"
           className="font-semibold text-bonnet hover:underline"
