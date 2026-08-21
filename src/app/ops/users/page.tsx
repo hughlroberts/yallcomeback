@@ -203,32 +203,47 @@ export default async function OpsUsersPage({
             <thead className="border-b border-stone-100 bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
               <tr>
                 <th className="px-4 py-3 font-semibold">User</th>
-                <th className="px-4 py-3 font-semibold">Role</th>
-                <th className="px-4 py-3 font-semibold">Brand / access</th>
-                <th className="px-4 py-3 font-semibold">Actions</th>
+                <th className="px-4 py-3 font-semibold">Role / brand</th>
+                <th className="px-4 py-3 font-semibold">Password</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {users.map((u) => (
                 <tr key={u.id} className="align-top">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-stone-900">
-                      {u.name || "—"}
-                      {u.id === session.user.id ? (
-                        <span className="ml-1 text-xs font-normal text-stone-400">
-                          (you)
-                        </span>
+                    <form action={opsUpdateUserRole} id={`user-${u.id}`} className="space-y-2">
+                      <input type="hidden" name="id" value={u.id} />
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold uppercase tracking-wide text-stone-400">
+                          Name
+                          {u.id === session.user.id ? (
+                            <span className="ml-1 font-normal normal-case text-stone-400">
+                              (you)
+                            </span>
+                          ) : null}
+                        </label>
+                        <Input
+                          name="name"
+                          defaultValue={u.name || ""}
+                          placeholder="Display name"
+                          className="!h-9 min-w-[12rem] text-xs"
+                        />
+                      </div>
+                      <p className="text-xs text-stone-500">{u.email}</p>
+                      {u.host ? (
+                        <p className="text-[11px] text-stone-400">
+                          {u.host.name} · {hostAccessLabel(u.hostAccess)}
+                        </p>
                       ) : null}
-                    </p>
-                    <p className="text-xs text-stone-500">{u.email}</p>
+                    </form>
                   </td>
                   <td className="px-4 py-3">
-                    <form action={opsUpdateUserRole} className="space-y-1">
-                      <input type="hidden" name="id" value={u.id} />
+                    <div className="space-y-1">
                       <select
                         name="role"
+                        form={`user-${u.id}`}
                         defaultValue={u.role}
-                        className="w-full rounded border border-stone-200 px-2 py-1 text-xs"
+                        className="w-full rounded border border-stone-200 px-2 py-1.5 text-xs"
                       >
                         <option value="GUEST">GUEST</option>
                         <option value="HOST">HOST</option>
@@ -236,8 +251,9 @@ export default async function OpsUsersPage({
                       </select>
                       <select
                         name="hostId"
+                        form={`user-${u.id}`}
                         defaultValue={u.hostId || ""}
-                        className="w-full rounded border border-stone-200 px-2 py-1 text-xs"
+                        className="w-full rounded border border-stone-200 px-2 py-1.5 text-xs"
                       >
                         <option value="">No brand</option>
                         {hosts.map((h) => (
@@ -248,27 +264,23 @@ export default async function OpsUsersPage({
                       </select>
                       <select
                         name="hostAccess"
+                        form={`user-${u.id}`}
                         defaultValue={u.hostAccess || "FULL"}
-                        className="w-full rounded border border-stone-200 px-2 py-1 text-xs"
+                        className="w-full rounded border border-stone-200 px-2 py-1.5 text-xs"
                       >
                         <option value="OWNER">OWNER</option>
                         <option value="FULL">FULL</option>
                         <option value="LIMITED">LIMITED</option>
                       </select>
-                      <Button type="submit" variant="secondary" className="!text-xs">
-                        Update role
+                      <Button
+                        type="submit"
+                        form={`user-${u.id}`}
+                        variant="secondary"
+                        className="!text-xs"
+                      >
+                        Save user
                       </Button>
-                    </form>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-stone-600">
-                    {u.host ? (
-                      <>
-                        <p className="font-medium text-stone-800">{u.host.name}</p>
-                        <p>{hostAccessLabel(u.hostAccess)}</p>
-                      </>
-                    ) : (
-                      "—"
-                    )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <form action={opsResetUserPassword} className="flex flex-col gap-1">

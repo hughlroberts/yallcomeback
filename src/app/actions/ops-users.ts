@@ -102,11 +102,13 @@ export async function opsResetUserPassword(formData: FormData) {
   redirect("/ops/users?saved=reset");
 }
 
+/** Update display name, role, brand, and co-host access (platform ops). */
 export async function opsUpdateUserRole(formData: FormData) {
   const session = await requirePlatformAdmin();
   if (!session) throw new Error("Unauthorized");
 
   const id = String(formData.get("id") || "");
+  const name = String(formData.get("name") || "").trim() || null;
   const role = parseRole(String(formData.get("role") || ""));
   const hostIdRaw = String(formData.get("hostId") || "").trim();
   const hostAccess = parseHostAccess(String(formData.get("hostAccess") || ""));
@@ -127,6 +129,7 @@ export async function opsUpdateUserRole(formData: FormData) {
   await prisma.user.update({
     where: { id },
     data: {
+      name,
       role,
       hostId,
       hostAccess: role === "HOST" ? access : null,
@@ -134,5 +137,7 @@ export async function opsUpdateUserRole(formData: FormData) {
   });
 
   revalidatePath("/ops/users");
+  revalidatePath("/admin");
+  revalidatePath("/admin/team");
   redirect("/ops/users?saved=1");
 }
