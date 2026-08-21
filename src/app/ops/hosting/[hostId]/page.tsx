@@ -91,12 +91,7 @@ export default async function OpsHostDetailPage({
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-sm text-ink-muted">
-          <Link href="/ops/hosting" className="text-bonnet hover:underline">
-            ← Website hosting
-          </Link>
-        </p>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+        <div className="mt-0 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink">
               {host.name}

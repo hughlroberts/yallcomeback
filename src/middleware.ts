@@ -133,8 +133,10 @@ function withTenant(
 }
 
 function passthrough(req: NextRequest): NextResponse {
+  const requestHeaders = cleanRequestHeaders(req);
+  requestHeaders.set("x-pathname", req.nextUrl.pathname);
   return NextResponse.next({
-    request: { headers: cleanRequestHeaders(req) },
+    request: { headers: requestHeaders },
   });
 }
 

@@ -10,6 +10,7 @@ type HostOption = {
 /**
  * Platform-admin only: pick which host brand /admin is scoped to.
  * Prevents Hugh’s personal listings from appearing while managing Cherokee.
+ * Exit to Ops is the intentional way back to the platform panel.
  */
 export function AdminBrandSwitcher({
   hosts,
@@ -26,11 +27,10 @@ export function AdminBrandSwitcher({
     <div className="border-b border-amber-200/80 bg-amber-50">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-2 px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
         <div className="min-w-0 text-sm text-amber-950">
-          <span className="font-semibold">Platform admin</span>
+          <span className="font-semibold">Managing website</span>
           <span className="mx-1.5 text-amber-700/70">·</span>
           {active ? (
             <>
-              Managing brand:{" "}
               <strong className="font-semibold">{active.name}</strong>
               <span className="ml-1 text-xs text-amber-800/80">
                 ({active.slug})
@@ -43,43 +43,60 @@ export function AdminBrandSwitcher({
             </span>
           )}
         </div>
-        <form
-          action={setAdminBrandContext}
-          className="flex flex-wrap items-center gap-2"
-        >
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <label className="sr-only" htmlFor="admin-brand-select">
-            Host brand
-          </label>
-          <select
-            id="admin-brand-select"
-            name="hostId"
-            defaultValue={activeHostId || ""}
-            className="max-w-[16rem] rounded-lg border border-amber-300/80 bg-white px-2.5 py-1.5 text-sm font-medium text-stone-900"
+        <div className="flex flex-wrap items-center gap-2">
+          <form
+            action={setAdminBrandContext}
+            className="flex flex-wrap items-center gap-2"
           >
-            <option value="">Choose brand…</option>
-            {hosts.map((h) => (
-              <option key={h.id} value={h.id}>
-                {h.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="rounded-lg bg-amber-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-950"
-          >
-            Switch brand
-          </button>
-          {active ? (
-            <Link
-              href={`/h/${active.slug}`}
-              target="_blank"
-              className="text-xs font-semibold text-amber-950 underline underline-offset-2"
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <label className="sr-only" htmlFor="admin-brand-select">
+              Host brand
+            </label>
+            <select
+              id="admin-brand-select"
+              name="hostId"
+              defaultValue={activeHostId || ""}
+              className="max-w-[16rem] rounded-lg border border-amber-300/80 bg-white px-2.5 py-1.5 text-sm font-medium text-stone-900"
             >
-              Guest site →
+              <option value="">Choose brand…</option>
+              {hosts.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="rounded-lg bg-amber-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-950"
+            >
+              Switch brand
+            </button>
+          </form>
+          {active ? (
+            <>
+              <Link
+                href={`/h/${active.slug}`}
+                target="_blank"
+                className="text-xs font-semibold text-amber-950 underline underline-offset-2"
+              >
+                Guest site →
+              </Link>
+              <Link
+                href={`/ops/hosting/${active.id}`}
+                className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
+              >
+                ← Exit to Ops Panel
+              </Link>
+            </>
+          ) : (
+            <Link
+              href="/ops/hosting"
+              className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
+            >
+              ← Exit to Ops Panel
             </Link>
-          ) : null}
-        </form>
+          )}
+        </div>
       </div>
     </div>
   );
