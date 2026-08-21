@@ -205,6 +205,21 @@ model Host {
   /// Bare hostname for guest routing (e.g. cherokeelanding.net).
   /// Combined with HOST_DOMAIN_MAP / DB map so guests hit this brand.
   customDomain         String?
+  /// Domain SSL / DNS provisioning (platform-managed; host pastes records at registrar)
+  /// NONE | PENDING | READY | FAILED | VERIFIED
+  domainProvisionStatus  String?
+  domainProvisionError   String?
+  domainProvisionedAt    DateTime?
+  /// Hostname registered for SSL (usually www.bare)
+  domainSslHostname      String?
+  /// CNAME hostlabel (e.g. www) and target the host must set at their registrar
+  domainDnsCnameHost     String?
+  domainDnsCnameTarget   String?
+  /// TXT verification host + value (ownership proof)
+  domainDnsTxtHost       String?
+  domainDnsTxtValue      String?
+  /// External platform domain id (opaque; for status refresh)
+  domainExternalId       String?
   /// STAYLOCAL = use StayLocal listing URLs; CUSTOM = own domain; BOTH = both
   sitePresence         HostSitePresence    @default(STAYLOCAL)
   /// Host-level default: new properties inherit this for marketplace visibility
@@ -683,6 +698,8 @@ model Conversation {
   guestPhone    String?
   subject       String?
   status        ConversationStatus @default(OPEN)
+  /// When true, platform Ops sees this thread even without a brand cookie
+  opsAlert      Boolean            @default(false)
   lastMessageAt DateTime?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
@@ -691,6 +708,7 @@ model Conversation {
   @@index([hostId, status])
   @@index([guestEmail])
   @@index([bookingId])
+  @@index([opsAlert, status])
 }
 
 model Message {

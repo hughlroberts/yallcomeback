@@ -984,11 +984,12 @@ export default async function AdminBrandPage({
                   </span>
                   <div>
                     <p className="font-semibold text-stone-900">
-                      Ops — enable the domain for SSL
+                      Platform — enable SSL (usually automatic)
                     </p>
                     <p className="mt-0.5 text-xs text-stone-500">
-                      Not on this page. Yall Come Back Ops registers the hostname
-                      and sends you the exact CNAME / TXT values to paste.
+                      On Save, Yall Come Back tries to register www for HTTPS and
+                      shows DNS values below. Ops also gets a Messages alert if
+                      anything needs a human.
                     </p>
                   </div>
                 </li>
@@ -1001,10 +1002,9 @@ export default async function AdminBrandPage({
                       You — update DNS at your registrar
                     </p>
                     <p className="mt-0.5 text-xs text-stone-500">
-                      Not on this page. At the place you bought the domain, set
-                      CNAME <code className="rounded bg-stone-100 px-1">www</code>{" "}
-                      to the target Ops sent. Optional: forward the apex to www.
-                      Full guide:{" "}
+                      Not on this page. At the place you bought the domain, paste
+                      the CNAME (and TXT) shown below after Save. Optional:
+                      forward the apex to www. Full guide:{" "}
                       <Link
                         href="/help/branded-website"
                         className="font-semibold text-bonnet underline"
@@ -1032,7 +1032,8 @@ export default async function AdminBrandPage({
                   <code className="rounded bg-stone-100 px-1">
                     cherokeelanding.net
                   </code>
-                  . Leave empty to stay on preview only.
+                  . Leave empty to stay on preview only. Saving notifies Ops and
+                  tries to prepare DNS values automatically.
                 </p>
                 {host.customDomain ? (
                   <p className="rounded-lg border border-emerald-100 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-950">
@@ -1041,15 +1042,78 @@ export default async function AdminBrandPage({
                     <code className="rounded bg-white px-1 font-mono text-[11px]">
                       {host.customDomain}
                     </code>{" "}
-                    → this brand. Steps 2–3 (SSL + DNS) still happen outside this
-                    form. Preview remains{" "}
+                    → this brand. Preview remains{" "}
                     <code className="rounded bg-white px-1 font-mono text-[11px]">
                       {previewPath}
                     </code>{" "}
-                    until DNS is live.
+                    until registrar DNS is live.
                   </p>
                 ) : null}
               </div>
+
+              {host.customDomain ? (
+                <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/70 px-4 py-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-stone-900">
+                      DNS records to paste at your registrar
+                    </p>
+                    <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-stone-700">
+                      {host.domainProvisionStatus || "PENDING"}
+                    </span>
+                  </div>
+                  {host.domainDnsCnameTarget ? (
+                    <dl className="space-y-2 text-sm">
+                      <div className="rounded-lg bg-white/90 px-3 py-2">
+                        <dt className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
+                          CNAME
+                        </dt>
+                        <dd className="mt-1 font-mono text-xs text-stone-800">
+                          name{" "}
+                          <strong>{host.domainDnsCnameHost || "www"}</strong>
+                          {" → "}
+                          <strong className="break-all">
+                            {host.domainDnsCnameTarget}
+                          </strong>
+                        </dd>
+                      </div>
+                      {host.domainDnsTxtHost && host.domainDnsTxtValue ? (
+                        <div className="rounded-lg bg-white/90 px-3 py-2">
+                          <dt className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
+                            TXT (verify)
+                          </dt>
+                          <dd className="mt-1 font-mono text-xs text-stone-800">
+                            name <strong>{host.domainDnsTxtHost}</strong>
+                            {" → "}
+                            <strong className="break-all">
+                              {host.domainDnsTxtValue}
+                            </strong>
+                          </dd>
+                        </div>
+                      ) : null}
+                      <p className="text-xs text-stone-600">
+                        Optional: forward{" "}
+                        <code className="rounded bg-white px-1">
+                          {host.customDomain.replace(/^www\./, "")}
+                        </code>{" "}
+                        →{" "}
+                        <code className="rounded bg-white px-1">
+                          https://
+                          {host.domainSslHostname ||
+                            `www.${host.customDomain.replace(/^www\./, "")}`}
+                        </code>
+                        .
+                      </p>
+                    </dl>
+                  ) : (
+                    <p className="text-xs leading-relaxed text-stone-700">
+                      {host.domainProvisionError
+                        ? host.domainProvisionError
+                        : "DNS values are not ready yet. Ops was notified in Messages — they will enable SSL and this card will show the records to paste."}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
               <div className="space-y-1.5">
                 <Label htmlFor="websiteUrl">
                   Public website URL (what you tell guests)

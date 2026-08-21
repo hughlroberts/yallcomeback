@@ -55,13 +55,19 @@ export function conversationAccessWhere(
   // Platform admin brand cookie (or host account) scopes inbox to that brand
   if (viewer.isPlatform && viewer.hostId) {
     return {
-      OR: [{ hostId: viewer.hostId }, ...asGuest],
+      OR: [
+        { hostId: viewer.hostId },
+        { opsAlert: true, status: "OPEN" },
+        ...asGuest,
+      ],
     };
   }
 
   if (viewer.isPlatform) {
-    // No brand selected — empty host side (guest threads still via asGuest only if needed)
-    return { OR: asGuest };
+    // No brand selected — still surface Ops alerts (e.g. domain setup tasks)
+    return {
+      OR: [{ opsAlert: true, status: "OPEN" }, ...asGuest],
+    };
   }
 
   if (viewer.isHost && viewer.hostId) {

@@ -315,6 +315,8 @@ export async function updateHostProfile(formData: FormData) {
     }
   }
 
+  const previousCustomDomain = existing.customDomain;
+
   const host = await prisma.host.update({
     where: { id: hostId },
     data: {
@@ -360,6 +362,20 @@ export async function updateHostProfile(formData: FormData) {
       where: { hostId: host.id },
       data: { listOnMarketplace: false },
     });
+  }
+
+  // Domain changed → provision SSL hostname when possible + always alert Ops
+  if (previousCustomDomain !== customDomain) {
+    try {
+      const { handleCustomDomainChange } = await import("@/lib/domain-setup");
+      await handleCustomDomainChange({
+        hostId: host.id,
+        previousDomain: previousCustomDomain,
+        nextDomain: customDomain,
+      });
+    } catch {
+      // Never block brand save on provisioning / notify failures
+    }
   }
 
   revalidatePath("/admin");

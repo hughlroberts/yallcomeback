@@ -65,9 +65,10 @@ export function OpsHostDomainGuide({ host }: Props) {
             </p>
           </div>
           <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs">
-            <p className="font-semibold text-sky-900">You (platform SSL)</p>
+            <p className="font-semibold text-sky-900">Platform (auto + alert)</p>
             <p className="mt-0.5 text-stone-600">
-              Register the hostname; copy the CNAME / TXT values to send
+              Save Brand auto-registers SSL when possible; you always get a
+              Messages alert
             </p>
           </div>
           <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs">
@@ -150,33 +151,27 @@ export function OpsHostDomainGuide({ host }: Props) {
 
         <li>
           <p className="font-semibold text-stone-900">
-            2. You — enable the domain on the platform (SSL)
+            2. Platform — SSL (auto) + Messages alert
           </p>
           <p className="mt-1">
-            Hosts never see this step. In platform hosting settings, register
-            the hostname so HTTPS works, then copy the DNS values to send:
+            When Brand saves a new custom domain, the app tries to register{" "}
+            <code className="rounded bg-white px-1">
+              {wwwHost || "www.their-domain.com"}
+            </code>{" "}
+            and stores CNAME/TXT on the host. You always get an Ops{" "}
+            <Link
+              href="/admin/messages"
+              className="font-semibold text-bonnet hover:underline"
+            >
+              Messages
+            </Link>{" "}
+            alert (even when automation works). If status is FAILED, enable the
+            hostname manually and reply in that thread with the DNS values.
           </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-stone-600">
-            <li>
-              Add{" "}
-              <code className="rounded bg-white px-1">
-                {wwwHost || "www.their-domain.com"}
-              </code>{" "}
-              as a custom domain on the Yall Come Back service
-            </li>
-            <li>
-              Copy the <strong>CNAME</strong> target the platform shows, plus
-              any <strong>TXT</strong> verify record
-            </li>
-            <li>
-              Keep those values private to Ops + the host — do not publish
-              internal hostnames in help or marketing
-            </li>
-          </ul>
           <p className="mt-2 text-xs text-stone-500">
-            The public platform site is{" "}
-            <code className="rounded bg-white px-1">{PLATFORM_HOST}</code>. Host
-            brand domains are separate registrations.
+            Requires <code className="rounded bg-white px-1">PLATFORM_DOMAIN_API_TOKEN</code>{" "}
+            (or token fallback) on the service. Without it, Save still maps the
+            domain and still alerts you — DNS values stay empty until you act.
           </p>
         </li>
 

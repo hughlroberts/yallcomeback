@@ -1519,16 +1519,17 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
 
         <HelpH3>2. Platform enables the domain for SSL</HelpH3>
         <HelpP>
-          Yall Come Back Ops registers your hostname on the platform so HTTPS
-          works. Ops then sends you a <strong>CNAME</strong> target and
-          sometimes a <strong>TXT</strong> verify record. You cannot skip this
-          step. Pointing DNS alone is not enough.
+          When you save your domain in Brand, Yall Come Back usually registers{" "}
+          <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">www</code>{" "}
+          for HTTPS automatically and shows the DNS values on that same page.
+          Ops also receives an inbox alert. Pointing DNS alone is not enough —
+          the platform must know the hostname first.
         </HelpP>
 
         <HelpH3>3. Update DNS at your registrar</HelpH3>
         <HelpP>
-          Log in where you bought the domain. Use the exact values Ops sent in
-          step 2.
+          Log in where you bought the domain. Use the exact CNAME and TXT values
+          shown under Brand → Domain (not a guess).
         </HelpP>
         <HelpUl>
           <li>
@@ -1536,9 +1537,9 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               www
             </code>{" "}
-            that points to the target Ops sent you.
+            that points to the target on the Brand page.
           </li>
-          <li>Add the TXT verify record if Ops asked for one.</li>
+          <li>Add the TXT verify record if Brand shows one.</li>
           <li>
             Optional: forward the apex (example: cherokeelanding.net) to{" "}
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
@@ -1580,14 +1581,14 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             Edit DNS at the registrar when Ops sends the CNAME and TXT values.
           </li>
           <li>
-            <strong>Yall Come Back Ops</strong> — Enable the hostname on the
-            platform for SSL. Send you the exact DNS records to paste.
+            <strong>Yall Come Back Ops</strong> — Receives a Messages alert when
+            you save a domain. Steps in only if auto-provision fails.
           </li>
         </HelpUl>
         <HelpP>
-          Do not invent DNS targets. Always paste the CNAME and TXT values Ops
-          sends. Do not point your domain at www.yallcomeback.app unless Ops
-          tells you that is the correct target.
+          Do not invent DNS targets. Always paste the CNAME and TXT values from
+          Brand. Do not point your domain at www.yallcomeback.app unless Brand
+          shows that as the target.
         </HelpP>
       </HelpSection>
 
