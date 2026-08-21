@@ -50,15 +50,16 @@ export function HostSiteFooter({
 
   return (
     <footer className="mt-auto border-t border-stone-200 bg-stone-50 pb-[env(safe-area-inset-bottom,0px)] text-stone-700">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="grid gap-10 sm:grid-cols-2">
-          <div className="flex flex-row items-start gap-4">
+      {/* Tighter vertical padding so a larger mark doesn’t grow the footer */}
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-7">
+        <div className="grid gap-8 sm:grid-cols-2 sm:items-center">
+          <div className="flex flex-row items-center gap-4">
             {markUrl ? (
               <span
                 className={
                   markIsLogo
-                    ? "relative size-14 shrink-0"
-                    : "relative size-14 shrink-0 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200"
+                    ? "relative size-28 shrink-0"
+                    : "relative size-28 shrink-0 overflow-hidden rounded-full bg-stone-100 ring-1 ring-stone-200"
                 }
               >
                 <Image
@@ -70,7 +71,7 @@ export function HostSiteFooter({
                       ? "object-contain"
                       : "object-cover"
                   }
-                  sizes="56px"
+                  sizes="112px"
                   unoptimized
                 />
               </span>
