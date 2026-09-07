@@ -132,10 +132,12 @@ export default async function BookPage({
       })
     : null;
   const isSignedIn = Boolean(signedInUser?.email);
-  const payOptions = guestPaymentOptions(property.host);
+  const payOptions = guestPaymentOptions(property.host, channel);
   const defaultPay = defaultGuestPayMethod(payOptions);
-  const bitcoinOffered = payOptions.some((o) => o.value === "bitcoin");
-  const onlineCardOffered = payOptions.some((o) => o.value === "card");
+  const bitcoinOffered = payOptions.some((o) => o.value === "bitcoin" && o.ready);
+  const onlineCardOffered = payOptions.some((o) => o.value === "card" && o.ready);
+  const payReady = payOptions.some((o) => o.ready);
+  const payBlocked = payOptions.find((o) => !o.ready)?.blockedReason;
   const btcQuote =
     bitcoinOffered && !quote.error
       ? await quoteBtcFromUsd(quote.depositAmount)
@@ -346,11 +348,18 @@ export default async function BookPage({
         {quote.error && (
           <p className="mt-6 text-base text-red-600">{quote.error}</p>
         )}
-        {!onlineCardOffered ? (
+        {!payReady && payBlocked ? (
           <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-base text-amber-900">
-            This host confirms deposits themselves (cash, bank, card in person,
-            or Bitcoin if they offer it). Your stay is held until they mark the
-            deposit paid.
+            {payBlocked}
+            {channel === "marketplace"
+              ? " Marketplace stays are paid by card. Message the host, or book on their website if they take another method."
+              : ""}
+          </p>
+        ) : null}
+        {payReady && !onlineCardOffered ? (
+          <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-base text-amber-900">
+            This host confirms deposits themselves. Your stay is held until they
+            mark the deposit paid.
           </p>
         ) : null}
         {bitcoinOffered ? (
@@ -424,21 +433,26 @@ export default async function BookPage({
             {payOptions.map((opt) => (
               <label
                 key={opt.value}
-                className="flex cursor-pointer items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm hover:bg-stone-50"
+                className={`flex items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm ${
+                  opt.ready
+                    ? "cursor-pointer hover:bg-stone-50"
+                    : "cursor-not-allowed opacity-60"
+                }`}
               >
                 <input
                   type="radio"
                   name="paymentMethod"
                   value={opt.value}
                   defaultChecked={defaultPay === opt.value}
+                  disabled={!opt.ready}
                   className="mt-1"
                 />
                 <span>
                   <span className="font-medium text-stone-900">{opt.label}</span>
                   <span className="mt-0.5 block text-xs text-stone-500">
-                    {opt.value === "card"
+                    {opt.ready && opt.value === "card"
                       ? `Pay ${formatMoney(quote.depositAmount)} USD by card now.`
-                      : opt.value === "bitcoin"
+                      : opt.ready && opt.value === "bitcoin"
                         ? `Pay ~${btcQuote ? formatBtc(btcQuote.btcAmount) : "BTC"} for ${formatMoney(quote.depositAmount)} USD.`
                         : opt.hint}
                   </span>
@@ -557,7 +571,7 @@ export default async function BookPage({
 
           <Button
             type="submit"
-            disabled={!available || !!quote.error}
+            disabled={!available || !!quote.error || !payReady}
             className="w-full"
           >
             {onlineCardOffered || bitcoinOffered

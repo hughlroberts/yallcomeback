@@ -240,12 +240,9 @@ model Host {
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
   stripeCustomerId     String?
-  /// How this host collects guest deposits. Stripe online card is optional.
-  acceptCash           Boolean             @default(true)
-  acceptInPersonCard   Boolean             @default(true)
-  acceptBitcoin        Boolean             @default(false)
-  acceptOnlineCard     Boolean             @default(false)
-  /// Stripe Connect v2 account (acct_...) — only if they opt into online card
+  /// Default for guest checkout on the host website (not marketplace).
+  websitePaymentMethod PaymentMethod       @default(STRIPE)
+  /// Stripe Connect v2 account (acct_...) — needed for marketplace + online card
   stripeAccountId      String?             @unique
   /// Platform hosting subscription billed to the connected account
   stripeSubscriptionId String?
@@ -605,6 +602,8 @@ model CalendarBlock {
   guestEmail   String?
   /// Guest phone for SMS / follow-up later
   guestPhone   String?
+  /// How this custom stay will be paid (host-entered bookings only)
+  paymentMethod PaymentMethod?
   /// Amount due for this offline stay (host-entered)
   invoiceAmount Float?
   invoiceCurrency String       @default("USD")

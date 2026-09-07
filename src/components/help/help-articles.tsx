@@ -400,8 +400,8 @@ function Payments({ article }: { article: HelpArticle }) {
           </li>
           <li>
             Hosts or platform admin mark deposits paid in Admin when they
-            receive cash, card, or Bitcoin. They can also mark paid when Stripe
-            is live and configured.
+            receive cash, card, or Bitcoin. Card checkout marks paid when the
+            charge succeeds.
           </li>
         </HelpUl>
       </HelpSection>
@@ -409,9 +409,17 @@ function Payments({ article }: { article: HelpArticle }) {
       <HelpSection title="Payment methods">
         <HelpUl>
           <li>
-            <strong>USD</strong> — Primary currency for the marketplace. Card
-            payments use Stripe when the platform has keys enabled. If Stripe is
-            off, hosts can accept payment offline and mark paid by hand.
+            <strong>Find a Place</strong> — Marketplace stays always use card.
+            The host must finish card onboarding before you can pay.
+          </li>
+          <li>
+            <strong>Host website</strong> — Guests pay the one method the host
+            set as the website default (card, cash or bank, card in person, or
+            Bitcoin).
+          </li>
+          <li>
+            <strong>Calendar stays</strong> — The host picks the method for that
+            stay when they block the dates.
           </li>
           <li>
             <strong>Bitcoin</strong> — When the operator enables Bitcoin, guests
@@ -1741,10 +1749,9 @@ function SelfHost({ article }: { article: HelpArticle }) {
 
       <HelpSection title="Payments on your website">
         <HelpP>
-          You can take deposits the same way you do today (bank transfer, cash,
-          or card when enabled). Mark them paid in Admin. Optional card payments
-          can be turned on later when you are ready. Nothing blocks publishing
-          your stays first.
+          Find a Place stays always use card. Your website uses the default you
+          set in Admin → Payments. Custom calendar stays use the method you pick
+          for that stay. Mark cash, bank, and in-person card paid in Admin.
         </HelpP>
       </HelpSection>
     </HelpArticleLayout>

@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
-import { saveHostPaymentMethods } from "@/app/actions/host-payments";
+import { saveWebsitePaymentMethod } from "@/app/actions/host-payments";
+import { WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
 import {
   createHostProduct,
   openBillingPortal,
@@ -104,81 +105,41 @@ export default async function AdminPaymentsPage({
       <div>
         <h1 className="text-2xl font-semibold text-stone-900">Payments</h1>
         <p className="mt-1 text-sm text-stone-600">
-          You choose how repeat guests pay you. Online card is optional.
-          Listings, calendars, and messages work either way. Yall Come Back
-          does not take a cut of the stay.
+          Marketplace bookings always use online card. Your website uses the
+          default below (Stripe unless you change it). Custom calendar stays
+          pick a method per booking. Yall Come Back does not take a cut of the
+          stay.
         </p>
       </div>
 
       <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">How guests can pay you</h2>
+        <h2 className="font-semibold text-stone-900">Host website deposits</h2>
         <p className="text-sm text-stone-600">
-          Turn on every method you actually use. Guests only see what you
-          enable. At least one method should stay on.
+          Guests who book on your site pay this way. Find a Place (marketplace)
+          always uses online card.
         </p>
-        <form action={saveHostPaymentMethods} className="space-y-3">
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="acceptCash"
-              defaultChecked={host.acceptCash}
-              className="mt-1"
-            />
-            <span>
-              <span className="font-medium text-stone-900">Cash or bank</span>
-              <span className="mt-0.5 block text-xs text-stone-500">
-                Guest pays you directly. You mark the deposit paid in Bookings.
+        <form action={saveWebsitePaymentMethod} className="space-y-3">
+          {WEBSITE_PAY_CHOICES.map((choice) => (
+            <label key={choice.value} className="flex items-start gap-2 text-sm">
+              <input
+                type="radio"
+                name="websitePaymentMethod"
+                value={choice.value}
+                defaultChecked={
+                  (host.websitePaymentMethod || "STRIPE") === choice.value
+                }
+                className="mt-1"
+              />
+              <span>
+                <span className="font-medium text-stone-900">{choice.label}</span>
+                <span className="mt-0.5 block text-xs text-stone-500">
+                  {choice.hint}
+                </span>
               </span>
-            </span>
-          </label>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="acceptInPersonCard"
-              defaultChecked={host.acceptInPersonCard}
-              className="mt-1"
-            />
-            <span>
-              <span className="font-medium text-stone-900">Card in person</span>
-              <span className="mt-0.5 block text-xs text-stone-500">
-                Tap or chip at the stay. You mark paid when it goes through.
-              </span>
-            </span>
-          </label>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="acceptBitcoin"
-              defaultChecked={host.acceptBitcoin}
-              className="mt-1"
-            />
-            <span>
-              <span className="font-medium text-stone-900">Bitcoin</span>
-              <span className="mt-0.5 block text-xs text-stone-500">
-                Guest sends BTC for the USD deposit. Needs Bitcoin enabled on
-                the platform, then you paste the tx id.
-              </span>
-            </span>
-          </label>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="acceptOnlineCard"
-              defaultChecked={host.acceptOnlineCard}
-              className="mt-1"
-            />
-            <span>
-              <span className="font-medium text-stone-900">
-                Online card (optional)
-              </span>
-              <span className="mt-0.5 block text-xs text-stone-500">
-                Guest pays the deposit online. Requires the onboard step below.
-                Skip it if you only take cash, in-person card, or Bitcoin.
-              </span>
-            </span>
-          </label>
+            </label>
+          ))}
           <Button type="submit" variant="secondary">
-            Save payment methods
+            Save website default
           </Button>
         </form>
       </Card>
@@ -214,12 +175,11 @@ export default async function AdminPaymentsPage({
       ) : null}
 
       <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">
-          Online card — optional
-        </h2>
+        <h2 className="font-semibold text-stone-900">Online card</h2>
         <p className="text-sm text-stone-600">
-          Only if you checked online card above. You can skip this and still
-          use every other host tool.
+          Required for Find a Place. Also required if your website default is
+          online card. Skip only if you stay off the marketplace and guests
+          pay you another way.
         </p>
         {statusError ? (
           <p className="text-sm text-red-700">{statusError}</p>

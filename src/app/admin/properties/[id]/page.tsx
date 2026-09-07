@@ -35,6 +35,7 @@ import {
   listHostInsightsOptions,
 } from "@/lib/listing-insights";
 import { isStripeConfigured } from "@/lib/stripe";
+import { paymentMethodLabel } from "@/lib/host-payments";
 import {
   DEFAULT_PEAK_MIN_NIGHTS,
   upcomingPeakHolidays,
@@ -772,6 +773,16 @@ export default async function AdminPropertyDetailPage({
           </p>
         </div>
         <div>
+          <Label>How this stay is paid</Label>
+          <Select name="paymentMethod" defaultValue="">
+            <option value="">Not a paid stay</option>
+            <option value="STRIPE">Online card / invoice</option>
+            <option value="MANUAL">Cash or bank</option>
+            <option value="IN_PERSON_CARD">Card in person</option>
+            <option value="BITCOIN">Bitcoin</option>
+          </Select>
+        </div>
+        <div>
           <Label>Invoice amount ($)</Label>
           <Input
             name="invoiceAmount"
@@ -826,6 +837,9 @@ export default async function AdminPropertyDetailPage({
                     {b.occupantName ? ` · ${b.occupantName}` : ""}
                     {b.guestEmail ? ` · ${b.guestEmail}` : ""}
                     {b.guestPhone ? ` · ${b.guestPhone}` : ""}
+                    {b.paymentMethod
+                      ? ` · ${paymentMethodLabel(b.paymentMethod)}`
+                      : ""}
                   </p>
                   {b.notes && <p className="mt-1 text-stone-400">{b.notes}</p>}
                   <p className="mt-2 text-xs">

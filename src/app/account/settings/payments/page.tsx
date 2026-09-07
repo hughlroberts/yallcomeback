@@ -41,8 +41,8 @@ export default async function AccountPaymentsPage() {
           title="Card payments"
           description={
             isHost
-              ? "Choose cash, card in person, Bitcoin, and optional online card. Online card is not required."
-              : "Pay the way this host offers — cash, card in person, Bitcoin, or online card."
+              ? "Marketplace stays use online card. Your website default and custom calendar stays can use another method."
+              : "Pay the way this listing’s host collects deposits."
           }
           href={isHost ? "/admin/payments" : "/account/bookings"}
           badge={stripeOn ? "Connect" : "Setup later"}

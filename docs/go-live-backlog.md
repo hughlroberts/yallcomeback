@@ -41,6 +41,8 @@ Related: `src/app/layout.tsx`, `/privacy` § cookies.
 
 Do not turn on card checkout, hosted invoices, or Bitcoin deposits until the items below are done. Guests already see that online card payments are not enabled. Hosts mark deposits and invoices paid in Admin.
 
+Channel rules are already in the app: marketplace always card; host website uses one default (card unless the host changes it); custom calendar stays pick a method per block.
+
 When picked up, do **card (Connect) and Bitcoin in the same pass**. Connect code is in the app; keys are not.
 
 ### Card (Stripe Connect)
@@ -60,7 +62,7 @@ Bitcoin is for guest stay deposits only — not hosting invoices. Hosts still pa
 2. Use a dedicated deposit wallet (not a personal spending wallet). Mainnet for live; testnet only while rehearsing.
 3. Set production env: `BITCOIN_ENABLED=true`, `BITCOIN_ADDRESS=bc1q…`, `BITCOIN_NETWORK=mainnet`, `BITCOIN_LABEL=Yall Come Back deposit`.
 4. Smoke-test: guest chooses Bitcoin at checkout, sees the BIP21 wallet link and USD→BTC quote, sends a small amount, host marks the booking paid with the tx id.
-5. Confirm Ops → Settings shows a valid address, and booking offers Bitcoin next to card / manual.
+5. Confirm Ops → Settings shows a valid address. Smoke-test a host-website default of Bitcoin, and a custom calendar stay paid in Bitcoin.
 
 Related: `src/lib/stripe.ts`, `src/lib/bitcoin.ts`, Ops → Settings → Stripe and Bitcoin.
 

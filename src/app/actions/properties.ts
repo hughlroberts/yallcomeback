@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { parseTimeTo24h, slugify } from "@/lib/utils";
 import {
@@ -1034,6 +1035,14 @@ export async function addCalendarBlock(formData: FormData) {
     amountRaw && Number.isFinite(Number(amountRaw))
       ? Number(amountRaw)
       : null;
+  const payRaw = String(formData.get("paymentMethod") || "").trim();
+  const paymentMethod: PaymentMethod | null =
+    payRaw === "STRIPE" ||
+    payRaw === "MANUAL" ||
+    payRaw === "BITCOIN" ||
+    payRaw === "IN_PERSON_CARD"
+      ? payRaw
+      : null;
 
   const block = await prisma.calendarBlock.create({
     data: {
@@ -1052,11 +1061,14 @@ export async function addCalendarBlock(formData: FormData) {
       guestEmail,
       guestPhone,
       invoiceAmount,
+      paymentMethod,
     },
   });
 
   // Optional: create + email Stripe invoice immediately
-  if (formData.get("sendInvoice") === "on" && guestEmail && invoiceAmount) {
+  const sendInvoice =
+    formData.get("sendInvoice") === "on" || paymentMethod === "STRIPE";
+  if (sendInvoice && guestEmail && invoiceAmount) {
     const { sendStripeInvoiceForBlock } = await import("@/lib/block-invoice");
     await sendStripeInvoiceForBlock({
       blockId: block.id,

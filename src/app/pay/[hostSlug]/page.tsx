@@ -37,7 +37,7 @@ export default async function HostPayPage({
     priceId: string | null;
   }[] = [];
 
-  if (stripeOn && host.acceptOnlineCard && host.stripeAccountId) {
+  if (stripeOn && host.stripeAccountId) {
     try {
       const status = await retrieveConnectStatus(host.stripeAccountId);
       ready = status.readyToProcessPayments;

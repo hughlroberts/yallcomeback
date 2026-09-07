@@ -28,6 +28,8 @@ import { TrackListingView } from "@/components/track-listing-view";
 import { ListingJsonLd } from "@/components/listing-json-ld";
 import { getSiteOrigin } from "@/lib/site-url";
 import { listingPublicPath } from "@/lib/site-url";
+import { getRequestTenant } from "@/lib/tenant";
+import { resolveBookingChannel } from "@/lib/host-payments";
 
 export const dynamic = "force-dynamic";
 
@@ -42,12 +44,14 @@ export default async function MarketplacePropertyPage({
     checkOut?: string;
     guests?: string;
     pets?: string;
+    via?: string;
   }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
 
   const marketplaceWhere = marketplacePropertyWhere();
+  const viaHostSite = sp.via === "host_site";
   const include = {
     images: { orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }] },
     seasons: { orderBy: { startDate: "asc" as const } },
@@ -67,18 +71,27 @@ export default async function MarketplacePropertyPage({
     },
   };
 
-  let property = await prisma.property.findFirst({
-    where: {
-      slug,
-      published: marketplaceWhere.published,
-      listOnMarketplace: marketplaceWhere.listOnMarketplace,
-      host: {
-        ...marketplaceWhere.host,
-        ...(sp.host ? { slug: sp.host } : {}),
-      },
-    },
-    include,
-  });
+  let property = viaHostSite && sp.host
+    ? await prisma.property.findFirst({
+        where: {
+          slug,
+          published: true,
+          host: { slug: sp.host, active: true },
+        },
+        include,
+      })
+    : await prisma.property.findFirst({
+        where: {
+          slug,
+          published: marketplaceWhere.published,
+          listOnMarketplace: marketplaceWhere.listOnMarketplace,
+          host: {
+            ...marketplaceWhere.host,
+            ...(sp.host ? { slug: sp.host } : {}),
+          },
+        },
+        include,
+      });
 
   // Wrong ?host= (e.g. personal listing linked as Cherokee) → correct URL
   if (!property && sp.host) {
@@ -98,6 +111,7 @@ export default async function MarketplacePropertyPage({
       if (sp.checkOut) q.set("checkOut", sp.checkOut);
       if (sp.guests) q.set("guests", sp.guests);
       if (sp.pets) q.set("pets", sp.pets);
+      if (sp.via) q.set("via", sp.via);
       redirect(`/marketplace/properties/${slug}?${q.toString()}`);
     }
   }
@@ -115,7 +129,25 @@ export default async function MarketplacePropertyPage({
     });
   }
 
+  const tenant = await getRequestTenant();
+  if (!property && tenant) {
+    property = await prisma.property.findFirst({
+      where: {
+        slug,
+        published: true,
+        hostId: tenant.id,
+      },
+      include,
+    });
+  }
+
   if (!property) notFound();
+
+  const bookingChannel = resolveBookingChannel({
+    via: sp.via,
+    tenantHostSlug: tenant?.slug,
+    listingHostSlug: property.host.slug,
+  });
 
   const [ranges, staysHosted, brandOwner] = await Promise.all([
     getPublicUnavailableRanges(property.id),
@@ -308,7 +340,7 @@ export default async function MarketplacePropertyPage({
               propertySlug={property.slug}
               hostSlug={property.host.slug}
               bookBasePath={`/book/${property.slug}`}
-              channel="marketplace"
+              channel={bookingChannel}
               baseNightlyRate={property.baseNightlyRate}
               weekendPremiumPercent={property.weekendPremiumPercent}
               discountNewListingPercent={property.discountNewListingPercent}

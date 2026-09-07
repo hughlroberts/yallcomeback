@@ -11,7 +11,12 @@ import {
   getBitcoinAddress,
   quoteBtcFromUsd,
 } from "@/lib/bitcoin";
-import { guestPaymentOptions } from "@/lib/host-payments";
+import {
+  defaultGuestPayMethod,
+  guestPaymentOptions,
+  guestValueToPaymentMethod,
+  paymentMethodToGuestValue,
+} from "@/lib/host-payments";
 
 export async function createBooking(formData: FormData) {
   const propertyId = String(formData.get("propertyId") || "");
@@ -122,41 +127,26 @@ export async function createBooking(formData: FormData) {
     .filter(Boolean)
     .join("\n\n");
 
-  const payOptions = guestPaymentOptions(property.host);
-  const allowed = new Set(payOptions.map((o) => o.value));
-
-  let method: PaymentMethod = "MANUAL";
-  if (payMethodRaw === "bitcoin") {
-    if (!allowed.has("bitcoin")) {
-      throw new Error("This host does not take Bitcoin.");
-    }
-    method = "BITCOIN";
-  } else if (payMethodRaw === "card" || payMethodRaw === "stripe") {
-    if (!allowed.has("card")) {
-      throw new Error("This host does not take online card.");
-    }
-    method = "STRIPE";
-  } else if (payMethodRaw === "in_person_card") {
-    if (!allowed.has("in_person_card")) {
-      throw new Error("This host does not take card in person.");
-    }
-    method = "IN_PERSON_CARD";
-  } else if (payMethodRaw === "manual") {
-    if (!allowed.has("manual") && payOptions.length > 0) {
-      throw new Error("Choose a payment method this host offers.");
-    }
-    method = "MANUAL";
-  } else {
-    const fallback = payOptions[0]?.value ?? "manual";
-    method =
-      fallback === "card"
-        ? "STRIPE"
-        : fallback === "bitcoin"
-          ? "BITCOIN"
-          : fallback === "in_person_card"
-            ? "IN_PERSON_CARD"
-            : "MANUAL";
+  const channel: "marketplace" | "host_site" | "direct" =
+    sourceChannel === "marketplace" || sourceChannel === "direct"
+      ? sourceChannel
+      : "host_site";
+  const payOptions = guestPaymentOptions(property.host, channel);
+  const allowed = new Set(payOptions.filter((o) => o.ready).map((o) => o.value));
+  if (allowed.size === 0) {
+    throw new Error(
+      payOptions[0]?.blockedReason ||
+        "This listing is not ready to take a deposit.",
+    );
   }
+
+  const chosenPay = payMethodRaw
+    ? paymentMethodToGuestValue(guestValueToPaymentMethod(payMethodRaw))
+    : defaultGuestPayMethod(payOptions);
+  if (!allowed.has(chosenPay)) {
+    throw new Error("Choose a payment method this listing offers.");
+  }
+  const method: PaymentMethod = guestValueToPaymentMethod(chosenPay);
 
   const btcAddress = method === "BITCOIN" ? getBitcoinAddress() : null;
   let bitcoinAmountBtc: number | null = null;
@@ -230,6 +220,7 @@ export async function createBooking(formData: FormData) {
         startDate: checkInDate,
         endDate: checkOutDate,
         occupantName: guestName,
+        paymentMethod: method,
         notes: `Booking ${created.id} (${created.status})`,
       },
     });

@@ -186,6 +186,20 @@ export function AdminBlockSheet({
               />
             </div>
             <div className="space-y-1 sm:col-span-2">
+              <Label htmlFor="sheet-pay">How this stay is paid</Label>
+              <Select id="sheet-pay" name="paymentMethod" defaultValue="">
+                <option value="">Not a paid stay</option>
+                <option value="STRIPE">Online card / invoice</option>
+                <option value="MANUAL">Cash or bank</option>
+                <option value="IN_PERSON_CARD">Card in person</option>
+                <option value="BITCOIN">Bitcoin</option>
+              </Select>
+              <p className="text-xs text-stone-400">
+                Only for a real stay you entered. Owner / maintenance blocks can
+                stay unpaid.
+              </p>
+            </div>
+            <div className="space-y-1 sm:col-span-2">
               <Label htmlFor="sheet-amount">
                 Invoice amount ($) · ~{formatMoney(suggested)} suggested
               </Label>
