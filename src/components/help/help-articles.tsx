@@ -1049,6 +1049,11 @@ function Taxes({ article }: { article: HelpArticle }) {
       article={article}
       extraRelated={[
         {
+          href: "/admin/taxes",
+          title: "Admin → Taxes",
+          description: "Year summaries and CSV exports for federal and state records.",
+        },
+        {
           href: "/account/settings/taxes",
           title: "Account → Taxes",
           description: "Liability notice and any rates on your host brand.",
@@ -1146,6 +1151,13 @@ function Taxes({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             Hosts: open{" "}
+            <Link href="/admin/taxes" className="font-semibold text-bonnet">
+              Admin → Taxes
+            </Link>{" "}
+            to download year CSVs for stays, occupancy tax, and income received.
+          </li>
+          <li>
+            Hosts: open{" "}
             <Link
               href="/account/settings/taxes"
               className="font-semibold text-bonnet"
@@ -1156,12 +1168,34 @@ function Taxes({ article }: { article: HelpArticle }) {
             host brand.
           </li>
           <li>
-            Guests: you do not set tax. Rates come from the host of the stay you
-            book.
+            Guests: you do not set tax. Download a stay CSV from Account →
+            Taxes for your own records.
+          </li>
+        </HelpUl>
+      </HelpSection>
+
+      <HelpSection title="Tax records and exports">
+        <HelpP>
+          Admin → Taxes gives bulk CSV files for one calendar year. Yall Come
+          Back does not send Form 1099 or a state occupancy return. You (or
+          your tax professional) use the files with your own books.
+        </HelpP>
+        <HelpUl>
+          <li>
+            <strong>Stay ledger</strong> — Confirmed stays with check-in in that
+            year. Use this for state lodging or occupancy tax by city.
           </li>
           <li>
-            There is no separate Taxes (host) Admin screen. This help article is
-            the guide for how taxes work on Yall Come Back.
+            <strong>Occupancy tax collected</strong> — Each tax line amount on
+            those stays.
+          </li>
+          <li>
+            <strong>Income received</strong> — Payments marked paid in that
+            year. Use this for cash-basis federal income records.
+          </li>
+          <li>
+            <strong>Year summary</strong> — Totals plus legal name and filing
+            state if you saved a tax profile.
           </li>
         </HelpUl>
       </HelpSection>

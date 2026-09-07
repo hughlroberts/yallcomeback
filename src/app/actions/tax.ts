@@ -142,6 +142,38 @@ export async function updateTaxLine(formData: FormData) {
   redirect("/help/taxes?saved=1");
 }
 
+const ENTITY_TYPES = [
+  "individual",
+  "llc",
+  "partnership",
+  "s_corp",
+  "c_corp",
+  "other",
+] as const;
+
+export async function saveTaxProfile(formData: FormData) {
+  const resolved = await resolveHostId(formData);
+  if (!resolved) redirect("/login?callbackUrl=/admin/taxes");
+
+  const taxLegalName = String(formData.get("taxLegalName") || "").trim() || null;
+  const rawType = String(formData.get("taxEntityType") || "").trim();
+  const taxEntityType = ENTITY_TYPES.includes(rawType as (typeof ENTITY_TYPES)[number])
+    ? rawType
+    : null;
+  const stateRaw = String(formData.get("taxFilingState") || "")
+    .trim()
+    .toUpperCase();
+  const taxFilingState = /^[A-Z]{2}$/.test(stateRaw) ? stateRaw : null;
+
+  await prisma.host.update({
+    where: { id: resolved.hostId },
+    data: { taxLegalName, taxEntityType, taxFilingState },
+  });
+  revalidatePath("/admin/taxes");
+  revalidatePath("/account/settings/taxes");
+  redirect("/admin/taxes?saved=profile");
+}
+
 export async function deleteTaxLine(formData: FormData) {
   const resolved = await resolveHostId(formData);
   if (!resolved) redirect("/login?callbackUrl=/help/taxes");

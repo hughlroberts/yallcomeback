@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/admin/tax",
-        destination: "/help/taxes",
+        destination: "/admin/taxes",
         permanent: false,
       },
       {

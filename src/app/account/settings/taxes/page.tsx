@@ -74,28 +74,48 @@ export default async function AccountTaxesPage() {
               how host-level taxes work on Yall Come Back.
             </p>
           )}
-          <Link
-            href="/help/taxes"
-            className="inline-flex rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover"
-          >
-            Read: Taxes for hosts →
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/admin/taxes"
+              className="inline-flex rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover"
+            >
+              Open tax records and exports
+            </Link>
+            <Link
+              href="/help/taxes"
+              className="inline-flex rounded-[var(--radius-control)] border border-stone-200 px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+            >
+              Taxes help
+            </Link>
+          </div>
         </div>
-      ) : (
-        <div className="mt-8 space-y-3 text-sm text-stone-600">
-          <p>
-            Tax is set by each <strong>host brand</strong> (not per guest
-            account). When a host charges tax, it can show on the booking quote
-            for their stays.
+      ) : null}
+
+      <div className="mt-10 space-y-3">
+        <h2 className="text-base font-semibold text-stone-900">
+          Your stays (guest records)
+        </h2>
+        <p className="text-sm text-stone-600">
+          Download a CSV of stays you booked this year: dates, listing, city,
+          amounts, and tax on the quote. This is a personal record, not a tax
+          form.
+        </p>
+        <a
+          href={`/account/taxes/export?year=${new Date().getFullYear()}`}
+          className="inline-flex rounded-[var(--radius-control)] border border-stone-200 px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+        >
+          Download my {new Date().getFullYear()} stays CSV
+        </a>
+        {!isHost ? (
+          <p className="text-sm text-stone-500">
+            Host brands set lodging tax. Guests do not configure rates. See{" "}
+            <Link href="/help/taxes" className="font-semibold text-bonnet underline">
+              taxes help
+            </Link>
+            .
           </p>
-          <Link
-            href="/help/taxes"
-            className="inline-flex font-semibold text-bonnet underline-offset-2 hover:underline"
-          >
-            Taxes for hosts (help center) →
-          </Link>
-        </div>
-      )}
+        ) : null}
+      </div>
     </AccountSettingsShell>
   );
 }

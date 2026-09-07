@@ -262,6 +262,12 @@ model Host {
   /// Host confirmed they alone are responsible for tax filing (required before taxes apply)
   taxLiabilityAcknowledged   Boolean   @default(false)
   taxLiabilityAcknowledgedAt DateTime?
+  /// Printed on tax exports only — not shown to guests
+  taxLegalName               String?
+  /// individual | llc | partnership | s_corp | c_corp | other
+  taxEntityType              String?
+  /// Two-letter US state used on state occupancy exports
+  taxFilingState             String?
 
   /// Default guest auto-messages for all listings (listing can override with its own body)
   /// 1) On booking — confirmation

@@ -112,7 +112,10 @@ export default async function AdminLayout({
       ? [{ href: "/admin/payments", label: "Payments" }]
       : []),
     ...(canViewEarnings(accessInfo)
-      ? [{ href: "/admin/earnings", label: "Earnings" }]
+      ? [
+          { href: "/admin/earnings", label: "Earnings" },
+          { href: "/admin/taxes", label: "Taxes" },
+        ]
       : []),
     { href: "/admin/messages", label: "Messages" },
     { href: "/admin/guest-messages", label: "Message templates" },

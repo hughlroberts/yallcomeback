@@ -84,14 +84,14 @@ export function EarningsShell({
 
           <div className="mx-3 hidden border-t border-slate-200/80 pt-3 lg:block">
             <Link
-              href="/help/taxes"
+              href="/admin/taxes"
               className="flex items-center gap-3 rounded-full px-3 py-2.5 text-[15px] font-medium text-slate-600 hover:bg-white/80 hover:text-slate-900"
             >
               <Settings
                 className="size-[18px] text-slate-500"
                 strokeWidth={1.75}
               />
-              Tax help
+              Tax records
             </Link>
           </div>
         </aside>
