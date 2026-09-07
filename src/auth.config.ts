@@ -34,10 +34,10 @@ export const authConfig = {
       const path = nextUrl.pathname;
 
       if (path.startsWith("/admin")) {
+        // Login required here. HOST vs GUEST is enforced in the admin layout
+        // from the database so a guest who just chose Start hosting is not
+        // bounced by a stale JWT.
         if (!isLoggedIn) return false;
-        if (role !== "ADMIN" && role !== "HOST") {
-          return Response.redirect(new URL("/", nextUrl));
-        }
         return true;
       }
 

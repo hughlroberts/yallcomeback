@@ -7,7 +7,7 @@ export const metadata = { title: "Sign in" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; error?: string; registered?: string }>;
 }) {
   const session = await auth();
   const sp = await searchParams;
@@ -54,6 +54,12 @@ export default async function LoginPage({
           .
         </p>
 
+        {sp.registered === "host" ? (
+          <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900">
+            Host account created. Sign in, then add a card under Payments to go
+            live.
+          </p>
+        ) : null}
         {sp.error && (
           <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700 ring-1 ring-inset ring-red-100">
             Invalid email or password.
@@ -64,7 +70,10 @@ export default async function LoginPage({
           <input
             type="hidden"
             name="callbackUrl"
-            value={sp.callbackUrl || "/"}
+            value={
+              sp.callbackUrl ||
+              (sp.registered === "host" ? "/admin/payments?welcome=1" : "/")
+            }
           />
           <div>
             <Label htmlFor="email">Email</Label>

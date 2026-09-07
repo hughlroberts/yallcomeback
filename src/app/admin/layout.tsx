@@ -21,19 +21,24 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (
-    !session?.user ||
-    (session.user.role !== "ADMIN" && session.user.role !== "HOST")
-  ) {
+  if (!session?.user) {
     redirect("/login?callbackUrl=/admin");
   }
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  const role = dbUser?.role ?? session.user.role;
+  if (role !== "ADMIN" && role !== "HOST") {
+    redirect("/for-hosts?start=1");
+  }
 
-  const isPlatform = session.user.role === "ADMIN";
+  const isPlatform = role === "ADMIN";
   const access = await requireHostAdmin();
   const accessInfo = resolveHostAccessInfo({
     isPlatform,
     hostId: access?.hostId ?? null,
-    hostAccess: access?.hostAccess ?? session.user.hostAccess,
+    hostAccess: access?.hostAccess ?? session.user.hostAccess ?? null,
   });
 
   let hostPricingAccess: { pricingIntelligenceEnabled?: boolean } | null =
@@ -53,9 +58,9 @@ export default async function AdminLayout({
   let brandHosts: { id: string; name: string; slug: string }[] = [];
   let activeBrandId: string | null = null;
 
-  if (!isPlatform && session.user.hostId) {
+  if (!isPlatform && access?.hostId) {
     const row = await prisma.host.findUnique({
-      where: { id: session.user.hostId },
+      where: { id: access.hostId },
       select: {
         pricingIntelligenceEnabled: true,
         hostingMode: true,

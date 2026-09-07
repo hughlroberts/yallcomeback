@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { HostSignupForm } from "@/components/HostSignupForm";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
@@ -18,11 +20,25 @@ export const metadata = {
 export default async function ForHostsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ path?: string }>;
+  searchParams: Promise<{ path?: string; start?: string }>;
 }) {
   const params = await searchParams;
   const initialPath =
     params.path === "self" || params.path === "paid" ? params.path : "paid";
+  const session = await auth();
+  const signedInUser = session?.user?.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true, email: true, role: true, hostId: true },
+      })
+    : null;
+  if (
+    signedInUser &&
+    (signedInUser.role === "HOST" || signedInUser.role === "ADMIN") &&
+    signedInUser.hostId
+  ) {
+    redirect("/admin/payments?welcome=1");
+  }
 
   // Public catalog only — complimentary ($0) plans are platform-assigned in Ops
   const plans = await prisma.hostingPlan.findMany({
@@ -366,12 +382,12 @@ export default async function ForHostsPage({
                 </li>
               </ol>
               <p className="mt-4 text-sm text-stone-500">
-                Already approved?{" "}
+                Already hosting?{" "}
                 <Link
-                  href="/login"
+                  href="/login?callbackUrl=/admin"
                   className="font-medium text-bonnet hover:underline"
                 >
-                  Sign in to the host portal
+                  Sign in to Host admin
                 </Link>
                 .
               </p>
@@ -381,6 +397,11 @@ export default async function ForHostsPage({
           <div id="apply">
             <HostSignupForm
               initialPath={initialPath}
+              existingAccount={
+                signedInUser?.email
+                  ? { name: signedInUser.name, email: signedInUser.email }
+                  : null
+              }
               plans={plans.map((p) => ({
                 id: p.id,
                 name: p.name,

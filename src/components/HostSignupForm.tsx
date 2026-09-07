@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { registerHost } from "@/app/actions/host";
+import { registerHost, startHosting } from "@/app/actions/host";
 import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
@@ -23,9 +23,12 @@ type Path = "paid" | "self";
 export function HostSignupForm({
   plans,
   initialPath = "paid",
+  existingAccount = null,
 }: {
   plans: PlanOption[];
   initialPath?: Path;
+  /** Signed-in guest converting this account to a host */
+  existingAccount?: { name: string | null; email: string } | null;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -59,13 +62,22 @@ export function HostSignupForm({
       if (syncedPlanId) formData.set("planId", syncedPlanId);
     }
     // listOnMarketplace comes from the checkbox (optional for both paths)
+    if (existingAccount) {
+      const result = await startHosting(formData);
+      setPending(false);
+      if (result && "error" in result && result.error) {
+        setError(result.error);
+        return;
+      }
+      return;
+    }
     const result = await registerHost(formData);
     setPending(false);
     if (result.error) {
       setError(result.error);
       return;
     }
-    router.push("/login?registered=host");
+    router.push("/login?registered=host&callbackUrl=/admin/payments?welcome=1");
     router.refresh();
   }
 
@@ -75,12 +87,14 @@ export function HostSignupForm({
       className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm"
     >
       <h2 className="text-xl font-semibold text-stone-900">
-        {path === "self" ? "Register free self-host" : "Apply for paid hosting"}
+        {path === "self" ? "Start free self-host" : "Start hosting"}
       </h2>
       <p className="mt-1 text-sm text-stone-500">
         {path === "self"
           ? "Deploy on your domain at no monthly platform fee. Marketplace listing is optional — you choose."
-          : "We host your brand on Yall Come Back. After approval you get a monthly hosting invoice (per property, not per booking)."}
+          : existingAccount
+            ? `Continue as ${existingAccount.email}. Add a card after this to go live — no wait for approval.`
+            : "We host your brand on Yall Come Back. Add a card to subscribe. Listings go live when hosting is paid — no wait for approval."}
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-stone-100 p-1">
@@ -111,15 +125,26 @@ export function HostSignupForm({
       </div>
 
       <div className="mt-5 space-y-4">
-        <Field label="Your name" name="name" required />
-        <Field label="Email" name="email" type="email" required />
-        <Field
-          label="Password"
-          name="password"
-          type="password"
-          required
-          minLength={8}
-        />
+        {existingAccount ? (
+          <p className="rounded-xl bg-stone-50 px-3 py-2 text-sm text-stone-700">
+            Signed in as{" "}
+            <strong>{existingAccount.email}</strong>
+            {existingAccount.name ? ` (${existingAccount.name})` : ""}. This
+            account becomes your host login.
+          </p>
+        ) : (
+          <>
+            <Field label="Your name" name="name" required />
+            <Field label="Email" name="email" type="email" required />
+            <Field
+              label="Password"
+              name="password"
+              type="password"
+              required
+              minLength={8}
+            />
+          </>
+        )}
         <Field
           label="Host / brand name"
           name="displayName"
@@ -333,10 +358,12 @@ export function HostSignupForm({
         className="mt-6 w-full rounded-full bg-bonnet px-4 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover disabled:opacity-60"
       >
         {pending
-          ? "Submitting…"
+          ? "Starting…"
           : path === "self"
-            ? "Submit free self-host registration"
-            : "Submit paid hosting application"}
+            ? "Start free self-host"
+            : existingAccount
+              ? "Start hosting on this account"
+              : "Create host account"}
       </button>
     </form>
   );

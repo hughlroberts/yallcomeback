@@ -85,6 +85,22 @@ export default async function AccountSettingsHubPage() {
         <p className="mt-0.5 text-stone-500">{user.email}</p>
       </div>
 
+      {!isHost ? (
+        <div className="mb-8 rounded-2xl border border-honey/40 bg-honey/10 px-4 py-4">
+          <p className="text-sm font-semibold text-stone-900">Start hosting</p>
+          <p className="mt-1 text-sm text-stone-600">
+            Use this same account. No approval wait — add a card when you are
+            ready to go live.
+          </p>
+          <Link
+            href="/for-hosts?start=1"
+            className="mt-3 inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover"
+          >
+            Start hosting
+          </Link>
+        </div>
+      ) : null}
+
       <ul className="grid gap-3 sm:grid-cols-2">
         {SECTIONS.map((s) => (
           <li key={s.href}>

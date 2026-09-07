@@ -62,7 +62,12 @@ export async function registerHost(formData: FormData) {
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    return { error: "An account with that email already exists." };
+    return {
+      error:
+        existingUser.role === "GUEST"
+          ? "You already have an account. Sign in, then choose Start hosting."
+          : "An account with that email already exists. Sign in to open Host admin.",
+    };
   }
 
   const existingHost = await prisma.host.findUnique({ where: { slug } });
@@ -133,8 +138,11 @@ export async function registerHost(formData: FormData) {
         billingEmail: email,
         active: true,
         hostingMode,
-        approvalStatus: "PENDING_REVIEW",
-        subscriptionStatus: "NONE",
+        approvalStatus: "APPROVED",
+        reviewedAt: new Date(),
+        approvalNotes: "Self-serve. Hosting goes live after payment.",
+        subscriptionStatus:
+          hostingMode === "PLATFORM" ? "PENDING_PAYMENT" : "NONE",
         planId: hostingMode === "PLATFORM" ? resolvedPlanId : null,
         setupServiceStatus: wantsSetup ? "REQUESTED" : "NONE",
         setupServiceAmount: SETUP_SERVICE_FEE_USD,
@@ -156,12 +164,143 @@ export async function registerHost(formData: FormData) {
     });
   });
 
+  await prisma.host.updateMany({
+    where: { approvalStatus: "PENDING_REVIEW" },
+    data: {
+      approvalStatus: "APPROVED",
+      reviewedAt: new Date(),
+      approvalNotes: "Self-serve. Hosting goes live after payment.",
+    },
+  });
+
   revalidatePath("/hosts");
   revalidatePath("/marketplace");
   revalidatePath("/for-hosts");
   revalidatePath("/self-host");
   revalidatePath("/ops/hosting");
   return { ok: true as const };
+}
+
+/**
+ * Signed-in guest becomes a host on this same account. No ops approval —
+ * they add a card under Admin → Payments to go live.
+ */
+export async function startHosting(formData: FormData) {
+  const { auth } = await import("@/lib/auth");
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login?callbackUrl=/for-hosts");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  });
+  if (!user) redirect("/login?callbackUrl=/for-hosts");
+  if (user.role === "ADMIN") redirect("/ops/hosting");
+  if (user.role === "HOST" && user.hostId) {
+    redirect("/admin/payments?welcome=1");
+  }
+
+  if (formData.get("acceptTerms") !== "on") {
+    return { error: "You must agree to the Terms of Service and Privacy Policy." };
+  }
+
+  const displayName = String(formData.get("displayName") || "").trim();
+  const slugRaw = String(formData.get("slug") || displayName);
+  const slug = slugify(slugRaw);
+  const tagline = String(formData.get("tagline") || "").trim() || null;
+  const websiteUrl = normalizeWebsiteUrl(
+    String(formData.get("websiteUrl") || ""),
+  );
+  if (!displayName || !slug) {
+    return { error: "Add a host / brand name and slug." };
+  }
+  const existingHost = await prisma.host.findUnique({ where: { slug } });
+  if (existingHost) {
+    return { error: "That site slug is already taken. Try another." };
+  }
+
+  const hostingModeRaw = String(formData.get("hostingMode") || "PLATFORM");
+  const hostingMode =
+    hostingModeRaw === "SELF" ? ("SELF" as const) : ("PLATFORM" as const);
+  const listOnMarketplace = formData.get("listOnMarketplace") === "1";
+  const sitePresence: HostSitePresence =
+    hostingMode === "SELF"
+      ? "CUSTOM"
+      : parseSitePresence(String(formData.get("sitePresence") || "STAYLOCAL"));
+  const wantsSetup = formData.get("setupService") === "1";
+
+  let resolvedPlanId: string | null = null;
+  if (hostingMode === "PLATFORM") {
+    const { planSlugForSitePresence } = await import("@/lib/hosting");
+    const wantSlug = planSlugForSitePresence(sitePresence);
+    const matched = await prisma.hostingPlan.findFirst({
+      where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
+    });
+    resolvedPlanId = matched?.id ?? null;
+    if (!resolvedPlanId) {
+      const fallback = await prisma.hostingPlan.findFirst({
+        where: { isActive: true, monthlyPrice: { gt: 0 } },
+        orderBy: { sortOrder: "asc" },
+      });
+      resolvedPlanId = fallback?.id ?? null;
+    }
+  }
+
+  const email = user.email;
+  await prisma.$transaction(async (tx) => {
+    const host = await tx.host.create({
+      data: {
+        slug,
+        name: displayName,
+        tagline,
+        websiteUrl,
+        sitePresence,
+        listOnMarketplace,
+        contactEmail: email,
+        billingEmail: email,
+        active: true,
+        hostingMode,
+        approvalStatus: "APPROVED",
+        reviewedAt: new Date(),
+        approvalNotes: "Self-serve. Hosting goes live after payment.",
+        subscriptionStatus:
+          hostingMode === "PLATFORM" ? "PENDING_PAYMENT" : "NONE",
+        planId: hostingMode === "PLATFORM" ? resolvedPlanId : null,
+        setupServiceStatus: wantsSetup ? "REQUESTED" : "NONE",
+        setupServiceAmount: SETUP_SERVICE_FEE_USD,
+        setupServiceNotes: wantsSetup
+          ? "Host requested full setup at signup (listings, brand, website)."
+          : null,
+      },
+    });
+    await tx.user.update({
+      where: { id: user.id },
+      data: {
+        role: "HOST",
+        hostId: host.id,
+        hostAccess: "OWNER",
+      },
+    });
+  });
+
+  await prisma.host.updateMany({
+    where: { approvalStatus: "PENDING_REVIEW" },
+    data: {
+      approvalStatus: "APPROVED",
+      reviewedAt: new Date(),
+      approvalNotes: "Self-serve. Hosting goes live after payment.",
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/payments");
+  revalidatePath("/for-hosts");
+  redirect(
+    hostingMode === "PLATFORM"
+      ? "/admin/payments?welcome=1"
+      : "/admin?welcome=1",
+  );
 }
 
 const HOST_PROFILE_PATH = "/admin";

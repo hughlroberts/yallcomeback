@@ -25,7 +25,13 @@ export const metadata = { title: "Payments · Admin" };
 export default async function AdminPaymentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ accountId?: string; refresh?: string; subscribed?: string; canceled?: string }>;
+  searchParams: Promise<{
+    accountId?: string;
+    refresh?: string;
+    subscribed?: string;
+    canceled?: string;
+    welcome?: string;
+  }>;
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/payments");
@@ -228,6 +234,12 @@ export default async function AdminPaymentsPage({
       {sp.refresh ? (
         <p className="rounded-xl bg-stone-50 px-4 py-3 text-sm text-stone-700">
           Onboarding link expired. Click onboard again to continue.
+        </p>
+      ) : null}
+      {sp.welcome ? (
+        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          You&apos;re hosting. Add a card below to subscribe. You can build
+          listings now; they go live on Find a Place after hosting is paid.
         </p>
       ) : null}
       {sp.subscribed ? (

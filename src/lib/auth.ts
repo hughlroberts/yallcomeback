@@ -6,7 +6,7 @@ import { authConfig } from "@/auth.config";
 import type { HostAccessLevel, Role } from "@prisma/client";
 
 /** How often to re-read role/hostId from the database (ms). */
-const ROLE_REFRESH_MS = 60_000;
+const ROLE_REFRESH_MS = 5_000;
 
 declare module "next-auth" {
   interface User {
@@ -166,29 +166,51 @@ export async function requirePlatformAdmin() {
  */
 export async function requireHostAdmin(hostId?: string) {
   const session = await auth();
-  if (!session?.user) return null;
+  if (!session?.user?.id) return null;
 
-  if (session.user.role === "ADMIN") {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, hostId: true, hostAccess: true },
+  });
+  if (!dbUser) return null;
+
+  if (dbUser.role === "ADMIN") {
     let resolved = hostId ?? null;
     if (!resolved) {
       const { getAdminBrandHostId } = await import("@/lib/admin-brand-context");
       resolved = await getAdminBrandHostId();
     }
     return {
-      session,
+      session: {
+        ...session,
+        user: {
+          ...session.user,
+          role: "ADMIN" as const,
+          hostId: resolved,
+          hostAccess: null,
+        },
+      },
       hostId: resolved,
       isPlatform: true as const,
       hostAccess: null as HostAccessLevel | null,
     };
   }
 
-  if (session.user.role === "HOST" && session.user.hostId) {
-    if (hostId && hostId !== session.user.hostId) return null;
+  if (dbUser.role === "HOST" && dbUser.hostId) {
+    if (hostId && hostId !== dbUser.hostId) return null;
     return {
-      session,
-      hostId: session.user.hostId,
+      session: {
+        ...session,
+        user: {
+          ...session.user,
+          role: "HOST" as const,
+          hostId: dbUser.hostId,
+          hostAccess: dbUser.hostAccess ?? "OWNER",
+        },
+      },
+      hostId: dbUser.hostId,
       isPlatform: false as const,
-      hostAccess: (session.user.hostAccess ?? "OWNER") as HostAccessLevel,
+      hostAccess: (dbUser.hostAccess ?? "OWNER") as HostAccessLevel,
     };
   }
 
