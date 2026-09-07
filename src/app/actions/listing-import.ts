@@ -47,6 +47,8 @@ export async function importListingFromUrl(
   try {
     const access = await ensureHostAccess();
     const hostId = await resolveHostIdForCreate(access, formData);
+    const { assertHostAllowsFutureWork } = await import("@/lib/hosting");
+    await assertHostAllowsFutureWork(hostId, { bypass: access.isPlatform });
     const url = String(formData.get("url") || "").trim();
     if (!url) return { ok: false, error: "URL required" };
 

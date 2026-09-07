@@ -60,7 +60,9 @@ export default async function OpsHostingPage() {
       where: {
         hostingMode: "PLATFORM",
         approvalStatus: "APPROVED",
-        subscriptionStatus: { in: ["ACTIVE", "PAST_DUE", "PENDING_PAYMENT"] },
+        subscriptionStatus: {
+          in: ["ACTIVE", "PAST_DUE", "PAUSED", "PENDING_PAYMENT"],
+        },
       },
       include: { plan: true },
       orderBy: { currentPeriodEnd: "asc" },

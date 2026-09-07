@@ -8,6 +8,7 @@ import type {
   HostSitePresence,
   SetupServiceStatus,
 } from "@prisma/client";
+import { prisma } from "@/lib/db";
 
 /** One-time done-for-you setup: listings, brand, custom domain / website. */
 export const SETUP_SERVICE_FEE_USD = 500;
@@ -40,12 +41,66 @@ export type HostLiveFields = Pick<
   | "subscriptionStatus"
 >;
 
+/** Unpaid hosting still works this many days (full access). */
+export const HOSTING_GRACE_DAYS = 3;
+/** Reminder email + pause after this many unpaid days. */
+export const HOSTING_REMINDER_AND_PAUSE_DAYS = 5;
+
+/** Guest-visible while paid, in grace, or paused (historical listings stay up). */
+export const HOSTING_PUBLIC_STATUSES: HostingSubStatus[] = [
+  "ACTIVE",
+  "PAST_DUE",
+  "PAUSED",
+];
+
 /** Public site + marketplace require a live, paid (or self) host */
 export function isHostPublicLive(host: HostLiveFields): boolean {
   if (!host.active) return false;
   if (host.approvalStatus !== "APPROVED") return false;
   if (host.hostingMode === "SELF") return true;
-  return host.subscriptionStatus === "ACTIVE";
+  return HOSTING_PUBLIC_STATUSES.includes(host.subscriptionStatus);
+}
+
+export function isHostingPaused(
+  host: Pick<Host, "hostingMode" | "subscriptionStatus">,
+): boolean {
+  if (host.hostingMode === "SELF") return false;
+  return host.subscriptionStatus === "PAUSED";
+}
+
+/**
+ * New listings, first-time publish, new guest bookings, new extras.
+ * Paused hosts keep existing listings and bookings only.
+ */
+export function canHostAddFutureWork(
+  host: Pick<Host, "active" | "hostingMode" | "approvalStatus" | "subscriptionStatus">,
+): boolean {
+  if (!host.active) return false;
+  if (host.approvalStatus === "REJECTED" || host.approvalStatus === "SUSPENDED") {
+    return false;
+  }
+  if (host.hostingMode === "SELF") return true;
+  return (
+    host.subscriptionStatus === "ACTIVE" ||
+    host.subscriptionStatus === "PAST_DUE" ||
+    host.subscriptionStatus === "PENDING_PAYMENT" ||
+    host.subscriptionStatus === "NONE"
+  );
+}
+
+export const HOSTING_PAUSED_MESSAGE =
+  "Hosting is paused because payment is overdue. You can manage existing listings and bookings, but you cannot add anything new until you pay. Open Admin → Payments.";
+
+export async function assertHostAllowsFutureWork(
+  hostId: string,
+  opts?: { bypass?: boolean },
+): Promise<void> {
+  if (opts?.bypass) return;
+  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  if (!host) throw new Error("Host not found");
+  if (!canHostAddFutureWork(host)) {
+    throw new Error(HOSTING_PAUSED_MESSAGE);
+  }
 }
 
 /**
@@ -180,6 +235,8 @@ export function subscriptionLabel(status: HostingSubStatus): string {
       return "Active";
     case "PAST_DUE":
       return "Past due";
+    case "PAUSED":
+      return "Paused — pay hosting to add new stays";
     case "CANCELLED":
       return "Cancelled";
     default:

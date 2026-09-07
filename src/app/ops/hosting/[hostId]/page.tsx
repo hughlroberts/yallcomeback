@@ -343,6 +343,7 @@ export default async function OpsHostDetailPage({
               <option value="PENDING_PAYMENT">Pending payment</option>
               <option value="ACTIVE">Active</option>
               <option value="PAST_DUE">Past due</option>
+              <option value="PAUSED">Paused (no new listings)</option>
               <option value="CANCELLED">Cancelled</option>
             </select>
           </div>

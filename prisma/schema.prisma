@@ -83,7 +83,8 @@ enum HostingSubStatus {
   NONE
   PENDING_PAYMENT // approved; first invoice open
   ACTIVE
-  PAST_DUE
+  PAST_DUE // unpaid, still in grace / before pause
+  PAUSED // unpaid past dunning; existing listings only, no new work
   CANCELLED
 }
 
@@ -239,6 +240,10 @@ model Host {
   subscriptionStatus   HostingSubStatus    @default(NONE)
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
+  /// When hosting last went unpaid (dunning clock). Cleared on payment.
+  hostingPastDueAt     DateTime?
+  /// Day-5 unpaid reminder already sent.
+  hostingDunningReminderSentAt DateTime?
   stripeCustomerId     String?
   /// Default for guest checkout on the host website (not marketplace).
   websitePaymentMethod PaymentMethod       @default(STRIPE)

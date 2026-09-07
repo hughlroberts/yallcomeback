@@ -80,6 +80,12 @@ export async function createBooking(formData: FormData) {
     include: { seasons: true, host: true },
   });
   if (!property || !property.published) throw new Error("Property not found");
+  const { canHostAddFutureWork } = await import("@/lib/hosting");
+  if (!canHostAddFutureWork(property.host)) {
+    throw new Error(
+      "This host is not taking new stays right now. Message them about an existing booking, or try again after they resume hosting.",
+    );
+  }
 
   if (sourceChannel === "marketplace") {
     if (!property.listOnMarketplace || !property.host.listOnMarketplace) {

@@ -140,6 +140,18 @@ export default async function AdminPaymentsPage({
             : ""}
           {cardOnFile ? ` · ${cardOnFile}` : " · no card on file yet"}
         </p>
+        {host.subscriptionStatus === "PAST_DUE" ? (
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            Payment is late. You have a 3-day grace period. After 5 unpaid days
+            we pause new listings and new stays. Existing listings stay.
+          </p>
+        ) : null}
+        {host.subscriptionStatus === "PAUSED" ? (
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-950">
+            Hosting is paused. Add a card and pay to take new stays again.
+            Existing listings and bookings are unchanged.
+          </p>
+        ) : null}
         {!priceConfigured ? (
           <p className="text-sm text-amber-800">
             Operator must set{" "}

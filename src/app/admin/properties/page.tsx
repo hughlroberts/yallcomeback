@@ -24,6 +24,21 @@ export default async function AdminPropertiesPage() {
     hostAccess: access.hostAccess,
   });
   const allowCreate = canCreateListings(accessInfo);
+  let hostingAllowsCreate = true;
+  if (access.hostId && !access.isPlatform) {
+    const { canHostAddFutureWork } = await import("@/lib/hosting");
+    const host = await prisma.host.findUnique({
+      where: { id: access.hostId },
+      select: {
+        active: true,
+        hostingMode: true,
+        approvalStatus: true,
+        subscriptionStatus: true,
+      },
+    });
+    hostingAllowsCreate = host ? canHostAddFutureWork(host) : false;
+  }
+  const showCreate = allowCreate && hostingAllowsCreate;
 
   const properties = await prisma.property.findMany({
     where: propertyScopeWhere(access),
@@ -43,12 +58,14 @@ export default async function AdminPropertiesPage() {
             Properties
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            {allowCreate
+            {showCreate
               ? "Create listings step by step, then edit anytime. Duplicate to spin up a similar stay quickly."
-              : "Update calendars, photos, and details. Creating new listings requires full co-host access."}
+              : hostingAllowsCreate
+                ? "Update calendars, photos, and details. Creating new listings requires full co-host access."
+                : "Hosting is paused for new listings. You can still edit existing stays. Pay hosting under Payments to add more."}
           </p>
         </div>
-        {allowCreate ? (
+        {showCreate ? (
           <Link
             href="/admin/properties/new"
             className="rounded-[var(--radius-control)] bg-bonnet px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover"
@@ -66,12 +83,14 @@ export default async function AdminPropertiesPage() {
               Start with what kind of place you have - photos and the rest come
               next.
             </p>
+            {showCreate ? (
             <Link
               href="/admin/properties/new"
               className="mt-5 inline-flex rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
             >
               Create a new listing
             </Link>
+            ) : null}
           </div>
         ) : null}
 
@@ -123,7 +142,7 @@ export default async function AdminPropertiesPage() {
                 >
                   Fridge magnet
                 </Link>
-                {allowCreate ? (
+                {showCreate ? (
                   <form action={duplicateProperty}>
                     <input type="hidden" name="propertyId" value={p.id} />
                     <button

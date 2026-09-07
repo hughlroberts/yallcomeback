@@ -194,10 +194,20 @@ export async function applyHostingSubscriptionFromStripe(opts: {
     | "PENDING_PAYMENT"
     | "ACTIVE"
     | "PAST_DUE"
+    | "PAUSED"
     | "CANCELLED" = host.subscriptionStatus;
-  if (raw === "active" || raw === "trialing") subscriptionStatus = "ACTIVE";
-  else if (raw === "past_due" || raw === "unpaid") subscriptionStatus = "PAST_DUE";
-  else if (raw === "canceled" || raw === "incomplete_expired")
+  let hostingPastDueAt: Date | null | undefined;
+  let hostingDunningReminderSentAt: Date | null | undefined;
+  if (raw === "active" || raw === "trialing") {
+    subscriptionStatus = "ACTIVE";
+    hostingPastDueAt = null;
+    hostingDunningReminderSentAt = null;
+  } else if (raw === "past_due" || raw === "unpaid") {
+    if (host.subscriptionStatus !== "PAUSED") {
+      subscriptionStatus = "PAST_DUE";
+    }
+    hostingPastDueAt = host.hostingPastDueAt ?? new Date();
+  } else if (raw === "canceled" || raw === "incomplete_expired")
     subscriptionStatus = "CANCELLED";
   else if (opts.cancelAtPeriodEnd) subscriptionStatus = "CANCELLED";
 
@@ -209,6 +219,10 @@ export async function applyHostingSubscriptionFromStripe(opts: {
       stripeSubscriptionStatus:
         opts.stripeStatus || host.stripeSubscriptionStatus,
       subscriptionStatus,
+      ...(hostingPastDueAt !== undefined ? { hostingPastDueAt } : {}),
+      ...(hostingDunningReminderSentAt !== undefined
+        ? { hostingDunningReminderSentAt }
+        : {}),
     },
   });
 }

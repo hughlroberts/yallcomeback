@@ -278,6 +278,7 @@ export async function updateHostOps(formData: FormData) {
     | "PENDING_PAYMENT"
     | "ACTIVE"
     | "PAST_DUE"
+    | "PAUSED"
     | "CANCELLED";
   const sitePresence = String(
     formData.get("sitePresence") || host.sitePresence,
@@ -365,6 +366,7 @@ export async function updateHostOps(formData: FormData) {
       | "PENDING_PAYMENT"
       | "ACTIVE"
       | "PAST_DUE"
+      | "PAUSED"
       | "CANCELLED";
     sitePresence: "STAYLOCAL" | "CUSTOM" | "BOTH";
     websiteUrl: string | null;

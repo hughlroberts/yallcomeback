@@ -12,6 +12,8 @@ import {
   resolveHostAccessInfo,
 } from "@/lib/host-access";
 import { canSeePricingIntelligenceNav } from "@/lib/platform-features";
+import { isHostingPaused } from "@/lib/hosting";
+import Link from "next/link";
 
 export default async function AdminLayout({
   children,
@@ -36,14 +38,34 @@ export default async function AdminLayout({
 
   let hostPricingAccess: { pricingIntelligenceEnabled?: boolean } | null =
     null;
+  let billingHost: {
+    hostingMode: "PLATFORM" | "SELF";
+    subscriptionStatus:
+      | "NONE"
+      | "PENDING_PAYMENT"
+      | "ACTIVE"
+      | "PAST_DUE"
+      | "PAUSED"
+      | "CANCELLED";
+    active: boolean;
+    approvalStatus: "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "SUSPENDED";
+  } | null = null;
   let brandHosts: { id: string; name: string; slug: string }[] = [];
   let activeBrandId: string | null = null;
 
   if (!isPlatform && session.user.hostId) {
-    hostPricingAccess = await prisma.host.findUnique({
+    const row = await prisma.host.findUnique({
       where: { id: session.user.hostId },
-      select: { pricingIntelligenceEnabled: true },
+      select: {
+        pricingIntelligenceEnabled: true,
+        hostingMode: true,
+        subscriptionStatus: true,
+        active: true,
+        approvalStatus: true,
+      },
     });
+    hostPricingAccess = row;
+    billingHost = row;
   }
 
   if (isPlatform) {
@@ -54,10 +76,18 @@ export default async function AdminLayout({
       take: 100,
     });
     if (activeBrandId) {
-      hostPricingAccess = await prisma.host.findUnique({
+      const row = await prisma.host.findUnique({
         where: { id: activeBrandId },
-        select: { pricingIntelligenceEnabled: true },
+        select: {
+          pricingIntelligenceEnabled: true,
+          hostingMode: true,
+          subscriptionStatus: true,
+          active: true,
+          approvalStatus: true,
+        },
       });
+      hostPricingAccess = row;
+      billingHost = row;
     }
   }
 
@@ -121,6 +151,27 @@ export default async function AdminLayout({
         />
       </div>
       <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6">
+        {billingHost && billingHost.subscriptionStatus === "PAST_DUE" ? (
+          <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            Hosting payment is past due. You still have a short grace period.
+            Pay under{" "}
+            <Link href="/admin/payments" className="font-semibold underline">
+              Payments
+            </Link>{" "}
+            so new listings and new stays stay available.
+          </p>
+        ) : null}
+        {billingHost && isHostingPaused(billingHost) ? (
+          <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-950">
+            Hosting is paused for new work because payment is overdue. Existing
+            listings and bookings stay here. You cannot add listings or take new
+            stays until you{" "}
+            <Link href="/admin/payments" className="font-semibold underline">
+              pay hosting
+            </Link>
+            .
+          </p>
+        ) : null}
         {children}
       </div>
     </div>

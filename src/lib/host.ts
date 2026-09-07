@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 import type { Host, Property } from "@prisma/client";
-import { isHostPublicLive } from "./hosting";
+import { HOSTING_PUBLIC_STATUSES, isHostPublicLive } from "./hosting";
 import {
   formatDistanceMiles,
   hasCoordinates,
@@ -41,7 +41,7 @@ export function marketplacePropertyWhere() {
         { hostingMode: "SELF" as const },
         {
           hostingMode: "PLATFORM" as const,
-          subscriptionStatus: "ACTIVE" as const,
+          subscriptionStatus: { in: [...HOSTING_PUBLIC_STATUSES] },
         },
       ],
     },

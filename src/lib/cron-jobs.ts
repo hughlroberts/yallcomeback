@@ -45,10 +45,22 @@ export async function runBookingMessages(): Promise<BookingMessagesResult> {
 export async function runAllCronJobs(): Promise<{
   ical: IcalSyncResult;
   messages: BookingMessagesResult;
+  dunning: { pastDueSeeded: number; reminded: number; paused: number };
   pricing?: { skipped: boolean; hostsProcessed: number; errors: string[] };
 }> {
   const ical = await runIcalSync();
   const messages = await runBookingMessages();
+  let dunning: { pastDueSeeded: number; reminded: number; paused: number } = {
+    pastDueSeeded: 0,
+    reminded: 0,
+    paused: 0,
+  };
+  try {
+    const { processHostingDunning } = await import("@/lib/hosting-dunning");
+    dunning = await processHostingDunning();
+  } catch (e) {
+    console.error("[cron:hosting-dunning]", e);
+  }
 
   // Monthly pricing intelligence: only if explicitly enabled in-process.
   // Prefer external monthly hit to /api/cron/pricing-intelligence.
@@ -65,5 +77,5 @@ export async function runAllCronJobs(): Promise<{
     pricing = await runMonthlyPricingIntelligence();
   }
 
-  return { ical, messages, pricing };
+  return { ical, messages, dunning, pricing };
 }

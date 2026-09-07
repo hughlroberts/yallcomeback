@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { assertHostAllowsFutureWork } from "@/lib/hosting";
 import { parseTimeTo24h, slugify } from "@/lib/utils";
 import {
   assertPropertyAccess,
@@ -17,6 +18,7 @@ import { randomUUID } from "crypto";
 export async function createProperty(formData: FormData) {
   const access = await ensureHostAccess();
   const hostId = await resolveHostIdForCreate(access, formData);
+  await assertHostAllowsFutureWork(hostId, { bypass: access.isPlatform });
   const title = String(formData.get("title") || "").trim();
   if (!title) throw new Error("Title required");
 
@@ -95,6 +97,9 @@ export async function duplicateProperty(formData: FormData) {
     },
   });
   if (!source) throw new Error("Property not found");
+  await assertHostAllowsFutureWork(source.hostId, {
+    bypass: access.isPlatform,
+  });
 
   const baseTitle = source.title
     .replace(/\s*\(copy(?:\s+\d+)?\)\s*$/i, "")
@@ -213,6 +218,7 @@ export async function duplicateProperty(formData: FormData) {
 export async function startListingDraft(formData: FormData) {
   const access = await ensureHostAccess();
   const hostId = await resolveHostIdForCreate(access, formData);
+  await assertHostAllowsFutureWork(hostId, { bypass: access.isPlatform });
   const { isListingTypeId } = await import("@/lib/listing-types");
 
   const rawType = String(formData.get("propertyType") || "");
@@ -664,8 +670,13 @@ export async function publishListing(formData: FormData) {
 
   const property = await prisma.property.findUniqueOrThrow({
     where: { id },
-    include: { host: { select: { slug: true } } },
+    include: { host: { select: { slug: true, id: true } } },
   });
+  if (!property.published) {
+    await assertHostAllowsFutureWork(property.host.id, {
+      bypass: access.isPlatform,
+    });
+  }
 
   if (!property.title.trim() || property.title === "Untitled listing") {
     throw new Error("Add a title before publishing");
@@ -768,6 +779,12 @@ export async function updateProperty(formData: FormData) {
     include: { host: true },
   });
   if (!existing) throw new Error("Property not found");
+  const wantPublished = formData.get("published") === "on";
+  if (wantPublished && !existing.published) {
+    await assertHostAllowsFutureWork(existing.hostId, {
+      bypass: access.isPlatform,
+    });
+  }
 
   const locationId = String(formData.get("locationId") || "") || null;
   if (locationId) {
@@ -1027,6 +1044,18 @@ export async function addCalendarBlock(formData: FormData) {
   const access = await ensureHostAccess();
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
+  const blockType = String(formData.get("blockType") || "OTHER");
+  if (blockType === "OFFLINE" || blockType === "FRIENDS") {
+    const prop = await prisma.property.findUnique({
+      where: { id: propertyId },
+      select: { hostId: true },
+    });
+    if (prop) {
+      await assertHostAllowsFutureWork(prop.hostId, {
+        bypass: access.isPlatform,
+      });
+    }
+  }
 
   const guestEmail = String(formData.get("guestEmail") || "").trim() || null;
   const guestPhone = String(formData.get("guestPhone") || "").trim() || null;

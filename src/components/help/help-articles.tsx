@@ -1761,6 +1761,12 @@ function SelfHost({ article }: { article: HelpArticle }) {
           Monthly hosting is separate. Open Admin → Payments and add a card to
           pay Yall Come Back. That card is not the same account guests pay.
         </HelpP>
+        <HelpP>
+          If a hosting payment fails, you keep full access for 3 days. After 5
+          unpaid days we send a reminder and pause new work. You can still
+          manage existing listings and bookings. You cannot add new listings or
+          take new stays until you pay.
+        </HelpP>
       </HelpSection>
     </HelpArticleLayout>
   );

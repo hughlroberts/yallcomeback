@@ -27,6 +27,21 @@ export default async function NewListingWizardPage({
   if (!canCreateListings(info)) {
     redirect("/admin/properties?error=limited");
   }
+  if (access.hostId && !access.isPlatform) {
+    const { canHostAddFutureWork } = await import("@/lib/hosting");
+    const host = await prisma.host.findUnique({
+      where: { id: access.hostId },
+      select: {
+        active: true,
+        hostingMode: true,
+        approvalStatus: true,
+        subscriptionStatus: true,
+      },
+    });
+    if (host && !canHostAddFutureWork(host)) {
+      redirect("/admin/properties?error=paused");
+    }
+  }
 
   const sp = await searchParams;
 

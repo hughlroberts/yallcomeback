@@ -93,6 +93,80 @@ export function platformFromHeader(): string | null {
   return formatMailbox(name || PRODUCT_NAME, address);
 }
 
+/** Ops / billing mail (no conversation thread). */
+export async function dispatchPlatformEmail(opts: {
+  to: string;
+  subject: string;
+  text: string;
+}): Promise<DispatchResult> {
+  const to = opts.to.trim().toLowerCase();
+  if (!isUsableEmail(to)) {
+    return {
+      attempted: false,
+      status: "skipped",
+      channel: "EMAIL",
+      detail: "Invalid recipient email",
+    };
+  }
+  if (!isEmailMessagingEnabled()) {
+    return {
+      attempted: false,
+      status: "not_configured",
+      channel: "EMAIL",
+      detail: "Email not configured",
+    };
+  }
+  const from = platformFromHeader();
+  if (!from) {
+    return {
+      attempted: false,
+      status: "not_configured",
+      channel: "EMAIL",
+      detail: "MESSAGING_EMAIL_FROM missing",
+    };
+  }
+  const text = opts.text.trim();
+  const html = `<p style="font:16px/1.5 system-ui,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</p>`;
+  if (process.env.MESSAGING_EMAIL_DRY_RUN === "true") {
+    console.info("[messaging:email:dry-run:platform]", {
+      to,
+      subject: opts.subject,
+    });
+    return {
+      attempted: true,
+      status: "sent",
+      channel: "EMAIL",
+      detail: "Dry-run",
+    };
+  }
+  const apiKey = resendApiKey();
+  if (apiKey) {
+    return sendViaResend({
+      from,
+      to,
+      subject: opts.subject,
+      text,
+      html,
+      apiKey,
+    });
+  }
+  if (smtpConfigured()) {
+    return sendViaSmtp({
+      from,
+      to,
+      subject: opts.subject,
+      text,
+      html,
+    });
+  }
+  return {
+    attempted: false,
+    status: "not_configured",
+    channel: "EMAIL",
+    detail: "No email transport",
+  };
+}
+
 function resendApiKey(): string | null {
   return (
     process.env.MESSAGING_EMAIL_API_KEY?.trim() ||

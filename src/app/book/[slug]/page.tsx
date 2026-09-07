@@ -138,6 +138,8 @@ export default async function BookPage({
   const onlineCardOffered = payOptions.some((o) => o.value === "card" && o.ready);
   const payReady = payOptions.some((o) => o.ready);
   const payBlocked = payOptions.find((o) => !o.ready)?.blockedReason;
+  const { canHostAddFutureWork } = await import("@/lib/hosting");
+  const hostTakesNewStays = canHostAddFutureWork(property.host);
   const btcQuote =
     bitcoinOffered && !quote.error
       ? await quoteBtcFromUsd(quote.depositAmount)
@@ -348,6 +350,12 @@ export default async function BookPage({
         {quote.error && (
           <p className="mt-6 text-base text-red-600">{quote.error}</p>
         )}
+        {!hostTakesNewStays ? (
+          <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-base text-amber-900">
+            This host is not taking new stays right now. Existing bookings are
+            unchanged.
+          </p>
+        ) : null}
         {!payReady && payBlocked ? (
           <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-base text-amber-900">
             {payBlocked}
@@ -571,7 +579,7 @@ export default async function BookPage({
 
           <Button
             type="submit"
-            disabled={!available || !!quote.error || !payReady}
+            disabled={!available || !!quote.error || !payReady || !hostTakesNewStays}
             className="w-full"
           >
             {onlineCardOffered || bitcoinOffered

@@ -24,7 +24,14 @@ export default async function HomePage() {
         where: {
           active: true,
           approvalStatus: "APPROVED",
-          OR: [{ hostingMode: "SELF" }, { subscriptionStatus: "ACTIVE" }],
+          OR: [
+            { hostingMode: "SELF" },
+            {
+              subscriptionStatus: {
+                in: ["ACTIVE", "PAST_DUE", "PAUSED"] as const,
+              },
+            },
+          ],
         },
       }),
       showDiscovery

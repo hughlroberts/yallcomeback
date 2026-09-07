@@ -6,6 +6,7 @@ import {
   applyHostingSubscriptionFromStripe,
   stripeObjectId,
 } from "@/lib/platform-billing";
+import { markHostingPastDue } from "@/lib/hosting-dunning";
 import { prisma } from "@/lib/db";
 
 /**
@@ -38,6 +39,18 @@ export async function POST(req: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid signature";
     return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object as {
+      metadata?: { kind?: string; hostId?: string };
+      customer?: string | { id?: string } | null;
+    };
+    if (invoice.metadata?.kind === "hosting" && invoice.metadata.hostId) {
+      await markHostingPastDue(invoice.metadata.hostId);
+    } else if (invoice.metadata?.kind === "hosting_subscription" && invoice.metadata.hostId) {
+      await markHostingPastDue(invoice.metadata.hostId);
+    }
   }
 
   if (

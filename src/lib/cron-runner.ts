@@ -36,7 +36,7 @@ async function tick() {
     const sent =
       (m.weekBefore?.sent ?? 0) + (m.dayBefore?.sent ?? 0);
     console.log(
-      `[cron] ok in ${Date.now() - started}ms · ical=${result.ical.synced} · messages_sent=${sent}`,
+      `[cron] ok in ${Date.now() - started}ms · ical=${result.ical.synced} · messages_sent=${sent} · dunning_paused=${result.dunning.paused}`,
     );
   } catch (e) {
     console.error("[cron] failed", e);

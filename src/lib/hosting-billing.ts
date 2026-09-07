@@ -255,6 +255,8 @@ export async function markHostingInvoicePaid(
         currentPeriodStart: invoice.periodStart,
         currentPeriodEnd: invoice.periodEnd,
         active: true,
+        hostingPastDueAt: null,
+        hostingDunningReminderSentAt: null,
       },
     });
 

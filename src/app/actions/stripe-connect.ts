@@ -61,6 +61,8 @@ export async function startConnectOnboarding() {
 export async function createHostProduct(formData: FormData) {
   assertStripeOn();
   const host = await requireBrandHost();
+  const { assertHostAllowsFutureWork } = await import("@/lib/hosting");
+  await assertHostAllowsFutureWork(host.id);
   if (!host.stripeAccountId) {
     throw new Error("Onboard to collect payments before creating products.");
   }
