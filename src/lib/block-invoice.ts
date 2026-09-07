@@ -3,9 +3,9 @@ import { getStripe, isStripeConfigured, toStripeAmount } from "@/lib/stripe";
 import { nightsBetween } from "@/lib/utils";
 
 /**
- * Create + send a Stripe Invoice for a calendar block (offline booking).
- * Guest can pay the hosted link online; host can also collect on POS and
- * mark the invoice paid in Stripe (or via "Mark paid" in admin).
+ * Create + send a Stripe Invoice for a calendar block on the host's
+ * connected account (Direct Charge). Stripe's card fee is billed to the
+ * host — never to Yall Come Back. Do not fall back to the platform account.
  */
 export async function sendStripeInvoiceForBlock(opts: {
   blockId: string;
@@ -37,7 +37,16 @@ export async function sendStripeInvoiceForBlock(opts: {
     where: { id: opts.blockId },
     include: {
       property: {
-        include: { host: { select: { id: true, name: true, slug: true } } },
+        include: {
+          host: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              stripeAccountId: true,
+            },
+          },
+        },
       },
     },
   });
@@ -51,6 +60,14 @@ export async function sendStripeInvoiceForBlock(opts: {
     );
   }
 
+  const accountId = block.property.host.stripeAccountId;
+  if (!accountId) {
+    throw new Error(
+      "This host must finish card onboarding before you can send a card invoice. Cash and in-person stays do not need this.",
+    );
+  }
+  const onAccount = { stripeAccount: accountId };
+
   const currency = (opts.currency || block.invoiceCurrency || "USD").toLowerCase();
   const nights = nightsBetween(block.startDate, block.endDate);
   const checkIn = block.startDate.toISOString().slice(0, 10);
@@ -63,44 +80,57 @@ export async function sendStripeInvoiceForBlock(opts: {
     `${block.property.title} · ${checkIn} → ${checkOut}` +
       (nights > 0 ? ` (${nights} night${nights === 1 ? "" : "s"})` : "");
 
-  const customer = await stripe.customers.create({
-    email,
-    name: guestName,
-    metadata: {
-      calendarBlockId: block.id,
-      propertyId: block.propertyId,
-      hostId: block.property.host.id,
-      kind: "calendar_block",
+  const customer = await stripe.customers.create(
+    {
+      email,
+      name: guestName,
+      metadata: {
+        calendarBlockId: block.id,
+        propertyId: block.propertyId,
+        hostId: block.property.host.id,
+        kind: "calendar_block",
+      },
     },
-  });
+    onAccount,
+  );
 
-  await stripe.invoiceItems.create({
-    customer: customer.id,
-    amount: toStripeAmount(amount),
-    currency,
-    description: lineDescription,
-  });
-
-  const invoice = await stripe.invoices.create({
-    customer: customer.id,
-    collection_method: "send_invoice",
-    days_until_due: 14,
-    auto_advance: true,
-    metadata: {
-      kind: "calendar_block",
-      calendarBlockId: block.id,
-      propertyId: block.propertyId,
-      hostId: block.property.host.id,
+  await stripe.invoiceItems.create(
+    {
+      customer: customer.id,
+      amount: toStripeAmount(amount),
+      currency,
+      description: lineDescription,
     },
-    footer:
-      "Pay online with the link above, or pay in person - we can take card on our POS and apply it to this invoice.",
-  });
+    onAccount,
+  );
+
+  const invoice = await stripe.invoices.create(
+    {
+      customer: customer.id,
+      collection_method: "send_invoice",
+      days_until_due: 14,
+      auto_advance: true,
+      metadata: {
+        kind: "calendar_block",
+        calendarBlockId: block.id,
+        propertyId: block.propertyId,
+        hostId: block.property.host.id,
+      },
+      footer:
+        "Pay online with the link above, or pay in person - we can take card on our POS and apply it to this invoice.",
+    },
+    onAccount,
+  );
 
   if (!invoice.id) throw new Error("Stripe did not return an invoice id");
 
-  const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
+  const finalized = await stripe.invoices.finalizeInvoice(
+    invoice.id,
+    undefined,
+    onAccount,
+  );
   try {
-    await stripe.invoices.sendInvoice(finalized.id);
+    await stripe.invoices.sendInvoice(finalized.id, undefined, onAccount);
   } catch {
     // Email may fail in test mode; hosted URL still works
   }

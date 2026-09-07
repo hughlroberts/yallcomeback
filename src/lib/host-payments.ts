@@ -29,7 +29,7 @@ export const WEBSITE_PAY_CHOICES: {
   {
     value: "STRIPE",
     label: "Online card",
-    hint: "Guest pays the deposit on Stripe. Default for the marketplace and this site.",
+    hint: "Guest pays the deposit by card. The card processor takes its fee from your payout — not from Yall Come Back.",
   },
   {
     value: "MANUAL",

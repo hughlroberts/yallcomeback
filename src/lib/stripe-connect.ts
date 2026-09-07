@@ -12,7 +12,9 @@ import { prisma } from "@/lib/db";
 import { PRODUCT_NAME, PRODUCT_ORIGIN } from "@/lib/features";
 import {
   applicationFeeCents,
+  CARD_PROCESSING_LINE,
   hostingPriceId,
+  processingFeeToNetCents,
   requireStripeClient,
   toStripeAmount,
 } from "@/lib/stripe";
@@ -184,7 +186,8 @@ export async function listProductsOnConnectedAccount(accountId: string) {
 
 /**
  * Direct Charge Checkout on the connected account.
- * Application fee is the platform take; YCB default is $0 (hosting fee, not a cut).
+ * Stripe's card fee is billed to that account — never to Yall Come Back.
+ * application_fee_amount is a YCB stay cut (keep 0).
  */
 export async function createDirectChargeCheckout(opts: {
   accountId: string;
@@ -240,11 +243,38 @@ export async function createHostingSubscriptionCheckout(accountId: string) {
       "Missing STRIPE_HOSTING_PRICE_ID. Create a recurring Price in the Stripe Dashboard and set the id (price_...) in env.",
     );
   }
+  const priceObj = await stripeClient.prices.retrieve(price);
+  const netCents = priceObj.unit_amount;
+  if (netCents == null || netCents <= 0) {
+    throw new Error("Hosting Price must be a fixed recurring amount.");
+  }
+  const processingCents = processingFeeToNetCents(netCents);
   const origin = publicOrigin();
+  const line_items: {
+    price?: string;
+    quantity: number;
+    price_data?: {
+      currency: string;
+      unit_amount: number;
+      recurring: { interval: "month" };
+      product_data: { name: string };
+    };
+  }[] = [{ price, quantity: 1 }];
+  if (processingCents > 0) {
+    line_items.push({
+      quantity: 1,
+      price_data: {
+        currency: (priceObj.currency || "usd").toLowerCase(),
+        unit_amount: processingCents,
+        recurring: { interval: "month" },
+        product_data: { name: CARD_PROCESSING_LINE },
+      },
+    });
+  }
   return stripeClient.checkout.sessions.create({
     customer_account: accountId,
     mode: "subscription",
-    line_items: [{ price, quantity: 1 }],
+    line_items,
     success_url: `${origin}/admin/payments?subscribed=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/admin/payments?canceled=1`,
     metadata: { kind: "hosting_subscription" },

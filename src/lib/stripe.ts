@@ -14,7 +14,9 @@ import { STRIPE_LIVE_READY } from "@/lib/features";
  *   STRIPE_WEBHOOK_SECRET=whsec_...           // snapshot events
  *   STRIPE_THIN_WEBHOOK_SECRET=whsec_...      // v2 Connect thin events
  *   STRIPE_HOSTING_PRICE_ID=price_...         // platform hosting subscription
- *   STRIPE_APPLICATION_FEE_CENTS=0
+ *   STRIPE_APPLICATION_FEE_CENTS=0            // YCB stay cut — keep 0
+ *   STRIPE_PERCENT_BPS=290                    // 2.9% when YCB is merchant
+ *   STRIPE_FIXED_FEE_CENTS=30                 // $0.30
  */
 
 function missingKeyMessage(): string {
@@ -86,6 +88,33 @@ export function applicationFeeCents(): number {
   if (!Number.isFinite(raw) || raw <= 0) return 0;
   return Math.round(raw);
 }
+
+/** Basis points of the US card-present rate (290 = 2.9%). */
+export function stripePercentBps(): number {
+  const n = Number(process.env.STRIPE_PERCENT_BPS || "290");
+  return Number.isFinite(n) && n >= 0 ? n : 290;
+}
+
+/** Fixed per-charge card fee in cents ($0.30). */
+export function stripeFixedFeeCents(): number {
+  const n = Number(process.env.STRIPE_FIXED_FEE_CENTS || "30");
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : 30;
+}
+
+/**
+ * Extra cents to charge so the merchant still nets `netCents` after Stripe's
+ * percentage + fixed card fee. Used when Yall Come Back is the merchant
+ * (hosting / add-on invoices). Guest stay Direct Charges bill the host.
+ */
+export function processingFeeToNetCents(netCents: number): number {
+  if (!Number.isFinite(netCents) || netCents <= 0) return 0;
+  const rate = stripePercentBps() / 10000;
+  if (rate >= 1) return 0;
+  const gross = Math.ceil((netCents + stripeFixedFeeCents()) / (1 - rate));
+  return Math.max(0, gross - Math.round(netCents));
+}
+
+export const CARD_PROCESSING_LINE = "Card processing";
 
 export function hostingPriceId(): string | null {
   const id = process.env.STRIPE_HOSTING_PRICE_ID?.trim();

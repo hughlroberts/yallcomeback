@@ -5,7 +5,13 @@ import {
   PRICING_INTELLIGENCE_ADDON_LABEL,
   PRICING_INTELLIGENCE_ADDON_USD,
 } from "@/lib/platform-features";
-import { getStripe, isStripeConfigured, toStripeAmount } from "@/lib/stripe";
+import {
+  CARD_PROCESSING_LINE,
+  getStripe,
+  isStripeConfigured,
+  processingFeeToNetCents,
+  toStripeAmount,
+} from "@/lib/stripe";
 
 export async function createHostingInvoiceForHost(opts: {
   hostId: string;
@@ -131,6 +137,15 @@ export async function createHostingInvoiceForHost(opts: {
         amount: toStripeAmount(addonAmount),
         currency: plan.currency.toLowerCase(),
         description: `${PRICING_INTELLIGENCE_ADDON_LABEL} — $${addonAmount}/mo add-on (not included in hosting)`,
+      });
+    }
+    const processingCents = processingFeeToNetCents(toStripeAmount(amount));
+    if (processingCents > 0) {
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        amount: processingCents,
+        currency: plan.currency.toLowerCase(),
+        description: `${CARD_PROCESSING_LINE} — so Yall Come Back nets the listed hosting price`,
       });
     }
 

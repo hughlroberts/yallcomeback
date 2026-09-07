@@ -410,7 +410,9 @@ function Payments({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             <strong>Find a Place</strong> — Marketplace stays always use card.
-            The host must finish card onboarding before you can pay.
+            The host must finish card onboarding before you can pay. The card
+            processor takes its fee from the host payout. Yall Come Back does
+            not pay that fee and does not take a stay cut.
           </li>
           <li>
             <strong>Host website</strong> — Guests pay the one method the host
@@ -1751,7 +1753,9 @@ function SelfHost({ article }: { article: HelpArticle }) {
         <HelpP>
           Find a Place stays always use card. Your website uses the default you
           set in Admin → Payments. Custom calendar stays use the method you pick
-          for that stay. Mark cash, bank, and in-person card paid in Admin.
+          for that stay. Mark cash, bank, and in-person card paid in Admin. When
+          guests pay by card, the processor fee comes from your payout. Yall
+          Come Back does not pay that fee.
         </HelpP>
       </HelpSection>
     </HelpArticleLayout>

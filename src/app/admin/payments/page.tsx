@@ -106,9 +106,10 @@ export default async function AdminPaymentsPage({
         <h1 className="text-2xl font-semibold text-stone-900">Payments</h1>
         <p className="mt-1 text-sm text-stone-600">
           Marketplace bookings always use online card. Your website uses the
-          default below (Stripe unless you change it). Custom calendar stays
+          default below (card unless you change it). Custom calendar stays
           pick a method per booking. Yall Come Back does not take a cut of the
-          stay.
+          stay. When guests pay by card, the card processor takes its fee from
+          your payout — Yall Come Back does not pay that fee.
         </p>
       </div>
 
@@ -179,7 +180,8 @@ export default async function AdminPaymentsPage({
         <p className="text-sm text-stone-600">
           Required for Find a Place. Also required if your website default is
           online card. Skip only if you stay off the marketplace and guests
-          pay you another way.
+          pay you another way. Card payouts land on this account, minus the
+          processor fee. Yall Come Back never covers that fee.
         </p>
         {statusError ? (
           <p className="text-sm text-red-700">{statusError}</p>
@@ -226,7 +228,8 @@ export default async function AdminPaymentsPage({
         <h2 className="font-semibold text-stone-900">Website hosting subscription</h2>
         <p className="text-sm text-stone-600">
           Pay Yall Come Back&apos;s monthly hosting on this connected account
-          (not a cut of guest stays). Current status:{" "}
+          (not a cut of guest stays). Card processing is added so Yall Come
+          Back nets the listed price. Current status:{" "}
           <strong>{host.subscriptionStatus.replaceAll("_", " ").toLowerCase()}</strong>
           {host.stripeSubscriptionStatus
             ? ` (Stripe: ${host.stripeSubscriptionStatus})`

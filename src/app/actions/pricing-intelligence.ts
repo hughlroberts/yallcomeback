@@ -14,7 +14,13 @@ import {
   executePricingPipeline,
   runPricingIntelligenceForHost,
 } from "@/lib/pricing-intelligence/run";
-import { getStripe, isStripeConfigured, toStripeAmount } from "@/lib/stripe";
+import {
+  CARD_PROCESSING_LINE,
+  getStripe,
+  isStripeConfigured,
+  processingFeeToNetCents,
+  toStripeAmount,
+} from "@/lib/stripe";
 import { after } from "next/server";
 
 function assertEnabled() {
@@ -85,6 +91,8 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
       });
     }
 
+    const netCents = toStripeAmount(amount);
+    const processingCents = processingFeeToNetCents(netCents);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
@@ -96,7 +104,7 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
           quantity: 1,
           price_data: {
             currency: "usd",
-            unit_amount: toStripeAmount(amount),
+            unit_amount: netCents,
             recurring: { interval: "month" },
             product_data: {
               name: PRICING_INTELLIGENCE_ADDON_LABEL,
@@ -105,6 +113,19 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
             },
           },
         },
+        ...(processingCents > 0
+          ? [
+              {
+                quantity: 1,
+                price_data: {
+                  currency: "usd",
+                  unit_amount: processingCents,
+                  recurring: { interval: "month" as const },
+                  product_data: { name: CARD_PROCESSING_LINE },
+                },
+              },
+            ]
+          : []),
       ],
       metadata: {
         kind: "pricing_intelligence_addon",
