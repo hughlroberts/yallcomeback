@@ -21,6 +21,7 @@ import {
   processingFeeToNetCents,
   toStripeAmount,
 } from "@/lib/stripe";
+import { ensurePlatformCustomer } from "@/lib/platform-billing";
 import { after } from "next/server";
 
 function assertEnabled() {
@@ -77,19 +78,15 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
         ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
         : "http://localhost:3000");
 
-    let customerId = host.stripeCustomerId;
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email,
-        name: host.name,
-        metadata: { hostId: host.id, slug: host.slug },
-      });
-      customerId = customer.id;
-      await prisma.host.update({
-        where: { id: host.id },
-        data: { stripeCustomerId: customerId },
-      });
-    }
+    const customerId = await ensurePlatformCustomer({
+      id: host.id,
+      name: host.name,
+      slug: host.slug,
+      stripeCustomerId: host.stripeCustomerId,
+      contactEmail: host.contactEmail,
+      billingEmail: host.billingEmail,
+      users: host.users,
+    });
 
     const netCents = toStripeAmount(amount);
     const processingCents = processingFeeToNetCents(netCents);

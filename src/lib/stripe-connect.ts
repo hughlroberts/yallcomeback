@@ -1,20 +1,16 @@
 /**
- * Stripe Connect (Accounts v2) for hosts.
+ * Stripe Connect (Accounts v2) for *guest* money only.
  *
  * - Each host maps to one v2 connected account (Host.stripeAccountId).
- * - Onboarding status is always read from the Stripe API (not cached in DB).
- * - Guest card deposits are Direct Charges on the connected account.
- * - Platform hosting is a subscription billed to the connected account
- *   (customer_account = acct_..., not a v1 customer id).
+ * - Guest card deposits, extras, and calendar invoices are Direct Charges.
+ * - Hosts paying Yall Come Back for hosting use platform-billing.ts
+ *   (Customer cus_… + card on the platform account) — never this file.
  */
 
 import { prisma } from "@/lib/db";
 import { PRODUCT_NAME, PRODUCT_ORIGIN } from "@/lib/features";
 import {
   applicationFeeCents,
-  CARD_PROCESSING_LINE,
-  hostingPriceId,
-  processingFeeToNetCents,
   requireStripeClient,
   toStripeAmount,
 } from "@/lib/stripe";
@@ -229,102 +225,6 @@ export async function createDirectChargeCheckout(opts: {
       stripeAccount: opts.accountId,
     },
   );
-}
-
-/**
- * Charge a hosting subscription to the connected account.
- * V2: use customer_account = acct_... (do not use a v1 customer id).
- */
-export async function createHostingSubscriptionCheckout(accountId: string) {
-  const stripeClient = requireStripeClient();
-  const price = hostingPriceId();
-  if (!price) {
-    throw new Error(
-      "Missing STRIPE_HOSTING_PRICE_ID. Create a recurring Price in the Stripe Dashboard and set the id (price_...) in env.",
-    );
-  }
-  const priceObj = await stripeClient.prices.retrieve(price);
-  const netCents = priceObj.unit_amount;
-  if (netCents == null || netCents <= 0) {
-    throw new Error("Hosting Price must be a fixed recurring amount.");
-  }
-  const processingCents = processingFeeToNetCents(netCents);
-  const origin = publicOrigin();
-  const line_items: {
-    price?: string;
-    quantity: number;
-    price_data?: {
-      currency: string;
-      unit_amount: number;
-      recurring: { interval: "month" };
-      product_data: { name: string };
-    };
-  }[] = [{ price, quantity: 1 }];
-  if (processingCents > 0) {
-    line_items.push({
-      quantity: 1,
-      price_data: {
-        currency: (priceObj.currency || "usd").toLowerCase(),
-        unit_amount: processingCents,
-        recurring: { interval: "month" },
-        product_data: { name: CARD_PROCESSING_LINE },
-      },
-    });
-  }
-  return stripeClient.checkout.sessions.create({
-    customer_account: accountId,
-    mode: "subscription",
-    line_items,
-    success_url: `${origin}/admin/payments?subscribed=1&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/admin/payments?canceled=1`,
-    metadata: { kind: "hosting_subscription" },
-    subscription_data: {
-      metadata: { kind: "hosting_subscription" },
-    },
-  });
-}
-
-export async function createBillingPortalSession(accountId: string) {
-  const stripeClient = requireStripeClient();
-  const origin = publicOrigin();
-  return stripeClient.billingPortal.sessions.create({
-    customer_account: accountId,
-    return_url: `${origin}/admin/payments`,
-  });
-}
-
-/** Persist subscription status on the host row (customer_account = acct_...). */
-export async function applySubscriptionStatusFromStripe(opts: {
-  customerAccountId: string | null | undefined;
-  subscriptionId?: string | null;
-  stripeStatus?: string | null;
-  cancelAtPeriodEnd?: boolean;
-}) {
-  const accountId = opts.customerAccountId?.trim();
-  if (!accountId) return null;
-
-  const host = await prisma.host.findUnique({
-    where: { stripeAccountId: accountId },
-  });
-  if (!host) return null;
-
-  const raw = (opts.stripeStatus || "").toLowerCase();
-  let subscriptionStatus: "NONE" | "PENDING_PAYMENT" | "ACTIVE" | "PAST_DUE" | "CANCELLED" =
-    host.subscriptionStatus;
-  if (raw === "active" || raw === "trialing") subscriptionStatus = "ACTIVE";
-  else if (raw === "past_due" || raw === "unpaid") subscriptionStatus = "PAST_DUE";
-  else if (raw === "canceled" || raw === "incomplete_expired")
-    subscriptionStatus = "CANCELLED";
-  else if (opts.cancelAtPeriodEnd) subscriptionStatus = "CANCELLED";
-
-  return prisma.host.update({
-    where: { id: host.id },
-    data: {
-      stripeSubscriptionId: opts.subscriptionId || host.stripeSubscriptionId,
-      stripeSubscriptionStatus: opts.stripeStatus || host.stripeSubscriptionStatus,
-      subscriptionStatus,
-    },
-  });
 }
 
 export function depositCheckoutName(propertyTitle: string): string {

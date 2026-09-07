@@ -244,7 +244,7 @@ model Host {
   websitePaymentMethod PaymentMethod       @default(STRIPE)
   /// Stripe Connect v2 account (acct_...) — needed for marketplace + online card
   stripeAccountId      String?             @unique
-  /// Platform hosting subscription billed to the connected account
+  /// Platform hosting subscription on YCB's Stripe Customer (not Connect)
   stripeSubscriptionId String?
   stripeSubscriptionStatus String?
   billingEmail         String?

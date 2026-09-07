@@ -67,9 +67,9 @@ export default async function AccountPaymentsPage() {
 
         {isHost && !isPlatform ? (
           <PaymentLink
-            title="Hosting invoices"
-            description="Monthly website hosting fees (per listing) are billed by Yall Come Back. Contact the platform if you need a copy of an invoice."
-            href="/contact"
+            title="Hosting — pay Yall Come Back"
+            description="Put a card on file and subscribe. This is billed on Yall Come Back’s account, separate from guest stay payouts."
+            href="/admin/payments"
             badge="Host"
           />
         ) : null}

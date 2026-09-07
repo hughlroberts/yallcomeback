@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { markHostingInvoicePaidByStripeId } from "@/lib/hosting-billing";
 import { markBlockInvoicePaidByStripeId } from "@/lib/block-invoice";
-import { applySubscriptionStatusFromStripe } from "@/lib/stripe-connect";
+import {
+  applyHostingSubscriptionFromStripe,
+  stripeObjectId,
+} from "@/lib/platform-billing";
 import { prisma } from "@/lib/db";
 
 /**
@@ -64,7 +67,7 @@ export async function POST(req: Request) {
       mode?: string;
       payment_status?: string;
       subscription?: string | { id?: string } | null;
-      customer_account?: string | null;
+      customer?: string | { id?: string } | null;
     };
     if (
       session.metadata?.kind === "pricing_intelligence_addon" &&
@@ -106,14 +109,11 @@ export async function POST(req: Request) {
         });
       }
     }
-    if (session.mode === "subscription" || session.metadata?.kind === "hosting_subscription") {
-      const subId =
-        typeof session.subscription === "string"
-          ? session.subscription
-          : session.subscription?.id;
-      await applySubscriptionStatusFromStripe({
-        customerAccountId: session.customer_account,
-        subscriptionId: subId,
+    if (session.metadata?.kind === "hosting_subscription") {
+      await applyHostingSubscriptionFromStripe({
+        hostId: session.metadata.hostId,
+        customerId: stripeObjectId(session.customer),
+        subscriptionId: stripeObjectId(session.subscription),
         stripeStatus: "active",
       });
     }
@@ -134,18 +134,20 @@ export async function POST(req: Request) {
         id?: string;
         status?: string;
         cancel_at_period_end?: boolean;
-        customer_account?: string | null;
+        customer?: string | { id?: string } | null;
         metadata?: { kind?: string; hostId?: string };
         items?: { data?: { price?: { id?: string }; quantity?: number }[] };
         pause_collection?: unknown;
       };
-      // V2 connected accounts: identity is customer_account (acct_...), not customer.
-      await applySubscriptionStatusFromStripe({
-        customerAccountId: sub.customer_account,
-        subscriptionId: sub.id,
-        stripeStatus: sub.status,
-        cancelAtPeriodEnd: sub.cancel_at_period_end,
-      });
+      if (sub.metadata?.kind === "hosting_subscription") {
+        await applyHostingSubscriptionFromStripe({
+          hostId: sub.metadata.hostId,
+          customerId: stripeObjectId(sub.customer),
+          subscriptionId: sub.id,
+          stripeStatus: sub.status,
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+        });
+      }
       if (
         sub.metadata?.kind === "pricing_intelligence_addon" &&
         sub.metadata.hostId

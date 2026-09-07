@@ -7,12 +7,15 @@ import { prisma } from "@/lib/db";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import {
   createAccountOnboardingLink,
-  createBillingPortalSession,
   createConnectedAccountForHost,
   createDirectChargeCheckout,
-  createHostingSubscriptionCheckout,
   createProductOnConnectedAccount,
 } from "@/lib/stripe-connect";
+import {
+  createHostingSubscriptionCheckout,
+  createPlatformBillingPortalSession,
+  ensurePlatformCustomer,
+} from "@/lib/platform-billing";
 import { isStripeConfigured, toStripeAmount } from "@/lib/stripe";
 
 async function requireBrandHost() {
@@ -81,21 +84,23 @@ export async function createHostProduct(formData: FormData) {
 export async function startHostingSubscription() {
   assertStripeOn();
   const host = await requireBrandHost();
-  if (!host.stripeAccountId) {
-    throw new Error("Onboard to collect payments first, then subscribe.");
+  if (host.subscriptionStatus === "ACTIVE" && host.stripeCustomerId) {
+    const portal = await createPlatformBillingPortalSession(
+      host.stripeCustomerId,
+    );
+    if (!portal.url) throw new Error("Billing portal did not return a URL.");
+    redirect(portal.url);
   }
-  const session = await createHostingSubscriptionCheckout(host.stripeAccountId);
-  if (!session.url) throw new Error("Stripe Checkout did not return a URL.");
+  const session = await createHostingSubscriptionCheckout(host);
+  if (!session.url) throw new Error("Card checkout did not return a URL.");
   redirect(session.url);
 }
 
 export async function openBillingPortal() {
   assertStripeOn();
   const host = await requireBrandHost();
-  if (!host.stripeAccountId) {
-    throw new Error("No connected account yet.");
-  }
-  const session = await createBillingPortalSession(host.stripeAccountId);
+  const customerId = await ensurePlatformCustomer(host);
+  const session = await createPlatformBillingPortalSession(customerId);
   if (!session.url) throw new Error("Billing portal did not return a URL.");
   redirect(session.url);
 }

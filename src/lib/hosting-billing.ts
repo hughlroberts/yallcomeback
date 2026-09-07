@@ -12,6 +12,10 @@ import {
   processingFeeToNetCents,
   toStripeAmount,
 } from "@/lib/stripe";
+import {
+  customerHasCardOnFile,
+  ensurePlatformCustomer,
+} from "@/lib/platform-billing";
 
 export async function createHostingInvoiceForHost(opts: {
   hostId: string;
@@ -103,24 +107,22 @@ export async function createHostingInvoiceForHost(opts: {
 
   let stripeInvoiceId: string | null = null;
   let stripeHostedInvoiceUrl: string | null = null;
-  let status: "OPEN" | "DRAFT" = "OPEN";
+  let status: "OPEN" | "DRAFT" | "PAID" = "OPEN";
+  let chargedCardOnFile = false;
 
   const stripe = opts.sendStripe !== false ? getStripe() : null;
 
   if (stripe && billingEmail) {
-    let customerId = host.stripeCustomerId;
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: billingEmail,
-        name: host.name,
-        metadata: { hostId: host.id, hostSlug: host.slug },
-      });
-      customerId = customer.id;
-      await prisma.host.update({
-        where: { id: host.id },
-        data: { stripeCustomerId: customerId },
-      });
-    }
+    const customerId = await ensurePlatformCustomer({
+      id: host.id,
+      name: host.name,
+      slug: host.slug,
+      stripeCustomerId: host.stripeCustomerId,
+      contactEmail: host.contactEmail,
+      billingEmail: host.billingEmail,
+      users: host.users,
+    });
+    const chargeCard = await customerHasCardOnFile(customerId);
 
     // Separate Stripe line items so hosting and the $35 add-on stay distinct
     if (hostingAmount > 0) {
@@ -151,8 +153,6 @@ export async function createHostingInvoiceForHost(opts: {
 
     const invoice = await stripe.invoices.create({
       customer: customerId,
-      collection_method: "send_invoice",
-      days_until_due: 7,
       auto_advance: true,
       metadata: {
         hostId: host.id,
@@ -163,18 +163,24 @@ export async function createHostingInvoiceForHost(opts: {
         pricingIntelligenceAddon: addonActive ? "1" : "0",
         pricingIntelligenceAddonAmount: String(addonAmount),
       },
+      ...(chargeCard
+        ? { collection_method: "charge_automatically" as const }
+        : { collection_method: "send_invoice" as const, days_until_due: 7 }),
     });
 
     const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
-    try {
-      await stripe.invoices.sendInvoice(finalized.id);
-    } catch {
-      // Test mode / restricted accounts may block send; hosted URL still works
+    if (!chargeCard) {
+      try {
+        await stripe.invoices.sendInvoice(finalized.id);
+      } catch {
+        // Test mode / restricted accounts may block send; hosted URL still works
+      }
     }
 
     stripeInvoiceId = finalized.id;
     stripeHostedInvoiceUrl = finalized.hosted_invoice_url ?? null;
-    status = "OPEN";
+    status = finalized.status === "paid" ? "PAID" : "OPEN";
+    chargedCardOnFile = chargeCard;
   }
 
   const record = await prisma.hostingInvoice.create({
@@ -190,15 +196,18 @@ export async function createHostingInvoiceForHost(opts: {
       periodEnd,
       status,
       dueDate,
+      paidAt: status === "PAID" ? new Date() : undefined,
       stripeInvoiceId,
       stripeHostedInvoiceUrl,
       notes:
         opts.notes ||
-        (stripe
-          ? `Stripe invoice sent · ${lineDescription}`
-          : isStripeConfigured()
-            ? `Stripe customer email missing - manual invoice · ${lineDescription}`
-            : `Manual invoice (Stripe not enabled) · ${lineDescription}`),
+        (chargedCardOnFile
+          ? `Card on file · ${lineDescription}`
+          : stripe
+            ? `Stripe invoice sent · ${lineDescription}`
+            : isStripeConfigured()
+              ? `Stripe customer email missing - manual invoice · ${lineDescription}`
+              : `Manual invoice (Stripe not enabled) · ${lineDescription}`),
     },
   });
 
@@ -207,7 +216,9 @@ export async function createHostingInvoiceForHost(opts: {
     data: {
       planId: plan.id,
       subscriptionStatus:
-        host.subscriptionStatus === "ACTIVE" ? "ACTIVE" : "PENDING_PAYMENT",
+        status === "PAID" || host.subscriptionStatus === "ACTIVE"
+          ? "ACTIVE"
+          : "PENDING_PAYMENT",
       billingEmail: billingEmail || host.billingEmail,
     },
   });

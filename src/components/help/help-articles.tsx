@@ -1757,6 +1757,10 @@ function SelfHost({ article }: { article: HelpArticle }) {
           guests pay by card, the processor fee comes from your payout. Yall
           Come Back does not pay that fee.
         </HelpP>
+        <HelpP>
+          Monthly hosting is separate. Open Admin → Payments and add a card to
+          pay Yall Come Back. That card is not the same account guests pay.
+        </HelpP>
       </HelpSection>
     </HelpArticleLayout>
   );

@@ -12,6 +12,7 @@ import {
   startHostingSubscription,
 } from "@/app/actions/stripe-connect";
 import { hostingPriceId, isStripeConfigured } from "@/lib/stripe";
+import { describePlatformCard } from "@/lib/platform-billing";
 import {
   listProductsOnConnectedAccount,
   retrieveConnectStatus,
@@ -99,19 +100,68 @@ export default async function AdminPaymentsPage({
 
   const sp = await searchParams;
   const priceConfigured = Boolean(hostingPriceId());
+  let cardOnFile: string | null = null;
+  if (stripeOn && host.stripeCustomerId) {
+    try {
+      cardOnFile = await describePlatformCard(host.stripeCustomerId);
+    } catch {
+      cardOnFile = null;
+    }
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-stone-900">Payments</h1>
         <p className="mt-1 text-sm text-stone-600">
-          Marketplace bookings always use online card. Your website uses the
-          default below (card unless you change it). Custom calendar stays
-          pick a method per booking. Yall Come Back does not take a cut of the
-          stay. When guests pay by card, the card processor takes its fee from
-          your payout — Yall Come Back does not pay that fee.
+          Two separate money paths. You pay Yall Come Back for hosting with a
+          card on our account. Guests pay you on your connected account. Those
+          never mix. Yall Come Back does not take a cut of the stay.
         </p>
       </div>
+
+      <Card className="space-y-4 p-6">
+        <h2 className="font-semibold text-stone-900">
+          Pay Yall Come Back — hosting
+        </h2>
+        <p className="text-sm text-stone-600">
+          Monthly website hosting is billed to a card on Yall Come Back&apos;s
+          account. This is not guest stay money. Add a card to subscribe. Update
+          or cancel anytime. Card processing is added so Yall Come Back nets
+          the listed price.
+        </p>
+        <p className="text-sm text-stone-700">
+          Status:{" "}
+          <strong>
+            {host.subscriptionStatus.replaceAll("_", " ").toLowerCase()}
+          </strong>
+          {host.stripeSubscriptionStatus
+            ? ` (billing: ${host.stripeSubscriptionStatus})`
+            : ""}
+          {cardOnFile ? ` · ${cardOnFile}` : " · no card on file yet"}
+        </p>
+        {!priceConfigured ? (
+          <p className="text-sm text-amber-800">
+            Operator must set{" "}
+            <code className="rounded bg-amber-50 px-1">STRIPE_HOSTING_PRICE_ID</code>{" "}
+            to a recurring Price on the platform Stripe account.
+          </p>
+        ) : null}
+        <div className="flex flex-wrap gap-3">
+          <form action={startHostingSubscription}>
+            <Button type="submit" disabled={!stripeOn || !priceConfigured}>
+              {host.subscriptionStatus === "ACTIVE"
+                ? "Manage hosting"
+                : "Add card and subscribe"}
+            </Button>
+          </form>
+          <form action={openBillingPortal}>
+            <Button type="submit" variant="secondary" disabled={!stripeOn}>
+              Update card
+            </Button>
+          </form>
+        </div>
+      </Card>
 
       <Card className="space-y-4 p-6">
         <h2 className="font-semibold text-stone-900">Host website deposits</h2>
@@ -176,12 +226,13 @@ export default async function AdminPaymentsPage({
       ) : null}
 
       <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">Online card</h2>
+        <h2 className="font-semibold text-stone-900">
+          Collect guest cards
+        </h2>
         <p className="text-sm text-stone-600">
-          Required for Find a Place. Also required if your website default is
-          online card. Skip only if you stay off the marketplace and guests
-          pay you another way. Card payouts land on this account, minus the
-          processor fee. Yall Come Back never covers that fee.
+          Guests pay you. Payouts and the processor fee stay on this connected
+          account — never on Yall Come Back. Required for Find a Place, and if
+          your website default is online card.
         </p>
         {statusError ? (
           <p className="text-sm text-red-700">{statusError}</p>
@@ -219,46 +270,9 @@ export default async function AdminPaymentsPage({
         )}
         <form action={startConnectOnboarding}>
           <Button type="submit" disabled={!stripeOn}>
-            Onboard to collect payments
+            Onboard to collect guest cards
           </Button>
         </form>
-      </Card>
-
-      <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">Website hosting subscription</h2>
-        <p className="text-sm text-stone-600">
-          Pay Yall Come Back&apos;s monthly hosting on this connected account
-          (not a cut of guest stays). Card processing is added so Yall Come
-          Back nets the listed price. Current status:{" "}
-          <strong>{host.subscriptionStatus.replaceAll("_", " ").toLowerCase()}</strong>
-          {host.stripeSubscriptionStatus
-            ? ` (Stripe: ${host.stripeSubscriptionStatus})`
-            : ""}
-          .
-        </p>
-        {!priceConfigured ? (
-          <p className="text-sm text-amber-800">
-            Operator must set{" "}
-            <code className="rounded bg-amber-50 px-1">STRIPE_HOSTING_PRICE_ID</code>{" "}
-            to a recurring Price in the Stripe Dashboard.
-          </p>
-        ) : null}
-        <div className="flex flex-wrap gap-3">
-          <form action={startHostingSubscription}>
-            <Button type="submit" disabled={!stripeOn || !host.stripeAccountId || !priceConfigured}>
-              Subscribe to hosting
-            </Button>
-          </form>
-          <form action={openBillingPortal}>
-            <Button
-              type="submit"
-              variant="secondary"
-              disabled={!stripeOn || !host.stripeAccountId}
-            >
-              Manage billing
-            </Button>
-          </form>
-        </div>
       </Card>
 
       <Card className="space-y-4 p-6">
