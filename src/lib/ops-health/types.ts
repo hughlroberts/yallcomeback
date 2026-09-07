@@ -19,6 +19,7 @@ export type HealthCheckId =
   | "db_ok"
   | "cron_configured"
   | "cron_in_process"
+  | "hosting_payment_check"
   | "counts";
 
 export type HealthFinding = {

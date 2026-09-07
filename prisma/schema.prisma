@@ -912,3 +912,13 @@ model PricingMarketComp {
   @@index([active, maxGuests])
   @@index([region, city])
 }
+
+/// Last successful run of a named scheduled job (daily payment check, etc.)
+model CronRun {
+  name           String   @id
+  lastStartedAt  DateTime
+  lastFinishedAt DateTime?
+  lastOk         Boolean  @default(false)
+  lastSummary    String?
+  updatedAt      DateTime @updatedAt
+}

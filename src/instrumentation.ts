@@ -1,6 +1,6 @@
 /**
  * Next.js instrumentation — runs once when the Node server starts.
- * Starts background cron (iCal sync + booking messages) in production.
+ * Starts background cron (iCal, booking messages, daily hosting payment check).
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {

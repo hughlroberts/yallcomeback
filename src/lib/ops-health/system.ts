@@ -112,5 +112,52 @@ export async function runSystemChecks(): Promise<{
     });
   }
 
+  try {
+    const { lastDailyHostingPaymentCheck } = await import(
+      "@/lib/hosting-payment-check"
+    );
+    const last = await lastDailyHostingPaymentCheck();
+    if (!last?.lastFinishedAt) {
+      rows.push({
+        label: "Daily hosting payment check",
+        value: "Never run",
+        tone: "warn",
+      });
+      findings.push({
+        id: "cron:hosting-payments-never",
+        checkId: "hosting_payment_check",
+        severity: "warning",
+        title: "Hosting payment check has not run",
+        detail: "The daily job that confirms hosting payments with Stripe has no successful run yet.",
+      });
+    } else {
+      const ageH =
+        (now.getTime() - last.lastFinishedAt.getTime()) / 3_600_000;
+      const stale = ageH > 36;
+      rows.push({
+        label: "Daily hosting payment check",
+        value: `${last.lastOk ? "OK" : "Failed"} · ${Math.round(ageH)}h ago`,
+        tone: stale || !last.lastOk ? "warn" : "ok",
+      });
+      if (stale || !last.lastOk) {
+        findings.push({
+          id: "cron:hosting-payments-stale",
+          checkId: "hosting_payment_check",
+          severity: stale ? "critical" : "warning",
+          title: stale
+            ? "Hosting payment check is stale"
+            : "Hosting payment check last run failed",
+          detail: last.lastSummary || "Run GET /api/cron/hosting-payments with CRON_SECRET.",
+        });
+      }
+    }
+  } catch {
+    rows.push({
+      label: "Daily hosting payment check",
+      value: "Unavailable",
+      tone: "warn",
+    });
+  }
+
   return { findings, rows };
 }

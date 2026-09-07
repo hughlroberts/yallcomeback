@@ -45,21 +45,29 @@ export async function runBookingMessages(): Promise<BookingMessagesResult> {
 export async function runAllCronJobs(): Promise<{
   ical: IcalSyncResult;
   messages: BookingMessagesResult;
-  dunning: { pastDueSeeded: number; reminded: number; paused: number };
+  hostingPayments: import("@/lib/hosting-payment-check").HostingPaymentCheckResult;
   pricing?: { skipped: boolean; hostsProcessed: number; errors: string[] };
 }> {
   const ical = await runIcalSync();
   const messages = await runBookingMessages();
-  let dunning: { pastDueSeeded: number; reminded: number; paused: number } = {
-    pastDueSeeded: 0,
-    reminded: 0,
-    paused: 0,
-  };
+  let hostingPayments: import("@/lib/hosting-payment-check").HostingPaymentCheckResult =
+    {
+      skipped: true,
+      ranAt: new Date().toISOString(),
+      checked: 0,
+      confirmedPaid: 0,
+      markedPastDue: 0,
+      reminded: 0,
+      paused: 0,
+      errors: [],
+    };
   try {
-    const { processHostingDunning } = await import("@/lib/hosting-dunning");
-    dunning = await processHostingDunning();
+    const { maybeRunDailyHostingPaymentCheck } = await import(
+      "@/lib/hosting-payment-check"
+    );
+    hostingPayments = await maybeRunDailyHostingPaymentCheck();
   } catch (e) {
-    console.error("[cron:hosting-dunning]", e);
+    console.error("[cron:hosting-payments]", e);
   }
 
   // Monthly pricing intelligence: only if explicitly enabled in-process.
@@ -77,5 +85,5 @@ export async function runAllCronJobs(): Promise<{
     pricing = await runMonthlyPricingIntelligence();
   }
 
-  return { ical, messages, dunning, pricing };
+  return { ical, messages, hostingPayments, pricing };
 }

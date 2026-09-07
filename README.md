@@ -159,8 +159,8 @@ On each property admin page:
 
 **Automatic (set-and-forget):**
 
-- **In-process** on Railway: `instrumentation.ts` runs iCal sync + booking auto-messages every ~20 minutes in production (`CRON_IN_PROCESS=true`).
-- **GitHub Actions backup**: `.github/workflows/cron.yml` pings the same endpoints every 20 minutes (needs secrets `CRON_SECRET` + `CRON_BASE_URL`).
+- **In-process** on Railway: `instrumentation.ts` runs iCal sync + booking auto-messages every ~20 minutes in production (`CRON_IN_PROCESS=true`). Hosting payments are reconciled **once per UTC day** on that same ticker (and retried if the last run failed).
+- **GitHub Actions backup**: `.github/workflows/cron.yml` pings iCal + messages every 20 minutes. `.github/workflows/cron-hosting-payments.yml` forces the hosting payment check daily at 13:00 UTC. Secrets: `CRON_SECRET` + `CRON_BASE_URL`.
 
 **Manual / external cron:**
 
@@ -169,6 +169,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
   https://your-app.up.railway.app/api/cron/sync-ical
 curl -H "Authorization: Bearer $CRON_SECRET" \
   https://your-app.up.railway.app/api/cron/booking-messages
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  https://www.yallcomeback.app/api/cron/hosting-payments
 ```
 
 ## License
