@@ -106,8 +106,9 @@ export function EarningsFilters({
           aria-label="Payout methods"
         >
           <option value="all">All payout methods</option>
-          <option value="MANUAL">Manual / bank</option>
-          <option value="STRIPE">Card (Stripe)</option>
+          <option value="MANUAL">Cash / bank</option>
+          <option value="IN_PERSON_CARD">Card in person</option>
+          <option value="STRIPE">Card online</option>
           <option value="BITCOIN">Bitcoin</option>
         </select>
       ) : (

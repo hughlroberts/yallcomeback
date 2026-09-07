@@ -9,9 +9,9 @@ import { isRangeAvailable } from "@/lib/availability";
 import { revalidatePath } from "next/cache";
 import {
   getBitcoinAddress,
-  isBitcoinEnabled,
   quoteBtcFromUsd,
 } from "@/lib/bitcoin";
+import { guestPaymentOptions } from "@/lib/host-payments";
 
 export async function createBooking(formData: FormData) {
   const propertyId = String(formData.get("propertyId") || "");
@@ -122,27 +122,40 @@ export async function createBooking(formData: FormData) {
     .filter(Boolean)
     .join("\n\n");
 
-  const stripeEnabled = process.env.STRIPE_ENABLED === "true";
-  const bitcoinOk = isBitcoinEnabled();
+  const payOptions = guestPaymentOptions(property.host);
+  const allowed = new Set(payOptions.map((o) => o.value));
 
   let method: PaymentMethod = "MANUAL";
   if (payMethodRaw === "bitcoin") {
-    if (!bitcoinOk) throw new Error("Bitcoin payments are not enabled");
+    if (!allowed.has("bitcoin")) {
+      throw new Error("This host does not take Bitcoin.");
+    }
     method = "BITCOIN";
   } else if (payMethodRaw === "card" || payMethodRaw === "stripe") {
-    if (!stripeEnabled) throw new Error("Card payments are not enabled");
-    if (!property.host.stripeAccountId) {
-      throw new Error(
-        "This host is not collecting card deposits yet. Choose another payment method.",
-      );
+    if (!allowed.has("card")) {
+      throw new Error("This host does not take online card.");
     }
     method = "STRIPE";
+  } else if (payMethodRaw === "in_person_card") {
+    if (!allowed.has("in_person_card")) {
+      throw new Error("This host does not take card in person.");
+    }
+    method = "IN_PERSON_CARD";
   } else if (payMethodRaw === "manual") {
+    if (!allowed.has("manual") && payOptions.length > 0) {
+      throw new Error("Choose a payment method this host offers.");
+    }
     method = "MANUAL";
-  } else if (stripeEnabled) {
-    method = "STRIPE";
   } else {
-    method = "MANUAL";
+    const fallback = payOptions[0]?.value ?? "manual";
+    method =
+      fallback === "card"
+        ? "STRIPE"
+        : fallback === "bitcoin"
+          ? "BITCOIN"
+          : fallback === "in_person_card"
+            ? "IN_PERSON_CARD"
+            : "MANUAL";
   }
 
   const btcAddress = method === "BITCOIN" ? getBitcoinAddress() : null;

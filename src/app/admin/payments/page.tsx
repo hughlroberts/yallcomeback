@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { saveHostPaymentMethods } from "@/app/actions/host-payments";
 import {
   createHostProduct,
   openBillingPortal,
@@ -103,10 +104,84 @@ export default async function AdminPaymentsPage({
       <div>
         <h1 className="text-2xl font-semibold text-stone-900">Payments</h1>
         <p className="mt-1 text-sm text-stone-600">
-          Collect guest deposits on your own Stripe account. Yall Come Back
-          does not take a cut of the stay — hosting is billed separately.
+          You choose how repeat guests pay you. Online card is optional.
+          Listings, calendars, and messages work either way. Yall Come Back
+          does not take a cut of the stay.
         </p>
       </div>
+
+      <Card className="space-y-4 p-6">
+        <h2 className="font-semibold text-stone-900">How guests can pay you</h2>
+        <p className="text-sm text-stone-600">
+          Turn on every method you actually use. Guests only see what you
+          enable. At least one method should stay on.
+        </p>
+        <form action={saveHostPaymentMethods} className="space-y-3">
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="acceptCash"
+              defaultChecked={host.acceptCash}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">Cash or bank</span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Guest pays you directly. You mark the deposit paid in Bookings.
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="acceptInPersonCard"
+              defaultChecked={host.acceptInPersonCard}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">Card in person</span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Tap or chip at the stay. You mark paid when it goes through.
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="acceptBitcoin"
+              defaultChecked={host.acceptBitcoin}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">Bitcoin</span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Guest sends BTC for the USD deposit. Needs Bitcoin enabled on
+                the platform, then you paste the tx id.
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="acceptOnlineCard"
+              defaultChecked={host.acceptOnlineCard}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">
+                Online card (optional)
+              </span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Guest pays the deposit online. Requires the onboard step below.
+                Skip it if you only take cash, in-person card, or Bitcoin.
+              </span>
+            </span>
+          </label>
+          <Button type="submit" variant="secondary">
+            Save payment methods
+          </Button>
+        </form>
+      </Card>
 
       {!stripeOn ? (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
@@ -139,7 +214,13 @@ export default async function AdminPaymentsPage({
       ) : null}
 
       <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">Collect guest deposits</h2>
+        <h2 className="font-semibold text-stone-900">
+          Online card — optional
+        </h2>
+        <p className="text-sm text-stone-600">
+          Only if you checked online card above. You can skip this and still
+          use every other host tool.
+        </p>
         {statusError ? (
           <p className="text-sm text-red-700">{statusError}</p>
         ) : null}

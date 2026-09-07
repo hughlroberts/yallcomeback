@@ -53,6 +53,8 @@ enum PaymentMethod {
   MANUAL
   /// Guest pays deposit in Bitcoin to configured address
   BITCOIN
+  /// Guest pays by card at the property (host marks paid)
+  IN_PERSON_CARD
 }
 
 enum PaymentStatus {
@@ -238,7 +240,12 @@ model Host {
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
   stripeCustomerId     String?
-  /// Stripe Connect v2 account (acct_...) — host collects guest card deposits
+  /// How this host collects guest deposits. Stripe online card is optional.
+  acceptCash           Boolean             @default(true)
+  acceptInPersonCard   Boolean             @default(true)
+  acceptBitcoin        Boolean             @default(false)
+  acceptOnlineCard     Boolean             @default(false)
+  /// Stripe Connect v2 account (acct_...) — only if they opt into online card
   stripeAccountId      String?             @unique
   /// Platform hosting subscription billed to the connected account
   stripeSubscriptionId String?

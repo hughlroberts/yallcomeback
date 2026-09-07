@@ -14,11 +14,11 @@ import { Button, Input, Label, Textarea } from "@/components/ui";
 import { MessageHostButton } from "@/components/message-host-form";
 import { BrandSeal } from "@/components/brand-logo";
 import { auth } from "@/lib/auth";
+import { formatBtc, quoteBtcFromUsd } from "@/lib/bitcoin";
 import {
-  formatBtc,
-  isBitcoinEnabled,
-  quoteBtcFromUsd,
-} from "@/lib/bitcoin";
+  defaultGuestPayMethod,
+  guestPaymentOptions,
+} from "@/lib/host-payments";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Book" };
@@ -132,16 +132,14 @@ export default async function BookPage({
       })
     : null;
   const isSignedIn = Boolean(signedInUser?.email);
-  const stripeEnabled =
-    process.env.STRIPE_ENABLED === "true" &&
-    Boolean(property.host.stripeAccountId);
-  const bitcoinEnabled = isBitcoinEnabled();
+  const payOptions = guestPaymentOptions(property.host);
+  const defaultPay = defaultGuestPayMethod(payOptions);
+  const bitcoinOffered = payOptions.some((o) => o.value === "bitcoin");
+  const onlineCardOffered = payOptions.some((o) => o.value === "card");
   const btcQuote =
-    bitcoinEnabled && !quote.error
+    bitcoinOffered && !quote.error
       ? await quoteBtcFromUsd(quote.depositAmount)
       : null;
-  const defaultPay =
-    stripeEnabled ? "card" : bitcoinEnabled ? "bitcoin" : "manual";
 
   const locationLine = [property.city, property.region, property.country]
     .filter(Boolean)
@@ -348,14 +346,14 @@ export default async function BookPage({
         {quote.error && (
           <p className="mt-6 text-base text-red-600">{quote.error}</p>
         )}
-        {!stripeEnabled && !bitcoinEnabled && (
+        {!onlineCardOffered ? (
           <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-base text-amber-900">
-            Online card payments are not enabled yet. Your booking will be held
-            as pending until the host confirms your deposit (e.g. cash or bank
-            transfer).
+            This host confirms deposits themselves (cash, bank, card in person,
+            or Bitcoin if they offer it). Your stay is held until they mark the
+            deposit paid.
           </p>
-        )}
-        {bitcoinEnabled ? (
+        ) : null}
+        {bitcoinOffered ? (
           <p className="mt-6 rounded-2xl bg-orange-50 p-4 text-base text-orange-950">
             <strong>Bitcoin accepted.</strong> Pay the deposit in USD equivalent
             BTC after you submit. Amount is locked at the rate shown when you
@@ -423,60 +421,30 @@ export default async function BookPage({
             <legend className="text-sm font-medium text-stone-800">
               How will you pay the deposit?
             </legend>
-            {stripeEnabled ? (
-              <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm hover:bg-stone-50">
+            {payOptions.map((opt) => (
+              <label
+                key={opt.value}
+                className="flex cursor-pointer items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm hover:bg-stone-50"
+              >
                 <input
                   type="radio"
                   name="paymentMethod"
-                  value="card"
-                  defaultChecked={defaultPay === "card"}
+                  value={opt.value}
+                  defaultChecked={defaultPay === opt.value}
                   className="mt-1"
                 />
                 <span>
-                  <span className="font-medium text-stone-900">Card</span>
+                  <span className="font-medium text-stone-900">{opt.label}</span>
                   <span className="mt-0.5 block text-xs text-stone-500">
-                    Pay {formatMoney(quote.depositAmount)} USD by card
+                    {opt.value === "card"
+                      ? `Pay ${formatMoney(quote.depositAmount)} USD by card now.`
+                      : opt.value === "bitcoin"
+                        ? `Pay ~${btcQuote ? formatBtc(btcQuote.btcAmount) : "BTC"} for ${formatMoney(quote.depositAmount)} USD.`
+                        : opt.hint}
                   </span>
                 </span>
               </label>
-            ) : null}
-            {bitcoinEnabled ? (
-              <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-orange-200 bg-orange-50/50 px-3 py-2.5 text-sm hover:bg-orange-50">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="bitcoin"
-                  defaultChecked={defaultPay === "bitcoin"}
-                  className="mt-1"
-                />
-                <span>
-                  <span className="font-medium text-stone-900">Bitcoin</span>
-                  <span className="mt-0.5 block text-xs text-stone-600">
-                    Pay ~{btcQuote ? formatBtc(btcQuote.btcAmount) : "BTC"} for{" "}
-                    {formatMoney(quote.depositAmount)} USD deposit. You&apos;ll
-                    get the address on the next screen.
-                  </span>
-                </span>
-              </label>
-            ) : null}
-            <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm hover:bg-stone-50">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="manual"
-                defaultChecked={defaultPay === "manual"}
-                className="mt-1"
-              />
-              <span>
-                <span className="font-medium text-stone-900">
-                  Other (host will confirm)
-                </span>
-                <span className="mt-0.5 block text-xs text-stone-500">
-                  Cash, bank transfer, or arrange with the host - deposit stays
-                  pending until confirmed
-                </span>
-              </span>
-            </label>
+            ))}
           </fieldset>
 
           {isSignedIn && signedInUser ? (
@@ -592,7 +560,7 @@ export default async function BookPage({
             disabled={!available || !!quote.error}
             className="w-full"
           >
-            {bitcoinEnabled || stripeEnabled
+            {onlineCardOffered || bitcoinOffered
               ? "Continue to pay deposit"
               : "Request booking"}
           </Button>
