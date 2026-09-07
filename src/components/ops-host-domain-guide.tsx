@@ -2,13 +2,14 @@ import Link from "next/link";
 import type { Host } from "@prisma/client";
 import { DomainDnsPanel } from "@/components/domain-dns-panel";
 import { domainMapSnippet } from "@/lib/custom-domains";
+import { PRODUCT_ORIGIN } from "@/lib/features";
 import { sitePublishStateLabel } from "@/lib/host-site";
 
 const PLATFORM_HOST =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/^https?:\/\//, "").replace(
     /\/$/,
     "",
-  ) || "www.yallcomeback.app";
+  ) || PRODUCT_ORIGIN.replace(/^https?:\/\//, "");
 
 type Props = {
   host: Pick<

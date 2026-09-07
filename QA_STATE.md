@@ -4,7 +4,7 @@ BRANCH: main
 LAST UPDATED: 2026-08-08T04:00:00Z
 
 ## NEXT ACTION
-Optional: set `NEXT_PUBLIC_SITE_URL=https://yallcomeback.com` (or canonical public host) on Railway so robots + sitemap agree. Sign in as host/admin to exercise Services live editor end-to-end.
+Optional: set `NEXT_PUBLIC_SITE_URL=https://www.yallcomeback.app` on Railway so robots + sitemap agree. Sign in as host/admin to exercise Services live editor end-to-end.
 
 ## ROUTES (2026-08-08 production re-QA)
 | path | auth | status | notes |

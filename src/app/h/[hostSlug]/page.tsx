@@ -91,7 +91,7 @@ export default async function HostSiteHomePage({
           ) : null}
 
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/80">
-            Book direct
+            Come stay
           </p>
           <h1 className="mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight text-white sm:text-5xl md:text-6xl">
             {host.name}
@@ -102,7 +102,7 @@ export default async function HostSiteHomePage({
             </p>
           ) : (
             <p className="mt-3 max-w-2xl text-lg text-stone-200 sm:text-xl">
-              Stay with us — book direct, no marketplace middleman.
+              Come stay with us again. Book directly with the host you know.
             </p>
           )}
           <div className="mt-8 flex flex-wrap gap-2.5 sm:gap-3">

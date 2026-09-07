@@ -51,7 +51,7 @@ async function main() {
       currency: "USD",
       currencySymbol: "$",
       defaultDepositPercent: 30,
-      contactEmail: "hello@yallcomeback.com",
+      contactEmail: "hello@yallcomeback.app",
     },
   });
 

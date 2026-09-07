@@ -7,9 +7,13 @@
  * live in `src/lib/platform-features.ts` and must NOT be listed here.
  */
 export const PRODUCT_NAME = "Yall Come Back";
-export const PRODUCT_DOMAIN = "yallcomeback.com";
+/** Public written domain (no www). Canonical origin is PRODUCT_ORIGIN. */
+export const PRODUCT_DOMAIN = "yallcomeback.app";
+/** Live public origin. Apex yallcomeback.app redirects here. */
+export const PRODUCT_ORIGIN = "https://www.yallcomeback.app";
+export const PRODUCT_EMAIL = `hello@${PRODUCT_DOMAIN}`;
 /** Primary marketing tagline (sentence case). */
-export const PRODUCT_TAGLINE = "The same stay minus the middle man";
+export const PRODUCT_TAGLINE = "Stay again with a host you know";
 export const PRODUCT_VERSION = "0.1.0";
 export const LICENSE = "MIT";
 
@@ -17,7 +21,8 @@ export const LICENSE = "MIT";
  * --- Pre-launch placeholders --- 
  * Leave these unset until go-live. Right before launch, ask the owner for:
  *   1. Public git repo URL → set REPO_URL below
- *   2. Stripe account keys → set env vars (never commit secrets); flip STRIPE_ENABLED=true
+ *   2. Payments (same pass): Stripe keys + Bitcoin deposit address
+ *      (see docs/go-live-backlog.md and GitHub issue #2)
  */
 
 /**

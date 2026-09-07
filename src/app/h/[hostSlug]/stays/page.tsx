@@ -39,8 +39,8 @@ export default async function HostStaysPage({
         Places to stay with {host.name}
       </h1>
       <p className="mt-3 max-w-2xl text-stone-600">
-        Book direct — you&apos;re a guest of {host.name}, not a marketplace
-        middleman.
+        You&apos;re a guest of {host.name}. Book the stay you already love,
+        directly with the host.
       </p>
 
       {properties.length === 0 ? (

@@ -6,6 +6,10 @@ This version has breaking changes - APIs, conventions, and file structure may al
 
 # Yall Come Back agent rules
 
+## Product name (required)
+
+Always write **Yall Come Back**. Never `y'all`, `Y'all Come Back`, or `"yall come back"` in quotes. It is a brand name, not the Southern farewell. The URL is `yallcomeback.app`.
+
 ## Never name underlying infrastructure (required)
 
 Do **not** mention hosting vendors, PaaS brands, databases, frameworks, or other internal tools in **any guest-, host-, or Ops-facing UI copy** (help, marketing, Admin, Ops, emails, signup).

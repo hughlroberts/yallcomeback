@@ -1,4 +1,4 @@
-# yallcomeback.com brand specification
+# yallcomeback.app brand specification
 
 Version 1.0
 
@@ -17,12 +17,12 @@ Everything below is normative. Where a rule says "never," treat it as a build er
 | Field | Value |
 | --- | --- |
 | Product name | Yall Come Back |
-| Domain | yallcomeback.com |
+| Domain | yallcomeback.app |
 | Category | Direct booking platform for short term rental hosts |
 | What it does | Lets hosts take repeat bookings directly, without paying marketplace commission on guests they already earned |
 | Primary audience | Independent hosts and small property managers, 1 to 20 units |
 | Secondary audience | Returning guests booking a second or third stay |
-| Tagline | The same stay minus the middle man |
+| Tagline | Stay again with a host you know |
 | One line pitch | Your guests already liked it here once. Let them book you, not a marketplace. |
 
 ### Positioning
@@ -35,30 +35,31 @@ The brand voice is Southern hospitality with a spine of business sense. Warm, pl
 
 ## 2. Naming rules
 
-There are exactly two locked written forms. Never invent a third.
+The product name is **Yall Come Back**. That is the only written form of the name.
 
 | Form | Written as | Where it is used |
 | --- | --- | --- |
-| URL form | `yallcomeback.com` | Header, footer, favicon alt text, business cards, anywhere the web address appears. No apostrophe, no spaces, no capitals. |
-| Spoken form | `"yall come back"` | Hero headline, email signoffs, the sign device, merchandise. Always inside typographic quote marks. Always with the apostrophe. Always lowercase. |
+| Product name | `Yall Come Back` | Header, body copy, legal pages, emails, social, merchandise, alt text. Capital Y, C, and B. No apostrophe. Not in quote marks. |
+| URL form | `yallcomeback.app` | The web address only. No apostrophe, no spaces, no capitals. Canonical origin is `https://www.yallcomeback.app`. `yallcomeback.com` is reserved for a later cutover. |
 
-Never write: `YallComeBack`, `YallComeBack`, `Yall Come Back`, `YCB` in body copy.
+Never write: `y'all`, `ya'll`, `Y'all`, `Y'all Come Back`, `"yall come back"`, `YallComeBack`.
 
-`YCB` is permitted only as a monogram inside the seal and sign devices, never in running text.
+Do not treat the name as the Southern farewell “y'all come back.” It is a brand name, not a slogan in quotes.
 
-Use typographic quotes (U+201C and U+201D), never straight quotes. Use a typographic apostrophe (U+2019) in the spoken form.
+`YCB` is permitted only as a monogram inside the seal, never in running text.
 
 ---
 
 ## 3. Logo system
 
-### 3.1 Primary lockup: the quote
+### 3.1 Primary lockup: seal + wordmark
 
-The logo is typographic, not a symbol. The phrase is set in the display face inside honey quotation marks. The quotation marks are the recognizable asset because they signal that a person said this to you.
+The logo is the circular YCB seal plus the words **Yall Come Back** in the display face. No quotation marks. No apostrophe.
 
 ```html
-<a class="ycb-logo" href="/" aria-label="yall come back, home">
-  <span class="ycb-logo__quote" aria-hidden="true">&ldquo;</span>yall come back<span class="ycb-logo__quote" aria-hidden="true">&rdquo;</span>
+<a class="ycb-logo" href="/" aria-label="Yall Come Back, home">
+  <!-- circular seal -->
+  <span class="ycb-logo__text">Yall Come Back</span>
 </a>
 ```
 
@@ -73,27 +74,22 @@ The logo is typographic, not a symbol. The phrase is set in the display face ins
   white-space: nowrap;
   font-variation-settings: "SOFT" 40, "WONK" 1;
 }
-.ycb-logo__quote {
-  color: var(--color-highlight);
-  font-size: 1.35em;
-  line-height: 0;
-}
 ```
 
 Rules:
 
-- Minimum size: 20px cap height. Below that, use the icon instead.
-- Clear space on all sides: equal to the height of one quotation mark.
-- The quote marks are always honey (`--color-highlight`). The words are always ink (`--color-ink`) in light mode and buttermilk (`--color-page-dark-text`) in dark mode.
-- Never set the words in honey. Never set the quote marks in ink.
-- Never stack the phrase onto more than two lines.
+- Minimum size: 20px cap height. Below that, use the seal alone.
+- Clear space on all sides: equal to the height of the capital Y.
+- The words are always ink (`--color-ink`) in light mode and buttermilk in dark mode.
+- Never set the wordmark in honey. Never wrap it in quote marks.
+- Never stack the name onto more than two lines.
 
-### 3.2 App icon and favicon: the opening quote
+### 3.2 App icon and favicon: the seal
 
-A single opening quotation mark in honey on a bonnet tile. This is the only mark that should appear at 32px or smaller.
+The circular seal (or cannon mark) on a bonnet tile. This is the only mark that should appear at 32px or smaller.
 
 ```svg
-<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="yall come back">
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Yall Come Back">
   <rect width="64" height="64" rx="15" fill="#3A4A86"/>
   <circle cx="24" cy="40" r="7" fill="#E8CE96"/>
   <path d="M17 38 L25.5 34 L14.5 20 Z" fill="#E8CE96"/>
@@ -112,7 +108,7 @@ Used on the checkout and payment screens only, where the job is to reassure some
 <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Book direct with the host">
   <circle cx="60" cy="60" r="60" fill="#3A4A86"/>
   <circle cx="60" cy="60" r="50" fill="none" stroke="#E8CE96" stroke-width="2"/>
-  <text x="60" y="52" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="500" letter-spacing="5" fill="#FBF7EF">Y'ALL</text>
+  <text x="60" y="52" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="500" letter-spacing="5" fill="#FBF7EF">YALL</text>
   <text x="60" y="72" text-anchor="middle" font-family="Inter, sans-serif" font-size="14" font-weight="500" letter-spacing="1.5" fill="#FBF7EF">COME BACK</text>
   <path d="M38 84 L82 84" stroke="#E8CE96" stroke-width="1.5"/>
   <circle cx="50" cy="96" r="2.5" fill="#E8CE96"/>
@@ -126,12 +122,11 @@ Used on the checkout and payment screens only, where the job is to reassure some
 A painted plaque, used for printed collateral, welcome cards, in-property signage, merchandise, and occasionally as a section header image on the site. Not a logo replacement.
 
 ```svg
-<svg viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Yall come back now, ya hear">
+<svg viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Yall Come Back">
   <rect width="320" height="100" rx="5" fill="#3A4A86"/>
   <rect x="9" y="9" width="302" height="82" rx="3" fill="none" stroke="#E8CE96" stroke-width="2"/>
-  <text x="160" y="40" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="500" letter-spacing="6" fill="#FBF7EF">Y'ALL</text>
-  <text x="160" y="64" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="500" letter-spacing="5" fill="#FBF7EF">COME BACK</text>
-  <text x="160" y="82" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" letter-spacing="3" fill="#E8CE96">NOW, YA HEAR</text>
+  <text x="160" y="48" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="500" letter-spacing="6" fill="#FBF7EF">YALL</text>
+  <text x="160" y="74" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="500" letter-spacing="5" fill="#FBF7EF">COME BACK</text>
 </svg>
 ```
 
@@ -139,7 +134,7 @@ All caps is permitted inside the sign and seal devices only. Everywhere else in 
 
 ### 3.5 Logo misuse
 
-Never: rotate, outline, add a drop shadow, place on a photograph without a solid scrim, recolor to any value outside the palette, stretch, add a house or roof or location pin, wrap in a circle other than the seal, or animate the quote marks on page load.
+Never: rotate, outline, add a drop shadow, place on a photograph without a solid scrim, recolor to any value outside the palette, stretch, add a house or roof or location pin, wrap the wordmark in quotation marks, or add an apostrophe to Yall.
 
 ---
 
@@ -157,7 +152,7 @@ Never: rotate, outline, add a drop shadow, place on a photograph without a solid
 | `--color-support` | `#8C97CE` | Lupine | Borders on interactive elements, dividers, chart fills, disabled states |
 | `--color-soft` | `#EDEFF8` | Petal | Section bands, hover fills, selected rows, empty state panels |
 | `--color-soft-hover` | `#E3E7F5` | Petal deep | Hover on a petal surface |
-| `--color-highlight` | `#E8CE96` | Honey | Badges, highlights, the returning guest marker, quote marks in the logo |
+| `--color-highlight` | `#E8CE96` | Honey | Badges, highlights, the returning guest marker, accent line in the hero |
 | `--color-confirm` | `#93A38F` | Sage | Confirmed and success states |
 | `--color-confirm-text` | `#2C3628` | Sage ink | The only text color permitted on sage |
 | `--color-page` | `#FBF7EF` | Buttermilk | Page background |
@@ -323,11 +318,11 @@ Buttermilk background, no border until the page scrolls, then a hairline bottom 
 
 ```html
 <section class="hero">
-  <p class="hero__eyebrow">Book direct with your host</p>
+  <p class="hero__eyebrow">Come back</p>
   <h1 class="hero__title">
-    <span class="hero__quote" aria-hidden="true">&ldquo;</span>Yall come back<span class="hero__quote" aria-hidden="true">&rdquo;</span>
+    Stay again <span class="hero__quote">with a host you know</span>
   </h1>
-  <p class="hero__sub">Direct booking for the guests who already love your place.</p>
+  <p class="hero__sub">If the stay was good enough to remember, it should be easy to book again.</p>
   <div class="hero__actions">
     <a class="btn btn--primary" href="/stay">See open dates</a>
     <a class="btn btn--secondary" href="/hosts">I'm a host</a>
@@ -377,7 +372,7 @@ Use these strings verbatim.
 | Footer signoff | Yall come back now. |
 | Cookie notice | We use only what's needed to run the booking. Nothing else. |
 
-Banned vocabulary: howdy, partner, fixin' to, yall as a decorative garnish in body copy, seamless, unlock, empower, leverage, simply, just, easy, "successfully." Never use an exclamation mark in system copy. Never apologize in an error message.
+Banned vocabulary: howdy, partner, fixin' to, y'all, ya'll, "yall come back" as a quoted slogan, seamless, unlock, empower, leverage, simply, just, easy, "successfully." Never use an exclamation mark in system copy. Never apologize in an error message. The product name Yall Come Back is required; the dialect word y'all is not.
 
 Banned imagery: lassos, longhorn skulls, sheriff badges, cowboy boots, wagon wheels, cacti, barbed wire. The name already carries the region. The visuals stay modern so hosts outside the South are not excluded and hosts inside it are not caricatured.
 
@@ -389,7 +384,7 @@ Photography direction: real host interiors in morning or evening light. Keys on 
 
 | Do | Don't |
 | --- | --- |
-| Set the logo as type in quote marks | Draw a house, roof, door, plate, or location pin as the mark |
+| Set the logo as the seal plus Yall Come Back | Draw a house, roof, door, plate, or location pin as the mark; wrap the name in quotes; write y'all |
 | Keep honey to badges and highlights | Use honey as a light mode button |
 | Use bonnet for the one primary action per view | Fill large areas with bonnet |
 | Let buttermilk carry roughly half the screen | Fill the page with white |
@@ -505,7 +500,7 @@ export default {
 
 ```json
 {
-  "brand": { "name": "Yall Come Back", "domain": "yallcomeback.com" },
+  "brand": { "name": "Yall Come Back", "domain": "yallcomeback.app" },
   "color": {
     "ink": "#2A3566",
     "inkMuted": "#5F6683",
@@ -540,7 +535,8 @@ export default {
 
 ## 11. Open items
 
-Two things to settle before launch, neither of which blocks a build:
+Open items. None of these block a build:
 
-1. Trademark. "Yall come back" is a common phrase, so protection will be thin. That cuts both ways: hard to defend, unlikely to draw a challenge. Worth a search before printing physical collateral.
+1. Trademark. Yall Come Back overlaps a common farewell, so protection will be thin. That cuts both ways: hard to defend, unlikely to draw a challenge. Worth a search before printing physical collateral. Never lean on the dialect spelling y'all to make that overlap.
 2. Short link domain. The URL runs 16 characters with the TLD, which is long for a QR code label on an in-property card or a rebooking SMS. A short redirect domain is worth acquiring for those surfaces. The logo system does not change.
+3. `.com` cutover. Public brand domain is `yallcomeback.app` until there is traction. Then buy `yallcomeback.com` and point it at the same origin. Do not print `.com` on guest-facing surfaces until that cutover.

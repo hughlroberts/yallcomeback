@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { PRODUCT_ORIGIN } from "@/lib/features";
 import { dispatchEmail } from "@/lib/messaging";
 import { canSendEmailTo } from "@/lib/notification-prefs";
 import { ensurePlatformCustomDomain } from "@/lib/platform-domains";
@@ -108,7 +109,7 @@ export async function handleCustomDomainChange(opts: {
 
   const site =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    "https://www.yallcomeback.app";
+    PRODUCT_ORIGIN;
   const brandPath = `${site}/admin/brand?hostId=${host.id}`;
   const opsPath = `${site}/ops/hosting/${host.id}`;
 

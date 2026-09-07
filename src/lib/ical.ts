@@ -17,7 +17,11 @@ function escapeText(text: string): string {
     .replace(/\n/g, "\\n");
 }
 
-/** Export local bookings + manual blocks for a property (not ICAL_IMPORT to avoid loops) */
+/**
+ * Export local bookings + manual blocks for a property (not ICAL_IMPORT to avoid loops).
+ * Event UIDs use a stable @yallcomeback.com host so calendar clients do not see
+ * duplicates if the public brand domain changes.
+ */
 export async function buildPropertyIcal(
   propertyId: string,
   propertyTitle: string

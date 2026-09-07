@@ -572,7 +572,15 @@ export default async function BookPage({
               />
               <span>
                 I have read and accept the cancellation policy
-                {disclaimer ? " and host disclaimer" : ""}
+                {disclaimer ? " and host disclaimer" : ""}, and the{" "}
+                <a href="/terms" className="font-medium text-bonnet underline">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="/privacy" className="font-medium text-bonnet underline">
+                  Privacy Policy
+                </a>
+                . The stay is a contract with the host, not Yall Come Back.
               </span>
             </label>
           </div>

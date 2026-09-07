@@ -33,7 +33,7 @@ export async function generateMetadata({
   const description =
     host.tagline ||
     host.description?.slice(0, 160) ||
-    `Book direct with ${host.name}`;
+    `Stay again with ${host.name}`;
 
   const faviconUrl =
     HOST_FAVICONS[host.slug] || host.logoUrl || undefined;

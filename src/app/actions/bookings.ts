@@ -112,7 +112,7 @@ export async function createBooking(formData: FormData) {
   // Guest must accept cancellation policy (always shown) and host disclaimer when present
   if (!acceptedDisclaimer) {
     throw new Error(
-      "Please accept the cancellation policy and host disclosure to continue",
+      "Please accept the cancellation policy, host disclosure, and Terms of Service to continue",
     );
   }
   const disclaimerText = [

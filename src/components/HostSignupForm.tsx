@@ -306,6 +306,27 @@ export function HostSignupForm({
 
       {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
 
+      <label className="mt-4 flex items-start gap-2 text-sm text-stone-700">
+        <input
+          type="checkbox"
+          name="acceptTerms"
+          required
+          className="mt-1"
+        />
+        <span>
+          I agree to the{" "}
+          <a href="/terms" className="font-medium text-bonnet underline">
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href="/privacy" className="font-medium text-bonnet underline">
+            Privacy Policy
+          </a>
+          . I am an independent host. Yall Come Back does not operate my stays,
+          collect my lodging taxes, or insure my property.
+        </span>
+      </label>
+
       <button
         type="submit"
         disabled={pending}

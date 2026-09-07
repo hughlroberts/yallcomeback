@@ -10,6 +10,26 @@
  *
  * www / bare domain both work if either is listed.
  */
+
+/** Hostnames that always stay on the platform marketplace, never a host tenant. */
+const PLATFORM_HOSTNAMES = new Set([
+  "localhost",
+  "yallcomeback.app",
+  "www.yallcomeback.app",
+  // Reserved for a later brand-domain cutover — never a host custom domain.
+  "yallcomeback.com",
+  "www.yallcomeback.com",
+]);
+
+export function isPlatformHostname(
+  hostname: string | null | undefined,
+): boolean {
+  if (!hostname) return false;
+  const host = hostname.split(":")[0]?.toLowerCase() ?? "";
+  if (!host) return false;
+  if (host === "localhost" || host.endsWith(".railway.app")) return true;
+  return PLATFORM_HOSTNAMES.has(host);
+}
 export function parseHostDomainMap(
   raw: string | undefined | null,
 ): Record<string, string> {
@@ -47,7 +67,7 @@ export function normalizeCustomDomain(
   if (!hostOnly || hostOnly.includes(" ") || !hostOnly.includes(".")) {
     return null;
   }
-  if (hostOnly === "localhost" || hostOnly.endsWith(".railway.app")) {
+  if (isPlatformHostname(hostOnly)) {
     return null;
   }
   // Store bare domain; map adds www. automatically
@@ -67,15 +87,7 @@ export function hostSlugForHostname(
 ): string | null {
   if (!hostname) return null;
   const host = hostname.split(":")[0]?.toLowerCase() ?? "";
-  if (!host || host === "localhost" || host.endsWith(".railway.app")) {
-    // Main platform hostnames are not remapped
-    if (host.endsWith(".railway.app") || host === "localhost") return null;
-  }
-  // yallcomeback.com production apex stays platform
-  if (
-    host === "yallcomeback.com" ||
-    host === "www.yallcomeback.com"
-  ) {
+  if (!host || isPlatformHostname(host)) {
     return null;
   }
   const map = {
@@ -101,13 +113,7 @@ export async function resolveHostSlugForHostname(
   if (!hostname) return null;
 
   const host = hostname.split(":")[0]?.toLowerCase() ?? "";
-  if (
-    !host ||
-    host === "localhost" ||
-    host.endsWith(".railway.app") ||
-    host === "yallcomeback.com" ||
-    host === "www.yallcomeback.com"
-  ) {
+  if (!host || isPlatformHostname(host)) {
     return null;
   }
 
@@ -159,6 +165,8 @@ export function isPlatformPath(pathname: string): boolean {
     pathname.startsWith("/account") ||
     pathname.startsWith("/messages") ||
     pathname.startsWith("/help") ||
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/privacy") ||
     pathname.startsWith("/open-source") ||
     pathname.startsWith("/for-hosts") ||
     pathname.startsWith("/self-host") ||

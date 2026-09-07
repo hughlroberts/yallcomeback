@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { PRODUCT_ORIGIN } from "@/lib/features";
 
 /** Runtime env — do not prerender with build-time fallback host. */
 export const dynamic = "force-dynamic";
@@ -7,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
   const base =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     process.env.APP_URL?.replace(/\/$/, "") ||
-    "https://yallcomeback.com";
+    PRODUCT_ORIGIN;
 
   // robots Host should be hostname only when provided
   let hostName: string | undefined;

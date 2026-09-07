@@ -1,6 +1,6 @@
 # Yall Come Back
 
-**The same stay minus the middle man.**
+**Stay again with a host you know.**
 
 MIT open-source vacation rentals platform: host-branded sites, optional marketplace, calendars, bookings, and monthly website hosting (optional paid service — not a booking commission).
 
@@ -16,7 +16,7 @@ Required for any deploy:
 
 - `DATABASE_URL` — Postgres connection string on Railway (SQLite `file:./dev.db` is local-only)
 - `AUTH_SECRET` — long random string (`openssl rand -base64 32`)
-- `AUTH_URL` — public site origin, e.g. `https://your-app.up.railway.app`
+- `AUTH_URL` — public site origin, e.g. `https://www.yallcomeback.app`
 - `NEXT_PUBLIC_SITE_NAME` — e.g. `Yall Come Back`
 
 Optional: Stripe, Bitcoin, SMS/email messaging (see `.env.example`).
@@ -59,7 +59,7 @@ If you run this repo on **your own servers** and still want stays on the central
 3. From your remote deploy, push listings:
 
 ```bash
-export YCB_ORIGIN="https://yallcomeback.com"
+export YCB_ORIGIN="https://www.yallcomeback.app"
 export YCB_SYNDICATION_KEY="ycb_syn_...."
 
 curl -X POST "$YCB_ORIGIN/api/syndication/listings" \
@@ -125,9 +125,9 @@ Highlights:
 4. Monthly invoice (Stripe or manual)  
 5. Paid → public site + marketplace opt-in go live  
 
-## Stripe (placeholder until go-live)
+## Payments (placeholder until go-live)
 
-Payments run in **manual mode** until Stripe is configured:
+Card and Bitcoin ship in the **same pass** (see `docs/go-live-backlog.md`). Until then, payments run in **manual mode**:
 
 - Guest deposits: Admin → Bookings → mark paid  
 - Hosting invoices: Admin → Hosting → mark paid  
@@ -139,10 +139,15 @@ STRIPE_ENABLED=true
 STRIPE_SECRET_KEY=sk_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+
+BITCOIN_ENABLED=true
+BITCOIN_ADDRESS=bc1q...
+BITCOIN_NETWORK=mainnet
+BITCOIN_LABEL=Yall Come Back deposit
 ```
 
 Webhook: `POST /api/stripe/webhook`  
-Then set `STRIPE_LIVE_READY = true` in `src/lib/features.ts`. Status also shows under **Admin → Settings**.
+Then set `STRIPE_LIVE_READY = true` in `src/lib/features.ts`. Bitcoin is stay deposits only (host pastes the tx id). Status shows under **Admin → Settings**.
 
 ## iCal sync & scheduled jobs
 

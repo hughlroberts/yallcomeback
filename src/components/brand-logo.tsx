@@ -62,7 +62,7 @@ export function BrandCannon({
 }
 
 /**
- * Header lockup: YCB circular seal + “yall come back” wordmark.
+ * Header lockup: YCB circular seal + Yall Come Back wordmark.
  * shrink-0 so flex never squishes/truncates the wordmark; overflow-visible for Fraunces glyphs.
  */
 export function BrandLogo({
@@ -79,7 +79,7 @@ export function BrandLogo({
         "ycb-logo group inline-flex shrink-0 items-center gap-2.5 overflow-visible sm:gap-3",
         className,
       )}
-      aria-label="yall come back, home"
+      aria-label="Yall Come Back, home"
     >
       <BrandMark
         size={72}
@@ -117,7 +117,7 @@ export function BrandSeal({
 }
 
 /**
- * Phrase seal (“yall come back” + cannon in the mark) — footer / large brand moments.
+ * Phrase seal (Yall Come Back + cannon in the mark) — footer / large brand moments.
  */
 export function BrandPhraseSeal({
   className,

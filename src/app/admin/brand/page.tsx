@@ -14,6 +14,7 @@ import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { DomainDnsPanel } from "@/components/domain-dns-panel";
 import { MarketplaceToWebsiteUpgrade } from "@/components/marketplace-to-website-upgrade";
 import { SubmitButton } from "@/components/submit-button";
+import { PRODUCT_ORIGIN } from "@/lib/features";
 import { maskSyndicationKey } from "@/lib/syndication";
 import {
   hostServicesHref,
@@ -1100,7 +1101,7 @@ export default async function AdminBrandPage({
                   placeholder={
                     host.customDomain
                       ? `https://www.${host.customDomain.replace(/^www\./, "")}`
-                      : `https://www.yallcomeback.app/h/${host.slug}`
+                      : `${PRODUCT_ORIGIN}/h/${host.slug}`
                   }
                 />
                 <p className="text-xs text-stone-500">

@@ -45,8 +45,7 @@ export default async function OpsSettingsPage() {
       <Card>
         <h2 className="font-semibold">Go-live placeholders</h2>
         <p className="mt-2 text-sm text-stone-600">
-          Leave these until launch. Wire them up only after you have the real
-          values from the site owner.
+          Leave these until launch. Card and Bitcoin ship in the same pass.
         </p>
         <dl className="mt-4 space-y-2 text-sm">
           <div className="flex justify-between gap-4">
@@ -70,6 +69,12 @@ export default async function OpsSettingsPage() {
             <dt className="text-stone-500">Stripe</dt>
             <dd className="text-right font-medium text-amber-800">
               {stripeSetupLabel(stripeEnabled, hasSecret)}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-stone-500">Bitcoin</dt>
+            <dd className="text-right font-medium text-amber-800">
+              {bitcoinSetupLabel()}
             </dd>
           </div>
         </dl>
@@ -225,8 +230,9 @@ STRIPE_WEBHOOK_SECRET=whsec_...`}
           </div>
         </dl>
         <pre className="mt-4 overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">
-{`BITCOIN_ENABLED=true
-BITCOIN_ADDRESS=bc1q...   # your receive address
+{`# Same go-live pass as Stripe — leave unset until then.
+BITCOIN_ENABLED=true
+BITCOIN_ADDRESS=bc1q...   # dedicated deposit wallet, not a spending wallet
 BITCOIN_NETWORK=mainnet
 BITCOIN_LABEL=Yall Come Back deposit`}
         </pre>
@@ -296,7 +302,8 @@ BITCOIN_LABEL=Yall Come Back deposit`}
           </p>
           <pre className="overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">
 {`# Prefer Resend (simple HTTP API)
-MESSAGING_EMAIL_FROM="Yall Come Back <bookings@yourdomain.com>"
+MESSAGING_EMAIL_FROM="Yall Come Back <hello@yallcomeback.app>"
+# Mailbox + transport are on the go-live backlog — leave unset until then.
 RESEND_API_KEY="re_..."
 # Optional: MESSAGING_EMAIL_ENABLED=false  to force off
 # Optional: MESSAGING_EMAIL_DRY_RUN=true   staging log-only

@@ -39,10 +39,11 @@ export default function AboutPage() {
                 Why we built this
               </h2>
               <p className="mt-3 leading-relaxed text-stone-600">
-                Most platforms take a cut of every booking and own the guest
-                relationship. Yall Come Back flips that: you get a host-branded site,
-                direct booking requests, seasonal rates, and calendar tools. If
-                you want more discovery, you can opt into the marketplace.
+                The stay people still talk about should be easy to book again.
+                Yall Come Back is for hosts who already made it great — and for
+                the guests who want to come back to them, not start over with a
+                stranger. You get a host-branded site, direct booking, and an
+                optional marketplace if you want more discovery.
               </p>
             </section>
             <section>
@@ -205,14 +206,14 @@ export default function AboutPage() {
                 <p>
                   Yall Come Back started at home, not in a boardroom. Hugh and Yum
                   know what it means to welcome people to a place you care about
-                  — and how frustrating it is when big platforms take a large cut
-                  of every stay while owning the guest relationship.
+                  — and how much it matters when those same families want to
+                  come back.
                 </p>
                 <p>
-                  They built Yall Come Back so independent hosts can put their own
-                  brand first: a real website, direct booking, and tools that
-                  keep the conversation between host and guest. The marketplace
-                  is optional discovery, not the product.
+                  They built Yall Come Back so the second stay is simple: a real
+                  website, direct booking, and a conversation that stays between
+                  host and guest. The marketplace is optional discovery, not the
+                  product.
                 </p>
                 <p>
                   When they&apos;re not shipping features or helping hosts get

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   const origin = publicOrigin(req);
   const body = `# Yall Come Back
 
-> Book direct vacation rentals — host-owned stays, optional marketplace discovery. Texas lakeside focus (Cedar Creek Lake, Athens, Malakoff, and more).
+> Repeat stays booked directly with the host — optional marketplace discovery. Texas lakeside focus (Cedar Creek Lake, Athens, Malakoff, and more).
 
 This site is agent-friendly. Prefer the JSON API below over scraping HTML.
 
@@ -22,6 +22,8 @@ This site is agent-friendly. Prefer the JSON API below over scraping HTML.
 - Listing detail: ${origin}/api/v1/listings/{slug}
 - Human marketplace: ${origin}/marketplace
 - Human docs page: ${origin}/agents.md
+- Terms of Service: ${origin}/terms
+- Privacy Policy: ${origin}/privacy
 
 ## How to search (exact dates)
 

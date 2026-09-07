@@ -96,7 +96,7 @@ Hit once a month (GitHub Actions, Railway cron, etc.):
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://yallcomeback.com/api/cron/pricing-intelligence
+  https://www.yallcomeback.app/api/cron/pricing-intelligence
 ```
 
 Skips hosts that already completed a run in the last 28 days.

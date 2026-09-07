@@ -78,7 +78,11 @@ export default async function PrivacyPage({
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
             Yall Come Back stores the profile and booking data you provide so hosts
             can confirm stays. You can update or clear optional fields anytime.
-            For deletion of your account, contact the platform operator.
+            For deletion of your account, use the Contact page. Read the full{" "}
+            <a href="/privacy" className="font-medium text-bonnet underline">
+              Privacy Policy
+            </a>
+            .
           </p>
         </section>
 

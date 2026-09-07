@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const origin = publicOrigin(req);
   const md = `# Agent guide — Yall Come Back
 
-Yall Come Back is a book-direct vacation rental platform. Guests can search the optional marketplace or book on a host's own site.
+Yall Come Back is for guests coming back to a host they already know. Search the optional marketplace or book on a host's own site. Bookings are a contract between host and guest; the platform is not a party. See [${origin}/terms](${origin}/terms) and [${origin}/privacy](${origin}/privacy).
 
 ## For AI agents
 

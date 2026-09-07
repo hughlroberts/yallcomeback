@@ -15,7 +15,8 @@ import { searchIsMeaningful } from "@/lib/browse-history";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Find a Place",
-  description: "Search direct-book stays on Yall Come Back — no middleman.",
+  description:
+    "Find a stay you already love — and book the host who made it great.",
 };
 
 type SearchFields = {
@@ -78,8 +79,8 @@ export default async function MarketplacePage({
             Places to stay
           </h1>
           <p className="mt-3 max-w-2xl text-slate-600">
-            Search by place, dates, and party size - or leave fields blank to see
-            everything.
+            Find a stay you already love — or discover one worth coming back to.
+            Search by place, dates, and party size, or leave fields blank.
           </p>
 
           <StaySearchForm

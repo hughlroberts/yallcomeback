@@ -163,7 +163,7 @@ async function hostOgCard(host: {
   }
 
   const tagline =
-    host.tagline || "Book direct — no marketplace middleman.";
+    host.tagline || "Come back and stay with us.";
 
   return new ImageResponse(
     (

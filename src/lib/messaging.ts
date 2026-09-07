@@ -8,6 +8,8 @@
  * Do not surface SMS in guest-facing product copy — ops settings only.
  */
 
+import { PRODUCT_ORIGIN } from "@/lib/features";
+
 export type ExternalMessageChannel = "SMS" | "EMAIL";
 
 export type DispatchResult = {
@@ -24,7 +26,9 @@ export function messagingSiteOrigin(): string {
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     process.env.AUTH_URL?.replace(/\/$/, "") ||
     process.env.APP_URL?.replace(/\/$/, "") ||
-    "http://localhost:3000"
+    (process.env.NODE_ENV === "production"
+      ? PRODUCT_ORIGIN
+      : "http://localhost:3000")
   );
 }
 

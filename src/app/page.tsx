@@ -55,7 +55,7 @@ export default async function HomePage() {
     name: "Yall Come Back",
     url: origin,
     description:
-      "Book-direct vacation rentals. Search stays with exact or flexible dates.",
+      "Come back to a stay you already love. Book the host who made it great.",
     potentialAction: {
       "@type": "SearchAction",
       target: {
@@ -90,17 +90,17 @@ export default async function HomePage() {
         />
         <div className="relative z-10 mx-auto flex min-h-[72vh] max-w-6xl flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-20">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-honey/90">
-            Book direct
+            Come back
           </p>
           <h1 className="mt-4 max-w-3xl font-display text-4xl font-medium tracking-tight text-white sm:text-5xl lg:text-6xl">
-            The same stay
-            <span className="block text-honey">minus the middle man</span>
+            Stay again
+            <span className="block text-honey">with a host you know</span>
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-stone-200">
-            Big booking sites take a large share of every reservation. Yall Come
-            Back is built so hosts keep more of what they earn - and guests,
-            especially locals and return visitors, pay less in platform fees.
-            Search, message, and book the way you already expect.
+            If the stay was good enough to remember, it should be easy to book
+            again. Come back to the host and the place that already felt like
+            yours — the people who made it memorable, not a stranger in a
+            catalog.
           </p>
           <div className="mt-8 w-full max-w-4xl">
             <StaySearchForm
@@ -123,16 +123,16 @@ export default async function HomePage() {
           <div className="grid gap-8 sm:grid-cols-3">
             {[
               {
-                title: "Direct booking",
-                body: "You book the place with the people who run it. Questions, check-in details, and the stay itself stay between you and the host - not a distant call center.",
+                title: "A host you already know",
+                body: "The second stay is the whole point. Book the people and the place that already felt like yours.",
               },
               {
-                title: "More of the money stays put",
-                body: "Big platforms take a large cut from hosts and stack service fees on guests. Here, more of what you pay goes to the stay - and hosts keep more of what they earn.",
+                title: "Book them directly",
+                body: "Questions, check-in, “see you Friday” — it stays between you and the host who made it great.",
               },
               {
-                title: "Built for locals and return guests",
-                body: "If you already know the property or live nearby, you should not pay a premium just to rebook. Search, message, and reserve without the extra platform tax.",
+                title: "Worth coming back for",
+                body: "Locals, regulars, and anyone who still talks about that week. Search, message, and reserve without starting over.",
               },
             ].map((item) => (
               <div key={item.title}>
@@ -154,7 +154,7 @@ export default async function HomePage() {
               href="/for-hosts"
               className="rounded-full border border-bonnet/30 bg-petal px-6 py-3 text-sm font-semibold text-bonnet hover:bg-petal-hover"
             >
-              Host without the cut
+              Host the guests who come back
             </Link>
           </div>
         </div>
@@ -231,7 +231,7 @@ export default async function HomePage() {
               Places to stay
             </h2>
             <p className="mt-2 text-stone-500">
-              The same stay minus the middle man
+              Stay again with a host you know
             </p>
           </div>
           <Link
@@ -274,12 +274,12 @@ export default async function HomePage() {
         </div>
         <div className="relative z-10 mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
           <h2 className="text-3xl font-semibold text-white">
-            Hosting? Stop giving away a cut of every stay.
+            Hosting? Keep the guests who already love you.
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-cyan-100">
-            List on the free marketplace, run a simple paid host site, or take
-            the open-source stack and put your own brand on it. Guests get the
-            familiar book-and-message flow - you keep more of what you earn.
+            They already know the dock, the kitchen, your name. Give them a way
+            to book you directly — on the marketplace, a simple host site, or
+            your own brand on the open-source stack.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link

@@ -62,14 +62,15 @@ export default function ContactPage() {
           <div className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-stone-900">Platform</h2>
             <p className="mt-3 text-sm leading-relaxed text-stone-600">
-              Demo contact email for this local build:
+              Platform email is not live yet. For a stay, message the host from
+              the listing. For hosting, apply or sign in.
             </p>
-            <a
-              href="mailto:hello@yallcomeback.com"
+            <Link
+              href="/for-hosts"
               className="mt-4 inline-flex text-sm font-semibold text-bonnet hover:underline"
             >
-              hello@yallcomeback.com
-            </a>
+              Host a place →
+            </Link>
           </div>
         </div>
 

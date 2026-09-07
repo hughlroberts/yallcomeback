@@ -2,7 +2,7 @@
 
 This guide is for operators who **run their own MIT open-source deploy** (their
 servers, their database) and still want listings to appear on the **central**
-Yall Come Back marketplace at [yallcomeback.com](https://yallcomeback.com)
+Yall Come Back marketplace at [yallcomeback.app](https://www.yallcomeback.app)
 (or your production origin).
 
 Marketplace listing is **optional**. You can self-host forever with zero
@@ -41,7 +41,7 @@ Path B is for true independence + optional discovery on the central marketplace.
 ### 1. Register and get approved (central site)
 
 ```text
-https://yallcomeback.com/for-hosts?path=self
+https://www.yallcomeback.app/for-hosts?path=self
 ```
 
 - Choose **Free self-host** ($0 / month platform fee).
@@ -61,7 +61,7 @@ On the **central** site (not your remote admin):
 Example secret name:
 
 ```env
-YCB_MARKETPLACE_ORIGIN=https://yallcomeback.com
+YCB_MARKETPLACE_ORIGIN=https://www.yallcomeback.app
 YCB_SYNDICATION_KEY=ycb_syn_...
 ```
 
@@ -104,7 +104,7 @@ Content-Type: application/json
 **curl example:**
 
 ```bash
-export YCB_ORIGIN="https://yallcomeback.com"
+export YCB_ORIGIN="https://www.yallcomeback.app"
 export YCB_SYNDICATION_KEY="ycb_syn_...."   # from Brand & website
 
 curl -sS -X POST "$YCB_ORIGIN/api/syndication/listings" \
@@ -135,7 +135,7 @@ curl -sS -X POST "$YCB_ORIGIN/api/syndication/listings" \
     "title": "Lake cabin with dock",
     "published": true,
     "listOnMarketplace": true,
-    "marketplaceUrl": "https://yallcomeback.com/marketplace/properties/lake-cabin?host=your-slug"
+    "marketplaceUrl": "https://www.yallcomeback.app/marketplace/properties/lake-cabin?host=your-slug"
   },
   "note": "Listing is live on the marketplace when discovery includes it."
 }

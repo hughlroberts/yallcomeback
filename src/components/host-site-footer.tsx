@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Host } from "@prisma/client";
 import { MessageHostButton } from "@/components/message-host-form";
+import { PRODUCT_ORIGIN } from "@/lib/features";
+import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { hostSiteMarkObjectFit, hostSiteMarkUrl } from "@/lib/host-images";
 import { hostSocialLinks } from "@/lib/host-site";
 
@@ -84,7 +86,7 @@ export function HostSiteFooter({
                 <p className="mt-1 text-sm text-stone-500">{host.tagline}</p>
               ) : (
                 <p className="mt-1 text-sm text-stone-500">
-                  Book direct with your host — not a marketplace middleman.
+                  Come back and stay with us.
                 </p>
               )}
             </div>
@@ -171,15 +173,29 @@ export function HostSiteFooter({
           <p>
             © {new Date().getFullYear()} {host.name}
           </p>
-          <p>
-            Powered by{" "}
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <a
-              href="https://yallcomeback.com"
+              href={`${PRODUCT_ORIGIN}${TERMS_PATH}`}
               className="underline-offset-2 hover:text-stone-600 hover:underline"
-              rel="noopener noreferrer"
             >
-              Yall Come Back
+              Terms
             </a>
+            <a
+              href={`${PRODUCT_ORIGIN}${PRIVACY_PATH}`}
+              className="underline-offset-2 hover:text-stone-600 hover:underline"
+            >
+              Privacy
+            </a>
+            <span>
+              Powered by{" "}
+              <a
+                href={PRODUCT_ORIGIN}
+                className="underline-offset-2 hover:text-stone-600 hover:underline"
+                rel="noopener noreferrer"
+              >
+                Yall Come Back
+              </a>
+            </span>
           </p>
         </div>
       </div>

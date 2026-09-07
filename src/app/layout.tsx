@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Geist_Mono } from "next/font/google";
 import { SiteShell } from "@/components/site-shell";
-import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@/lib/features";
+import { PRODUCT_NAME, PRODUCT_ORIGIN, PRODUCT_TAGLINE } from "@/lib/features";
 import "./globals.css";
 
 const inter = Inter({
@@ -25,7 +25,7 @@ const siteName = process.env.NEXT_PUBLIC_SITE_NAME || PRODUCT_NAME;
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.AUTH_URL ||
-  "https://www.yallcomeback.app";
+  PRODUCT_ORIGIN;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

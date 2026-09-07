@@ -25,14 +25,8 @@ export default async function AdminHostingPage() {
           bookings from admin.
         </p>
         <p className="text-sm text-stone-600">
-          Questions about billing or your plan? Email{" "}
-          <a
-            href="mailto:hello@yallcomeback.com"
-            className="font-medium text-bonnet hover:underline"
-          >
-            hello@yallcomeback.com
-          </a>
-          .
+          Questions about billing or your plan? Send a message from Admin →
+          Messages. Platform email is not live yet.
         </p>
         <Link
           href="/admin/properties"

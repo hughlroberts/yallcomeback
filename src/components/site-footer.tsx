@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandPhraseSeal } from "@/components/brand-logo";
+import { PRODUCT_DOMAIN } from "@/lib/features";
 
 export function SiteFooter() {
   return (
@@ -16,11 +17,11 @@ export function SiteFooter() {
               />
               <div className="min-w-0 flex-1">
                 <p className="font-display text-xl font-medium tracking-tight text-buttermilk sm:text-2xl">
-                  yallcomeback.com
+                  {PRODUCT_DOMAIN}
                 </p>
                 <p className="mt-1.5 text-sm leading-relaxed text-buttermilk/70 sm:mt-2">
-                  The same stay minus the middle man. Your guests book you, not a
-                  marketplace.
+                  Stay again with a host you know. Book the people who made it
+                  great.
                 </p>
               </div>
             </div>
@@ -84,9 +85,17 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-buttermilk/50 sm:px-6">
-          <p>© {new Date().getFullYear()} yallcomeback.com</p>
-          <p className="text-honey/90">Made in Texas by Texans.</p>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-5 text-xs text-buttermilk/50 sm:px-6">
+          <p>© {new Date().getFullYear()} {PRODUCT_DOMAIN}</p>
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <Link href="/terms" className="hover:text-honey">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-honey">
+              Privacy
+            </Link>
+            <span className="text-honey/90">Made in Texas by Texans.</span>
+          </nav>
         </div>
       </div>
     </footer>

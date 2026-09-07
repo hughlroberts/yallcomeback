@@ -60,9 +60,9 @@ export default async function HostAboutPage({
                 </div>
               ) : (
                 <p className="text-stone-600 leading-relaxed">
-                  Welcome to {host.name}. We host stays for guests who want to
-                  book direct — no marketplace middleman. Reach out anytime;
-                  we&apos;re happy to help plan your trip.
+                  Welcome to {host.name}. Come back to a stay you already love
+                  — book directly with us. Reach out anytime; we&apos;re happy
+                  to help plan your trip.
                 </p>
               )}
               <div className="mt-8 flex flex-wrap gap-3">

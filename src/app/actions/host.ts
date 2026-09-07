@@ -48,6 +48,11 @@ export async function registerHost(formData: FormData) {
   );
   const slug = slugify(slugRaw);
 
+  if (formData.get("acceptTerms") !== "on") {
+    return {
+      error: "You must agree to the Terms of Service and Privacy Policy.",
+    };
+  }
   if (!name || !email || !password || !displayName || !slug) {
     return { error: "Please fill in all required fields." };
   }

@@ -43,7 +43,15 @@ export default async function LoginPage({
           Sign in
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Guests and hosts use the same login.
+          Guests and hosts use the same login. By signing in you agree to the{" "}
+          <a href="/terms" className="font-medium text-bonnet underline">
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/privacy" className="font-medium text-bonnet underline">
+            Privacy Policy
+          </a>
+          .
         </p>
 
         {sp.error && (

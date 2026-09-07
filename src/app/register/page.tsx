@@ -6,9 +6,14 @@ import { Button, Input, Label, Card } from "@/components/ui";
 
 export const metadata = { title: "Create account" };
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const session = await auth();
   if (session?.user) redirect("/account/bookings");
+  const sp = await searchParams;
 
   async function registerAction(formData: FormData) {
     "use server";
@@ -16,6 +21,9 @@ export default async function RegisterPage() {
     const email = String(formData.get("email") || "").trim().toLowerCase();
     const password = String(formData.get("password") || "");
 
+    if (formData.get("acceptTerms") !== "on") {
+      redirect("/register?error=terms");
+    }
     if (!email || password.length < 8) {
       redirect("/register?error=invalid");
     }
@@ -47,6 +55,21 @@ export default async function RegisterPage() {
         <p className="mt-1 text-sm text-stone-500">
           Book stays and view your reservations.
         </p>
+        {sp.error === "terms" ? (
+          <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            You must agree to the Terms of Service and Privacy Policy.
+          </p>
+        ) : null}
+        {sp.error === "exists" ? (
+          <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            An account with that email already exists.
+          </p>
+        ) : null}
+        {sp.error === "invalid" ? (
+          <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            Enter a valid email and a password of at least 8 characters.
+          </p>
+        ) : null}
         <form action={registerAction} className="mt-6 space-y-4">
           <div>
             <Label htmlFor="name">Name</Label>
@@ -66,6 +89,25 @@ export default async function RegisterPage() {
               required
             />
           </div>
+          <label className="flex items-start gap-2 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              name="acceptTerms"
+              required
+              className="mt-1"
+            />
+            <span>
+              I agree to the{" "}
+              <a href="/terms" className="font-medium text-bonnet underline">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="font-medium text-bonnet underline">
+                Privacy Policy
+              </a>
+              . Bookings are a contract with the host, not Yall Come Back.
+            </span>
+          </label>
           <Button type="submit" className="w-full">
             Create account
           </Button>

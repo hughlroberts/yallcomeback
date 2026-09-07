@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
+import { PRODUCT_ORIGIN } from "@/lib/features";
 import { marketplacePropertyWhere } from "@/lib/host";
 
 export const dynamic = "force-dynamic";
@@ -8,13 +9,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     process.env.APP_URL?.replace(/\/$/, "") ||
-    "https://yallcomeback.com";
+    PRODUCT_ORIGIN;
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${base}/`, changeFrequency: "daily", priority: 1 },
     { url: `${base}/marketplace`, changeFrequency: "hourly", priority: 0.95 },
     { url: `${base}/for-hosts`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${base}/about`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${base}/terms`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${base}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${base}/contact`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/llms.txt`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/agents.md`, changeFrequency: "weekly", priority: 0.8 },
     {

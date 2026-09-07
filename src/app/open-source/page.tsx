@@ -3,6 +3,7 @@ import {
   FEATURE_GROUPS,
   LICENSE,
   PRODUCT_NAME,
+  PRODUCT_ORIGIN,
   PRODUCT_VERSION,
   REPO_URL,
   SELF_HOST_DEV_STEPS,
@@ -321,7 +322,7 @@ npm run build && npm start
             <pre className="overflow-x-auto p-5 text-sm leading-relaxed">{`# On the central Yall Come Back site after approval:
 # Admin → Brand & website → Generate syndication API key
 
-export YCB_ORIGIN="https://yallcomeback.com"   # or your platform origin
+export YCB_ORIGIN="${PRODUCT_ORIGIN}"   # or your platform origin
 export YCB_SYNDICATION_KEY="ycb_syn_...."      # shown once when generated
 
 # Upsert a listing (same slug updates later)
