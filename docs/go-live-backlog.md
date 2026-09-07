@@ -2,6 +2,24 @@
 
 Work that is decided but not started. Newest first.
 
+## Auto fridge magnet after a stay is booked (TBD)
+
+**Status:** deferred — idea only, do not build yet  
+**Related:** Admin → Fridge magnets (print-one QR page already exists)
+
+When a guest **purchases / confirms a listing stay**, automatically send them a fridge magnet (QR back to that listing / host) so they book again without searching.
+
+Open questions before implementation:
+
+1. **Physical vs digital** — Mail a printed magnet, email a print-at-home PDF, or both?
+2. **Trigger** — Deposit paid, stay confirmed, or after checkout?
+3. **Address** — Collect mailing address at booking, or only email a PDF until we have an address?
+4. **Who pays / fulfills** — Yall Come Back ships, the host ships, or a print vendor (Sticker Mule, etc.)?
+5. **Which listings** — Every stay, host opt-in, or platform-paid hosts only?
+6. **Repeat guests** — One magnet per guest per listing, or every booking?
+
+Existing building block: `src/components/fridge-magnet.tsx`, `/admin/magnets/[propertyId]`. Do not start fulfillment, postage, or address fields until the questions above are decided.
+
 ## Analytics and errors (delayed)
 
 **Status:** deferred — turn on soon  
