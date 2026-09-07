@@ -137,6 +137,8 @@ export async function startGuestConversation(formData: FormData) {
       body: emailBody,
       conversationId: conversation.id,
       replyPath: `/admin/messages/${conversation.id}`,
+      fromPartyName: guestName,
+      replyTo: guestEmail,
     });
     if (result.attempted) {
       externalStatus = mergeExternalStatus(
@@ -225,6 +227,8 @@ export async function replyToConversation(formData: FormData) {
         body: `${conversation.host.name} wrote:\n\n${body}`,
         conversationId,
         replyPath: `/messages/${conversationId}`,
+        fromPartyName: conversation.host.name,
+        replyTo: conversation.host.contactEmail,
       });
       if (email.attempted) {
         externalStatus = mergeExternalStatus(
@@ -271,6 +275,8 @@ export async function replyToConversation(formData: FormData) {
         body: `${conversation.guestName} wrote:\n\n${body}`,
         conversationId,
         replyPath: `/admin/messages/${conversationId}`,
+        fromPartyName: conversation.guestName,
+        replyTo: conversation.guestEmail,
       });
       if (email.attempted) {
         externalStatus = mergeExternalStatus(

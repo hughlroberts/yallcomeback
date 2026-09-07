@@ -301,8 +301,9 @@ BITCOIN_LABEL=Yall Come Back deposit`}
             Email env (live customer delivery)
           </p>
           <pre className="overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">
-{`# Prefer Resend (simple HTTP API)
-MESSAGING_EMAIL_FROM="Yall Come Back <hello@yallcomeback.app>"
+{`# Prefer Resend. Always send FROM this Yall Come Back address (Airbnb-style).
+# Stay mail becomes "Host Name via Yall Come Back <bookings@…>" + Reply-To host.
+MESSAGING_EMAIL_FROM="Yall Come Back <bookings@yallcomeback.app>"
 # Mailbox + transport are on the go-live backlog — leave unset until then.
 RESEND_API_KEY="re_..."
 # Optional: MESSAGING_EMAIL_ENABLED=false  to force off

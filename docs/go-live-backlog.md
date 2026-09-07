@@ -35,16 +35,24 @@ Related: `src/lib/stripe.ts`, `src/lib/bitcoin.ts`, Ops → Settings → Stripe 
 ## Email (delayed)
 
 **Status:** deferred until we are ready to receive mail  
-**Intended address:** `hello@yallcomeback.app`
+**Issue:** [#1](https://github.com/hughlroberts/yallcomeback/issues/1)
 
-Do not advertise this inbox on guest or host screens until the items below are done. In-app messaging stays the path for guests and hosts.
+Airbnb-style envelope (already in code). We send; hosts never give us their Gmail.
+
+| Kind | From | Reply-To |
+| --- | --- | --- |
+| Stay mail to guest | `Cherokee Landing via Yall Come Back <bookings@yallcomeback.app>` | host contact |
+| Stay mail to host | `Guest Name via Yall Come Back <bookings@yallcomeback.app>` | guest email |
+| Platform / ops | `Yall Come Back <bookings@yallcomeback.app>` | — |
+
+Do **not** send as `stay@cherokeelanding.net` or the host’s iCloud. Custom-domain From is a later optional feature (DNS DKIM on their domain).
 
 When picked up:
 
-1. Create the `hello@yallcomeback.app` mailbox (or a catch-all) and DNS (MX + SPF; DKIM when the sender is live).
-2. Set production env: `MESSAGING_EMAIL_FROM`, `RESEND_API_KEY` (or SMTP). Keep SMS off.
-3. Smoke-test: guest message → host email; host reply → guest email; booking auto-message.
-4. Put `hello@yallcomeback.app` back on `/contact` and Admin → Website hosting.
-5. Confirm Ops → Settings no longer shows email as placeholder.
+1. Verify `yallcomeback.app` on Resend (SPF + DKIM + DMARC). Use one sending mailbox: `bookings@yallcomeback.app`.
+2. Optional later: `hello@yallcomeback.app` as the public contact inbox (same domain). Do not advertise it until it is monitored.
+3. Set production env: `MESSAGING_EMAIL_FROM="Yall Come Back <bookings@yallcomeback.app>"`, `RESEND_API_KEY`. Keep SMS off.
+4. Smoke-test: guest message → host mail shows guest name via Yall Come Back, Reply-To is the guest; host reply → guest mail shows host name via Yall Come Back, Reply-To is the host; booking auto-message same as host→guest. In-app link still works.
+5. Confirm Ops → Settings shows email transport live.
 
-Related: `PRODUCT_EMAIL` / `PRODUCT_DOMAIN` in `src/lib/features.ts`, Ops → Settings → Messaging.
+Related: `src/lib/messaging.ts` (`stayFromHeader` / `platformFromHeader`), Ops → Settings → Messaging.

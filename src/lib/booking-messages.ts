@@ -284,6 +284,8 @@ export async function deliverBookingAutoMessage(
     body,
     conversationId,
     replyPath: `/messages/${conversationId}`,
+    fromPartyName: host.name,
+    replyTo: host.contactEmail,
   });
 
   if (email.attempted) {

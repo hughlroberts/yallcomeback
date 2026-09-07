@@ -4,11 +4,15 @@
  * In-app always works. Email goes to the guest/host address on each new message
  * when a transport is configured (Resend API key, or SMTP via nodemailer).
  *
+ * Envelope is Airbnb-style: we always send from the Yall Come Back address.
+ * Stay mail uses "Name via Yall Come Back" plus Reply-To for the other party.
+ * Never send From a host's personal mailbox.
+ *
  * SMS is wired for a future Twilio-style provider; enable only via ops env.
  * Do not surface SMS in guest-facing product copy — ops settings only.
  */
 
-import { PRODUCT_ORIGIN } from "@/lib/features";
+import { PRODUCT_NAME, PRODUCT_ORIGIN } from "@/lib/features";
 
 export type ExternalMessageChannel = "SMS" | "EMAIL";
 
@@ -38,6 +42,55 @@ function emailFromAddress(): string | null {
     process.env.EMAIL_FROM?.trim() ||
     "";
   return from || null;
+}
+
+function parseMailbox(raw: string): { name: string | null; address: string } {
+  const m = raw.match(/^(.*)<([^>]+)>\s*$/);
+  if (m) {
+    const name = m[1].trim().replace(/^["']|["']$/g, "");
+    return { name: name || null, address: m[2].trim() };
+  }
+  return { name: null, address: raw.trim() };
+}
+
+function sanitizeDisplayName(name: string): string {
+  return name.replace(/[\r\n<>"]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+function formatMailbox(name: string, address: string): string {
+  const n = sanitizeDisplayName(name);
+  if (!n) return address;
+  return `${n} <${address}>`;
+}
+
+function isUsableEmail(value: string | null | undefined): value is string {
+  const v = value?.trim().toLowerCase() || "";
+  return Boolean(v && v.includes("@") && !v.includes(" ") && v.length < 254);
+}
+
+/**
+ * Airbnb-style envelope: we always send from the Yall Come Back address.
+ * Stay mail shows "Host Name via Yall Come Back"; Reply-To is the other party.
+ * Never send from a host's Gmail/iCloud.
+ */
+export function stayFromHeader(partyName: string | null | undefined): string | null {
+  const raw = emailFromAddress();
+  if (!raw) return null;
+  const { address } = parseMailbox(raw);
+  if (!address) return null;
+  const party = partyName?.trim();
+  const display = party
+    ? `${sanitizeDisplayName(party)} via ${PRODUCT_NAME}`
+    : PRODUCT_NAME;
+  return formatMailbox(display, address);
+}
+
+export function platformFromHeader(): string | null {
+  const raw = emailFromAddress();
+  if (!raw) return null;
+  const { address, name } = parseMailbox(raw);
+  if (!address) return null;
+  return formatMailbox(name || PRODUCT_NAME, address);
 }
 
 function resendApiKey(): string | null {
@@ -145,21 +198,24 @@ async function sendViaResend(opts: {
   text: string;
   html: string;
   apiKey: string;
+  replyTo?: string | null;
 }): Promise<DispatchResult> {
   try {
+    const payload: Record<string, unknown> = {
+      from: opts.from,
+      to: [opts.to],
+      subject: opts.subject,
+      text: opts.text,
+      html: opts.html,
+    };
+    if (opts.replyTo) payload.reply_to = [opts.replyTo];
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${opts.apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: opts.from,
-        to: [opts.to],
-        subject: opts.subject,
-        text: opts.text,
-        html: opts.html,
-      }),
+      body: JSON.stringify(payload),
     });
     const data = (await res.json().catch(() => ({}))) as {
       id?: string;
@@ -199,6 +255,7 @@ async function sendViaSmtp(opts: {
   subject: string;
   text: string;
   html: string;
+  replyTo?: string | null;
 }): Promise<DispatchResult> {
   const host =
     process.env.MESSAGING_SMTP_HOST?.trim() ||
@@ -261,6 +318,7 @@ async function sendViaSmtp(opts: {
       subject: opts.subject,
       text: opts.text,
       html: opts.html,
+      ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
     });
     return {
       attempted: true,
@@ -295,6 +353,14 @@ export async function dispatchEmail(opts: {
   replyPath?: string;
   /** Skip preference checks (rare; default respects opt-out) */
   force?: boolean;
+  /**
+   * Stay mail: other party's name (host or guest).
+   * From becomes "Name via Yall Come Back <bookings@…>".
+   * Omit for platform/ops mail.
+   */
+  fromPartyName?: string | null;
+  /** Reply-To: host contact (guest mail) or guest email (host mail). */
+  replyTo?: string | null;
 }): Promise<DispatchResult> {
   const to = opts.to.trim().toLowerCase();
   if (!to || !to.includes("@")) {
@@ -333,7 +399,9 @@ export async function dispatchEmail(opts: {
     };
   }
 
-  const from = emailFromAddress();
+  const from = opts.fromPartyName
+    ? stayFromHeader(opts.fromPartyName)
+    : platformFromHeader();
   if (!from) {
     return {
       attempted: false,
@@ -342,6 +410,10 @@ export async function dispatchEmail(opts: {
       detail: "MESSAGING_EMAIL_FROM missing",
     };
   }
+
+  const replyToRaw = opts.replyTo?.trim().toLowerCase() || null;
+  const replyTo =
+    isUsableEmail(replyToRaw) && replyToRaw !== to ? replyToRaw : null;
 
   const { unsubscribeUrl } = await import("@/lib/notification-prefs");
   const { text, html } = buildEmailBodies({
@@ -356,6 +428,7 @@ export async function dispatchEmail(opts: {
       subject: opts.subject,
       conversationId: opts.conversationId,
       from,
+      replyTo,
     });
     return {
       attempted: true,
@@ -375,11 +448,19 @@ export async function dispatchEmail(opts: {
       text,
       html,
       apiKey,
+      replyTo,
     });
   }
 
   if (smtpConfigured()) {
-    return sendViaSmtp({ from, to, subject: opts.subject, text, html });
+    return sendViaSmtp({
+      from,
+      to,
+      subject: opts.subject,
+      text,
+      html,
+      replyTo,
+    });
   }
 
   // Enabled flag but no transport — log so ops can fix
