@@ -78,6 +78,9 @@ export default async function AdminLayout({
       : []),
     { href: "/admin/magnets", label: "Fridge magnets" },
     { href: "/admin/bookings", label: "Bookings" },
+    ...(canManageBrand(accessInfo)
+      ? [{ href: "/admin/payments", label: "Payments" }]
+      : []),
     ...(canViewEarnings(accessInfo)
       ? [{ href: "/admin/earnings", label: "Earnings" }]
       : []),

@@ -95,8 +95,9 @@ export default async function OpsSettingsPage() {
             <code className="rounded bg-amber-100/80 px-1">
               STRIPE_ENABLED=false
             </code>{" "}
-            until go-live. Right before launch, ask for Stripe API keys and
-            webhook secret, put them in{" "}
+            until keys exist. Then set test keys, Connect webhooks (snapshot
+            + thin), and a hosting Price id. Ask for Stripe API keys and
+            webhook secrets, put them in{" "}
             <code className="rounded bg-amber-100/80 px-1">.env</code> only
             (never commit), then set{" "}
             <code className="rounded bg-amber-100/80 px-1">

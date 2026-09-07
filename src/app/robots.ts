@@ -29,6 +29,7 @@ export default function robots(): MetadataRoute.Robots {
           "/api/admin",
           "/api/cron",
           "/api/stripe",
+          "/admin/payments",
           "/account",
           "/messages",
           "/login",

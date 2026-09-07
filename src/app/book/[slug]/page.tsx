@@ -132,7 +132,9 @@ export default async function BookPage({
       })
     : null;
   const isSignedIn = Boolean(signedInUser?.email);
-  const stripeEnabled = process.env.STRIPE_ENABLED === "true";
+  const stripeEnabled =
+    process.env.STRIPE_ENABLED === "true" &&
+    Boolean(property.host.stripeAccountId);
   const bitcoinEnabled = isBitcoinEnabled();
   const btcQuote =
     bitcoinEnabled && !quote.error

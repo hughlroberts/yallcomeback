@@ -238,6 +238,11 @@ model Host {
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
   stripeCustomerId     String?
+  /// Stripe Connect v2 account (acct_...) — host collects guest card deposits
+  stripeAccountId      String?             @unique
+  /// Platform hosting subscription billed to the connected account
+  stripeSubscriptionId String?
+  stripeSubscriptionStatus String?
   billingEmail         String?
   /// Bearer key for remote open-source / self-host → central marketplace push
   syndicationApiKey    String?             @unique

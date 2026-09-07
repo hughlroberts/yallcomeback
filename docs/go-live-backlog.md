@@ -41,15 +41,16 @@ Related: `src/app/layout.tsx`, `/privacy` § cookies.
 
 Do not turn on card checkout, hosted invoices, or Bitcoin deposits until the items below are done. Guests already see that online card payments are not enabled. Hosts mark deposits and invoices paid in Admin.
 
-When picked up, do **card and Bitcoin in the same pass**.
+When picked up, do **card (Connect) and Bitcoin in the same pass**. Connect code is in the app; keys are not.
 
-### Card (Stripe)
+### Card (Stripe Connect)
 
-1. Create the Stripe account (test first, then live).
-2. Set production env only (never commit): `STRIPE_ENABLED=true`, `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`.
-3. Webhook: `POST /api/stripe/webhook` for `invoice.paid` and `invoice.payment_succeeded`.
-4. Smoke-test a hosting invoice and a guest card deposit, then set `STRIPE_LIVE_READY = true`.
-5. Confirm Ops → Settings shows Stripe as live, and booking no longer says card payments are off.
+1. Create the platform Stripe account (test first, then live).
+2. Env (never commit): `STRIPE_ENABLED=true`, `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_THIN_WEBHOOK_SECRET`, `STRIPE_HOSTING_PRICE_ID`.
+3. Snapshot webhook `POST /api/stripe/webhook` (Checkout, invoices, `customer.subscription.*`).
+4. Thin Connect destination `POST /api/stripe/thin-webhook` for `v2.core.account[requirements].updated` and merchant/customer capability updates (payload style Thin).
+5. Host: Admin → Payments → Onboard to collect payments. Guest: card deposit on a listing, or extras at `/pay/[hostSlug]`.
+6. Smoke-test hosting Subscribe + billing portal. Then `STRIPE_LIVE_READY = true`.
 
 ### Bitcoin (stay deposits)
 

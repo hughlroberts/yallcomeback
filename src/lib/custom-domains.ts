@@ -167,6 +167,7 @@ export function isPlatformPath(pathname: string): boolean {
     pathname.startsWith("/help") ||
     pathname.startsWith("/terms") ||
     pathname.startsWith("/privacy") ||
+    pathname.startsWith("/pay") ||
     pathname.startsWith("/open-source") ||
     pathname.startsWith("/for-hosts") ||
     pathname.startsWith("/self-host") ||

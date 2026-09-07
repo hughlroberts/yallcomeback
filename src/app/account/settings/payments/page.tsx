@@ -38,15 +38,14 @@ export default async function AccountPaymentsPage() {
 
       <div className="mt-8 space-y-3">
         <PaymentLink
-          title="Stripe"
+          title="Card payments"
           description={
-            stripeOn
-              ? "Card payments and hosted invoices when enabled for this site."
-              : "Stripe is not live yet. When keys are configured, use the Stripe Dashboard for customers and payouts."
+            isHost
+              ? "Onboard to collect deposits on your own account. Hosting is billed separately — not a cut of stays."
+              : "Pay deposits by card when the host has card checkout on."
           }
-          href="https://dashboard.stripe.com/"
-          external
-          badge={stripeOn ? "Configured" : "Setup later"}
+          href={isHost ? "/admin/payments" : "/account/bookings"}
+          badge={stripeOn ? "Connect" : "Setup later"}
         />
 
         <PaymentLink

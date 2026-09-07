@@ -131,6 +131,11 @@ export async function createBooking(formData: FormData) {
     method = "BITCOIN";
   } else if (payMethodRaw === "card" || payMethodRaw === "stripe") {
     if (!stripeEnabled) throw new Error("Card payments are not enabled");
+    if (!property.host.stripeAccountId) {
+      throw new Error(
+        "This host is not collecting card deposits yet. Choose another payment method.",
+      );
+    }
     method = "STRIPE";
   } else if (payMethodRaw === "manual") {
     method = "MANUAL";
@@ -242,10 +247,35 @@ export async function createBooking(formData: FormData) {
   const { bookingAccessToken } = await import("@/lib/booking-access");
   const confirmParams = new URLSearchParams();
   confirmParams.set("t", bookingAccessToken(booking.id));
-  if (method === "STRIPE") confirmParams.set("pendingStripe", "1");
   if (autoMsgConversationId) {
     confirmParams.set("inbox", autoMsgConversationId);
   }
+
+  if (method === "STRIPE" && property.host.stripeAccountId) {
+    const { createDirectChargeCheckout, depositCheckoutName } = await import(
+      "@/lib/stripe-connect"
+    );
+    const { toStripeAmount } = await import("@/lib/stripe");
+    const session = await createDirectChargeCheckout({
+      accountId: property.host.stripeAccountId,
+      name: depositCheckoutName(property.title),
+      amountCents: toStripeAmount(quote.depositAmount),
+      successPath: `/book/confirmation/${booking.id}?${confirmParams.toString()}`,
+      cancelPath: `/book/${property.slug}`,
+      customerEmail: guestEmail,
+      metadata: {
+        kind: "booking_deposit",
+        bookingId: booking.id,
+        hostId: property.hostId,
+      },
+    });
+    if (!session.url) {
+      throw new Error("Card checkout did not start. Try again or pay another way.");
+    }
+    redirect(session.url);
+  }
+
+  if (method === "STRIPE") confirmParams.set("pendingStripe", "1");
   redirect(`/book/confirmation/${booking.id}?${confirmParams.toString()}`);
 }
 
