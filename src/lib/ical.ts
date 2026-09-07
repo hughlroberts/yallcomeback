@@ -1,3 +1,4 @@
+import { PRODUCT_DOMAIN } from "@/lib/features";
 import { prisma } from "./db";
 import { startOfDay } from "./utils";
 
@@ -19,8 +20,7 @@ function escapeText(text: string): string {
 
 /**
  * Export local bookings + manual blocks for a property (not ICAL_IMPORT to avoid loops).
- * Event UIDs use a stable @yallcomeback.com host so calendar clients do not see
- * duplicates if the public brand domain changes.
+ * Event UIDs use the public brand domain (`@yallcomeback.app`).
  */
 export async function buildPropertyIcal(
   propertyId: string,
@@ -55,7 +55,7 @@ export async function buildPropertyIcal(
 
     lines.push(
       "BEGIN:VEVENT",
-      `UID:${block.id}@yallcomeback.com`,
+      `UID:${block.id}@${PRODUCT_DOMAIN}`,
       `DTSTAMP:${formatIcalDate(new Date())}T000000Z`,
       `DTSTART;VALUE=DATE:${formatIcalDate(block.startDate)}`,
       `DTEND;VALUE=DATE:${formatIcalDate(block.endDate)}`,
