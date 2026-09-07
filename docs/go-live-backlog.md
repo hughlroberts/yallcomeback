@@ -2,6 +2,37 @@
 
 Work that is decided but not started. Newest first.
 
+## Analytics and errors (delayed)
+
+**Status:** deferred — turn on soon  
+**Stack:** Railway (already) + Sentry + Umami  
+**Issue:** [#3](https://github.com/hughlroberts/yallcomeback/issues/3)
+
+Railway already covers container health (logs, CPU/memory, failed-deploy alerts). Add Sentry for app errors and Umami for privacy-first page analytics. Do **not** add Google Analytics.
+
+### Keep using Railway
+
+1. Observability logs (`@level:error`, HTTP 5xx).
+2. One monitor on memory/CPU.
+3. Webhook or email on failed deploy / crash.
+
+### Sentry (errors)
+
+1. Create a Sentry project for the Next.js app.
+2. SDK in the app; production env: `SENTRY_DSN` (and Next.js build tokens as required). Set `environment` from `RAILWAY_ENVIRONMENT_NAME`, `release` from the deploy id.
+3. Leave session replay **off** unless checkout bugs need it (it records UI).
+4. Smoke-test: throw a test error in production, confirm it groups in Sentry with a stack trace.
+
+### Umami (analytics)
+
+1. Deploy the Umami template on the same Railway project (own Postgres or a dedicated DB). Change the default password immediately.
+2. Add `yallcomeback.app` (and later host custom domains if you want those counted).
+3. Load the tracker only in production, from env (`NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`).
+4. Custom events: marketplace search, listing view, booking request, host apply.
+5. Update Privacy Policy cookies / analytics section: Umami is first-party, no ads, we do not sell data.
+
+Related: `src/app/layout.tsx`, `/privacy` § cookies.
+
 ## Payments (delayed)
 
 **Status:** deferred — keep manual deposits and hosting invoices  
