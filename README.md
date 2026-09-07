@@ -160,7 +160,7 @@ On each property admin page:
 **Automatic (set-and-forget):**
 
 - **In-process** on Railway: `instrumentation.ts` runs iCal sync + booking auto-messages every ~20 minutes in production (`CRON_IN_PROCESS=true`). Hosting payments are reconciled **once per UTC day** on that same ticker (and retried if the last run failed).
-- **GitHub Actions backup**: `.github/workflows/cron.yml` pings iCal + messages every 20 minutes. `.github/workflows/cron-hosting-payments.yml` forces the hosting payment check daily at 13:00 UTC. Secrets: `CRON_SECRET` + `CRON_BASE_URL`.
+- **GitHub Actions backup**: `.github/workflows/cron.yml` pings iCal + messages every 20 minutes (needs secrets `CRON_SECRET` + `CRON_BASE_URL`). Ping `/api/cron/hosting-payments` daily the same way if you want a second check outside the app.
 
 **Manual / external cron:**
 
