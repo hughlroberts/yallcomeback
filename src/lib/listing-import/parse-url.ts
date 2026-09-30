@@ -28,12 +28,16 @@ export function parseListingImportUrl(input: string): {
     };
   }
 
-  // VRBO / Expedia vacation rentals
+  // VRBO / Expedia vacation rentals (hostname allowlist only)
   if (
     host === "vrbo.com" ||
     host.endsWith(".vrbo.com") ||
     host === "abritel.fr" ||
-    host.includes("vacationrentals")
+    host.endsWith(".abritel.fr") ||
+    host === "homeaway.com" ||
+    host.endsWith(".homeaway.com") ||
+    host === "vacationrentals.com" ||
+    host.endsWith(".vacationrentals.com")
   ) {
     // /p123456 or /cabin/.../p123 or query
     const m =

@@ -1,11 +1,11 @@
 "use server";
 
-import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { HostAccessLevel, Role } from "@prisma/client";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { hashPassword } from "@/lib/password";
 
 function parseRole(raw: string): Role | null {
   if (raw === "ADMIN" || raw === "HOST" || raw === "GUEST") return raw;
@@ -49,7 +49,7 @@ export async function opsUpsertUser(formData: FormData) {
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  const passwordHash = password ? await hash(password, 10) : undefined;
+  const passwordHash = password ? await hashPassword(password) : undefined;
 
   if (existing) {
     await prisma.user.update({
@@ -95,7 +95,7 @@ export async function opsResetUserPassword(formData: FormData) {
 
   await prisma.user.update({
     where: { id },
-    data: { passwordHash: await hash(password, 10) },
+    data: { passwordHash: await hashPassword(password) },
   });
 
   revalidatePath("/ops/users");

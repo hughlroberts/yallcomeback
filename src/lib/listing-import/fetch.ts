@@ -21,7 +21,8 @@ export async function fetchListingFromUrl(
 
   let res: Response;
   try {
-    res = await fetch(parsed.canonicalUrl, {
+    const { fetchSafeOutbound } = await import("@/lib/safe-url");
+    res = await fetchSafeOutbound(parsed.canonicalUrl, {
       headers: {
         "User-Agent": UA,
         Accept:
@@ -33,8 +34,6 @@ export async function fetchListingFromUrl(
         "Sec-Fetch-Site": "none",
         "Upgrade-Insecure-Requests": "1",
       },
-      redirect: "follow",
-      // Next.js: don't cache OTA pages
       cache: "no-store",
     });
   } catch (e) {

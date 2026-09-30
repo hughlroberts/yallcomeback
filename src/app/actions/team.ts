@@ -1,12 +1,12 @@
 "use server";
 
-import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { HostAccessLevel } from "@prisma/client";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageTeam, resolveHostAccessInfo } from "@/lib/host-access";
+import { hashPassword } from "@/lib/password";
 
 function parseAccess(raw: string): HostAccessLevel | null {
   if (raw === "FULL" || raw === "LIMITED") return raw;
@@ -49,7 +49,7 @@ export async function inviteCoHost(formData: FormData) {
     redirect("/admin/team?error=other_brand");
   }
 
-  const passwordHash = await hash(password, 10);
+  const passwordHash = await hashPassword(password);
 
   if (existing) {
     await prisma.user.update({
@@ -185,7 +185,7 @@ export async function resetCoHostPassword(formData: FormData) {
 
   await prisma.user.update({
     where: { id },
-    data: { passwordHash: await hash(password, 10) },
+    data: { passwordHash: await hashPassword(password) },
   });
 
   revalidatePath("/admin/team");

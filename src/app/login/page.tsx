@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/lib/auth";
 import { Button, Input, Label, Card } from "@/components/ui";
+import { safeInternalPath } from "@/lib/safe-redirect";
+import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 
 export const metadata = { title: "Sign in" };
 
@@ -11,24 +13,40 @@ export default async function LoginPage({
 }) {
   const session = await auth();
   const sp = await searchParams;
+  const callbackUrl = safeInternalPath(
+    sp.callbackUrl ||
+      (sp.registered === "host" ? "/admin/payments?welcome=1" : undefined),
+    "/",
+  );
   if (session?.user) {
     const roleHome =
       session.user.role === "ADMIN" || session.user.role === "HOST"
         ? "/admin"
         : "/account/bookings";
-    redirect(sp.callbackUrl || roleHome);
+    redirect(safeInternalPath(sp.callbackUrl, roleHome));
   }
 
   async function loginAction(formData: FormData) {
     "use server";
-    const email = String(formData.get("email") || "");
+    const email = String(formData.get("email") || "")
+      .trim()
+      .toLowerCase();
     const password = String(formData.get("password") || "");
-    const callbackUrl = String(formData.get("callbackUrl") || "/");
+    const next = safeInternalPath(formData.get("callbackUrl"), "/");
+    const ip = await incomingIp();
+    if (
+      !rateLimitAllow(`login:ip:${ip}`, 40, 15 * 60 * 1000) ||
+      !rateLimitAllow(`login:email:${email || "empty"}`, 15, 15 * 60 * 1000)
+    ) {
+      redirect(
+        `/login?error=rate&callbackUrl=${encodeURIComponent(next)}`,
+      );
+    }
     try {
       await signIn("credentials", {
         email,
         password,
-        redirectTo: callbackUrl,
+        redirectTo: next,
       });
     } catch (e) {
       // Auth.js throws NEXT_REDIRECT on success
@@ -60,20 +78,21 @@ export default async function LoginPage({
             live.
           </p>
         ) : null}
-        {sp.error && (
+        {sp.error === "rate" ? (
+          <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700 ring-1 ring-inset ring-red-100">
+            Too many sign-in attempts. Wait a few minutes and try again.
+          </p>
+        ) : sp.error ? (
           <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700 ring-1 ring-inset ring-red-100">
             Invalid email or password.
           </p>
-        )}
+        ) : null}
 
         <form action={loginAction} className="mt-6 space-y-4">
           <input
             type="hidden"
             name="callbackUrl"
-            value={
-              sp.callbackUrl ||
-              (sp.registered === "host" ? "/admin/payments?welcome=1" : "/")
-            }
+            value={callbackUrl}
           />
           <div>
             <Label htmlFor="email">Email</Label>

@@ -1,13 +1,15 @@
 "use server";
 
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
-import { hash, compare } from "bcryptjs";
+import { compare } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { hashPassword } from "@/lib/password";
+import {
+  readUploadedImage,
+  writePublicUpload,
+} from "@/lib/upload-image";
 
 async function requireUser() {
   const session = await auth();
@@ -56,31 +58,23 @@ export async function uploadUserAvatar(formData: FormData) {
   const session = await requireUser();
   if (!session) redirect("/login?callbackUrl=/account/settings/personal");
 
-  const file = formData.get("file") as File | null;
-  if (!file || file.size === 0) {
-    redirect("/account/settings/personal?edit=1&error=avatar_file");
-  }
-  if (file.size > 4 * 1024 * 1024) {
-    redirect("/account/settings/personal?edit=1&error=avatar_size");
+  const parsed = await readUploadedImage(formData.get("file") as File | null, {
+    maxBytes: 4 * 1024 * 1024,
+  });
+  if (!parsed.ok) {
+    const code =
+      parsed.error === "size"
+        ? "avatar_size"
+        : parsed.error === "type"
+          ? "avatar_type"
+          : "avatar_file";
+    redirect(`/account/settings/personal?edit=1&error=${code}`);
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const extRaw = path.extname(file.name || "").toLowerCase() || ".jpg";
-  const ext = [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(extRaw)
-    ? extRaw
-    : ".jpg";
-  const filename = `${randomUUID()}${ext}`;
-  const uploadDir = path.join(
-    process.cwd(),
-    "public",
-    "uploads",
-    "avatars",
-    session.user.id,
+  const { publicUrl: avatarUrl } = await writePublicUpload(
+    ["avatars", session.user.id],
+    parsed.image,
   );
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), bytes);
-
-  const avatarUrl = `/uploads/avatars/${session.user.id}/${filename}`;
   await prisma.user.update({
     where: { id: session.user.id },
     data: { avatarUrl },
@@ -239,7 +233,7 @@ export async function changePassword(formData: FormData) {
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { passwordHash: await hash(next, 10) },
+    data: { passwordHash: await hashPassword(next) },
   });
 
   revalidateAccount();

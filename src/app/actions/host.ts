@@ -1,15 +1,17 @@
 "use server";
 
-import { hash } from "bcryptjs";
-import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { HostSitePresence } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
+import { hashPassword } from "@/lib/password";
+import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
+import {
+  readUploadedImage,
+  writePublicUpload,
+} from "@/lib/upload-image";
 import {
   SETUP_SERVICE_FEE_USD,
   applyMarketplaceOptIn,
@@ -49,6 +51,10 @@ export async function registerHost(formData: FormData) {
   );
   const slug = slugify(slugRaw);
 
+  const ip = await incomingIp();
+  if (!rateLimitAllow(`host-register:ip:${ip}`, 5, 60 * 60 * 1000)) {
+    return { error: "Too many sign-ups from this network. Try again later." };
+  }
   if (formData.get("acceptTerms") !== "on") {
     return {
       error: "You must agree to the Terms of Service and Privacy Policy.",
@@ -76,7 +82,7 @@ export async function registerHost(formData: FormData) {
     return { error: "That site slug is already taken. Try another." };
   }
 
-  const passwordHash = await hash(password, 10);
+  const passwordHash = await hashPassword(password);
 
   const planId = String(formData.get("planId") || "").trim() || null;
   const hostingModeRaw = String(formData.get("hostingMode") || "PLATFORM");
@@ -717,32 +723,19 @@ export async function uploadServicesImage(
   const host = await prisma.host.findUnique({ where: { id: hostId } });
   if (!host) return { ok: false, error: "Host not found" };
 
-  const file = formData.get("file") as File | null;
-  if (!file || file.size === 0) {
+  const parsed = await readUploadedImage(formData.get("file") as File | null);
+  if (!parsed.ok) {
+    if (parsed.error === "size") return { ok: false, error: "Image must be under 5 MB" };
+    if (parsed.error === "type") {
+      return { ok: false, error: "Use a JPG, PNG, WebP, or GIF image" };
+    }
     return { ok: false, error: "Choose an image file" };
   }
-  if (file.size > 5 * 1024 * 1024) {
-    return { ok: false, error: "Image must be under 5 MB" };
-  }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const extRaw = path.extname(file.name || "").toLowerCase() || ".jpg";
-  const ext = [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(extRaw)
-    ? extRaw
-    : ".jpg";
-  const filename = `${randomUUID()}${ext}`;
-  const uploadDir = path.join(
-    process.cwd(),
-    "public",
-    "uploads",
-    "hosts",
-    hostId,
-    "services",
+  const { publicUrl: url } = await writePublicUpload(
+    ["hosts", hostId, "services"],
+    parsed.image,
   );
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), bytes);
-
-  const url = `/uploads/hosts/${hostId}/services/${filename}`;
   revalidatePath(`/h/${host.slug}/services`);
   return { ok: true, url };
 }
@@ -756,22 +749,27 @@ export async function uploadHostLogo(formData: FormData) {
   if (!access) redirect("/login?callbackUrl=/admin/brand");
 
   const hostId = String(formData.get("hostId") || "");
-  const returnTo = String(formData.get("returnTo") || "/admin/brand").trim();
+  const returnToRaw = String(formData.get("returnTo") || "/admin/brand").trim();
+  const returnTo =
+    returnToRaw.startsWith("/admin") || returnToRaw.startsWith("/ops")
+      ? returnToRaw
+      : "/admin/brand";
   if (!hostId) redirect("/admin/brand?error=missing");
   if (!access.isPlatform && access.hostId !== hostId) {
     redirect("/admin/brand?error=forbidden");
   }
 
-  const file = formData.get("file") as File | null;
-  if (!file || file.size === 0) {
-    redirect(
-      `${returnTo}${returnTo.includes("?") ? "&" : "?"}error=logo_file`,
-    );
-  }
-  if (file.size > 4 * 1024 * 1024) {
-    redirect(
-      `${returnTo}${returnTo.includes("?") ? "&" : "?"}error=logo_size`,
-    );
+  const parsed = await readUploadedImage(formData.get("file") as File | null, {
+    maxBytes: 4 * 1024 * 1024,
+  });
+  if (!parsed.ok) {
+    const code =
+      parsed.error === "size"
+        ? "logo_size"
+        : parsed.error === "type"
+          ? "logo_type"
+          : "logo_file";
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=${code}`);
   }
 
   const host = await prisma.host.findUnique({ where: { id: hostId } });
@@ -787,17 +785,10 @@ export async function uploadHostLogo(formData: FormData) {
     );
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const extRaw = path.extname(file.name || "").toLowerCase() || ".jpg";
-  const ext = [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(extRaw)
-    ? extRaw
-    : ".jpg";
-  const filename = `${randomUUID()}${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "hosts", hostId);
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), bytes);
-
-  const logoUrl = `/uploads/hosts/${hostId}/${filename}`;
+  const { publicUrl: logoUrl } = await writePublicUpload(
+    ["hosts", hostId],
+    parsed.image,
+  );
   await prisma.host.update({
     where: { id: hostId },
     data: { logoUrl },
@@ -819,7 +810,11 @@ export async function clearHostLogo(formData: FormData) {
   if (!access) redirect("/login?callbackUrl=/admin/brand");
 
   const hostId = String(formData.get("hostId") || "");
-  const returnTo = String(formData.get("returnTo") || "/admin/brand").trim();
+  const returnToRaw = String(formData.get("returnTo") || "/admin/brand").trim();
+  const returnTo =
+    returnToRaw.startsWith("/admin") || returnToRaw.startsWith("/ops")
+      ? returnToRaw
+      : "/admin/brand";
   if (!hostId) redirect("/admin/brand?error=missing");
   if (!access.isPlatform && access.hostId !== hostId) {
     redirect("/admin/brand?error=forbidden");

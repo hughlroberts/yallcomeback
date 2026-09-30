@@ -26,7 +26,7 @@ async function main() {
     throw new Error("Set ADMIN_PASSWORD to at least 8 characters");
   }
 
-  const passwordHash = await hash(password, 10);
+  const passwordHash = await hash(password, 12);
   const user = await prisma.user.upsert({
     where: { email },
     create: {

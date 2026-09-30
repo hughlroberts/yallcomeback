@@ -11,9 +11,12 @@ import {
   ensureHostAccess,
   resolveHostIdForCreate,
 } from "@/lib/scope";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
+import {
+  PROPERTY_IMAGE_MAX_BYTES,
+  readUploadedImage,
+  writePublicUpload,
+} from "@/lib/upload-image";
+import { assertSafeOutboundUrl } from "@/lib/safe-url";
 
 export async function createProperty(formData: FormData) {
   const access = await ensureHostAccess();
@@ -1183,7 +1186,12 @@ export async function deleteCalendarBlock(formData: FormData) {
   const id = String(formData.get("id") || "");
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
-  await prisma.calendarBlock.delete({ where: { id } });
+  const block = await prisma.calendarBlock.findFirst({
+    where: { id, propertyId },
+    select: { id: true },
+  });
+  if (!block) throw new Error("Block not found");
+  await prisma.calendarBlock.delete({ where: { id: block.id } });
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 
@@ -1191,11 +1199,15 @@ export async function addIcalImport(formData: FormData) {
   const access = await ensureHostAccess();
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
+  const importUrlRaw = String(formData.get("importUrl") || "").trim();
+  const importUrl = importUrlRaw
+    ? (await assertSafeOutboundUrl(importUrlRaw)).toString()
+    : null;
   await prisma.icalConnection.create({
     data: {
       propertyId,
       name: String(formData.get("name") || "Airbnb").trim(),
-      importUrl: String(formData.get("importUrl") || "").trim() || null,
+      importUrl,
       enabled: true,
     },
   });
@@ -1207,7 +1219,12 @@ export async function deleteIcalConnection(formData: FormData) {
   const id = String(formData.get("id") || "");
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
-  await prisma.icalConnection.delete({ where: { id } });
+  const connection = await prisma.icalConnection.findFirst({
+    where: { id, propertyId },
+    select: { id: true },
+  });
+  if (!connection) throw new Error("Calendar connection not found");
+  await prisma.icalConnection.delete({ where: { id: connection.id } });
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 
@@ -1216,8 +1233,13 @@ export async function syncIcalNow(formData: FormData) {
   const id = String(formData.get("id") || "");
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
+  const connection = await prisma.icalConnection.findFirst({
+    where: { id, propertyId },
+    select: { id: true },
+  });
+  if (!connection) throw new Error("Calendar connection not found");
   const { syncIcalConnection } = await import("@/lib/ical");
-  await syncIcalConnection(id);
+  await syncIcalConnection(connection.id);
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 
@@ -1225,21 +1247,24 @@ export async function uploadPropertyImage(formData: FormData) {
   const access = await ensureHostAccess();
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
-  const file = formData.get("file") as File | null;
-  if (!file || !propertyId) throw new Error("Missing file");
+  const parsed = await readUploadedImage(formData.get("file") as File | null, {
+    maxBytes: PROPERTY_IMAGE_MAX_BYTES,
+  });
+  if (!parsed.ok) {
+    if (parsed.error === "size") throw new Error("Image must be under 8 MB");
+    if (parsed.error === "type") {
+      throw new Error("Use a JPG, PNG, WebP, or GIF image");
+    }
+    throw new Error("Missing file");
+  }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const ext = path.extname(file.name) || ".jpg";
-  const filename = `${randomUUID()}${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", propertyId);
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), bytes);
+  const { publicUrl } = await writePublicUpload([propertyId], parsed.image);
 
   const count = await prisma.propertyImage.count({ where: { propertyId } });
   await prisma.propertyImage.create({
     data: {
       propertyId,
-      url: `/uploads/${propertyId}/${filename}`,
+      url: publicUrl,
       alt: String(formData.get("alt") || "") || null,
       sortOrder: count,
       isCover: count === 0,
@@ -1256,6 +1281,11 @@ export async function deletePropertyImage(formData: FormData) {
   const id = String(formData.get("id") || "");
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
-  await prisma.propertyImage.delete({ where: { id } });
+  const image = await prisma.propertyImage.findFirst({
+    where: { id, propertyId },
+    select: { id: true },
+  });
+  if (!image) throw new Error("Image not found");
+  await prisma.propertyImage.delete({ where: { id: image.id } });
   revalidatePath(`/admin/properties/${propertyId}`);
 }

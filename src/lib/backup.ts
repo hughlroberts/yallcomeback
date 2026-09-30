@@ -210,6 +210,25 @@ function uploadsRoot(): string {
   return path.join(process.cwd(), "public", "uploads");
 }
 
+/** Keep restore writes inside public/uploads (no .. / absolute paths). */
+function resolveUploadRel(rootResolved: string, rel: string): string | null {
+  if (!rel || typeof rel !== "string") return null;
+  const normalized = path.posix.normalize(rel.replace(/\\/g, "/"));
+  if (
+    !normalized ||
+    normalized.startsWith("..") ||
+    path.posix.isAbsolute(normalized)
+  ) {
+    return null;
+  }
+  const abs = path.resolve(rootResolved, normalized);
+  const prefix = rootResolved.endsWith(path.sep)
+    ? rootResolved
+    : rootResolved + path.sep;
+  if (abs !== rootResolved && !abs.startsWith(prefix)) return null;
+  return abs;
+}
+
 export async function buildHostingSummary(): Promise<HostingSummary> {
   const [plans, hosts] = await Promise.all([
     prisma.hostingPlan.findMany({ orderBy: { sortOrder: "asc" } }),
@@ -685,8 +704,10 @@ export async function restoreFullBackup(backup: FullBackup): Promise<{
 
   if (backup.uploadFiles) {
     const root = uploadsRoot();
+    const rootResolved = path.resolve(root);
     for (const [rel, b64] of Object.entries(backup.uploadFiles)) {
-      const abs = path.join(root, rel);
+      const abs = resolveUploadRel(rootResolved, rel);
+      if (!abs) continue;
       await fs.mkdir(path.dirname(abs), { recursive: true });
       await fs.writeFile(abs, Buffer.from(b64, "base64"));
     }

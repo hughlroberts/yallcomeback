@@ -120,7 +120,8 @@ export async function syncIcalConnection(connectionId: string) {
   }
 
   try {
-    const res = await fetch(connection.importUrl, {
+    const { fetchSafeOutbound } = await import("./safe-url");
+    const res = await fetchSafeOutbound(connection.importUrl, {
       headers: { "User-Agent": "Yall Come Back-iCal-Sync/1.0" },
       cache: "no-store",
     });

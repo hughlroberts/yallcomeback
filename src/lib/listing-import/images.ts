@@ -1,6 +1,8 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
+import { fetchSafeOutbound } from "@/lib/safe-url";
+import { sniffRemoteImage } from "@/lib/upload-image";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
@@ -35,20 +37,19 @@ export async function downloadListingImages(
         fetchUrl = `${remote}${remote.includes("?") ? "&" : "?"}im_w=1200`;
       }
 
-      const res = await fetch(fetchUrl, {
+      const res = await fetchSafeOutbound(fetchUrl, {
         headers: { "User-Agent": UA, Accept: "image/*" },
         cache: "no-store",
-        redirect: "follow",
       });
       if (!res.ok) continue;
       const ct = res.headers.get("content-type") || "";
       if (!ct.includes("image") && !ct.includes("octet-stream")) continue;
 
       const buf = Buffer.from(await res.arrayBuffer());
-      if (buf.length < 2000) continue;
+      const sniffed = sniffRemoteImage(buf);
+      if (!sniffed) continue;
 
-      const ext =
-        ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : "jpg";
+      const ext = sniffed.ext.slice(1);
       const filename = `${String(order).padStart(2, "0")}-${randomUUID().slice(0, 8)}.${ext}`;
       await writeFile(path.join(dir, filename), buf);
 

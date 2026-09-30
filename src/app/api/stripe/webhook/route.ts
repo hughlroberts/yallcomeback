@@ -25,20 +25,16 @@ export async function POST(req: Request) {
 
   if (!sig || !secret) {
     return NextResponse.json(
-      {
-        error:
-          "Missing STRIPE_WEBHOOK_SECRET. Add a snapshot webhook in Dashboard → Webhooks pointing at /api/stripe/webhook.",
-      },
-      { status: 400 },
+      { error: "Webhook not configured" },
+      { status: 503 },
     );
   }
 
   let event;
   try {
     event = stripeClient.webhooks.constructEvent(body, sig, secret);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid signature";
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
   if (event.type === "invoice.payment_failed") {

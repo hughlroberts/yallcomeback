@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runDailyHostingPaymentCheck } from "@/lib/hosting-payment-check";
+import { cronUnauthorized } from "@/lib/cron-auth";
 
 /**
  * Daily hosting payment check (force run).
@@ -7,17 +8,8 @@ import { runDailyHostingPaymentCheck } from "@/lib/hosting-payment-check";
  *     https://www.yallcomeback.app/api/cron/hosting-payments
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) {
-    return NextResponse.json(
-      { error: "Cron is not configured (CRON_SECRET missing)" },
-      { status: 503 },
-    );
-  }
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = cronUnauthorized(req);
+  if (denied) return denied;
 
   const result = await runDailyHostingPaymentCheck();
   return NextResponse.json(result);

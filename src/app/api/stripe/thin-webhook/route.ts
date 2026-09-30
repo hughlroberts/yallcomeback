@@ -23,15 +23,12 @@ export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
   if (!secret) {
     return NextResponse.json(
-      {
-        error:
-          "Missing STRIPE_THIN_WEBHOOK_SECRET. Create a thin event destination in Dashboard → Webhooks and paste the signing secret.",
-      },
-      { status: 400 },
+      { error: "Webhook not configured" },
+      { status: 503 },
     );
   }
   if (!sig) {
-    return NextResponse.json({ error: "Missing stripe-signature" }, { status: 400 });
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
   const stripeClient = getStripeClient() as ReturnType<typeof getStripeClient> & {
@@ -50,9 +47,8 @@ export async function POST(req: Request) {
       ? stripeClient.parseThinEvent.bind(stripeClient)
       : stripeClient.parseEventNotification.bind(stripeClient);
     thinEvent = parse(body, sig, secret) as { id: string; type?: string };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid thin event";
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
   const event = await stripeClient.v2.core.events.retrieve(thinEvent.id);

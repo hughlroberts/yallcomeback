@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { hash } from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { auth, signIn } from "@/lib/auth";
 import { Button, Input, Label, Card } from "@/components/ui";
+import { hashPassword } from "@/lib/password";
+import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 
 export const metadata = { title: "Create account" };
 
@@ -20,6 +21,10 @@ export default async function RegisterPage({
     const name = String(formData.get("name") || "").trim();
     const email = String(formData.get("email") || "").trim().toLowerCase();
     const password = String(formData.get("password") || "");
+    const ip = await incomingIp();
+    if (!rateLimitAllow(`register:ip:${ip}`, 5, 60 * 60 * 1000)) {
+      redirect("/register?error=rate");
+    }
 
     if (formData.get("acceptTerms") !== "on") {
       redirect("/register?error=terms");
@@ -31,7 +36,7 @@ export default async function RegisterPage({
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) redirect("/register?error=exists");
 
-    const passwordHash = await hash(password, 10);
+    const passwordHash = await hashPassword(password);
     await prisma.user.create({
       data: {
         name: name || null,
@@ -68,6 +73,11 @@ export default async function RegisterPage({
         {sp.error === "invalid" ? (
           <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
             Enter a valid email and a password of at least 8 characters.
+          </p>
+        ) : null}
+        {sp.error === "rate" ? (
+          <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            Too many accounts created from this network. Try again later.
           </p>
         ) : null}
         <form action={registerAction} className="mt-6 space-y-4">

@@ -1,10 +1,10 @@
 "use server";
 
-import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { hashPassword } from "@/lib/password";
 
 /**
  * Add another platform manager (role ADMIN). Hosts and guests are separate roles.
@@ -31,7 +31,7 @@ export async function addPlatformManager(formData: FormData) {
     redirect("/ops/managers?error=exists");
   }
 
-  const passwordHash = await hash(password, 10);
+  const passwordHash = await hashPassword(password);
 
   if (existing) {
     // Promote existing guest/host to platform admin carefully

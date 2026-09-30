@@ -142,7 +142,7 @@ Questions? Message us from your listing or booking.`,
 
   // Standalone host login (not platform admin). Prefer provision-cherokee-host-login.ts
   // for password rotation; keep this upsert in sync with production email.
-  const hostPassword = await hash("ChangeMe-Cherokee2026!", 10);
+  const hostPassword = await hash("ChangeMe-Cherokee2026!", 12);
   await prisma.user.upsert({
     where: { email: "cherokeelanding@icloud.com" },
     create: {

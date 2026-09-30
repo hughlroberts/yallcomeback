@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { recordPropertyView } from "@/lib/listing-insights";
+import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 /**
  * POST { propertyId } — count a public listing view (guest pages).
- * Light rate limit via no-store; clients should dedupe per session/tab.
+ * Clients should still dedupe per session/tab.
  */
 export async function POST(req: Request) {
+  const ip = incomingIpFromRequest(req);
+  if (!rateLimitAllow(`listing-views:${ip}`, 60, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   let body: { propertyId?: string };
   try {
     body = (await req.json()) as { propertyId?: string };

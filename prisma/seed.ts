@@ -33,8 +33,8 @@ async function main() {
   await prisma.host.deleteMany();
   await prisma.hostingPlan.deleteMany();
 
-  const passwordHash = await hash("admin12345", 10);
-  const hostPassword = await hash("host12345", 10);
+  const passwordHash = await hash("admin12345", 12);
+  const hostPassword = await hash("host12345", 12);
 
   await prisma.siteSettings.upsert({
     where: { id: "default" },

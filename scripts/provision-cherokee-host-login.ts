@@ -51,7 +51,7 @@ async function main() {
     },
   });
 
-  const passwordHash = await hash(passwordPlain, 10);
+  const passwordHash = await hash(passwordPlain, 12);
 
   // Primary host login
   const user = await prisma.user.upsert({
