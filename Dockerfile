@@ -36,7 +36,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-RUN addgroup --system --gid 1001 nodejs \
+RUN apk add --no-cache su-exec \
+  && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
@@ -49,10 +50,11 @@ COPY --from=builder /app/.next/static ./.next/static
 RUN mkdir -p public/uploads \
   && chown -R nextjs:nodejs /app
 
-USER nextjs
+# Start as root so the Railway backups volume can be chowned, then drop to nextjs.
+USER root
 EXPOSE 3000
 
 # Real DATABASE_URL must come from Railway Variables (link Postgres → this service).
 # --accept-data-loss is required for additive unique indexes and intended column
 # drops (db push, not migrate). --skip-generate: client was built in the image.
-CMD ["sh", "-c", "if [ -z \"$DATABASE_URL\" ]; then echo 'FATAL: DATABASE_URL is not set on this service. In Railway: add Postgres, then on the web service Variables add DATABASE_URL = ${{ Postgres.DATABASE_URL }} (use Variable Reference).'; exit 1; fi; if [ -n \"$BACKUP_DIR\" ]; then mkdir -p \"$BACKUP_DIR\" || echo \"WARN: cannot create BACKUP_DIR $BACKUP_DIR\"; fi; npx prisma db push --schema=prisma/schema.prisma --accept-data-loss --skip-generate && node server.js"]
+CMD ["sh", "-c", "if [ -z \"$DATABASE_URL\" ]; then echo 'FATAL: DATABASE_URL is not set on this service. In Railway: add Postgres, then on the web service Variables add DATABASE_URL = ${{ Postgres.DATABASE_URL }} (use Variable Reference).'; exit 1; fi; if [ -n \"$BACKUP_DIR\" ]; then mkdir -p \"$BACKUP_DIR\" && chown -R nextjs:nodejs \"$BACKUP_DIR\"; fi; exec su-exec nextjs sh -c 'npx prisma db push --schema=prisma/schema.prisma --accept-data-loss --skip-generate && node server.js'"]
