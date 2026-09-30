@@ -78,7 +78,6 @@ export default async function AdminPricingRunPage({
     },
   });
   if (!run) notFound();
-  if (!access.isPlatform && access.hostId !== run.hostId) notFound();
 
   const recs = run.recommendations;
   const pending = recs.filter((r) => r.status === "PENDING");

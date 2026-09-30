@@ -23,9 +23,14 @@ Every database table:
 | Where | When | Retention |
 | --- | --- | --- |
 | GitHub Actions → **Daily full backup** | 11:15 UTC (~6:15 America/Chicago), and on demand | 90 days, encrypted |
+| This Mac → `Documents/ycb-backups` | 6:20 local, via LaunchAgent | 90 days, encrypted |
 | Ops → Backups → **Download backup now** | Whenever you want a copy on your Mac | You keep the file |
 
 Required GitHub secrets: `CRON_SECRET`, `CRON_BASE_URL`, `BACKUP_ENCRYPTION_KEY`.
+
+The GitHub workflow file needs the `workflow` OAuth scope to push
+(`gh auth refresh -s workflow`, then `git push`). Until that is on `main`,
+this Mac’s LaunchAgent is the daily off-site copy.
 
 `BACKUP_ENCRYPTION_KEY` is mandatory because this repo is public — unencrypted
 Action artifacts would be downloadable by anyone.

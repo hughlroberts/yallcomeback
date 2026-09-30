@@ -3,20 +3,13 @@ import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
-  hostHasPricingIntelligenceAddon,
   isPricingIntelligenceEnabled,
-  pricingAddonStatusLabel,
   pricingIntelligenceLlmConfigured,
-  PRICING_INTELLIGENCE_ADDON_BLURB,
   PRICING_INTELLIGENCE_ADDON_LABEL,
   PRICING_INTELLIGENCE_ADDON_USD,
 } from "@/lib/platform-features";
 import { isStripeConfigured } from "@/lib/stripe";
-import {
-  cancelPricingIntelligenceAddon,
-  requestPricingIntelligenceAddon,
-  startPricingResearch,
-} from "@/app/actions/pricing-intelligence";
+import { startPricingResearch } from "@/app/actions/pricing-intelligence";
 import { Button, Card, PageHeader } from "@/components/ui";
 import { formatMoney } from "@/lib/utils";
 
@@ -57,41 +50,22 @@ export default async function AdminPricingPage({
     redirect("/admin");
   }
 
-  const hostFilter = access.isPlatform ? {} : { hostId: access.hostId! };
-
-  const hosts = access.isPlatform
-    ? await prisma.host.findMany({
-        where: { active: true, approvalStatus: "APPROVED" },
-        orderBy: { name: "asc" },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          pricingIntelligenceEnabled: true,
-          pricingIntelligenceAddonStatus: true,
-          pricingIntelligenceAddonAmount: true,
-        },
-        take: 80,
-      })
-    : [];
-
-  const billingHost =
-    !access.isPlatform && access.hostId
-      ? await prisma.host.findUnique({
-          where: { id: access.hostId },
-          select: {
-            id: true,
-            name: true,
-            pricingIntelligenceEnabled: true,
-            pricingIntelligenceAddonStatus: true,
-            pricingIntelligenceAddonAmount: true,
-            pricingIntelligenceAddonStartedAt: true,
-          },
-        })
-      : null;
+  const hosts = await prisma.host.findMany({
+    where: { active: true, approvalStatus: "APPROVED" },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      pricingIntelligenceEnabled: true,
+      pricingIntelligenceAddonStatus: true,
+      pricingIntelligenceAddonAmount: true,
+    },
+    take: 80,
+  });
 
   const runs = await prisma.pricingIntelligenceRun.findMany({
-    where: hostFilter,
+    where: {},
     orderBy: { createdAt: "desc" },
     take: 30,
     include: {
@@ -110,16 +84,8 @@ export default async function AdminPricingPage({
     },
   });
 
-  const defaultHostId = access.isPlatform
-    ? hosts[0]?.id || ""
-    : access.hostId || "";
-
-  const hostAddon = billingHost;
-  const addonActive = hostAddon
-    ? hostHasPricingIntelligenceAddon(hostAddon)
-    : false;
-  const addonAmount =
-    hostAddon?.pricingIntelligenceAddonAmount || PRICING_INTELLIGENCE_ADDON_USD;
+  const defaultHostId = hosts[0]?.id || "";
+  const addonAmount = PRICING_INTELLIGENCE_ADDON_USD;
 
   return (
     <div className="space-y-8">
@@ -158,76 +124,7 @@ export default async function AdminPricingPage({
         </p>
       ) : null}
 
-      {/* Subscription / add-on card */}
-      {!access.isPlatform && hostAddon ? (
-        <Card className="space-y-4 border-honey/40 bg-honey/5 p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-bonnet">
-                Optional add-on
-              </p>
-              <h2 className="mt-1 text-lg font-semibold text-stone-900">
-                {PRICING_INTELLIGENCE_ADDON_LABEL}
-              </h2>
-              <p className="mt-1 text-2xl font-semibold tabular-nums text-stone-900">
-                {formatMoney(addonAmount)}
-                <span className="text-sm font-medium text-stone-500">
-                  /month
-                </span>
-              </p>
-              <p className="mt-2 max-w-xl text-sm text-stone-600">
-                {PRICING_INTELLIGENCE_ADDON_BLURB}
-              </p>
-            </div>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-stone-700 ring-1 ring-stone-200">
-              {pricingAddonStatusLabel(hostAddon.pricingIntelligenceAddonStatus)}
-            </span>
-          </div>
-          <ul className="list-inside list-disc text-sm text-stone-600">
-            <li>Monthly capacity-matched market research for your rates</li>
-            <li>Human approve before any price change</li>
-            <li>
-              <strong>Not included</strong> in website hosting or free self-host
-            </li>
-            <li>Shows as its own line on invoices when active</li>
-          </ul>
-          {addonActive ? (
-            <form action={cancelPricingIntelligenceAddon}>
-              <input type="hidden" name="hostId" value={hostAddon.id} />
-              <Button type="submit" variant="secondary">
-                Cancel add-on
-              </Button>
-            </form>
-          ) : hostAddon.pricingIntelligenceAddonStatus === "REQUESTED" ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-amber-900">
-                Checkout started or request received — finishes when payment
-                succeeds (Stripe) or ops marks Active.
-              </p>
-              <form action={requestPricingIntelligenceAddon}>
-                <input type="hidden" name="hostId" value={hostAddon.id} />
-                <Button type="submit" variant="secondary">
-                  Resume checkout · {formatMoney(addonAmount)}/mo
-                </Button>
-              </form>
-            </div>
-          ) : (
-            <form action={requestPricingIntelligenceAddon}>
-              <input type="hidden" name="hostId" value={hostAddon.id} />
-              <Button type="submit">
-                Subscribe · {formatMoney(addonAmount)}/mo
-              </Button>
-              <p className="mt-2 text-xs text-stone-500">
-                Opens Stripe Checkout when billing is configured; otherwise
-                queues a request for ops.
-              </p>
-            </form>
-          )}
-        </Card>
-      ) : null}
-
-      {access.isPlatform ? (
-        <Card className="space-y-3 border-stone-300 bg-stone-50 p-5 text-sm text-stone-700">
+      <Card className="space-y-3 border-stone-300 bg-stone-50 p-5 text-sm text-stone-700">
           <p className="font-semibold text-stone-900">
             Ops controls (secret rollout)
           </p>
@@ -257,7 +154,6 @@ export default async function AdminPricingPage({
             Not advertised on marketing pages. Not in open source.
           </p>
         </Card>
-      ) : null}
 
       <Card className="space-y-4 p-6">
         <h2 className="text-lg font-semibold text-stone-900">
@@ -296,47 +192,31 @@ export default async function AdminPricingPage({
           action={startPricingResearch}
           className="flex flex-wrap items-end gap-3"
         >
-          {access.isPlatform ? (
-            <>
-              <label className="text-sm">
-                <span className="font-medium text-stone-700">Host brand</span>
-                <select
-                  name="hostId"
-                  defaultValue={defaultHostId}
-                  className="mt-1 block min-w-[14rem] rounded-xl border border-stone-300 px-3 py-2"
-                  required
-                >
-                  {hosts.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {h.name}
-                      {h.pricingIntelligenceEnabled ? " · beta" : " · hidden"}
-                      {h.pricingIntelligenceAddonStatus === "ACTIVE"
-                        ? " · paid"
-                        : " · unpaid"}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex items-center gap-2 text-xs text-stone-600">
-                <input type="checkbox" name="bypassAddon" value="1" />
-                Bypass access / payment (your testing only)
-              </label>
-            </>
-          ) : (
-            <input type="hidden" name="hostId" value={defaultHostId} />
-          )}
-          <Button
-            type="submit"
-            disabled={!access.isPlatform && !addonActive}
-          >
-            Start research run
-          </Button>
+          <label className="text-sm">
+            <span className="font-medium text-stone-700">Host brand</span>
+            <select
+              name="hostId"
+              defaultValue={defaultHostId}
+              className="mt-1 block min-w-[14rem] rounded-xl border border-stone-300 px-3 py-2"
+              required
+            >
+              {hosts.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.name}
+                  {h.pricingIntelligenceEnabled ? " · beta" : " · hidden"}
+                  {h.pricingIntelligenceAddonStatus === "ACTIVE"
+                    ? " · paid"
+                    : " · unpaid"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-xs text-stone-600">
+            <input type="checkbox" name="bypassAddon" value="1" />
+            Bypass access / payment (your testing only)
+          </label>
+          <Button type="submit">Start research run</Button>
         </form>
-        {!access.isPlatform && !addonActive ? (
-          <p className="text-xs text-stone-500">
-            Subscribe to the add-on above before running research.
-          </p>
-        ) : null}
       </Card>
 
       <div>
