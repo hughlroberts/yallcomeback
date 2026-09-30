@@ -159,5 +159,55 @@ export async function runSystemChecks(): Promise<{
     });
   }
 
+  try {
+    const { lastBackupRun, backupRunIsStale } = await import("@/lib/backup");
+    const last = await lastBackupRun();
+    if (!last?.lastFinishedAt) {
+      rows.push({
+        label: "Daily full backup",
+        value: "Never run",
+        tone: "warn",
+      });
+      findings.push({
+        id: "backup:never",
+        checkId: "backup_check",
+        severity: "warning",
+        title: "No off-site backup has been recorded",
+        detail:
+          "GitHub Actions should pull /api/cron/backup daily. Ops → Backups can also download a copy now.",
+        href: "/ops/backups",
+      });
+    } else {
+      const ageH =
+        (now.getTime() - last.lastFinishedAt.getTime()) / 3_600_000;
+      const stale = backupRunIsStale(last, now);
+      rows.push({
+        label: "Daily full backup",
+        value: `${last.lastOk ? "OK" : "Failed"} · ${Math.round(ageH)}h ago`,
+        tone: stale ? "warn" : "ok",
+      });
+      if (stale) {
+        findings.push({
+          id: "backup:stale",
+          checkId: "backup_check",
+          severity: ageH > 36 ? "critical" : "warning",
+          title: ageH > 36
+            ? "Off-site backup is stale"
+            : "Last off-site backup failed",
+          detail:
+            last.lastSummary ||
+            "Run the Daily full backup GitHub Action or GET /api/cron/backup with CRON_SECRET.",
+          href: "/ops/backups",
+        });
+      }
+    }
+  } catch {
+    rows.push({
+      label: "Daily full backup",
+      value: "Unavailable",
+      tone: "warn",
+    });
+  }
+
   return { findings, rows };
 }

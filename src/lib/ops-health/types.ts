@@ -20,6 +20,7 @@ export type HealthCheckId =
   | "cron_configured"
   | "cron_in_process"
   | "hosting_payment_check"
+  | "backup_check"
   | "counts";
 
 export type HealthFinding = {
@@ -67,4 +68,5 @@ export const RESIDUAL_RISKS: string[] = [
   "Imported calendar feeds can overlap live bookings (external channel already sold the night).",
   "Deleting a booking calendar block can reopen nights while the booking row stays active.",
   "Pending payment holds do not auto-expire — abandoned requests can block dates indefinitely.",
+  "Listing photos stored under /uploads live on ephemeral Railway disk and can vanish on redeploy; the daily backup embeds them only when the total is under 40 MB.",
 ];

@@ -50,6 +50,7 @@ export default async function OpsLayout({
     { href: "/ops/pricing-comps", label: "Pricing comps" },
     { href: "/ops/managers", label: "Managers" },
     { href: "/ops/health", label: "Health" },
+    { href: "/ops/backups", label: "Backups" },
     { href: "/ops/settings", label: "Platform settings" },
   ];
 
