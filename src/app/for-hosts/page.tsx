@@ -202,7 +202,7 @@ export default async function ForHostsPage({
               className="group flex flex-col rounded-3xl border border-bonnet/25 bg-gradient-to-br from-petal/60 to-white p-6 shadow-sm ring-1 ring-bonnet/10 transition hover:border-bonnet/40 hover:shadow-md"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                2 · Branded website · $15/listing/mo
+                2 · Branded website · $25/listing/mo
               </p>
               <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
                 Your brand, your domain. We host the site.
@@ -221,7 +221,7 @@ export default async function ForHostsPage({
                 — same stays can appear on Find a Place with no second fee.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                <li>✓ $15 / published listing / month (includes marketplace)</li>
+                <li>✓ $25 / published listing / month (includes marketplace)</li>
                 <li>✓ Branded site + DNS on your domain</li>
                 <li>✓ Demo to Live publish before DNS cutover</li>
               </ul>
@@ -396,6 +396,7 @@ export default async function ForHostsPage({
               plans={plans.map((p) => ({
                 id: p.id,
                 name: p.name,
+                slug: p.slug,
                 monthlyPrice: p.monthlyPrice,
                 pricingModel: p.pricingModel,
                 description: p.description,

@@ -12,6 +12,7 @@ import { formatMoney } from "@/lib/utils";
 type PlanOption = {
   id: string;
   name: string;
+  slug?: string;
   monthlyPrice: number;
   pricingModel: "PER_PROPERTY" | "FLAT";
   description: string | null;
@@ -41,11 +42,13 @@ export function HostSignupForm({
   const [listOnMarketplace, setListOnMarketplace] = useState(true);
 
   const marketplacePlanId =
+    plans.find((p) => p.slug === "marketplace")?.id ||
     plans.find((p) => p.monthlyPrice === 5)?.id ||
     plans.find((p) => /marketplace/i.test(p.name))?.id ||
     "";
   const brandedPlanId =
-    plans.find((p) => p.monthlyPrice === 15)?.id ||
+    plans.find((p) => p.slug === "branded")?.id ||
+    plans.find((p) => p.monthlyPrice === 25)?.id ||
     plans.find((p) => /branded/i.test(p.name))?.id ||
     plans.find((p) => p.isDefault)?.id ||
     plans[0]?.id ||
@@ -177,7 +180,7 @@ export function HostSignupForm({
               <strong className="text-stone-800">
                 {paidPlan === "marketplace"
                   ? "Marketplace only · $5 / listing / month"
-                  : "Branded website · $15 / listing / month (marketplace included, optional)"}
+                  : "Branded website · $25 / listing / month (marketplace included, optional)"}
               </strong>
               . You can upgrade or change later in Brand &amp; website.
             </p>
@@ -200,7 +203,7 @@ export function HostSignupForm({
                   },
                   {
                     id: "website" as const,
-                    label: "Branded website · $15/listing/mo",
+                    label: "Branded website · $25/listing/mo",
                     hint: "Hosted brand site on your domain (logo, palette, About, services). Marketplace listing included — no second fee. Uncheck below if you do not want Find a Place.",
                   },
                 ] as const

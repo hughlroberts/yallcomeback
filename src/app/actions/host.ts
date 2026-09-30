@@ -108,7 +108,7 @@ export async function registerHost(formData: FormData) {
 
   let resolvedPlanId = planId;
   if (hostingMode === "PLATFORM") {
-    // Couple plan to guest-facing product so $5 marketplace vs $15 branded stays consistent
+    // Couple plan to guest-facing product so $5 marketplace vs $25 branded stays consistent
     const wantSlug = planSlugForSitePresence(sitePresence);
     const matched = await prisma.hostingPlan.findFirst({
       where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },

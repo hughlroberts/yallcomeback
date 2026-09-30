@@ -43,8 +43,8 @@ async function main() {
       name: "Branded website",
       slug: "branded",
       description:
-        "$15 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
-      monthlyPrice: 15,
+        "$25 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
+      monthlyPrice: 25,
       pricingModel: "PER_PROPERTY",
       minProperties: 1,
       currency: "USD",
@@ -55,8 +55,8 @@ async function main() {
     update: {
       name: "Branded website",
       description:
-        "$15 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
-      monthlyPrice: 15,
+        "$25 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
+      monthlyPrice: 25,
       pricingModel: "PER_PROPERTY",
       isActive: true,
       isDefault: true,

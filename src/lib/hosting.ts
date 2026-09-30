@@ -135,7 +135,7 @@ export function sitePresenceLabel(mode: HostSitePresence): string {
 }
 
 /**
- * Paid product is marketplace ($5) vs branded website ($15).
+ * Paid product is marketplace ($5) vs branded website ($25).
  * Marketplace listing is a checkbox on the website plan, not a third product.
  * Marketplace-only always lists on Find a Place.
  */

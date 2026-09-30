@@ -230,7 +230,7 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             <strong>PLATFORM (paid)</strong> — Marketplace only at $5 per
-            published listing / month, or branded website at $15 per published
+            published listing / month, or branded website at $25 per published
             listing / month (marketplace included). Full brand-domain guide:{" "}
             <Link
               href="/help/branded-website"
@@ -735,7 +735,7 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             month. Guests book on Find a Place. No custom brand site.
           </li>
           <li>
-            <strong>Branded website</strong> — $15 per published listing /
+            <strong>Branded website</strong> — $25 per published listing /
             month. Yall Come Back hosts your brand site on your domain.{" "}
             Marketplace listing is included (no second fee).
           </li>
@@ -1459,7 +1459,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             not keep a separate brand website.
           </li>
           <li>
-            <strong>2 · Branded website — $15 / listing / month</strong> — Yall
+            <strong>2 · Branded website — $25 / listing / month</strong> — Yall
             Come Back hosts a site that looks like your brand. Point your domain
             with DNS. This plan{" "}
             <strong>includes marketplace listing</strong> for the same stays —
@@ -1478,7 +1478,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         </HelpUl>
         <HelpP>
           Example: three published stays on the branded plan cost{" "}
-          <strong>$45 / month</strong> total ($15 × 3). The same three stays on
+          <strong>$75 / month</strong> total ($25 × 3). The same three stays on
           marketplace only cost <strong>$15 / month</strong> ($5 × 3).
         </HelpP>
       </HelpSection>
@@ -1511,7 +1511,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         <HelpP>
           Open Admin → Brand &amp; website and select{" "}
           <strong>Create my branded website</strong>. That switches you to the
-          $15 plan (marketplace stays included), unlocks logo and domain fields,
+          $25 plan (marketplace stays included), unlocks logo and domain fields,
           and keeps your listings. Then buy a domain at your registrar and enter
           it under Domain &amp; guest site.
         </HelpP>
