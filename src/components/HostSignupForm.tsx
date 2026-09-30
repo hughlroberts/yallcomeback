@@ -110,33 +110,6 @@ export function HostSignupForm({
             : "Put your stays and calendar here. Add a card to subscribe. Listings go live when hosting is paid."}
       </p>
 
-      <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-stone-100 p-1">
-        <button
-          type="button"
-          onClick={() => setPath("paid")}
-          className={[
-            "rounded-lg px-3 py-2.5 text-sm font-semibold transition",
-            path === "paid"
-              ? "bg-white text-stone-900 shadow-sm"
-              : "text-stone-600 hover:text-stone-900",
-          ].join(" ")}
-        >
-          Paid hosting
-        </button>
-        <button
-          type="button"
-          onClick={() => setPath("self")}
-          className={[
-            "rounded-lg px-3 py-2.5 text-sm font-semibold transition",
-            path === "self"
-              ? "bg-white text-stone-900 shadow-sm ring-2 ring-bonnet/30"
-              : "text-stone-600 hover:text-stone-900",
-          ].join(" ")}
-        >
-          Free self-host
-        </button>
-      </div>
-
       <div className="mt-5 space-y-4">
         {existingAccount ? (
           <p className="rounded-xl bg-stone-50 px-3 py-2 text-sm text-stone-700">
@@ -380,6 +353,33 @@ export function HostSignupForm({
               ? "Start hosting on this account"
               : "Create host account"}
       </button>
+
+      <p className="mt-5 border-t border-stone-100 pt-4 text-center text-xs text-stone-500">
+        {path === "self" ? (
+          <button
+            type="button"
+            onClick={() => setPath("paid")}
+            className="font-medium text-bonnet hover:underline"
+          >
+            Back to hosted plans
+          </button>
+        ) : (
+          <>
+            Running it on your own servers?{" "}
+            <button
+              type="button"
+              onClick={() => setPath("self")}
+              className="font-medium text-bonnet hover:underline"
+            >
+              Free self-host
+            </button>
+            {" · "}
+            <a href="/self-host" className="font-medium text-bonnet hover:underline">
+              Deploy guide
+            </a>
+          </>
+        )}
+      </p>
     </form>
   );
 }
