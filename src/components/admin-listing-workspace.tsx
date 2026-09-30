@@ -462,6 +462,247 @@ function priceForDate(
   return rateWithWeekend(base, day, weekendPremiumPercent);
 }
 
+type CalendarSpan = 1 | 3 | 12;
+type CalendarDensity = "full" | "quarter" | "year";
+
+function CalendarMonth({
+  year,
+  month,
+  density,
+  stays,
+  blockedSet,
+  seasons,
+  baseNightlyRate,
+  weekendPremiumPercent,
+  rangeStart,
+  rangeEnd,
+  today,
+  onDayClick,
+  onTitleClick,
+}: {
+  year: number;
+  month: number;
+  density: CalendarDensity;
+  stays: StayBar[];
+  blockedSet: Set<string>;
+  seasons: Season[];
+  baseNightlyRate: number;
+  weekendPremiumPercent: number;
+  rangeStart: string | null;
+  rangeEnd: string | null;
+  today: Date;
+  onDayClick: (key: string) => void;
+  onTitleClick?: () => void;
+}) {
+  const cells = monthMatrix(year, month);
+  const compact = density !== "full";
+  const yearView = density === "year";
+  const title = new Date(year, month, 1).toLocaleDateString("en-US", {
+    month: "long",
+    ...(yearView ? {} : { year: "numeric" }),
+  });
+
+  function isInRange(key: string) {
+    if (!rangeStart) return false;
+    const end = rangeEnd || rangeStart;
+    const a = rangeStart <= end ? rangeStart : end;
+    const b = rangeStart <= end ? end : rangeStart;
+    if (!rangeEnd) return key === rangeStart;
+    return key >= a && key < b;
+  }
+
+  return (
+    <div className="min-w-0">
+      {compact ? (
+        <button
+          type="button"
+          onClick={onTitleClick}
+          className={cn(
+            "mb-1.5 text-left font-semibold text-stone-900 hover:text-bonnet",
+            yearView ? "text-sm" : "text-base",
+          )}
+        >
+          {title}
+        </button>
+      ) : null}
+      <div
+        className={cn(
+          "mb-0.5 grid grid-cols-7",
+          yearView ? "gap-px" : "gap-px",
+        )}
+      >
+        {WEEKDAYS.map((d) => (
+          <div
+            key={d}
+            className={cn(
+              "text-center font-medium uppercase tracking-wide text-stone-400",
+              yearView ? "py-0.5 text-[9px]" : "py-1.5 text-[10px] sm:text-xs",
+            )}
+          >
+            {yearView ? d.slice(0, 1) : d}
+          </div>
+        ))}
+      </div>
+      <div className={yearView ? "space-y-px" : "overflow-hidden rounded-xl"}>
+        {Array.from({ length: 6 }, (_, weekIndex) => {
+          const week = cells.slice(weekIndex * 7, weekIndex * 7 + 7);
+          const weekStartKey = ymd(week[0]);
+          const weekEndKey = ymd(week[6]);
+          const weekBars = yearView
+            ? []
+            : stays
+                .map((stay) => {
+                  const visStart = stay.start;
+                  const visEnd = stay.end;
+                  if (visEnd < weekStartKey || visStart > weekEndKey) {
+                    return null;
+                  }
+                  const startCol =
+                    visStart <= weekStartKey ? 0 : parseYmd(visStart).getDay();
+                  const endCol =
+                    visEnd >= weekEndKey ? 6 : parseYmd(visEnd).getDay();
+                  if (endCol < startCol) return null;
+                  return {
+                    ...stay,
+                    startCol,
+                    span: endCol - startCol + 1,
+                    roundLeft: visStart >= weekStartKey,
+                    roundRight: visEnd <= weekEndKey,
+                    showLabel: visStart >= weekStartKey || startCol === 0,
+                  };
+                })
+                .filter((b): b is NonNullable<typeof b> => b != null);
+
+          return (
+            <div
+              key={weekStartKey}
+              className={cn(
+                "relative grid grid-cols-7",
+                yearView ? "gap-px" : "mb-1 gap-1 last:mb-0",
+              )}
+            >
+              {week.map((date) => {
+                const key = ymd(date);
+                const inMonth = date.getMonth() === month;
+                const isPast = startOfDay(date) < today;
+                const isBlocked = blockedSet.has(key);
+                const isToday = key === ymd(today);
+                const inRange = isInRange(key);
+                const isRangeEdge =
+                  key === rangeStart ||
+                  (rangeEnd != null && key === rangeEnd);
+                const price = priceForDate(
+                  date,
+                  baseNightlyRate,
+                  weekendPremiumPercent,
+                  seasons,
+                );
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                const coveredByBar = weekBars.some(
+                  (bar) =>
+                    date.getDay() >= bar.startCol &&
+                    date.getDay() <= bar.startCol + bar.span - 1,
+                );
+                const occupied = isBlocked || coveredByBar;
+
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => onDayClick(key)}
+                    title={
+                      occupied
+                        ? stays.find(
+                            (s) => s.start <= key && s.end >= key,
+                          )?.title
+                        : undefined
+                    }
+                    className={cn(
+                      "relative flex flex-col items-start text-left transition-colors",
+                      yearView
+                        ? "h-7 items-center justify-center rounded-md p-0"
+                        : density === "quarter"
+                          ? "min-h-[3.75rem] rounded-lg p-1 sm:min-h-[4.25rem]"
+                          : "min-h-[5.25rem] rounded-xl p-1.5 sm:min-h-[6rem] sm:p-2",
+                      !inMonth &&
+                        (yearView ? "text-stone-200" : "bg-stone-50 text-stone-300"),
+                      inMonth &&
+                        !occupied &&
+                        !inRange &&
+                        (yearView
+                          ? "hover:bg-stone-100"
+                          : "bg-stone-50 hover:bg-stone-100/80"),
+                      inMonth && occupied && !inRange && !yearView && "bg-stone-100",
+                      inMonth && occupied && yearView && "bg-stone-500 text-white",
+                      inRange && "bg-bonnet/15",
+                      isRangeEdge && "ring-2 ring-inset ring-bonnet",
+                      isPast && inMonth && !yearView && "opacity-55",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex items-center justify-center font-medium",
+                        yearView ? "size-6 text-[11px]" : "size-6 text-sm sm:size-7",
+                        isToday &&
+                          !yearView &&
+                          "rounded-full bg-bonnet text-white",
+                        isToday &&
+                          yearView &&
+                          !occupied &&
+                          "rounded-full bg-bonnet text-white",
+                        !isToday && isWeekend && inMonth && !yearView && "text-stone-900",
+                        !inMonth && !yearView && "text-stone-300",
+                      )}
+                    >
+                      {inMonth || !yearView ? date.getDate() : ""}
+                    </span>
+                    {!yearView && !isBlocked && !coveredByBar && inMonth ? (
+                      <span
+                        className={cn(
+                          "mt-0.5 font-semibold tabular-nums text-stone-900",
+                          density === "quarter"
+                            ? "text-[10px]"
+                            : "text-[12px] sm:text-[13px]",
+                        )}
+                      >
+                        {formatMoney(price)}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+              {weekBars.map((bar) => (
+                <div
+                  key={bar.id}
+                  title={bar.title}
+                  className={cn(
+                    "pointer-events-none absolute z-10 flex items-center overflow-hidden bg-stone-500 px-1.5 font-semibold text-white shadow-sm",
+                    density === "quarter"
+                      ? "bottom-1 h-5 text-[10px]"
+                      : "bottom-2 h-7 px-2 text-[11px] sm:h-8 sm:text-xs",
+                    bar.roundLeft && "rounded-l-full",
+                    bar.roundRight && "rounded-r-full",
+                    !bar.roundLeft && "rounded-l-sm",
+                    !bar.roundRight && "rounded-r-sm",
+                  )}
+                  style={{
+                    left: `calc(${bar.startCol} * (100% - 1.5rem) / 7 + ${bar.startCol} * 0.25rem + 0.15rem)`,
+                    width: `calc(${bar.span} * (100% - 1.5rem) / 7 + ${bar.span - 1} * 0.25rem - 0.3rem)`,
+                  }}
+                >
+                  {bar.showLabel ? (
+                    <span className="truncate">{bar.label}</span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 type TabId =
   | "calendar"
   | "insights"
@@ -518,6 +759,7 @@ export function AdminListingWorkspace({
   const [rangeStart, setRangeStart] = useState<string | null>(null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [blockSheetOpen, setBlockSheetOpen] = useState(false);
+  const [monthsShown, setMonthsShown] = useState<CalendarSpan>(1);
 
   const blockedSet = useMemo(() => {
     const local = new Set<string>();
@@ -574,12 +816,35 @@ export function AdminListingWorkspace({
 
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
-  const cells = monthMatrix(year, month);
   const today = startOfDay(new Date());
   const monthLabel = cursor.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
+  const monthsToRender =
+    monthsShown === 12
+      ? Array.from({ length: 12 }, (_, i) => new Date(year, i, 1))
+      : Array.from(
+          { length: monthsShown },
+          (_, i) => new Date(year, month + i, 1),
+        );
+  const spanLabel =
+    monthsShown === 12
+      ? String(year)
+      : monthsShown === 3
+        ? `${monthsToRender[0].toLocaleDateString("en-US", { month: "short" })} – ${monthsToRender[2].toLocaleDateString("en-US", { month: "short", year: "numeric" })}`
+        : monthLabel;
+  const density: CalendarDensity =
+    monthsShown === 12 ? "year" : monthsShown === 3 ? "quarter" : "full";
+  const wideCalendar = monthsShown !== 1;
+
+  function stepCursor(dir: -1 | 1) {
+    if (monthsShown === 12) {
+      setCursor(new Date(year + dir, 0, 1));
+      return;
+    }
+    setCursor(new Date(year, month + dir * monthsShown, 1));
+  }
 
   const photos = [...property.images].sort((a, b) => {
     if (a.isCover !== b.isCover) return a.isCover ? -1 : 1;
@@ -602,16 +867,6 @@ export function AdminListingWorkspace({
     const d = parseYmd(s);
     d.setDate(d.getDate() + days);
     return ymd(d);
-  }
-
-  function isInRange(key: string) {
-    if (!rangeStart) return false;
-    const end = rangeEnd || rangeStart;
-    const a = rangeStart <= end ? rangeStart : end;
-    const b = rangeStart <= end ? end : rangeStart;
-    // highlight nights [start, checkout) — if only start, just that night
-    if (!rangeEnd) return key === rangeStart;
-    return key >= a && key < b;
   }
 
   function onDayClick(key: string) {
@@ -795,9 +1050,21 @@ export function AdminListingWorkspace({
       </div>
 
       {tab === "calendar" ? (
-        <div className="grid gap-4 lg:grid-cols-[88px_minmax(0,1fr)_300px] xl:grid-cols-[96px_minmax(0,1fr)_320px]">
+        <div
+          className={cn(
+            "grid gap-4",
+            wideCalendar
+              ? "grid-cols-1"
+              : "lg:grid-cols-[88px_minmax(0,1fr)_300px] xl:grid-cols-[96px_minmax(0,1fr)_320px]",
+          )}
+        >
           {/* Left photo strip */}
-          <aside className="hidden flex-col gap-2 lg:flex">
+          <aside
+            className={cn(
+              "hidden flex-col gap-2 lg:flex",
+              wideCalendar && "!hidden",
+            )}
+          >
             {cover ? (
               <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-100 shadow-sm">
                 <Image src={cover} alt="" fill className="object-cover" sizes="96px" />
@@ -847,19 +1114,19 @@ export function AdminListingWorkspace({
                 <button
                   type="button"
                   className="inline-flex size-9 items-center justify-center rounded-full text-stone-700 hover:bg-stone-100"
-                  onClick={() => setCursor(new Date(year, month - 1, 1))}
-                  aria-label="Previous month"
+                  onClick={() => stepCursor(-1)}
+                  aria-label="Previous"
                 >
                   <ChevronLeft className="size-5" />
                 </button>
                 <h2 className="min-w-[10rem] text-center text-lg font-semibold tracking-tight text-stone-900">
-                  {monthLabel}
+                  {spanLabel}
                 </h2>
                 <button
                   type="button"
                   className="inline-flex size-9 items-center justify-center rounded-full text-stone-700 hover:bg-stone-100"
-                  onClick={() => setCursor(new Date(year, month + 1, 1))}
-                  aria-label="Next month"
+                  onClick={() => stepCursor(1)}
+                  aria-label="Next"
                 >
                   <ChevronRight className="size-5" />
                 </button>
@@ -871,12 +1138,35 @@ export function AdminListingWorkspace({
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-full bg-stone-500" /> Stay / block
                 </span>
+                <div className="inline-flex rounded-full border border-stone-200 bg-stone-50 p-0.5">
+                  {([1, 3, 12] as const).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => {
+                        setMonthsShown(n);
+                        if (n === 12) {
+                          setCursor(new Date(year, 0, 1));
+                        }
+                      }}
+                      className={cn(
+                        "rounded-full px-2.5 py-1 text-xs font-medium",
+                        monthsShown === n
+                          ? "bg-white text-stone-900 shadow-sm"
+                          : "text-stone-500 hover:text-stone-800",
+                      )}
+                    >
+                      {n === 12 ? "12 months" : n === 3 ? "3 months" : "1 month"}
+                    </button>
+                  ))}
+                </div>
                 <button
                   type="button"
                   className="rounded-full border border-stone-200 px-3 py-1 text-xs font-medium text-stone-700 hover:bg-stone-50"
                   onClick={() => {
                     const n = new Date();
                     setCursor(new Date(n.getFullYear(), n.getMonth(), 1));
+                    setMonthsShown(1);
                   }}
                 >
                   Today
@@ -885,140 +1175,38 @@ export function AdminListingWorkspace({
             </div>
 
             <div className="p-3 sm:p-4">
-              <div className="mb-1 grid grid-cols-7 gap-px">
-                {WEEKDAYS.map((d) => (
-                  <div
-                    key={d}
-                    className="py-2 text-center text-xs font-medium uppercase tracking-wide text-stone-400"
-                  >
-                    {d}
-                  </div>
+              <div
+                className={cn(
+                  monthsShown === 12 &&
+                    "grid gap-6 sm:grid-cols-2 lg:grid-cols-4",
+                  monthsShown === 3 && "grid gap-6 lg:grid-cols-3",
+                )}
+              >
+                {monthsToRender.map((d) => (
+                  <CalendarMonth
+                    key={`${d.getFullYear()}-${d.getMonth()}`}
+                    year={d.getFullYear()}
+                    month={d.getMonth()}
+                    density={density}
+                    stays={stays}
+                    blockedSet={blockedSet}
+                    seasons={seasons}
+                    baseNightlyRate={property.baseNightlyRate}
+                    weekendPremiumPercent={property.weekendPremiumPercent}
+                    rangeStart={rangeStart}
+                    rangeEnd={rangeEnd}
+                    today={today}
+                    onDayClick={onDayClick}
+                    onTitleClick={
+                      monthsShown === 1
+                        ? undefined
+                        : () => {
+                            setCursor(new Date(d.getFullYear(), d.getMonth(), 1));
+                            setMonthsShown(1);
+                          }
+                    }
+                  />
                 ))}
-              </div>
-              <div className="overflow-hidden rounded-xl">
-                {Array.from({ length: 6 }, (_, weekIndex) => {
-                  const week = cells.slice(weekIndex * 7, weekIndex * 7 + 7);
-                  const weekStartKey = ymd(week[0]);
-                  const weekEndKey = ymd(week[6]);
-                  const weekBars = stays
-                    .map((stay) => {
-                      // Visual bar includes checkout morning so a Sep 29 → Oct 1
-                      // checkout still paints on Oct 1 in this month grid.
-                      const visStart = stay.start;
-                      const visEnd = stay.end;
-                      if (visEnd < weekStartKey || visStart > weekEndKey) {
-                        return null;
-                      }
-                      const startCol =
-                        visStart <= weekStartKey
-                          ? 0
-                          : parseYmd(visStart).getDay();
-                      const endCol =
-                        visEnd >= weekEndKey ? 6 : parseYmd(visEnd).getDay();
-                      if (endCol < startCol) return null;
-                      return {
-                        ...stay,
-                        startCol,
-                        span: endCol - startCol + 1,
-                        roundLeft: visStart >= weekStartKey,
-                        roundRight: visEnd <= weekEndKey,
-                        showLabel: visStart >= weekStartKey || startCol === 0,
-                      };
-                    })
-                    .filter((b): b is NonNullable<typeof b> => b != null);
-
-                  return (
-                    <div
-                      key={weekStartKey}
-                      className="relative mb-1 grid grid-cols-7 gap-1 last:mb-0"
-                    >
-                      {week.map((date) => {
-                        const key = ymd(date);
-                        const inMonth = date.getMonth() === month;
-                        const isPast = startOfDay(date) < today;
-                        const isBlocked = blockedSet.has(key);
-                        const isToday = key === ymd(today);
-                        const inRange = isInRange(key);
-                        const isRangeEdge =
-                          key === rangeStart ||
-                          (rangeEnd != null && key === rangeEnd);
-                        const price = priceForDate(
-                          date,
-                          property.baseNightlyRate,
-                          property.weekendPremiumPercent,
-                          seasons,
-                        );
-                        const isWeekend =
-                          date.getDay() === 0 || date.getDay() === 6;
-                        const coveredByBar = weekBars.some(
-                          (bar) =>
-                            date.getDay() >= bar.startCol &&
-                            date.getDay() <= bar.startCol + bar.span - 1,
-                        );
-
-                        return (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => onDayClick(key)}
-                            className={cn(
-                              "relative flex min-h-[5.25rem] flex-col items-start rounded-xl p-1.5 text-left transition-colors sm:min-h-[6rem] sm:p-2",
-                              !inMonth && "bg-stone-50 text-stone-300",
-                              inMonth &&
-                                !isBlocked &&
-                                !inRange &&
-                                "bg-stone-50 hover:bg-stone-100/80",
-                              inMonth && isBlocked && !inRange && "bg-stone-100",
-                              inRange && "bg-bonnet/15",
-                              isRangeEdge && "ring-2 ring-inset ring-bonnet",
-                              isPast && "opacity-55",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "flex size-7 items-center justify-center rounded-full text-sm font-medium",
-                                isToday && "bg-bonnet text-white",
-                                !isToday &&
-                                  isWeekend &&
-                                  inMonth &&
-                                  "text-stone-900",
-                                !inMonth && "text-stone-300",
-                              )}
-                            >
-                              {date.getDate()}
-                            </span>
-                            {!isBlocked && !coveredByBar ? (
-                              <span className="mt-0.5 text-[12px] font-semibold tabular-nums text-stone-900 sm:text-[13px]">
-                                {inMonth ? formatMoney(price) : ""}
-                              </span>
-                            ) : null}
-                          </button>
-                        );
-                      })}
-                      {weekBars.map((bar) => (
-                        <div
-                          key={bar.id}
-                          title={bar.title}
-                          className={cn(
-                            "pointer-events-none absolute bottom-2 z-10 flex h-7 items-center overflow-hidden bg-stone-500 px-2 text-[11px] font-semibold text-white shadow-sm sm:h-8 sm:text-xs",
-                            bar.roundLeft && "rounded-l-full",
-                            bar.roundRight && "rounded-r-full",
-                            !bar.roundLeft && "rounded-l-sm",
-                            !bar.roundRight && "rounded-r-sm",
-                          )}
-                          style={{
-                            left: `calc(${bar.startCol} * (100% - 1.5rem) / 7 + ${bar.startCol} * 0.25rem + 0.2rem)`,
-                            width: `calc(${bar.span} * (100% - 1.5rem) / 7 + ${bar.span - 1} * 0.25rem - 0.4rem)`,
-                          }}
-                        >
-                          {bar.showLabel ? (
-                            <span className="truncate">{bar.label}</span>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
               </div>
 
               {rangeStart ? (
@@ -1097,12 +1285,14 @@ export function AdminListingWorkspace({
             }}
           />
 
-          <PricingSidebar
-            key={pricingKey}
-            property={property}
-            seasons={seasons}
-            onOpenPeaks={() => setTab("peaks")}
-          />
+          {wideCalendar ? null : (
+            <PricingSidebar
+              key={pricingKey}
+              property={property}
+              seasons={seasons}
+              onOpenPeaks={() => setTab("peaks")}
+            />
+          )}
         </div>
       ) : null}
 
