@@ -46,6 +46,7 @@ export default async function OpsLayout({
     },
     { href: "/ops/hosting/plans", label: "Plans & pricing" },
     { href: "/ops/users", label: "Users" },
+    { href: "/admin/pricing", label: "Pricing intelligence" },
     { href: "/ops/pricing-comps", label: "Pricing comps" },
     { href: "/ops/managers", label: "Managers" },
     { href: "/ops/health", label: "Health" },

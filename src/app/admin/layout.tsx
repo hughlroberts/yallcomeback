@@ -11,7 +11,6 @@ import {
   canViewEarnings,
   resolveHostAccessInfo,
 } from "@/lib/host-access";
-import { canSeePricingIntelligenceNav } from "@/lib/platform-features";
 import { isHostingPaused } from "@/lib/hosting";
 import Link from "next/link";
 
@@ -41,8 +40,6 @@ export default async function AdminLayout({
     hostAccess: access?.hostAccess ?? session.user.hostAccess ?? null,
   });
 
-  let hostPricingAccess: { pricingIntelligenceEnabled?: boolean } | null =
-    null;
   let billingHost: {
     hostingMode: "PLATFORM" | "SELF";
     subscriptionStatus:
@@ -62,14 +59,12 @@ export default async function AdminLayout({
     const row = await prisma.host.findUnique({
       where: { id: access.hostId },
       select: {
-        pricingIntelligenceEnabled: true,
         hostingMode: true,
         subscriptionStatus: true,
         active: true,
         approvalStatus: true,
       },
     });
-    hostPricingAccess = row;
     billingHost = row;
   }
 
@@ -84,32 +79,21 @@ export default async function AdminLayout({
       const row = await prisma.host.findUnique({
         where: { id: activeBrandId },
         select: {
-          pricingIntelligenceEnabled: true,
           hostingMode: true,
           subscriptionStatus: true,
           active: true,
           approvalStatus: true,
         },
       });
-      hostPricingAccess = row;
       billingHost = row;
     }
   }
-
-  const showPricing = canSeePricingIntelligenceNav({
-    isPlatformAdmin: isPlatform,
-    host: hostPricingAccess,
-  });
 
   const links = [
     { href: "/admin", label: "Dashboard", exact: true },
     { href: "/admin/properties", label: "Properties" },
     ...(canManageBrand(accessInfo)
       ? [{ href: "/admin/brand", label: "Brand & website" }]
-      : []),
-    // Secret / paid beta: platform admin always; hosts only if ops toggled access
-    ...(showPricing && canManageBrand(accessInfo)
-      ? [{ href: "/admin/pricing", label: "Pricing intelligence" }]
       : []),
     { href: "/admin/magnets", label: "Fridge magnets" },
     { href: "/admin/bookings", label: "Bookings" },

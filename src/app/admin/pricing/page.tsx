@@ -49,18 +49,12 @@ export default async function AdminPricingPage({
   }
 
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin/pricing");
+  if (!access) redirect("/login?callbackUrl=/ops");
   const sp = await searchParams;
 
-  // Hosts without beta access never see this tool
-  if (!access.isPlatform && access.hostId) {
-    const gate = await prisma.host.findUnique({
-      where: { id: access.hostId },
-      select: { pricingIntelligenceEnabled: true },
-    });
-    if (!gate?.pricingIntelligenceEnabled) {
-      redirect("/admin?error=pricing_secret");
-    }
+  // Hosted in Ops for now — not in host Admin.
+  if (!access.isPlatform) {
+    redirect("/admin");
   }
 
   const hostFilter = access.isPlatform ? {} : { hostId: access.hostId! };

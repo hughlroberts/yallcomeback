@@ -35,16 +35,10 @@ export default async function AdminPricingRunPage({
   }
 
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin/pricing");
+  if (!access) redirect("/login?callbackUrl=/ops");
 
-  if (!access.isPlatform && access.hostId) {
-    const gate = await prisma.host.findUnique({
-      where: { id: access.hostId },
-      select: { pricingIntelligenceEnabled: true },
-    });
-    if (!gate?.pricingIntelligenceEnabled) {
-      redirect("/admin");
-    }
+  if (!access.isPlatform) {
+    redirect("/admin");
   }
 
   const { runId } = await params;
