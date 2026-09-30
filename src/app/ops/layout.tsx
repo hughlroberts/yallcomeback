@@ -39,6 +39,7 @@ export default async function OpsLayout({
   const focusedManage = Boolean(manageHost);
 
   const links = [
+    { href: "/ops/earnings", label: "Earnings" },
     {
       href: "/ops/hosting",
       label: "Website hosting",

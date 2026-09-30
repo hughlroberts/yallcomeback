@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function OpsHomePage() {
-  redirect("/ops/hosting");
+  redirect("/ops/earnings");
 }

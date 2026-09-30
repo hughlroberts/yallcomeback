@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-import { markHostingInvoicePaidByStripeId } from "@/lib/hosting-billing";
+import {
+  markHostingInvoicePaidByStripeId,
+  recordStripePlatformInvoice,
+} from "@/lib/hosting-billing";
 import { markBlockInvoicePaidByStripeId } from "@/lib/block-invoice";
 import {
   applyHostingSubscriptionFromStripe,
@@ -56,16 +59,18 @@ export async function POST(req: Request) {
   ) {
     const invoice = event.data.object as {
       id?: string;
-      metadata?: { kind?: string };
+      metadata?: { kind?: string; hostId?: string };
     };
     if (invoice.id) {
-      // Guest stay invoices (calendar blocks) and hosting invoices
       if (invoice.metadata?.kind === "calendar_block") {
         await markBlockInvoicePaidByStripeId(invoice.id);
       } else {
         const hosting = await markHostingInvoicePaidByStripeId(invoice.id);
         if (!hosting) {
-          await markBlockInvoicePaidByStripeId(invoice.id);
+          const recorded = await recordStripePlatformInvoice(invoice);
+          if (!recorded) {
+            await markBlockInvoicePaidByStripeId(invoice.id);
+          }
         }
       }
     }
