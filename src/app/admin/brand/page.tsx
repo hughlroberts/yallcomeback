@@ -283,7 +283,8 @@ export default async function AdminBrandPage({
                 How guests find you
               </h2>
               <p className="mt-1 text-sm text-stone-600">
-                Three products — pick the surface that matches your business.
+                Marketplace only, or a branded website. Find a Place is a
+                checkbox on the website plan — not a third product.
               </p>
             </div>
 
@@ -321,17 +322,12 @@ export default async function AdminBrandPage({
                     {
                       id: "STAYLOCAL" as const,
                       title: "1 · Marketplace only · $5/listing/mo",
-                      body: "Same look and feel as every other stay on Yall Come Back (like Airbnb). Guests use listing URLs — no separate brand website, logo, palette, About, or Other services page.",
+                      body: "Shared Find a Place look. Listing URLs — no custom brand site, logo, or About page.",
                     },
                     {
                       id: "BOTH" as const,
                       title: "2 · Branded website · $15/listing/mo",
-                      body: "Yall Come Back hosts your brand site: logo, palette, stays, About, and Other services. Marketplace listing is included (no second fee). Point your own domain when ready.",
-                    },
-                    {
-                      id: "CUSTOM" as const,
-                      title: "2b · Branded website only · $15/listing/mo",
-                      body: "Same branded site without marketplace discovery. Point your domain when you go live.",
+                      body: "Hosted brand site on your domain (logo, palette, About, services). Marketplace listing is included — uncheck it below if you do not want Find a Place. No second fee.",
                     },
                   ] as const
                 ).map((opt) => (
@@ -343,7 +339,11 @@ export default async function AdminBrandPage({
                       type="radio"
                       name="sitePresence"
                       value={opt.id}
-                      defaultChecked={host.sitePresence === opt.id}
+                      defaultChecked={
+                        opt.id === "STAYLOCAL"
+                          ? host.sitePresence === "STAYLOCAL"
+                          : host.sitePresence !== "STAYLOCAL"
+                      }
                       className="mt-1"
                     />
                     <span>
@@ -356,11 +356,6 @@ export default async function AdminBrandPage({
                     </span>
                   </label>
                 ))}
-                <p className="pt-1 text-xs text-stone-500">
-                  <strong>3 · Open source:</strong> free self-host path (sign up
-                  with Free self-host, or ask Ops to switch hosting mode). Full
-                  product minus AI models.
-                </p>
               </fieldset>
             )}
           </Card>
@@ -1123,8 +1118,8 @@ export default async function AdminBrandPage({
                 Marketplace (optional)
               </h2>
               <p className="text-sm text-stone-500">
-                Appear on the shared Yall Come Back marketplace in addition to
-                your brand site, or stay domain-only.
+                Included on the branded website plan (no second fee). Uncheck
+                to stay off Find a Place. You can change this later per listing.
               </p>
               <label className="flex items-start gap-2 text-sm text-stone-700">
                 <input

@@ -19,14 +19,17 @@ type PlanOption = {
 };
 
 type Path = "paid" | "self";
+type PaidPlan = "marketplace" | "website";
 
 export function HostSignupForm({
   plans,
   initialPath = "paid",
+  initialPlan = "marketplace",
   existingAccount = null,
 }: {
   plans: PlanOption[];
   initialPath?: Path;
+  initialPlan?: PaidPlan;
   /** Signed-in guest converting this account to a host */
   existingAccount?: { name: string | null; email: string } | null;
 }) {
@@ -34,9 +37,8 @@ export function HostSignupForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [path, setPath] = useState<Path>(initialPath);
-  const [sitePresence, setSitePresence] = useState<
-    "STAYLOCAL" | "CUSTOM" | "BOTH"
-  >("STAYLOCAL");
+  const [paidPlan, setPaidPlan] = useState<PaidPlan>(initialPlan);
+  const [listOnMarketplace, setListOnMarketplace] = useState(true);
 
   const marketplacePlanId =
     plans.find((p) => p.monthlyPrice === 5)?.id ||
@@ -49,7 +51,9 @@ export function HostSignupForm({
     plans[0]?.id ||
     "";
   const syncedPlanId =
-    sitePresence === "STAYLOCAL" ? marketplacePlanId || brandedPlanId : brandedPlanId;
+    paidPlan === "marketplace"
+      ? marketplacePlanId || brandedPlanId
+      : brandedPlanId;
 
   async function onSubmit(formData: FormData) {
     setPending(true);
@@ -58,10 +62,19 @@ export function HostSignupForm({
     if (path === "self") {
       formData.set("sitePresence", "CUSTOM");
     } else {
-      formData.set("sitePresence", sitePresence);
+      formData.set(
+        "sitePresence",
+        paidPlan === "marketplace" ? "STAYLOCAL" : "BOTH",
+      );
       if (syncedPlanId) formData.set("planId", syncedPlanId);
     }
-    // listOnMarketplace comes from the checkbox (optional for both paths)
+    if (path === "paid" && paidPlan === "marketplace") {
+      formData.set("listOnMarketplace", "1");
+    } else if (listOnMarketplace) {
+      formData.set("listOnMarketplace", "1");
+    } else {
+      formData.delete("listOnMarketplace");
+    }
     if (existingAccount) {
       const result = await startHosting(formData);
       setPending(false);
@@ -175,7 +188,9 @@ export function HostSignupForm({
           hint={
             path === "self"
               ? "Your site URL after you point DNS at your deploy"
-              : "Required if you choose “Own domain” or “Both” below"
+              : paidPlan === "website"
+                ? "Optional now — add your domain later in Brand & website"
+                : "Optional. Marketplace-only hosts do not need a custom domain."
           }
         />
 
@@ -187,9 +202,9 @@ export function HostSignupForm({
             <p className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600">
               Plan follows your choice below:{" "}
               <strong className="text-stone-800">
-                {sitePresence === "STAYLOCAL"
+                {paidPlan === "marketplace"
                   ? "Marketplace only · $5 / listing / month"
-                  : "Branded website · $15 / listing / month (marketplace included)"}
+                  : "Branded website · $15 / listing / month (marketplace included, optional)"}
               </strong>
               . You can upgrade or change later in Brand &amp; website.
             </p>
@@ -199,25 +214,21 @@ export function HostSignupForm({
                 How guests find you
               </legend>
               <p className="text-xs text-stone-500">
-                Marketplace-only hosts can add a branded site + domain later in
-                Admin → Brand &amp; website.
+                Two plans. Marketplace-only hosts can add a branded site later
+                in Admin → Brand &amp; website. Website hosts can turn Find a
+                Place on or off anytime.
               </p>
               {(
                 [
                   {
-                    id: "STAYLOCAL" as const,
+                    id: "marketplace" as const,
                     label: "Marketplace only · $5/listing/mo",
                     hint: "Shared Find a Place look. Listing URLs — no custom brand site, logo, or About page.",
                   },
                   {
-                    id: "BOTH" as const,
+                    id: "website" as const,
                     label: "Branded website · $15/listing/mo",
-                    hint: "Hosted brand site on your domain (logo, palette, About, services). Marketplace listing included — no second fee.",
-                  },
-                  {
-                    id: "CUSTOM" as const,
-                    label: "Branded website only · $15/listing/mo",
-                    hint: "Same branded plan without marketplace discovery. Rare — most hosts choose Branded website above.",
+                    hint: "Hosted brand site on your domain (logo, palette, About, services). Marketplace listing included — no second fee. Uncheck below if you do not want Find a Place.",
                   },
                 ] as const
               ).map((opt) => (
@@ -229,8 +240,11 @@ export function HostSignupForm({
                     type="radio"
                     name="sitePresenceUi"
                     className="mt-1"
-                    checked={sitePresence === opt.id}
-                    onChange={() => setSitePresence(opt.id)}
+                    checked={paidPlan === opt.id}
+                    onChange={() => {
+                      setPaidPlan(opt.id);
+                      if (opt.id === "marketplace") setListOnMarketplace(true);
+                    }}
                   />
                   <span>
                     <span className="font-medium text-stone-900">
@@ -267,14 +281,15 @@ export function HostSignupForm({
           </div>
         )}
 
-        {/* Marketplace opt-in — both paths */}
+        {/* Marketplace opt-in — website plan and self-host. Marketplace-only is always on. */}
         <label className="flex items-start gap-2 rounded-xl border border-stone-200 px-3 py-3 text-sm text-stone-700">
           <input
             type="checkbox"
             name="listOnMarketplace"
             value="1"
-            defaultChecked={path === "paid"}
-            key={`mkt-${path}`}
+            checked={path === "paid" && paidPlan === "marketplace" ? true : listOnMarketplace}
+            disabled={path === "paid" && paidPlan === "marketplace"}
+            onChange={(e) => setListOnMarketplace(e.target.checked)}
             className="mt-1"
           />
           <span>

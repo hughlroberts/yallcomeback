@@ -8,6 +8,7 @@ import {
   createHostingInvoiceForHost,
   markHostingInvoicePaid,
 } from "@/lib/hosting-billing";
+import { applyMarketplaceOptIn } from "@/lib/hosting";
 
 async function ensurePlatform() {
   const session = await requirePlatformAdmin();
@@ -280,7 +281,7 @@ export async function updateHostOps(formData: FormData) {
     | "PAST_DUE"
     | "PAUSED"
     | "CANCELLED";
-  const sitePresence = String(
+  const sitePresenceRaw = String(
     formData.get("sitePresence") || host.sitePresence,
   ) as "STAYLOCAL" | "CUSTOM" | "BOTH";
   const websiteUrl =
@@ -356,6 +357,12 @@ export async function updateHostOps(formData: FormData) {
     planMonthly <= 0 &&
     hostingMode === "PLATFORM";
 
+  const opted = applyMarketplaceOptIn(
+    hostingMode,
+    sitePresenceRaw,
+    listOnMarketplace,
+  );
+
   const data: {
     name: string;
     tagline: string | null;
@@ -403,13 +410,12 @@ export async function updateHostOps(formData: FormData) {
     planId,
     hostingMode,
     subscriptionStatus: isComplimentary ? "ACTIVE" : subscriptionStatus,
-    sitePresence:
-      hostingMode === "SELF" ? "CUSTOM" : sitePresence,
+    sitePresence: opted.sitePresence,
     websiteUrl,
     billingEmail,
     contactEmail,
     approvalNotes,
-    listOnMarketplace,
+    listOnMarketplace: opted.listOnMarketplace,
     active,
     setupServiceStatus,
     setupServiceAmount,

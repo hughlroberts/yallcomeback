@@ -11,8 +11,9 @@ import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 import {
-
   SETUP_SERVICE_FEE_USD,
+  applyMarketplaceOptIn,
+  planSlugForSitePresence,
 } from "@/lib/hosting";
 import { parseSitePublishState } from "@/lib/host-site";
 import { normalizeCustomDomain } from "@/lib/custom-domains";
@@ -82,14 +83,15 @@ export async function registerHost(formData: FormData) {
   const hostingMode =
     hostingModeRaw === "SELF" ? ("SELF" as const) : ("PLATFORM" as const);
 
-  // Marketplace is optional for both paid and free self-host
-  const listOnMarketplace = formData.get("listOnMarketplace") === "1";
-
-  const sitePresenceRaw = String(formData.get("sitePresence") || "");
-  const sitePresence: HostSitePresence =
+  const opted = applyMarketplaceOptIn(
+    hostingMode,
     hostingMode === "SELF"
       ? "CUSTOM"
-      : parseSitePresence(sitePresenceRaw || "STAYLOCAL");
+      : parseSitePresence(String(formData.get("sitePresence") || "STAYLOCAL")),
+    formData.get("listOnMarketplace") === "1",
+  );
+  const sitePresence = opted.sitePresence;
+  const listOnMarketplace = opted.listOnMarketplace;
 
   if (
     (sitePresence === "CUSTOM" || sitePresence === "BOTH" || hostingMode === "SELF") &&
@@ -101,7 +103,6 @@ export async function registerHost(formData: FormData) {
   let resolvedPlanId = planId;
   if (hostingMode === "PLATFORM") {
     // Couple plan to guest-facing product so $5 marketplace vs $15 branded stays consistent
-    const { planSlugForSitePresence } = await import("@/lib/hosting");
     const wantSlug = planSlugForSitePresence(sitePresence);
     const matched = await prisma.hostingPlan.findFirst({
       where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
@@ -223,16 +224,19 @@ export async function startHosting(formData: FormData) {
   const hostingModeRaw = String(formData.get("hostingMode") || "PLATFORM");
   const hostingMode =
     hostingModeRaw === "SELF" ? ("SELF" as const) : ("PLATFORM" as const);
-  const listOnMarketplace = formData.get("listOnMarketplace") === "1";
-  const sitePresence: HostSitePresence =
+  const opted = applyMarketplaceOptIn(
+    hostingMode,
     hostingMode === "SELF"
       ? "CUSTOM"
-      : parseSitePresence(String(formData.get("sitePresence") || "STAYLOCAL"));
+      : parseSitePresence(String(formData.get("sitePresence") || "STAYLOCAL")),
+    formData.get("listOnMarketplace") === "1",
+  );
+  const sitePresence = opted.sitePresence;
+  const listOnMarketplace = opted.listOnMarketplace;
   const wantsSetup = formData.get("setupService") === "1";
 
   let resolvedPlanId: string | null = null;
   if (hostingMode === "PLATFORM") {
-    const { planSlugForSitePresence } = await import("@/lib/hosting");
     const wantSlug = planSlugForSitePresence(sitePresence);
     const matched = await prisma.hostingPlan.findFirst({
       where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
@@ -334,24 +338,21 @@ export async function updateHostProfile(formData: FormData) {
 
   const isSelf = hostingMode === "SELF";
 
-  let sitePresence = parseSitePresence(
-    String(formData.get("sitePresence") || existing.sitePresence),
+  const opted = applyMarketplaceOptIn(
+    isSelf ? "SELF" : "PLATFORM",
+    parseSitePresence(
+      String(formData.get("sitePresence") || existing.sitePresence),
+    ),
+    formData.get("listOnMarketplace") === "on",
   );
-  if (isSelf) {
-    // Open-source / self-host always owns its own site surface
-    sitePresence = "CUSTOM";
-  }
+  const sitePresence = opted.sitePresence;
+  const listOnMarketplace = opted.listOnMarketplace;
 
   /**
    * Marketplace-only (STAYLOCAL on platform): shared listing chrome only.
    * No logo/palette/about/services/domain — those live on listing pages.
    */
   const marketplaceOnly = !isSelf && sitePresence === "STAYLOCAL";
-
-  // Marketplace-only always lists on the marketplace; custom sites can opt out
-  const listOnMarketplace = marketplaceOnly
-    ? true
-    : formData.get("listOnMarketplace") === "on";
 
   // Brand-site fields: only accept from form when a branded website is on
   let description = existing.description;
@@ -484,7 +485,6 @@ export async function updateHostProfile(formData: FormData) {
       currentPlan && currentPlan.monthlyPrice <= 0,
     );
     if (!isComplimentary) {
-      const { planSlugForSitePresence } = await import("@/lib/hosting");
       const wantSlug = planSlugForSitePresence(sitePresence);
       const matched = await prisma.hostingPlan.findFirst({
         where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },

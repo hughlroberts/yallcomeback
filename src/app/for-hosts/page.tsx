@@ -20,11 +20,15 @@ export const metadata = {
 export default async function ForHostsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ path?: string; start?: string }>;
+  searchParams: Promise<{ path?: string; start?: string; plan?: string }>;
 }) {
   const params = await searchParams;
   const initialPath =
     params.path === "self" || params.path === "paid" ? params.path : "paid";
+  const initialPlan =
+    params.plan === "branded" || params.plan === "website"
+      ? "website"
+      : "marketplace";
   const session = await auth();
   const signedInUser = session?.user?.id
     ? await prisma.user.findUnique({
@@ -73,7 +77,7 @@ export default async function ForHostsPage({
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
-              href="#apply"
+              href="#host-paths"
               className="rounded-full bg-honey px-5 py-2.5 text-sm font-semibold text-stone-900 hover:bg-honey/90"
             >
               Start hosting
@@ -136,6 +140,95 @@ export default async function ForHostsPage({
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="host-paths"
+        className="border-b border-stone-200 bg-white"
+      >
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-bonnet">
+              Two ways to host
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
+              Marketplace, or your own branded site
+            </h2>
+            <p className="mt-3 text-stone-600">
+              Same calendars and booking tools on both. No cut of the stay.
+              Website hosts can turn Find a Place on or off anytime — it is
+              included, not a second fee.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+            <Link
+              href="/for-hosts?path=paid&plan=marketplace#apply"
+              className="group flex flex-col rounded-3xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-black/5 transition hover:border-bonnet/30 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
+                1 · Marketplace only · $5/listing/mo
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
+                List on Yall Come Back. Keep more of every stay.
+              </h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-stone-600">
+                Guests search and book on the shared Yall Come Back marketplace
+                with a familiar look and short listing URLs. You get calendars,
+                messaging, Insights, and booking tools with{" "}
+                <strong className="font-semibold text-stone-800">
+                  no cut of the booking
+                </strong>
+                — just{" "}
+                <strong className="font-semibold text-stone-800">
+                  $5 per published listing / month
+                </strong>
+                . Perfect if you want discovery without a separate brand
+                website.
+              </p>
+              <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
+                <li>✓ $5 / published listing / month</li>
+                <li>✓ Listing-first URLs (not a host mini-site)</li>
+                <li>✓ Zero commission · marketplace only</li>
+              </ul>
+              <p className="mt-5 text-sm font-semibold text-bonnet">
+                Start on the marketplace →
+              </p>
+            </Link>
+
+            <Link
+              href="/for-hosts?path=paid&plan=branded#apply"
+              className="group flex flex-col rounded-3xl border border-bonnet/25 bg-gradient-to-br from-petal/60 to-white p-6 shadow-sm ring-1 ring-bonnet/10 transition hover:border-bonnet/40 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
+                2 · Branded website · $15/listing/mo
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
+                Your brand, your domain. We host the site.
+              </h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-stone-600">
+                Yall Come Back runs a real guest website for you: logo, palette,
+                stays catalog, About, and an{" "}
+                <strong className="font-semibold text-stone-800">
+                  Other services
+                </strong>{" "}
+                page (boat rentals, camping, tours, even when it is not lodging).
+                Point your own custom domain when you are ready.{" "}
+                <strong className="font-semibold text-stone-800">
+                  Marketplace listing is included
+                </strong>{" "}
+                — same stays can appear on Find a Place with no second fee.
+              </p>
+              <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
+                <li>✓ $15 / published listing / month (includes marketplace)</li>
+                <li>✓ Branded site + DNS on your domain</li>
+                <li>✓ Demo to Live publish before DNS cutover</li>
+              </ul>
+              <p className="mt-5 text-sm font-semibold text-bonnet">
+                Build my website →
+              </p>
+            </Link>
           </div>
         </div>
       </section>
@@ -292,7 +385,9 @@ export default async function ForHostsPage({
 
           <div id="apply">
             <HostSignupForm
+              key={`${initialPath}-${initialPlan}`}
               initialPath={initialPath}
+              initialPlan={initialPlan}
               existingAccount={
                 signedInUser?.email
                   ? { name: signedInUser.name, email: signedInUser.email }

@@ -290,12 +290,13 @@ export default async function OpsHostDetailPage({
             <select
               id="sitePresence"
               name="sitePresence"
-              defaultValue={host.sitePresence}
+              defaultValue={
+                host.sitePresence === "STAYLOCAL" ? "STAYLOCAL" : "BOTH"
+              }
               className="mt-1 h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-white px-3 text-sm"
             >
-              <option value="STAYLOCAL">Yall Come Back URLs only</option>
-              <option value="CUSTOM">Own domain only</option>
-              <option value="BOTH">Both domain + platform</option>
+              <option value="STAYLOCAL">Marketplace only</option>
+              <option value="BOTH">Branded website</option>
             </select>
           </div>
           <div>

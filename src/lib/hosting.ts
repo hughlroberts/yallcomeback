@@ -126,12 +126,34 @@ export function sitePresenceLabel(mode: HostSitePresence): string {
     case "STAYLOCAL":
       return "Marketplace only";
     case "CUSTOM":
-      return "Custom website only";
+      return "Branded website";
     case "BOTH":
-      return "Custom website + marketplace";
+      return "Branded website";
     default:
       return mode;
   }
+}
+
+/**
+ * Paid product is marketplace ($5) vs branded website ($15).
+ * Marketplace listing is a checkbox on the website plan, not a third product.
+ * Marketplace-only always lists on Find a Place.
+ */
+export function applyMarketplaceOptIn(
+  hostingMode: "PLATFORM" | "SELF",
+  sitePresence: HostSitePresence,
+  listOnMarketplace: boolean,
+): { sitePresence: HostSitePresence; listOnMarketplace: boolean } {
+  if (hostingMode === "SELF") {
+    return { sitePresence: "CUSTOM", listOnMarketplace };
+  }
+  if (sitePresence === "STAYLOCAL") {
+    return { sitePresence: "STAYLOCAL", listOnMarketplace: true };
+  }
+  return {
+    sitePresence: listOnMarketplace ? "BOTH" : "CUSTOM",
+    listOnMarketplace,
+  };
 }
 
 /**
