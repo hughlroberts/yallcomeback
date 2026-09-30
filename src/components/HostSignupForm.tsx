@@ -93,8 +93,8 @@ export function HostSignupForm({
         {path === "self"
           ? "Deploy on your domain at no monthly platform fee. Marketplace listing is optional — you choose."
           : existingAccount
-            ? `Continue as ${existingAccount.email}. Add a card after this to go live — no wait for approval.`
-            : "We host your brand on Yall Come Back. Add a card to subscribe. Listings go live when hosting is paid — no wait for approval."}
+            ? `Continue as ${existingAccount.email}. Add a card after this to go live.`
+            : "Put your stays and calendar here. Add a card to subscribe. Listings go live when hosting is paid."}
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-stone-100 p-1">

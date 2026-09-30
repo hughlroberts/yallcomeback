@@ -49,14 +49,14 @@ export default function ContactPage() {
           <div className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-stone-900">Hosts</h2>
             <p className="mt-3 text-sm leading-relaxed text-stone-600">
-              New applications, subscription questions, and website hosting go
-              through the host portal after you apply.
+              Subscription questions and website hosting go through Host admin
+              after you start hosting.
             </p>
             <Link
               href="/for-hosts"
               className="mt-4 inline-flex text-sm font-semibold text-bonnet hover:underline"
             >
-              Apply to host →
+              Start hosting →
             </Link>
           </div>
           <div className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">

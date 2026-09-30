@@ -62,21 +62,11 @@ export function SiteFooter() {
             <ul className="mt-3 space-y-2 text-sm">
               <li>
                 <Link href="/for-hosts" className="hover:text-honey">
-                  Paid hosting or free self-host
+                  Start hosting
                 </Link>
               </li>
               <li>
-                <Link href="/self-host" className="hover:text-honey">
-                  Free self-host deploy
-                </Link>
-              </li>
-              <li>
-                <Link href="/open-source" className="hover:text-honey">
-                  Open source features
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="hover:text-honey">
+                <Link href="/login?callbackUrl=/admin" className="hover:text-honey">
                   Host sign in
                 </Link>
               </li>
@@ -93,6 +83,12 @@ export function SiteFooter() {
             </Link>
             <Link href="/privacy" className="hover:text-honey">
               Privacy
+            </Link>
+            <Link href="/open-source" className="hover:text-honey">
+              Own the code
+            </Link>
+            <Link href="/self-host" className="hover:text-honey">
+              Self-host
             </Link>
             <span className="text-honey/90">Made in Texas by Texans.</span>
           </nav>

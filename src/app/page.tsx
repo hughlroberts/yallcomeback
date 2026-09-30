@@ -284,9 +284,9 @@ export default async function HomePage() {
             Hosting? Keep the guests who already love you.
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-cyan-100">
-            They already know the dock, the kitchen, your name. Give them a way
-            to book you directly — on the marketplace, a simple host site, or
-            your own brand on the open-source stack.
+            We spent 20 years at Cherokee Landing taking return guests by hand.
+            Yall Come Back automates that work, keeps the familiar stay, and
+            does not take a cut of the weekend.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
@@ -294,12 +294,6 @@ export default async function HomePage() {
               className="inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-bonnet hover:bg-petal"
             >
               Start hosting
-            </Link>
-            <Link
-              href="/self-host"
-              className="inline-block rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/20"
-            >
-              Run your own site free
             </Link>
           </div>
         </div>

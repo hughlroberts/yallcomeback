@@ -21,12 +21,12 @@ export default function AboutPage() {
             About Yall Come Back
           </p>
           <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
-            Host websites first. Marketplace second.
+            Built by hosts who still take return guests.
           </h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-stone-300">
-            Yall Come Back is built for independent vacation rental hosts who want a
-            professional website under their own brand - with an optional shared
-            marketplace when they choose to list.
+            Twenty years at Cherokee Landing taught us the second stay is the
+            whole point. Yall Come Back is the tool we wanted: automate the
+            busywork, keep the familiar place, and do not break the bank.
           </p>
         </div>
       </div>
@@ -39,11 +39,12 @@ export default function AboutPage() {
                 Why we built this
               </h2>
               <p className="mt-3 leading-relaxed text-stone-600">
-                The stay people still talk about should be easy to book again.
-                Yall Come Back is for hosts who already made it great — and for
-                the guests who want to come back to them, not start over with a
-                stranger. You get a host-branded site, direct booking, and an
-                optional marketplace if you want more discovery.
+                Hugh and his dad have hosted return guests at Cherokee Landing
+                on Cedar Creek Lake for 20+ years. The families already knew the
+                dock and the kitchen. The work around that — texts, paper
+                calendars, deposits — did not. We built Yall Come Back so that
+                work could run itself without changing how the stay feels, and
+                without handing a cut of every weekend to a giant catalog.
               </p>
             </section>
             <section>
@@ -52,14 +53,13 @@ export default function AboutPage() {
               </h2>
               <ul className="mt-3 space-y-3 text-stone-600">
                 <li className="rounded-2xl border border-stone-200 bg-white px-4 py-3">
-                  Apply to host - we review before anything goes public.
+                  Start hosting on your account. No wait for approval.
                 </li>
                 <li className="rounded-2xl border border-stone-200 bg-white px-4 py-3">
-                  Choose platform website hosting or keep your own domain later.
+                  Put in the stays and calendar the regulars already know.
                 </li>
                 <li className="rounded-2xl border border-stone-200 bg-white px-4 py-3">
-                  Pay a simple monthly fee per published property (not a booking
-                  commission).
+                  Pay a small monthly fee per listing — not a cut of the stay.
                 </li>
               </ul>
             </section>
@@ -204,16 +204,17 @@ export default function AboutPage() {
 
               <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-slate-600">
                 <p>
-                  Yall Come Back started at home, not in a boardroom. Hugh and Yum
-                  know what it means to welcome people to a place you care about
-                  — and how much it matters when those same families want to
-                  come back.
+                  Yall Come Back started at Cherokee Landing, not in a
+                  boardroom. Hugh and his dad have hosted return guests there
+                  for 20+ years. Hugh and Yum know what it means when the same
+                  families want next summer too — and how much of that used to
+                  live in texts and paper calendars.
                 </p>
                 <p>
-                  They built Yall Come Back so the second stay is simple: a real
-                  website, direct booking, and a conversation that stays between
-                  host and guest. The marketplace is optional discovery, not the
-                  product.
+                  They built the tool they needed: automate the busywork, keep
+                  the familiar stay, and skip the giant platform bill. Direct
+                  booking stays between host and guest. The marketplace is
+                  optional discovery, not the product.
                 </p>
                 <p>
                   When they&apos;re not shipping features or helping hosts get

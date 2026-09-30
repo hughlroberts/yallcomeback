@@ -36,7 +36,7 @@ const FIND_LINK =
 /**
  * Top chrome: guest world (Find a Place) vs host world (Host a Place).
  * Host is styled as its own CTA — like VRBO’s list-property entry —
- * while still routing into YCB’s dual-path host story (paid + free self-host).
+ * while still routing into Host a Place.
  * Messages live under the account menu after sign-in.
  */
 export function SiteHeaderNav(props: Props) {
