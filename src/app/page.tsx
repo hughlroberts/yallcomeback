@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import {
   getMarketplaceListings,
   getMarketplacePlaceSuggestions,
@@ -8,14 +9,29 @@ import {
 import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
 import { GuestDiscoverySections } from "@/components/guest-discovery-sections";
+import { FirstVisitIntentGate } from "@/components/first-visit-intent";
 import { prisma } from "@/lib/db";
 import { getSiteOrigin } from "@/lib/site-url";
+import { auth } from "@/lib/auth";
+import { getRequestTenant } from "@/lib/tenant";
+import { INTENT_COOKIE, parseVisitIntent } from "@/lib/intent-cookie";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const showDiscovery = await marketplaceDiscoveryEnabled();
-  const origin = await getSiteOrigin();
+  const [showDiscovery, origin, tenant, session, jar] = await Promise.all([
+    marketplaceDiscoveryEnabled(),
+    getSiteOrigin(),
+    getRequestTenant(),
+    auth(),
+    cookies(),
+  ]);
+  const isHostOrAdmin =
+    session?.user?.role === "HOST" || session?.user?.role === "ADMIN";
+  const showIntentGate =
+    !tenant &&
+    !isHostOrAdmin &&
+    parseVisitIntent(jar.get(INTENT_COOKIE)?.value) == null;
 
   const [listings, liveHosts, featuredHost, placeSuggestions] =
     await Promise.all([
@@ -75,6 +91,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      {showIntentGate ? <FirstVisitIntentGate /> : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}

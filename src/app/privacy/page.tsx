@@ -169,6 +169,10 @@ export default function PrivacyPage() {
       <LegalUl>
         <li>keep you signed in (session and CSRF cookies);</li>
         <li>remember a host brand an operator is editing;</li>
+        <li>
+          remember whether you chose Find a Place, Host a Place, or just
+          browsing, so we do not ask again on the home page;
+        </li>
         <li>save on-device lists such as saved stays, where the product does that.</li>
       </LegalUl>
       <LegalP>
