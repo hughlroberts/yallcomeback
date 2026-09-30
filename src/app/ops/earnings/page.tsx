@@ -67,8 +67,8 @@ export default async function OpsEarningsPage() {
           <p className="text-sm text-stone-500">Plan MRR (estimated)</p>
           <p className="mt-1 text-3xl font-semibold">{formatMoney(data.mrr)}</p>
           <p className="mt-1 text-xs text-stone-400">
-            Listed plan price × published listings (+ add-ons), before
-            processing
+            Website is $25 flat; marketplace is $5 × listings (+ add-ons),
+            before processing
           </p>
         </Card>
         <Card>
@@ -119,7 +119,9 @@ export default async function OpsEarningsPage() {
                     <p className="text-xs text-stone-500">
                       {c.planName}
                       {c.unitPrice > 0
-                        ? ` · ${formatMoney(c.unitPrice)}/listing`
+                        ? c.pricingModel === "FLAT"
+                          ? ` · ${formatMoney(c.unitPrice)}/mo total`
+                          : ` · ${formatMoney(c.unitPrice)}/listing`
                         : ""}
                       {c.addon > 0 ? ` + intel ${formatMoney(c.addon)}` : ""}
                     </p>

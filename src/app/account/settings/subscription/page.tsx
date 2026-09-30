@@ -146,7 +146,7 @@ export default async function AccountSubscriptionPage({
     : sp.upgraded === "website"
       ? {
           title: "Branded website is on",
-          body: "You're on the $25 / listing plan. Marketplace listing stays included. Next: logo, colors, and your domain under Brand & website.",
+          body: "You're on the $25 / month website plan — that covers every listing. Marketplace listing stays included. Next: logo, colors, and your domain under Brand & website.",
           variant: "success" as const,
         }
       : sp.welcome
@@ -197,21 +197,34 @@ export default async function AccountSubscriptionPage({
                 ? "No monthly hosting fee on this brand."
                 : marketplaceOnly
                   ? `${formatMoney(host.plan?.monthlyPrice ?? 5)} per published listing / month. Guests find you on Find a Place.`
-                  : `${formatMoney(host.plan?.monthlyPrice ?? 25)} per published listing / month. Brand site on your domain; marketplace listing included.`}
+                  : `${formatMoney(host.plan?.monthlyPrice ?? 25)} / month for the whole website. Brand site on your domain; add as many listings as you want. Marketplace listing included.`}
           </p>
         </div>
 
         {estimate && !complimentary && !selfHost ? (
           <p className="rounded-xl bg-stone-50 px-3 py-2 text-sm text-stone-700">
-            Estimated this month:{" "}
-            <strong>{formatMoney(estimate.amount)}</strong>
-            {" · "}
-            {estimate.propertyCount} published listing
-            {estimate.propertyCount === 1 ? "" : "s"}
-            {publishedCount === 0
-              ? " (1 listing minimum until you publish)"
-              : ""}
-            .
+            {host.plan?.pricingModel === "FLAT" ? (
+              <>
+                This month: <strong>{formatMoney(estimate.amount)}</strong> for
+                the whole website
+                {publishedCount > 0
+                  ? ` (${publishedCount} published listing${publishedCount === 1 ? "" : "s"})`
+                  : ""}
+                . Adding listings does not raise the hosting bill.
+              </>
+            ) : (
+              <>
+                Estimated this month:{" "}
+                <strong>{formatMoney(estimate.amount)}</strong>
+                {" · "}
+                {estimate.propertyCount} published listing
+                {estimate.propertyCount === 1 ? "" : "s"}
+                {publishedCount === 0
+                  ? " (1 listing minimum until you publish)"
+                  : ""}
+                .
+              </>
+            )}
           </p>
         ) : null}
 
@@ -223,7 +236,8 @@ export default async function AccountSubscriptionPage({
             <p className="mt-1 text-sm leading-relaxed text-stone-600">
               Your own domain, logo, colors, and About page. Marketplace
               listing stays included — you do not pay $5 on top.{" "}
-              <strong>{formatMoney(25)} / published listing / month.</strong>
+              <strong>{formatMoney(25)} / month for the whole website</strong>
+              , no matter how many listings you publish.
             </p>
             <form
               action={upgradeToBrandedWebsite}
@@ -311,7 +325,14 @@ export default async function AccountSubscriptionPage({
               Update card so monthly invoices can charge it.
             </p>
           ) : null}
-          {!priceConfigured ? (
+          {marketplaceOnly ? (
+            <p className="text-sm text-stone-600">
+              Marketplace-only is billed {formatMoney(host.plan?.monthlyPrice ?? 5)}{" "}
+              per published listing. That is not the $25 website subscription —
+              Ops invoices from your listing count.
+            </p>
+          ) : null}
+          {!priceConfigured && branded ? (
             <p className="text-sm text-amber-800">
               Card checkout is not configured yet. Ops still invoices from your
               plan price.
@@ -319,13 +340,15 @@ export default async function AccountSubscriptionPage({
           ) : null}
 
           <div className="flex flex-wrap gap-3">
-            <form action={startHostingSubscription}>
-              <Button type="submit" disabled={!stripeOn || !priceConfigured}>
-                {host.subscriptionStatus === "ACTIVE"
-                  ? "Manage billing"
-                  : "Add card and subscribe"}
-              </Button>
-            </form>
+            {branded ? (
+              <form action={startHostingSubscription}>
+                <Button type="submit" disabled={!stripeOn || !priceConfigured}>
+                  {host.subscriptionStatus === "ACTIVE"
+                    ? "Manage billing"
+                    : "Add card and subscribe"}
+                </Button>
+              </form>
+            ) : null}
             <form action={openBillingPortal}>
               <Button type="submit" variant="secondary" disabled={!stripeOn}>
                 {cardOnFile ? "Update card" : "Add a card"}

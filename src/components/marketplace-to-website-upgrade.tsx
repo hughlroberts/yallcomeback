@@ -41,8 +41,8 @@ export function MarketplaceToWebsiteUpgrade({
           </span>
           <span>
             <strong className="text-stone-900">Upgrade here</strong> — switches
-            you to the branded website plan ($25 / published listing / month)
-            and unlocks Brand tools.
+            you to the branded website plan ($25 / month for the whole site —
+            any number of listings) and unlocks Brand tools.
           </span>
         </li>
         <li className="flex gap-3">

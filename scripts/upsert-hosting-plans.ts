@@ -1,7 +1,7 @@
 /**
  * Upsert public hosting plans to current pricing:
  *   Marketplace only — $5 / published listing / month
- *   Branded website  — $25 / published listing / month (marketplace included)
+ *   Branded website  — $25 / month flat for the whole site (marketplace included)
  *   Complimentary    — $0 (Ops / partners only)
  *
  * Retires legacy slug "listing" ($40).
@@ -46,9 +46,9 @@ async function main() {
       name: "Branded website",
       slug: "branded",
       description:
-        "$25 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
+        "$25 / month for the whole website — any number of listings. Brand site on your domain; marketplace listing included. Not a booking commission.",
       monthlyPrice: 25,
-      pricingModel: "PER_PROPERTY",
+      pricingModel: "FLAT",
       minProperties: 1,
       currency: "USD",
       isActive: true,
@@ -58,9 +58,9 @@ async function main() {
     update: {
       name: "Branded website",
       description:
-        "$25 per published listing / month. Brand site on your domain; marketplace listing included. Not a booking commission.",
+        "$25 / month for the whole website — any number of listings. Brand site on your domain; marketplace listing included. Not a booking commission.",
       monthlyPrice: 25,
-      pricingModel: "PER_PROPERTY",
+      pricingModel: "FLAT",
       isActive: true,
       isDefault: true,
       sortOrder: 2,
@@ -114,8 +114,12 @@ async function main() {
   });
 
   console.log("Plans upserted:");
-  console.log(`  marketplace → $${marketplace.monthlyPrice} id=${marketplace.id}`);
-  console.log(`  branded     → $${branded.monthlyPrice} id=${branded.id}`);
+  console.log(
+    `  marketplace → $${marketplace.monthlyPrice} ${marketplace.pricingModel} id=${marketplace.id}`,
+  );
+  console.log(
+    `  branded     → $${branded.monthlyPrice} ${branded.pricingModel} id=${branded.id}`,
+  );
   console.log(`  hosts moved from legacy listing → branded: ${movedHosts}`);
 }
 

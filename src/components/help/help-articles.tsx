@@ -230,8 +230,8 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             <strong>PLATFORM (paid)</strong> — Marketplace only at $5 per
-            published listing / month, or branded website at $25 per published
-            listing / month (marketplace included). Full brand-domain guide:{" "}
+            published listing / month, or branded website at $25 / month for
+            the whole site (marketplace included). Full brand-domain guide:{" "}
             <Link
               href="/help/branded-website"
               className="font-semibold text-bonnet"
@@ -735,9 +735,10 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             month. Guests book on Find a Place. No custom brand site.
           </li>
           <li>
-            <strong>Branded website</strong> — $25 per published listing /
-            month. Yall Come Back hosts your brand site on your domain.{" "}
-            Marketplace listing is included (no second fee).
+            <strong>Branded website</strong> — $25 / month for the whole
+            website, any number of listings. Yall Come Back hosts your brand
+            site on your domain. Marketplace listing is included (no second
+            fee).
           </li>
           <li>
             This is not a booking commission. You keep guest payments under your
@@ -1448,8 +1449,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
       <HelpSection title="Three different host paths">
         <HelpP>
           Choose one path. Do not mix the names — they are different products.
-          Prices are per published listing per month. There is no cut of each
-          booking.
+          There is no cut of each booking.
         </HelpP>
         <HelpUl>
           <li>
@@ -1459,9 +1459,10 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             not keep a separate brand website.
           </li>
           <li>
-            <strong>2 · Branded website — $25 / listing / month</strong> — Yall
+            <strong>2 · Branded website — $25 / month total</strong> — Yall
             Come Back hosts a site that looks like your brand. Point your domain
-            with DNS. This plan{" "}
+            with DNS. One $25 fee covers the whole website, no matter how many
+            cabins, boats, or campsites you publish. This plan{" "}
             <strong>includes marketplace listing</strong> for the same stays —
             you do not pay $5 again on top. Guests can book on your domain or on
             Find a Place.
@@ -1477,9 +1478,10 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
           </li>
         </HelpUl>
         <HelpP>
-          Example: three published stays on the branded plan cost{" "}
-          <strong>$75 / month</strong> total ($25 × 3). The same three stays on
-          marketplace only cost <strong>$15 / month</strong> ($5 × 3).
+          Example: seven published stays on the branded website plan cost{" "}
+          <strong>$25 / month</strong> total — the same as one stay. The same
+          seven stays on marketplace only cost <strong>$35 / month</strong>{" "}
+          ($5 × 7). Use marketplace-only if you do not need your own website.
         </HelpP>
       </HelpSection>
 
@@ -1511,7 +1513,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         <HelpP>
           Open Admin → Brand &amp; website and select{" "}
           <strong>Create my branded website</strong>. That switches you to the
-          $25 plan (marketplace stays included), unlocks logo and domain fields,
+          $25 / month website plan (marketplace stays included), unlocks logo and domain fields,
           and keeps your listings. Then buy a domain at your registrar and enter
           it under Domain &amp; guest site.
         </HelpP>

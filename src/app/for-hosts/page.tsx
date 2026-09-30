@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
+  formatPlanPrice,
 } from "@/lib/hosting";
 import { formatMoney } from "@/lib/utils";
 
@@ -202,10 +203,10 @@ export default async function ForHostsPage({
               className="group flex flex-col rounded-3xl border border-bonnet/25 bg-gradient-to-br from-petal/60 to-white p-6 shadow-sm ring-1 ring-bonnet/10 transition hover:border-bonnet/40 hover:shadow-md"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                2 · Branded website · $25/listing/mo
+                2 · Branded website · $25/mo
               </p>
               <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
-                Your brand, your domain. We host the site.
+                Your brand, your domain. $25 covers the whole site.
               </h3>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-stone-600">
                 Yall Come Back runs a real guest website for you: logo, palette,
@@ -216,12 +217,14 @@ export default async function ForHostsPage({
                 page (boat rentals, camping, tours, even when it is not lodging).
                 Point your own custom domain when you are ready.{" "}
                 <strong className="font-semibold text-stone-800">
-                  Marketplace listing is included
-                </strong>{" "}
-                — same stays can appear on Find a Place with no second fee.
+                  $25 / month total
+                </strong>
+                {" "}
+                — add every cabin, boat, and campsite; the hosting bill stays
+                $25. Marketplace listing is included, not a second fee.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                <li>✓ $25 / published listing / month (includes marketplace)</li>
+                <li>✓ $25 / month for the whole website (not per listing)</li>
                 <li>✓ Branded site + DNS on your domain</li>
                 <li>✓ Demo to Live publish before DNS cutover</li>
               </ul>
@@ -255,7 +258,7 @@ export default async function ForHostsPage({
                 },
                 {
                   title: "A fee you can live with",
-                  body: "Per published listing each month. Not a cut of every booking.",
+                  body: "A small monthly hosting fee. Not a cut of every booking.",
                   image: "/seed/lakefront/03.jpg",
                 },
               ].map((item) => (
@@ -286,9 +289,9 @@ export default async function ForHostsPage({
                   What it costs
                 </h2>
                 <p className="mt-2 text-sm text-stone-600">
-                  A monthly hosting fee per published listing — not a cut of
-                  each stay. That is how we keep the lights on without eating
-                  the weekend the regulars already paid you for.
+                  A small monthly hosting fee — not a cut of each stay. A
+                  branded website is $25 for the whole site; marketplace-only
+                  is $5 per listing if you do not need your own website.
                 </p>
                 <ul className="mt-4 space-y-3">
                   {plans
@@ -309,8 +312,7 @@ export default async function ForHostsPage({
                           ) : null}
                         </div>
                         <p className="text-lg font-semibold text-bonnet">
-                          {formatMoney(plan.monthlyPrice)}
-                          /listing/mo
+                          {formatPlanPrice(plan, formatMoney)}
                         </p>
                       </li>
                     ))}

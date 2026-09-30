@@ -193,7 +193,8 @@ export default function TermsPage() {
       <LegalH2 id="fees">7. Platform fees (not a cut of the stay)</LegalH2>
       <LegalP>
         If we host your website or marketplace listing, you pay the published
-        hosting plan (for example a monthly amount per listing) and any
+        hosting plan (for example $25 / month for a branded website, or $5 per
+        listing on marketplace only) and any
         optional setup or add-on you request. That fee is for access to the
         Platform. It is not a commission, brokerage fee, or share of the guest’s
         stay price. Stay money is between host and guest.

@@ -326,8 +326,8 @@ export default async function AdminBrandPage({
                     },
                     {
                       id: "BOTH" as const,
-                      title: "2 · Branded website · $25/listing/mo",
-                      body: "Hosted brand site on your domain (logo, palette, About, services). Marketplace listing is included — uncheck it below if you do not want Find a Place. No second fee.",
+                      title: "2 · Branded website · $25/mo",
+                      body: "Hosted brand site on your domain (logo, palette, About, services). $25 covers every listing — the bill does not grow when you add stays. Marketplace listing is included — uncheck it below if you do not want Find a Place. No second fee.",
                     },
                   ] as const
                 ).map((opt) => (

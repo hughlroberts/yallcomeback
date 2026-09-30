@@ -105,6 +105,7 @@ export async function loadOpsEarnings() {
       email: host.billingEmail || host.contactEmail || host.users[0]?.email || null,
       planName: host.plan?.name || "No plan",
       planSlug: host.plan?.slug || null,
+      pricingModel: host.plan?.pricingModel || null,
       product,
       productLabel:
         product === "marketplace"

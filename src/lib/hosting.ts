@@ -135,8 +135,10 @@ export function sitePresenceLabel(mode: HostSitePresence): string {
 }
 
 /**
- * Paid product is marketplace ($5) vs branded website ($25).
- * Marketplace listing is a checkbox on the website plan, not a third product.
+ * Paid product is marketplace ($5 / listing) vs branded website ($25 flat).
+ * Website is one monthly fee for the whole site so a mom-and-pop shop can
+ * add every cabin, boat, and campsite without the bill growing.
+ * Marketplace listing is a checkbox on the website plan, not a second fee.
  * Marketplace-only always lists on Find a Place.
  */
 export function applyMarketplaceOptIn(
@@ -273,7 +275,9 @@ export function hostingModeLabel(mode: HostingMode): string {
 }
 
 export function pricingModelLabel(model: HostingPricingModel): string {
-  return model === "PER_PROPERTY" ? "Per property / month" : "Flat / month";
+  return model === "PER_PROPERTY"
+    ? "Per listing / month"
+    : "Flat / month (whole website)";
 }
 
 /** Billable units: published properties, floored at plan.minProperties */
@@ -312,8 +316,20 @@ export function formatPlanPrice(
   }
   const money = formatMoney(plan.monthlyPrice);
   return plan.pricingModel === "PER_PROPERTY"
-    ? `${money}/property/mo`
+    ? `${money}/listing/mo`
     : `${money}/mo`;
+}
+
+/** Guest- and host-facing sentence for the monthly fee. */
+export function formatPlanPriceLong(
+  plan: Pick<HostingPlan, "monthlyPrice" | "pricingModel">,
+  formatMoney: (n: number, symbol?: string) => string,
+): string {
+  if (plan.monthlyPrice <= 0) return "No monthly fee";
+  const money = formatMoney(plan.monthlyPrice);
+  return plan.pricingModel === "PER_PROPERTY"
+    ? `${money} per published listing / month`
+    : `${money} / month for the whole website (any number of listings)`;
 }
 
 export function isComplimentaryPlan(

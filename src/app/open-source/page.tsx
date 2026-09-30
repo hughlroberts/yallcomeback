@@ -455,7 +455,7 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
             </h2>
             <ul className="mt-4 space-y-2 text-sm text-stone-600">
               <li>We list your stays with host branding on each listing</li>
-              <li>Approval + monthly fee per published property</li>
+              <li>Approval + a small monthly hosting fee</li>
               <li>Still not a booking commission</li>
               <li>
                 Apply at{" "}

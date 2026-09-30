@@ -16,6 +16,7 @@ import {
   createPlatformBillingPortalSession,
   ensurePlatformCustomer,
 } from "@/lib/platform-billing";
+import { hostProductPath } from "@/lib/hosting";
 import { isStripeConfigured, toStripeAmount } from "@/lib/stripe";
 
 async function requireBrandHost() {
@@ -87,6 +88,11 @@ export async function createHostProduct(formData: FormData) {
 export async function startHostingSubscription() {
   assertStripeOn();
   const host = await requireBrandHost();
+  if (hostProductPath(host) !== "website") {
+    throw new Error(
+      "Card checkout is the $25 / month branded website plan. Marketplace-only hosts are billed $5 per listing by invoice.",
+    );
+  }
   if (host.subscriptionStatus === "ACTIVE" && host.stripeCustomerId) {
     const portal = await createPlatformBillingPortalSession(
       host.stripeCustomerId,

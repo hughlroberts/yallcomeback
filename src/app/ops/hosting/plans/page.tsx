@@ -91,8 +91,8 @@ export default async function OpsHostingPlansPage() {
                 defaultValue="PER_PROPERTY"
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               >
-                <option value="PER_PROPERTY">Per property / month</option>
-                <option value="FLAT">Flat / month (whole host)</option>
+                <option value="PER_PROPERTY">Per listing / month</option>
+                <option value="FLAT">Flat / month (whole website)</option>
               </select>
             </div>
             <div>
@@ -130,7 +130,7 @@ export default async function OpsHostingPlansPage() {
                 id="description"
                 name="description"
                 rows={2}
-                placeholder="Billed monthly per published listing"
+                placeholder="e.g. $25 / month for the whole website"
               />
             </div>
             <div>

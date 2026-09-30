@@ -59,7 +59,7 @@ export default function AboutPage() {
                   Put in the stays and calendar the regulars already know.
                 </li>
                 <li className="rounded-2xl border border-stone-200 bg-white px-4 py-3">
-                  Pay a small monthly fee per listing — not a cut of the stay.
+                  Pay a small monthly hosting fee — not a cut of the stay.
                 </li>
               </ul>
             </section>

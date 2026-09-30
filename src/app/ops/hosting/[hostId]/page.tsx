@@ -259,8 +259,8 @@ export default async function OpsHostDetailPage({
           Use <strong>Complimentary</strong> for your own brand (any number of
           listings, never billed). Paying customers:{" "}
           <strong>Marketplace only</strong> $5 / published listing, or{" "}
-          <strong>Branded website</strong> $25 / published listing (marketplace
-          included).
+          <strong>Branded website</strong> $25 / month for the whole site
+          (marketplace included — listing count does not change the bill).
         </p>
         <form action={updateHostOps} className="mt-6 grid gap-4 sm:grid-cols-2">
           <input type="hidden" name="hostId" value={host.id} />

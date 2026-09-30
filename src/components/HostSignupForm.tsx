@@ -182,7 +182,7 @@ export function HostSignupForm({
               <strong className="text-stone-800">
                 {paidPlan === "marketplace"
                   ? "Marketplace only · $5 / listing / month"
-                  : "Branded website · $25 / listing / month (marketplace included, optional)"}
+                  : "Branded website · $25 / month for the whole site (marketplace included, optional)"}
               </strong>
               . You can upgrade or change later in Brand &amp; website.
             </p>
@@ -205,8 +205,8 @@ export function HostSignupForm({
                   },
                   {
                     id: "website" as const,
-                    label: "Branded website · $25/listing/mo",
-                    hint: "Hosted brand site on your domain (logo, palette, About, services). Marketplace listing included — no second fee. Uncheck below if you do not want Find a Place.",
+                    label: "Branded website · $25/mo",
+                    hint: "Hosted brand site on your domain (logo, palette, About, services). $25 covers every listing — the bill does not grow when you add cabins or boats. Marketplace listing included — no second fee. Uncheck below if you do not want Find a Place.",
                   },
                 ] as const
               ).map((opt) => (
