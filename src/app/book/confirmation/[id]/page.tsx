@@ -181,8 +181,8 @@ export default async function ConfirmationPage({
 
       {isStripePending && !isBitcoin ? (
         <p className="mt-6 rounded-lg bg-amber-50 p-3 text-center text-sm text-amber-900">
-          Card checkout will open here when Stripe is live. Your hold is saved;
-          the host can still confirm a manual deposit.
+          Card checkout will open here when card payments are live. Your hold is
+          saved; the host can still confirm a manual deposit.
         </p>
       ) : null}
 

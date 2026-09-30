@@ -1,11 +1,19 @@
 import { redirect } from "next/navigation";
+import { requireHostAdmin } from "@/lib/auth";
 
-/** Pricing intelligence lives under Ops → Pricing comps. */
+/** Nested under Ops → Pricing comps. Hosts stay in admin. */
 export default async function AdminPricingRunRedirect({
   params,
 }: {
   params: Promise<{ runId: string }>;
 }) {
-  const { runId } = await params;
-  redirect(`/ops/pricing-comps/intelligence/${runId}`);
+  const access = await requireHostAdmin();
+  if (!access) redirect("/login?callbackUrl=/admin");
+
+  if (access.isPlatform) {
+    const { runId } = await params;
+    redirect(`/ops/pricing-comps/intelligence/${runId}`);
+  }
+
+  redirect("/admin");
 }

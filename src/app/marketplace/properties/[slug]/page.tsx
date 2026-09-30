@@ -144,7 +144,6 @@ export default async function MarketplacePropertyPage({
   if (!property) notFound();
 
   const bookingChannel = resolveBookingChannel({
-    via: sp.via,
     tenantHostSlug: tenant?.slug,
     listingHostSlug: property.host.slug,
   });

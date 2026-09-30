@@ -16,7 +16,9 @@ import {
   guestPaymentOptions,
   guestValueToPaymentMethod,
   paymentMethodToGuestValue,
+  resolveBookingChannel,
 } from "@/lib/host-payments";
+import { getRequestTenant } from "@/lib/tenant";
 
 export async function createBooking(formData: FormData) {
   const propertyId = String(formData.get("propertyId") || "");
@@ -26,12 +28,6 @@ export async function createBooking(formData: FormData) {
   const pets = Number(formData.get("pets") || 0);
   const guestNotes = String(formData.get("guestNotes") || "").trim() || null;
   const acceptedDisclaimer = formData.get("acceptDisclaimer") === "on";
-  const sourceChannelRaw = String(formData.get("sourceChannel") || "host_site");
-  const sourceChannel = ["host_site", "marketplace", "direct"].includes(
-    sourceChannelRaw
-  )
-    ? sourceChannelRaw
-    : "host_site";
   const payMethodRaw = String(formData.get("paymentMethod") || "").toLowerCase();
 
   if (!propertyId || !checkIn || !checkOut) {
@@ -87,7 +83,12 @@ export async function createBooking(formData: FormData) {
     );
   }
 
-  if (sourceChannel === "marketplace") {
+  const tenant = await getRequestTenant();
+  const channel = resolveBookingChannel({
+    tenantHostSlug: tenant?.slug ?? null,
+    listingHostSlug: property.host.slug,
+  });
+  if (channel === "marketplace") {
     if (!property.listOnMarketplace || !property.host.listOnMarketplace) {
       throw new Error("Property is not available on the marketplace");
     }
@@ -133,10 +134,6 @@ export async function createBooking(formData: FormData) {
     .filter(Boolean)
     .join("\n\n");
 
-  const channel: "marketplace" | "host_site" | "direct" =
-    sourceChannel === "marketplace" || sourceChannel === "direct"
-      ? sourceChannel
-      : "host_site";
   const payOptions = guestPaymentOptions(property.host, channel, property);
   const allowed = new Set(payOptions.filter((o) => o.ready).map((o) => o.value));
   if (allowed.size === 0) {
@@ -199,7 +196,7 @@ export async function createBooking(formData: FormData) {
         totalAmount: quote.totalAmount,
         depositAmount: quote.depositAmount,
         status: "PENDING_PAYMENT",
-        sourceChannel,
+        sourceChannel: channel,
         disclaimerAccepted: disclaimerText,
         payments: {
           create: {

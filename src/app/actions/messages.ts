@@ -91,11 +91,35 @@ export async function startGuestConversation(formData: FormData) {
 
   const session = await auth();
 
+  let safeBookingId: string | null = null;
+  if (bookingId) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        userId: true,
+        guestEmail: true,
+        propertyId: true,
+        property: { select: { hostId: true } },
+      },
+    });
+    const email = guestEmail.toLowerCase();
+    const sessionUser = session?.user?.id;
+    const ownsBooking = Boolean(
+      booking &&
+        booking.property.hostId === hostId &&
+        (!resolvedPropertyId || booking.propertyId === resolvedPropertyId) &&
+        ((sessionUser && booking.userId === sessionUser) ||
+          booking.guestEmail.toLowerCase() === email),
+    );
+    if (ownsBooking && booking) safeBookingId = booking.id;
+  }
+
   const conversation = await prisma.conversation.create({
     data: {
       hostId,
       propertyId: resolvedPropertyId,
-      bookingId,
+      bookingId: safeBookingId,
       guestUserId: session?.user?.id,
       guestName,
       guestEmail,

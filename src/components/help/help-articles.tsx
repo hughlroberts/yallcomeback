@@ -719,10 +719,9 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             path, or free self-host.
           </li>
           <li>
-            Status moves from pending to approved, or to rejected or suspended.
-            Your public site shows online only when you are approved. For
-            platform hosts, hosting must also be paid or active under plan
-            rules.
+            Hosting starts on your account with no wait for approval. For
+            platform hosts, listings go live after the monthly hosting fee is
+            paid.
           </li>
         </HelpUl>
       </HelpSection>

@@ -625,6 +625,11 @@ export async function saveListingPrices(formData: FormData) {
     throw new Error("Weekend adjustment should be 0–100%");
   }
 
+  const existing = await prisma.property.findUnique({
+    where: { id },
+    select: { websitePaymentMethod: true },
+  });
+
   await prisma.property.update({
     where: { id },
     data: {
@@ -632,6 +637,7 @@ export async function saveListingPrices(formData: FormData) {
       weekendPremiumPercent: Math.round(weekendPremiumPercent * 10) / 10,
       websitePaymentMethod: parsePaymentMethod(
         formData.get("websitePaymentMethod"),
+        existing?.websitePaymentMethod,
       ),
     },
   });

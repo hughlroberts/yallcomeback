@@ -327,7 +327,10 @@ export async function applyHostingSubscriptionFromStripe(opts: {
   if (!host) return null;
 
   const raw = (opts.stripeStatus || "").toLowerCase();
-  const paused = stripeCollectionIsPaused(opts.pauseCollection);
+  const pauseProvided = opts.pauseCollection !== undefined;
+  const paused = pauseProvided
+    ? stripeCollectionIsPaused(opts.pauseCollection)
+    : (host.stripeSubscriptionStatus || "").toLowerCase() === "paused";
   let subscriptionStatus:
     | "NONE"
     | "PENDING_PAYMENT"

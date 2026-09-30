@@ -456,15 +456,14 @@ export async function updateHostOps(formData: FormData) {
     }
     const leavingPaid =
       (host.plan?.monthlyPrice ?? 0) > 0 || Boolean(host.stripeSubscriptionId);
-    if (leavingPaid && host.stripeSubscriptionId) {
-      if (host.stripeSubscriptionStatus === "paused") {
-        data.stripeSubscriptionStatus = "paused";
-      } else {
+    if (leavingPaid) {
+      data.stripeSubscriptionStatus = "paused";
+      if (
+        host.stripeSubscriptionId &&
+        host.stripeSubscriptionStatus !== "paused"
+      ) {
         try {
-          const paused = await pausePlatformHostingSubscription(
-            host.stripeSubscriptionId,
-          );
-          if (paused) data.stripeSubscriptionStatus = "paused";
+          await pausePlatformHostingSubscription(host.stripeSubscriptionId);
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           throw new Error(

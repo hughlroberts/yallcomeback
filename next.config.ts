@@ -59,16 +59,6 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: "/admin/pricing",
-        destination: "/ops/pricing-comps/intelligence",
-        permanent: false,
-      },
-      {
-        source: "/admin/pricing/:runId",
-        destination: "/ops/pricing-comps/intelligence/:runId",
-        permanent: false,
-      },
-      {
         source: "/ops/pricing",
         destination: "/ops/pricing-comps/intelligence",
         permanent: false,

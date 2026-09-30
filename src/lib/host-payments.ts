@@ -180,14 +180,16 @@ export function defaultGuestPayMethod(
   return ready?.value ?? options[0]?.value ?? "card";
 }
 
-/** Marketplace vs host website vs a typed-in / direct link. */
+/**
+ * Marketplace vs host website. Do not trust `via` / form `sourceChannel` —
+ * guests on the platform marketplace must always pay by card.
+ * Host-site method applies only when middleware tenant matches the listing host
+ * (custom domain or /h/{slug} chrome).
+ */
 export function resolveBookingChannel(input: {
-  via?: string | null;
   tenantHostSlug?: string | null;
   listingHostSlug?: string | null;
 }): BookingChannel {
-  if (input.via === "direct") return "direct";
-  if (input.via === "host_site") return "host_site";
   if (
     input.tenantHostSlug &&
     input.listingHostSlug &&

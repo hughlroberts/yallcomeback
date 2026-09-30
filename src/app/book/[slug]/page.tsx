@@ -18,7 +18,9 @@ import { formatBtc, quoteBtcFromUsd } from "@/lib/bitcoin";
 import {
   defaultGuestPayMethod,
   guestPaymentOptions,
+  resolveBookingChannel,
 } from "@/lib/host-payments";
+import { getRequestTenant } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Book" };
@@ -34,11 +36,11 @@ export default async function BookPage({
     guests?: string;
     pets?: string;
     host?: string;
-    channel?: string;
   }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
+  const tenant = await getRequestTenant();
 
   const property = await prisma.property.findFirst({
     where: {
@@ -69,12 +71,10 @@ export default async function BookPage({
         ),
       )
     : 0;
-  const channel =
-    sp.channel === "marketplace"
-      ? "marketplace"
-      : sp.channel === "direct"
-        ? "direct"
-        : "host_site";
+  const channel = resolveBookingChannel({
+    tenantHostSlug: tenant?.slug ?? null,
+    listingHostSlug: property.host.slug,
+  });
 
   if (!checkIn || !checkOut) {
     redirect(

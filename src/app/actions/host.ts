@@ -84,7 +84,6 @@ export async function registerHost(formData: FormData) {
 
   const passwordHash = await hashPassword(password);
 
-  const planId = String(formData.get("planId") || "").trim() || null;
   const hostingModeRaw = String(formData.get("hostingMode") || "PLATFORM");
   const hostingMode =
     hostingModeRaw === "SELF" ? ("SELF" as const) : ("PLATFORM" as const);
@@ -106,27 +105,19 @@ export async function registerHost(formData: FormData) {
     // Soft: allow missing URL at apply time; host fills later
   }
 
-  let resolvedPlanId = planId;
+  let resolvedPlanId: string | null = null;
   if (hostingMode === "PLATFORM") {
-    // Couple plan to guest-facing product so $5/listing marketplace vs $25 flat branded stays consistent
     const wantSlug = planSlugForSitePresence(sitePresence);
     const matched = await prisma.hostingPlan.findFirst({
       where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
     });
-    if (matched) {
-      resolvedPlanId = matched.id;
-    } else if (!resolvedPlanId) {
-      const defaultPlan = await prisma.hostingPlan.findFirst({
-        where: { isActive: true, isDefault: true },
+    resolvedPlanId = matched?.id ?? null;
+    if (!resolvedPlanId) {
+      const fallback = await prisma.hostingPlan.findFirst({
+        where: { isActive: true, monthlyPrice: { gt: 0 } },
+        orderBy: { sortOrder: "asc" },
       });
-      resolvedPlanId = defaultPlan?.id ?? null;
-      if (!resolvedPlanId) {
-        const anyPlan = await prisma.hostingPlan.findFirst({
-          where: { isActive: true },
-          orderBy: { sortOrder: "asc" },
-        });
-        resolvedPlanId = anyPlan?.id ?? null;
-      }
+      resolvedPlanId = fallback?.id ?? null;
     }
   }
 
@@ -169,15 +160,6 @@ export async function registerHost(formData: FormData) {
         hostAccess: "OWNER",
       },
     });
-  });
-
-  await prisma.host.updateMany({
-    where: { approvalStatus: "PENDING_REVIEW" },
-    data: {
-      approvalStatus: "APPROVED",
-      reviewedAt: new Date(),
-      approvalNotes: "Self-serve. Hosting goes live after payment.",
-    },
   });
 
   revalidatePath("/hosts");
@@ -292,15 +274,6 @@ export async function startHosting(formData: FormData) {
         hostAccess: "OWNER",
       },
     });
-  });
-
-  await prisma.host.updateMany({
-    where: { approvalStatus: "PENDING_REVIEW" },
-    data: {
-      approvalStatus: "APPROVED",
-      reviewedAt: new Date(),
-      approvalNotes: "Self-serve. Hosting goes live after payment.",
-    },
   });
 
   revalidatePath("/admin");
