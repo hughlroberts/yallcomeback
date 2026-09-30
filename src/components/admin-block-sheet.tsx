@@ -168,6 +168,16 @@ export function AdminBlockSheet({
               />
             </div>
             <div className="space-y-1">
+              <Label htmlFor="sheet-guests">Guests</Label>
+              <Input
+                id="sheet-guests"
+                name="guestCount"
+                type="number"
+                min={1}
+                placeholder="2"
+              />
+            </div>
+            <div className="space-y-1">
               <Label htmlFor="sheet-email">Guest email</Label>
               <Input
                 id="sheet-email"

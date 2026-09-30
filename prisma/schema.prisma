@@ -608,6 +608,8 @@ model CalendarBlock {
   source       BlockSource     @default(MANUAL)
   blockType    BlockType?
   occupantName String?
+  /// Party size for a named stay (optional)
+  guestCount   Int?
   notes        String?
   /// Guest contact for invoice / email later
   guestEmail   String?

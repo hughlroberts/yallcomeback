@@ -81,7 +81,14 @@ export default async function AdminPropertyDetailPage({
       host: true,
       bookings: {
         where: { status: { in: ["CONFIRMED", "PENDING_PAYMENT"] } },
-        select: { checkIn: true, checkOut: true, status: true },
+        select: {
+          id: true,
+          checkIn: true,
+          checkOut: true,
+          status: true,
+          guestName: true,
+          guests: true,
+        },
         take: 200,
       },
     },
@@ -835,6 +842,7 @@ export default async function AdminPropertyDetailPage({
                     {b.source}
                     {b.blockType ? ` · ${b.blockType}` : ""}
                     {b.occupantName ? ` · ${b.occupantName}` : ""}
+                    {b.guestCount ? ` · ${b.guestCount} guests` : ""}
                     {b.guestEmail ? ` · ${b.guestEmail}` : ""}
                     {b.guestPhone ? ` · ${b.guestPhone}` : ""}
                     {b.paymentMethod
@@ -1064,13 +1072,20 @@ export default async function AdminPropertyDetailPage({
           holidayKey: s.holidayKey,
         }))}
         blocks={property.calendarBlocks.map((b) => ({
+          id: b.id,
           startDate: toYmd(b.startDate),
           endDate: toYmd(b.endDate),
+          occupantName: b.occupantName,
+          guestCount: b.guestCount,
+          blockType: b.blockType,
         }))}
         bookings={property.bookings.map((b) => ({
+          id: b.id,
           checkIn: toYmd(b.checkIn),
           checkOut: toYmd(b.checkOut),
           status: b.status,
+          guestName: b.guestName,
+          guests: b.guests,
         }))}
         insightsPanel={
           <AdminListingInsights

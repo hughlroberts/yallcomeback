@@ -44,8 +44,60 @@ type Season = {
   holidayKey: string | null;
 };
 
-type Block = { startDate: string; endDate: string };
-type Booking = { checkIn: string; checkOut: string; status: string };
+type Block = {
+  id: string;
+  startDate: string;
+  endDate: string;
+  occupantName?: string | null;
+  guestCount?: number | null;
+  blockType?: string | null;
+};
+type Booking = {
+  id: string;
+  checkIn: string;
+  checkOut: string;
+  status: string;
+  guestName?: string | null;
+  guests?: number | null;
+};
+
+type StayBar = {
+  id: string;
+  start: string;
+  end: string;
+  label: string;
+  title: string;
+};
+
+function firstName(name: string) {
+  return name.trim().split(/\s+/)[0] || name.trim();
+}
+
+function stayPeopleLabel(
+  name: string | null | undefined,
+  guests: number | null | undefined,
+  fallback: string,
+) {
+  const n = name?.trim();
+  if (!n) return fallback;
+  const first = firstName(n);
+  if (guests && guests > 1) return `${first} + ${guests - 1}`;
+  return first;
+}
+
+function blockFallback(blockType: string | null | undefined) {
+  if (blockType === "OWNER") return "Owner";
+  if (blockType === "MAINTENANCE") return "Maintenance";
+  if (blockType === "FRIENDS") return "Friends";
+  return "Blocked";
+}
+
+function formatStaySpan(start: string, checkout: string) {
+  const a = parseYmd(start);
+  const b = parseYmd(checkout);
+  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+  return `${a.toLocaleDateString("en-US", opts)} – ${b.toLocaleDateString("en-US", opts)}`;
+}
 
 type WorkspaceProperty = {
   id: string;
@@ -488,6 +540,38 @@ export function AdminListingWorkspace({
     return local;
   }, [blocks, bookings]);
 
+  const stays: StayBar[] = useMemo(() => {
+    const fromBlocks: StayBar[] = blocks.map((b) => {
+      const label = stayPeopleLabel(
+        b.occupantName,
+        b.guestCount,
+        blockFallback(b.blockType),
+      );
+      const span = formatStaySpan(b.startDate, b.endDate);
+      return {
+        id: `block-${b.id}`,
+        start: b.startDate,
+        end: b.endDate,
+        label,
+        title: `${b.occupantName?.trim() || label} · ${span}`,
+      };
+    });
+    const fromBookings: StayBar[] = bookings
+      .filter((b) => ["CONFIRMED", "PENDING_PAYMENT"].includes(b.status))
+      .map((b) => {
+        const label = stayPeopleLabel(b.guestName, b.guests, "Guest");
+        const span = formatStaySpan(b.checkIn, b.checkOut);
+        return {
+          id: `booking-${b.id}`,
+          start: b.checkIn,
+          end: b.checkOut,
+          label,
+          title: `${b.guestName?.trim() || label} · ${span}`,
+        };
+      });
+    return [...fromBlocks, ...fromBookings];
+  }, [blocks, bookings]);
+
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
   const cells = monthMatrix(year, month);
@@ -530,8 +614,7 @@ export function AdminListingWorkspace({
     return key >= a && key < b;
   }
 
-  function onDayClick(key: string, inMonth: boolean) {
-    if (!inMonth) return;
+  function onDayClick(key: string) {
     setSelectedDay(key);
 
     // Range select: 1st click = start, 2nd = checkout end → open sheet
@@ -786,7 +869,7 @@ export function AdminListingWorkspace({
                   <span className="size-2.5 rounded-full bg-emerald-500" /> Available
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-full bg-stone-300" /> Blocked
+                  <span className="size-2.5 rounded-full bg-stone-500" /> Stay / block
                 </span>
                 <button
                   type="button"
@@ -812,68 +895,128 @@ export function AdminListingWorkspace({
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-stone-200 bg-stone-200/60">
-                {cells.map((date) => {
-                  const key = ymd(date);
-                  const inMonth = date.getMonth() === month;
-                  const isPast = startOfDay(date) < today;
-                  const isBlocked = blockedSet.has(key);
-                  const isToday = key === ymd(today);
-                  const inRange = inMonth && isInRange(key);
-                  const isRangeEdge =
-                    inMonth &&
-                    (key === rangeStart ||
-                      (rangeEnd != null && key === rangeEnd));
-                  const price = priceForDate(
-                    date,
-                    property.baseNightlyRate,
-                    property.weekendPremiumPercent,
-                    seasons,
-                  );
-                  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+              <div className="overflow-hidden rounded-xl">
+                {Array.from({ length: 6 }, (_, weekIndex) => {
+                  const week = cells.slice(weekIndex * 7, weekIndex * 7 + 7);
+                  const weekStartKey = ymd(week[0]);
+                  const weekEndKey = ymd(week[6]);
+                  const weekBars = stays
+                    .map((stay) => {
+                      // Visual bar includes checkout morning so a Sep 29 → Oct 1
+                      // checkout still paints on Oct 1 in this month grid.
+                      const visStart = stay.start;
+                      const visEnd = stay.end;
+                      if (visEnd < weekStartKey || visStart > weekEndKey) {
+                        return null;
+                      }
+                      const startCol =
+                        visStart <= weekStartKey
+                          ? 0
+                          : parseYmd(visStart).getDay();
+                      const endCol =
+                        visEnd >= weekEndKey ? 6 : parseYmd(visEnd).getDay();
+                      if (endCol < startCol) return null;
+                      return {
+                        ...stay,
+                        startCol,
+                        span: endCol - startCol + 1,
+                        roundLeft: visStart >= weekStartKey,
+                        roundRight: visEnd <= weekEndKey,
+                        showLabel: visStart >= weekStartKey || startCol === 0,
+                      };
+                    })
+                    .filter((b): b is NonNullable<typeof b> => b != null);
 
                   return (
-                    <button
-                      key={key}
-                      type="button"
-                      disabled={!inMonth}
-                      onClick={() => onDayClick(key, inMonth)}
-                      className={cn(
-                        "relative flex min-h-[4.75rem] flex-col items-start p-1.5 text-left transition-colors sm:min-h-[5.5rem] sm:p-2",
-                        !inMonth && "bg-stone-50 text-stone-300",
-                        inMonth && !isBlocked && !inRange && "bg-white hover:bg-stone-50",
-                        inMonth && isBlocked && !inRange && "bg-stone-100",
-                        inRange && "bg-bonnet/15",
-                        isRangeEdge && "ring-2 ring-inset ring-bonnet",
-                        isPast && inMonth && "opacity-55",
-                      )}
+                    <div
+                      key={weekStartKey}
+                      className="relative mb-1 grid grid-cols-7 gap-1 last:mb-0"
                     >
-                      <span
-                        className={cn(
-                          "flex size-7 items-center justify-center rounded-full text-sm font-medium",
-                          isToday && "bg-bonnet text-white",
-                          !isToday && isWeekend && inMonth && "text-stone-900",
-                          !inMonth && "text-stone-300",
-                        )}
-                      >
-                        {date.getDate()}
-                      </span>
-                      {inMonth ? (
-                        isBlocked ? (
-                          <span className="mt-auto text-[11px] font-medium text-stone-400">
-                            Blocked
-                          </span>
-                        ) : (
-                          <span
+                      {week.map((date) => {
+                        const key = ymd(date);
+                        const inMonth = date.getMonth() === month;
+                        const isPast = startOfDay(date) < today;
+                        const isBlocked = blockedSet.has(key);
+                        const isToday = key === ymd(today);
+                        const inRange = isInRange(key);
+                        const isRangeEdge =
+                          key === rangeStart ||
+                          (rangeEnd != null && key === rangeEnd);
+                        const price = priceForDate(
+                          date,
+                          property.baseNightlyRate,
+                          property.weekendPremiumPercent,
+                          seasons,
+                        );
+                        const isWeekend =
+                          date.getDay() === 0 || date.getDay() === 6;
+                        const coveredByBar = weekBars.some(
+                          (bar) =>
+                            date.getDay() >= bar.startCol &&
+                            date.getDay() <= bar.startCol + bar.span - 1,
+                        );
+
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => onDayClick(key)}
                             className={cn(
-                              "mt-auto text-[12px] font-semibold tabular-nums text-stone-900 sm:text-[13px]",
+                              "relative flex min-h-[5.25rem] flex-col items-start rounded-xl p-1.5 text-left transition-colors sm:min-h-[6rem] sm:p-2",
+                              !inMonth && "bg-stone-50 text-stone-300",
+                              inMonth &&
+                                !isBlocked &&
+                                !inRange &&
+                                "bg-stone-50 hover:bg-stone-100/80",
+                              inMonth && isBlocked && !inRange && "bg-stone-100",
+                              inRange && "bg-bonnet/15",
+                              isRangeEdge && "ring-2 ring-inset ring-bonnet",
+                              isPast && "opacity-55",
                             )}
                           >
-                            {formatMoney(price)}
-                          </span>
-                        )
-                      ) : null}
-                    </button>
+                            <span
+                              className={cn(
+                                "flex size-7 items-center justify-center rounded-full text-sm font-medium",
+                                isToday && "bg-bonnet text-white",
+                                !isToday &&
+                                  isWeekend &&
+                                  inMonth &&
+                                  "text-stone-900",
+                                !inMonth && "text-stone-300",
+                              )}
+                            >
+                              {date.getDate()}
+                            </span>
+                            {!isBlocked && !coveredByBar ? (
+                              <span className="mt-0.5 text-[12px] font-semibold tabular-nums text-stone-900 sm:text-[13px]">
+                                {inMonth ? formatMoney(price) : ""}
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                      {weekBars.map((bar) => (
+                        <div
+                          key={bar.id}
+                          title={bar.title}
+                          className={cn(
+                            "pointer-events-none absolute bottom-2 z-10 flex h-7 items-center overflow-hidden bg-stone-500 px-2 text-[11px] font-semibold text-white shadow-sm sm:h-8 sm:text-xs",
+                            bar.roundLeft && "rounded-l-full",
+                            bar.roundRight && "rounded-r-full",
+                            !bar.roundLeft && "rounded-l-sm",
+                            !bar.roundRight && "rounded-r-sm",
+                          )}
+                          style={{
+                            left: `calc(${bar.startCol} * (100% - 1.5rem) / 7 + ${bar.startCol} * 0.25rem + 0.2rem)`,
+                            width: `calc(${bar.span} * (100% - 1.5rem) / 7 + ${bar.span - 1} * 0.25rem - 0.4rem)`,
+                          }}
+                        >
+                          {bar.showLabel ? (
+                            <span className="truncate">{bar.label}</span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
                   );
                 })}
               </div>

@@ -1086,6 +1086,11 @@ export async function addCalendarBlock(formData: FormData) {
         | "OFFLINE"
         | "OTHER",
       occupantName: String(formData.get("occupantName") || "").trim() || null,
+      guestCount: (() => {
+        const raw = String(formData.get("guestCount") || "").trim();
+        const n = Number(raw);
+        return raw && Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+      })(),
       notes: String(formData.get("notes") || "").trim() || null,
       guestEmail,
       guestPhone,
