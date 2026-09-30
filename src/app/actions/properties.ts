@@ -1039,7 +1039,12 @@ export async function deleteSeason(formData: FormData) {
   const id = String(formData.get("id") || "");
   const propertyId = String(formData.get("propertyId") || "");
   await assertPropertyAccess(propertyId, access);
-  await prisma.seasonalPrice.delete({ where: { id } });
+  const season = await prisma.seasonalPrice.findFirst({
+    where: { id, propertyId },
+    select: { id: true },
+  });
+  if (!season) throw new Error("Season not found");
+  await prisma.seasonalPrice.delete({ where: { id: season.id } });
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 

@@ -88,6 +88,11 @@ export async function deleteThingToDo(formData: FormData) {
   const id = String(formData.get("id") || "");
   const locationId = String(formData.get("locationId") || "");
   await assertLocationAccess(locationId, access);
-  await prisma.thingToDo.delete({ where: { id } });
+  const item = await prisma.thingToDo.findFirst({
+    where: { id, locationId },
+    select: { id: true },
+  });
+  if (!item) throw new Error("Not found");
+  await prisma.thingToDo.delete({ where: { id: item.id } });
   revalidatePath(`/admin/locations/${locationId}`);
 }
