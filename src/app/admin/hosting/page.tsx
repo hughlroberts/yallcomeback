@@ -29,8 +29,14 @@ export default async function AdminHostingPage() {
           Messages. Platform email is not live yet.
         </p>
         <div className="flex flex-wrap gap-4 text-sm font-semibold">
+          <Link
+            href="/account/settings/subscription"
+            className="text-bonnet hover:underline"
+          >
+            Subscription
+          </Link>
           <Link href="/admin/payments" className="text-bonnet hover:underline">
-            Card payments &amp; hosting subscription
+            Guest payments
           </Link>
           <Link href="/admin/properties" className="text-bonnet hover:underline">
             ← Back to properties

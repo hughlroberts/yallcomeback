@@ -4,6 +4,7 @@ import { markHostingInvoicePaidByStripeId } from "@/lib/hosting-billing";
 import { markBlockInvoicePaidByStripeId } from "@/lib/block-invoice";
 import {
   applyHostingSubscriptionFromStripe,
+  ensureCustomerDefaultCard,
   stripeObjectId,
 } from "@/lib/platform-billing";
 import { markHostingPastDue } from "@/lib/hosting-dunning";
@@ -119,12 +120,19 @@ export async function POST(req: Request) {
       }
     }
     if (session.metadata?.kind === "hosting_subscription") {
+      const customerId = stripeObjectId(session.customer);
+      const subscriptionId = stripeObjectId(session.subscription);
       await applyHostingSubscriptionFromStripe({
         hostId: session.metadata.hostId,
-        customerId: stripeObjectId(session.customer),
-        subscriptionId: stripeObjectId(session.subscription),
+        customerId,
+        subscriptionId,
         stripeStatus: "active",
       });
+      if (customerId) {
+        await ensureCustomerDefaultCard(customerId, subscriptionId).catch(
+          () => null,
+        );
+      }
     }
   }
 

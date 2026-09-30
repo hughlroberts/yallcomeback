@@ -37,11 +37,20 @@ export default async function AccountPaymentsPage() {
       </p>
 
       <div className="mt-8 space-y-3">
+        {isHost ? (
+          <PaymentLink
+            title="Subscription — pay Yall Come Back"
+            description="Marketplace vs branded website, hosting card, and upgrades. Separate from guest stay money."
+            href="/account/settings/subscription"
+            badge="Host"
+          />
+        ) : null}
+
         <PaymentLink
           title="Card payments"
           description={
             isHost
-              ? "Marketplace stays use online card. Your website default and custom calendar stays can use another method."
+              ? "How guests pay you: website deposits, Find a Place cards, and extras."
               : "Pay the way this listing’s host collects deposits."
           }
           href={isHost ? "/admin/payments" : "/account/bookings"}
@@ -64,15 +73,6 @@ export default async function AccountPaymentsPage() {
           }
           badge={bitcoinOn ? "Available" : "Not enabled"}
         />
-
-        {isHost && !isPlatform ? (
-          <PaymentLink
-            title="Hosting — pay Yall Come Back"
-            description="Put a card on file and subscribe. This is billed on Yall Come Back’s account, separate from guest stay payouts."
-            href="/admin/payments"
-            badge="Host"
-          />
-        ) : null}
 
         <PaymentLink
           title="My booking deposits"

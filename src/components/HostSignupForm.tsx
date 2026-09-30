@@ -93,7 +93,9 @@ export function HostSignupForm({
       setError(result.error);
       return;
     }
-    router.push("/login?registered=host&callbackUrl=/admin/payments?welcome=1");
+    router.push(
+      "/login?registered=host&callbackUrl=/account/settings/subscription?welcome=1",
+    );
     router.refresh();
   }
 

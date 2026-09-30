@@ -41,7 +41,7 @@ export default async function ForHostsPage({
     (signedInUser.role === "HOST" || signedInUser.role === "ADMIN") &&
     signedInUser.hostId
   ) {
-    redirect("/admin/payments?welcome=1");
+    redirect("/account/settings/subscription?welcome=1");
   }
 
   // Public catalog only — complimentary ($0) plans are platform-assigned in Ops

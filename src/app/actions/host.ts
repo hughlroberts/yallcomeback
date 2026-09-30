@@ -190,7 +190,7 @@ export async function registerHost(formData: FormData) {
 
 /**
  * Signed-in guest becomes a host on this same account. No ops approval —
- * they add a card under Admin → Payments to go live.
+ * they add a card under Account → Subscription to go live.
  */
 export async function startHosting(formData: FormData) {
   const { auth } = await import("@/lib/auth");
@@ -205,7 +205,7 @@ export async function startHosting(formData: FormData) {
   if (!user) redirect("/login?callbackUrl=/for-hosts");
   if (user.role === "ADMIN") redirect("/ops/hosting");
   if (user.role === "HOST" && user.hostId) {
-    redirect("/admin/payments?welcome=1");
+    redirect("/account/settings/subscription?welcome=1");
   }
 
   if (formData.get("acceptTerms") !== "on") {
@@ -305,10 +305,11 @@ export async function startHosting(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/admin/payments");
+  revalidatePath("/account/settings/subscription");
   revalidatePath("/for-hosts");
   redirect(
     hostingMode === "PLATFORM"
-      ? "/admin/payments?welcome=1"
+      ? "/account/settings/subscription?welcome=1"
       : "/admin?welcome=1",
   );
 }
@@ -633,10 +634,9 @@ export async function upgradeToBrandedWebsite(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/admin/brand");
   revalidatePath("/ops/hosting");
+  revalidatePath("/account/settings/subscription");
   revalidatePath(`/h/${existing.slug}`);
-  redirect(
-    `/admin/brand?hostId=${hostId}&upgraded=website#domain-setup`,
-  );
+  redirect(`/account/settings/subscription?upgraded=website`);
 }
 
 /**

@@ -15,7 +15,9 @@ export default async function LoginPage({
   const sp = await searchParams;
   const callbackUrl = safeInternalPath(
     sp.callbackUrl ||
-      (sp.registered === "host" ? "/admin/payments?welcome=1" : undefined),
+      (sp.registered === "host"
+        ? "/account/settings/subscription?welcome=1"
+        : undefined),
     "/",
   );
   if (session?.user) {

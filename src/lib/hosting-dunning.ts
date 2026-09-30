@@ -70,7 +70,7 @@ async function sendDunningReminder(host: {
 }): Promise<boolean> {
   const to = hostBillingEmail(host);
   if (!to) return false;
-  const payUrl = `${messagingSiteOrigin()}/admin/payments`;
+  const payUrl = `${messagingSiteOrigin()}/account/settings/subscription`;
   const result = await dispatchPlatformEmail({
     to,
     subject: `${PRODUCT_NAME} hosting is unpaid — add a card to keep taking new stays`,

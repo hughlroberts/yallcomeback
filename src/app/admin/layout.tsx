@@ -147,8 +147,11 @@ export default async function AdminLayout({
           <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
             Hosting payment is past due. You still have a short grace period.
             Pay under{" "}
-            <Link href="/admin/payments" className="font-semibold underline">
-              Payments
+            <Link
+              href="/account/settings/subscription"
+              className="font-semibold underline"
+            >
+              Subscription
             </Link>{" "}
             so new listings and new stays stay available.
           </p>
@@ -158,7 +161,10 @@ export default async function AdminLayout({
             Hosting is paused for new work because payment is overdue. Existing
             listings and bookings stay here. You cannot add listings or take new
             stays until you{" "}
-            <Link href="/admin/payments" className="font-semibold underline">
+            <Link
+              href="/account/settings/subscription"
+              className="font-semibold underline"
+            >
               pay hosting
             </Link>
             .

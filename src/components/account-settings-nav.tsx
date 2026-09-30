@@ -7,6 +7,7 @@ export type AccountSection =
   | "privacy"
   | "notifications"
   | "taxes"
+  | "subscription"
   | "payments"
   | "language";
 
@@ -15,6 +16,7 @@ const NAV: {
   label: string;
   href: string;
   icon: string;
+  hostOnly?: boolean;
 }[] = [
   {
     id: "personal",
@@ -45,6 +47,13 @@ const NAV: {
     label: "Taxes",
     href: "/account/settings/taxes",
     icon: "📄",
+  },
+  {
+    id: "subscription",
+    label: "Subscription",
+    href: "/account/settings/subscription",
+    icon: "⭐",
+    hostOnly: true,
   },
   {
     id: "payments",
@@ -93,7 +102,7 @@ export function AccountSettingsNav({
             <span>Overview</span>
           </Link>
         </li>
-        {NAV.map((item) => {
+        {NAV.filter((item) => !item.hostOnly || isHost).map((item) => {
           const selected = item.id === active;
           return (
             <li key={item.id}>

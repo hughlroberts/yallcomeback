@@ -80,6 +80,7 @@ export async function createHostProduct(formData: FormData) {
     priceInCents: toStripeAmount(dollars),
   });
   revalidatePath("/admin/payments");
+  revalidatePath("/account/settings/subscription");
   revalidatePath(`/pay/${host.slug}`);
 }
 

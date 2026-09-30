@@ -12,6 +12,7 @@ import {
   Plane,
   Search,
   Settings,
+  Star,
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -260,6 +261,14 @@ export function UserMenu({
               label="Profile"
               onNavigate={close}
             />
+            {isHostOrAdmin ? (
+              <MenuRow
+                href="/account/settings/subscription"
+                icon={Star}
+                label="Subscription"
+                onNavigate={close}
+              />
+            ) : null}
             <MenuRow
               href="/account/settings"
               icon={Settings}

@@ -1792,8 +1792,9 @@ function SelfHost({ article }: { article: HelpArticle }) {
           Come Back does not pay that fee.
         </HelpP>
         <HelpP>
-          Monthly hosting is separate. Open Admin → Payments and add a card to
-          pay Yall Come Back. That card is not the same account guests pay.
+          Monthly hosting is separate. Open Account → Subscription and add a
+          card to pay Yall Come Back. That card is not the same account guests
+          pay.
         </HelpP>
         <HelpP>
           If a hosting payment fails, you keep full access for 3 days. After 5

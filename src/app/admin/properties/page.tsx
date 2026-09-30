@@ -62,7 +62,7 @@ export default async function AdminPropertiesPage() {
               ? "Create listings step by step, then edit anytime. Duplicate to spin up a similar stay quickly."
               : hostingAllowsCreate
                 ? "Update calendars, photos, and details. Creating new listings requires full co-host access."
-                : "Hosting is paused for new listings. You can still edit existing stays. Pay hosting under Payments to add more."}
+                : "Hosting is paused for new listings. You can still edit existing stays. Pay hosting under Subscription to add more."}
           </p>
         </div>
         {showCreate ? (

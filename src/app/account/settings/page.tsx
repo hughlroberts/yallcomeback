@@ -12,6 +12,7 @@ const SECTIONS: {
   title: string;
   description: string;
   icon: string;
+  hostOnly?: boolean;
 }[] = [
   {
     href: "/account/settings/personal",
@@ -44,9 +45,16 @@ const SECTIONS: {
     icon: "📄",
   },
   {
+    href: "/account/settings/subscription",
+    title: "Subscription",
+    description: "Marketplace vs branded website, hosting card, and upgrades.",
+    icon: "⭐",
+    hostOnly: true,
+  },
+  {
     href: "/account/settings/payments",
     title: "Payments",
-    description: "Stripe, Bitcoin, deposits, and host billing.",
+    description: "How guests pay you, and how you pay for stays.",
     icon: "💳",
   },
   {
@@ -102,7 +110,7 @@ export default async function AccountSettingsHubPage() {
       ) : null}
 
       <ul className="grid gap-3 sm:grid-cols-2">
-        {SECTIONS.map((s) => (
+        {SECTIONS.filter((s) => !s.hostOnly || isHost).map((s) => (
           <li key={s.href}>
             <Link
               href={s.href}

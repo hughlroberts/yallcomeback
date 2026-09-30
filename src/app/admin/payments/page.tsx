@@ -7,12 +7,9 @@ import { saveWebsitePaymentMethod } from "@/app/actions/host-payments";
 import { WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
 import {
   createHostProduct,
-  openBillingPortal,
   startConnectOnboarding,
-  startHostingSubscription,
 } from "@/app/actions/stripe-connect";
-import { hostingPriceId, isStripeConfigured } from "@/lib/stripe";
-import { describePlatformCard } from "@/lib/platform-billing";
+import { isStripeConfigured } from "@/lib/stripe";
 import {
   listProductsOnConnectedAccount,
   retrieveConnectStatus,
@@ -31,6 +28,7 @@ export default async function AdminPaymentsPage({
     subscribed?: string;
     canceled?: string;
     welcome?: string;
+    session_id?: string;
   }>;
 }) {
   const access = await requireHostAdmin();
@@ -105,14 +103,13 @@ export default async function AdminPaymentsPage({
   }
 
   const sp = await searchParams;
-  const priceConfigured = Boolean(hostingPriceId());
-  let cardOnFile: string | null = null;
-  if (stripeOn && host.stripeCustomerId) {
-    try {
-      cardOnFile = await describePlatformCard(host.stripeCustomerId);
-    } catch {
-      cardOnFile = null;
-    }
+  if (sp.subscribed || sp.canceled || sp.welcome || sp.session_id) {
+    const q = new URLSearchParams();
+    if (sp.subscribed) q.set("subscribed", sp.subscribed);
+    if (sp.session_id) q.set("session_id", sp.session_id);
+    if (sp.canceled) q.set("canceled", sp.canceled);
+    if (sp.welcome) q.set("welcome", sp.welcome);
+    redirect(`/account/settings/subscription?${q.toString()}`);
   }
 
   return (
@@ -120,66 +117,17 @@ export default async function AdminPaymentsPage({
       <div>
         <h1 className="text-2xl font-semibold text-stone-900">Payments</h1>
         <p className="mt-1 text-sm text-stone-600">
-          Two separate money paths. You pay Yall Come Back for hosting with a
-          card on our account. Guests pay you on your connected account. Those
-          never mix. Yall Come Back does not take a cut of the stay.
+          How guests pay you. Yall Come Back does not take a cut of the stay.
+          Your hosting plan and card for Yall Come Back live under{" "}
+          <Link
+            href="/account/settings/subscription"
+            className="font-semibold text-bonnet hover:underline"
+          >
+            Account → Subscription
+          </Link>
+          .
         </p>
       </div>
-
-      <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">
-          Pay Yall Come Back — hosting
-        </h2>
-        <p className="text-sm text-stone-600">
-          Monthly website hosting is billed to a card on Yall Come Back&apos;s
-          account. This is not guest stay money. Add a card to subscribe. Update
-          or cancel anytime. Card processing is added so Yall Come Back nets
-          the listed price.
-        </p>
-        <p className="text-sm text-stone-700">
-          Status:{" "}
-          <strong>
-            {host.subscriptionStatus.replaceAll("_", " ").toLowerCase()}
-          </strong>
-          {host.stripeSubscriptionStatus
-            ? ` (billing: ${host.stripeSubscriptionStatus})`
-            : ""}
-          {cardOnFile ? ` · ${cardOnFile}` : " · no card on file yet"}
-        </p>
-        {host.subscriptionStatus === "PAST_DUE" ? (
-          <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950">
-            Payment is late. You have a 3-day grace period. After 5 unpaid days
-            we pause new listings and new stays. Existing listings stay.
-          </p>
-        ) : null}
-        {host.subscriptionStatus === "PAUSED" ? (
-          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-950">
-            Hosting is paused. Add a card and pay to take new stays again.
-            Existing listings and bookings are unchanged.
-          </p>
-        ) : null}
-        {!priceConfigured ? (
-          <p className="text-sm text-amber-800">
-            Operator must set{" "}
-            <code className="rounded bg-amber-50 px-1">STRIPE_HOSTING_PRICE_ID</code>{" "}
-            to a recurring Price on the platform Stripe account.
-          </p>
-        ) : null}
-        <div className="flex flex-wrap gap-3">
-          <form action={startHostingSubscription}>
-            <Button type="submit" disabled={!stripeOn || !priceConfigured}>
-              {host.subscriptionStatus === "ACTIVE"
-                ? "Manage hosting"
-                : "Add card and subscribe"}
-            </Button>
-          </form>
-          <form action={openBillingPortal}>
-            <Button type="submit" variant="secondary" disabled={!stripeOn}>
-              Update card
-            </Button>
-          </form>
-        </div>
-      </Card>
 
       <Card className="space-y-4 p-6">
         <h2 className="font-semibold text-stone-900">Host website deposits</h2>
@@ -234,18 +182,6 @@ export default async function AdminPaymentsPage({
       {sp.refresh ? (
         <p className="rounded-xl bg-stone-50 px-4 py-3 text-sm text-stone-700">
           Onboarding link expired. Click onboard again to continue.
-        </p>
-      ) : null}
-      {sp.welcome ? (
-        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          You&apos;re hosting. Add a card below to subscribe. You can build
-          listings now; they go live on Find a Place after hosting is paid.
-        </p>
-      ) : null}
-      {sp.subscribed ? (
-        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Hosting subscription checkout finished. Status updates when Stripe
-          sends the webhook.
         </p>
       ) : null}
 

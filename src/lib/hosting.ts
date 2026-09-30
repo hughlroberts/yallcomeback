@@ -89,7 +89,7 @@ export function canHostAddFutureWork(
 }
 
 export const HOSTING_PAUSED_MESSAGE =
-  "Hosting is paused because payment is overdue. You can manage existing listings and bookings, but you cannot add anything new until you pay. Open Admin → Payments.";
+  "Hosting is paused because payment is overdue. You can manage existing listings and bookings, but you cannot add anything new until you pay. Open Account → Subscription.";
 
 export async function assertHostAllowsFutureWork(
   hostId: string,

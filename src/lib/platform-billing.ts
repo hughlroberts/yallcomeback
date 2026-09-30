@@ -84,7 +84,27 @@ export async function customerHasCardOnFile(
   return Boolean(await describePlatformCard(customerId));
 }
 
-/** e.g. "VISA •••• 4242" when a default card is on the platform Customer. */
+function cardLabelFromPaymentMethod(pm: unknown): string | null {
+  if (!pm || typeof pm !== "object") return null;
+  const card =
+    "card" in pm
+      ? (pm as { card?: { brand?: string; last4?: string } }).card
+      : undefined;
+  if (!card?.last4) return null;
+  const brand = (card.brand || "card").toUpperCase();
+  return `${brand} •••• ${card.last4}`;
+}
+
+function paymentMethodId(pm: unknown): string | null {
+  if (typeof pm === "string" && pm.startsWith("pm_")) return pm;
+  if (pm && typeof pm === "object" && "id" in pm) {
+    const id = (pm as { id?: string }).id;
+    return id && id.startsWith("pm_") ? id : null;
+  }
+  return null;
+}
+
+/** e.g. "VISA •••• 4242" when a card is on the platform Customer. */
 export async function describePlatformCard(
   customerId: string,
 ): Promise<string | null> {
@@ -93,15 +113,98 @@ export async function describePlatformCard(
     expand: ["invoice_settings.default_payment_method"],
   });
   if (customer.deleted) return null;
-  const pm = customer.invoice_settings?.default_payment_method;
-  if (pm && typeof pm === "object" && "card" in pm) {
-    const card = pm.card as { brand?: string; last4?: string } | undefined;
-    if (card?.last4) {
-      const brand = (card.brand || "card").toUpperCase();
-      return `${brand} •••• ${card.last4}`;
-    }
+  const fromDefault = cardLabelFromPaymentMethod(
+    customer.invoice_settings?.default_payment_method,
+  );
+  if (fromDefault) return fromDefault;
+
+  const listed = await stripeClient.paymentMethods.list({
+    customer: customerId,
+    type: "card",
+    limit: 1,
+  });
+  return cardLabelFromPaymentMethod(listed.data[0] ?? null);
+}
+
+/**
+ * Checkout attaches the card to the subscription, not always to
+ * customer.invoice_settings.default_payment_method. Copy it over so
+ * invoices and "card on file" agree.
+ */
+export async function ensureCustomerDefaultCard(
+  customerId: string,
+  subscriptionId?: string | null,
+): Promise<string | null> {
+  const stripeClient = requireStripeClient();
+  const customer = await stripeClient.customers.retrieve(customerId, {
+    expand: ["invoice_settings.default_payment_method"],
+  });
+  if (customer.deleted) return null;
+  const existing = cardLabelFromPaymentMethod(
+    customer.invoice_settings?.default_payment_method,
+  );
+  if (existing) return existing;
+
+  let pmId: string | null = null;
+  if (subscriptionId) {
+    const sub = await stripeClient.subscriptions.retrieve(subscriptionId, {
+      expand: ["default_payment_method"],
+    });
+    pmId = paymentMethodId(sub.default_payment_method);
   }
-  return null;
+  if (!pmId) {
+    const listed = await stripeClient.paymentMethods.list({
+      customer: customerId,
+      type: "card",
+      limit: 1,
+    });
+    pmId = listed.data[0]?.id ?? null;
+  }
+  if (!pmId) return null;
+  await stripeClient.customers.update(customerId, {
+    invoice_settings: { default_payment_method: pmId },
+  });
+  return describePlatformCard(customerId);
+}
+
+/**
+ * Apply a completed hosting Checkout session on return (do not wait for webhook).
+ */
+export async function applyHostingCheckoutSession(opts: {
+  sessionId: string;
+  expectedHostId: string;
+}): Promise<{ ok: boolean; cardLabel: string | null }> {
+  if (!opts.sessionId.startsWith("cs_")) {
+    return { ok: false, cardLabel: null };
+  }
+  const stripeClient = requireStripeClient();
+  const session = await stripeClient.checkout.sessions.retrieve(opts.sessionId, {
+    expand: ["subscription.default_payment_method"],
+  });
+  if (session.metadata?.kind !== "hosting_subscription") {
+    return { ok: false, cardLabel: null };
+  }
+  if (
+    session.metadata.hostId &&
+    session.metadata.hostId !== opts.expectedHostId
+  ) {
+    return { ok: false, cardLabel: null };
+  }
+  const customerId = stripeObjectId(session.customer);
+  const subscriptionId = stripeObjectId(session.subscription);
+  await applyHostingSubscriptionFromStripe({
+    hostId: opts.expectedHostId,
+    customerId,
+    subscriptionId,
+    stripeStatus:
+      session.status === "complete" || session.payment_status === "paid"
+        ? "active"
+        : session.status,
+  });
+  const cardLabel = customerId
+    ? await ensureCustomerDefaultCard(customerId, subscriptionId)
+    : null;
+  return { ok: true, cardLabel };
 }
 
 /**
@@ -152,8 +255,8 @@ export async function createHostingSubscriptionCheckout(host: PlatformHost) {
     payment_method_collection: "always",
     billing_address_collection: "auto",
     line_items,
-    success_url: `${origin}/admin/payments?subscribed=1&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/admin/payments?canceled=1`,
+    success_url: `${origin}/account/settings/subscription?subscribed=1&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/account/settings/subscription?canceled=1`,
     metadata: { kind: "hosting_subscription", hostId: host.id },
     subscription_data: {
       metadata: { kind: "hosting_subscription", hostId: host.id },
@@ -166,7 +269,7 @@ export async function createPlatformBillingPortalSession(customerId: string) {
   const origin = publicOrigin();
   return stripeClient.billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${origin}/admin/payments`,
+    return_url: `${origin}/account/settings/subscription`,
   });
 }
 
