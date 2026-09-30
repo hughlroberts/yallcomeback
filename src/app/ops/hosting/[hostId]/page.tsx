@@ -136,7 +136,7 @@ export default async function OpsHostDetailPage({
           <p className="text-sm text-ink-muted">Published listings</p>
           <p className="mt-1 text-3xl font-semibold text-ink">{published}</p>
           <p className="mt-1 text-xs text-ink-muted">
-            Billable units on per-property plans
+            Marketplace bills per listing; website is $25 flat
           </p>
         </Card>
         <Card>
@@ -325,9 +325,6 @@ export default async function OpsHostDetailPage({
               {plans.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} · {formatPlanPrice(p, formatMoney)}
-                  {p.monthlyPrice <= 0
-                    ? " (platform / partners only · never billed)"
-                    : ""}
                 </option>
               ))}
             </select>

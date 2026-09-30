@@ -95,7 +95,7 @@ async function main() {
       description:
         "Free hosting for your own brand or partner accounts. Still a full platform customer — no monthly fee.",
       monthlyPrice: 0,
-      pricingModel: "PER_PROPERTY",
+      pricingModel: "FLAT",
       minProperties: 1,
       currency: "USD",
       isActive: true,

@@ -41,15 +41,18 @@ export default async function OpsHostingPlansPage() {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">Hosting plans & pricing</h1>
         <p className="mt-1 max-w-2xl text-sm text-stone-500">
-          Default is{" "}
+          Two published products:{" "}
           <strong className="font-medium text-stone-700">
-            per property / month
+            branded website is $25/mo total
           </strong>{" "}
-          so hosts with more listings pay more hosting (still not a booking
-          commission). Flat monthly is available for special cases.{" "}
+          (any number of listings) and{" "}
+          <strong className="font-medium text-stone-700">
+            marketplace-only is $5/listing/mo
+          </strong>
+          . Still not a booking commission.{" "}
           <strong className="font-medium text-stone-700">Complimentary</strong>{" "}
-          plans stay internal — assign them yourself in Ops; they are never
-          offered on For hosts / signup.
+          stays internal — assign it in Ops; it is never offered on For hosts.
+          If a complimentary host pays, they move onto the matching paid plan.
         </p>
       </div>
 

@@ -45,7 +45,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 1. **Host sites** - branded mini-sites at `/h/your-slug` (or custom domain)
 2. **Shared marketplace** - **opt-in** listings at `/marketplace` (Find a Place)
-3. **Monthly hosting fee** (optional) - if we host the site for you: approve → invoice → go live (per property / month, **not** a % of bookings)
+3. **Monthly hosting fee** (optional) - if we host the site for you: $25/mo branded website (whole site) or $5/listing marketplace-only — **not** a % of bookings
 4. **Free self-host** - $0 platform fee; either manage listings on the central app or run a remote open-source deploy
 
 Same calendar, pricing, and bookings either way. Marketplace is never required.

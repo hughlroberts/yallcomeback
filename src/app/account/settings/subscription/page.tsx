@@ -15,6 +15,7 @@ import {
   applyHostingCheckoutSession,
   describePlatformCard,
   ensureCustomerDefaultCard,
+  promoteComplimentaryHostIfPaid,
 } from "@/lib/platform-billing";
 import {
   calculateHostingAmount,
@@ -104,6 +105,17 @@ export default async function AccountSubscriptionPage({
       include: { plan: true },
     });
     if (!host) redirect("/account/settings");
+  }
+
+  if (
+    host.plan &&
+    host.plan.monthlyPrice <= 0 &&
+    host.hostingMode === "PLATFORM" &&
+    (host.stripeSubscriptionStatus === "active" ||
+      Boolean(host.stripeSubscriptionId && host.subscriptionStatus === "ACTIVE"))
+  ) {
+    const promoted = await promoteComplimentaryHostIfPaid(host.id);
+    if (promoted) host = promoted;
   }
 
   const stripeOn = isStripeConfigured();
@@ -272,9 +284,18 @@ export default async function AccountSubscriptionPage({
             .
           </p>
         ) : null}
+        {complimentary && !selfHost ? (
+          <p className="rounded-xl border border-sage/40 bg-sage/15 px-3 py-2 text-sm text-stone-800">
+            Complimentary is $0 and is not billed. If you add a card and
+            subscribe, this brand moves off complimentary onto{" "}
+            {marketplaceOnly
+              ? `${formatMoney(5)} per published listing / month (marketplace).`
+              : `${formatMoney(25)} / month for the whole website.`}
+          </p>
+        ) : null}
       </Card>
 
-      {!selfHost && !complimentary ? (
+      {!selfHost && (!complimentary || branded) ? (
         <Card className="mt-4 space-y-4 p-5 sm:p-6">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-bonnet">
@@ -284,8 +305,9 @@ export default async function AccountSubscriptionPage({
               Card on file
             </h2>
             <p className="mt-1 text-sm text-stone-600">
-              Yall Come Back charges this card for hosting. Guests pay you on a
-              different account.
+              {complimentary
+                ? "Subscribing ends complimentary on this brand and starts the $25 / month website plan. Guests still pay you separately."
+                : "Yall Come Back charges this card for hosting. Guests pay you on a different account."}
             </p>
           </div>
 
@@ -343,9 +365,11 @@ export default async function AccountSubscriptionPage({
             {branded ? (
               <form action={startHostingSubscription}>
                 <Button type="submit" disabled={!stripeOn || !priceConfigured}>
-                  {host.subscriptionStatus === "ACTIVE"
-                    ? "Manage billing"
-                    : "Add card and subscribe"}
+                  {complimentary
+                    ? "Move to $25/mo website and subscribe"
+                    : host.subscriptionStatus === "ACTIVE"
+                      ? "Manage billing"
+                      : "Add card and subscribe"}
                 </Button>
               </form>
             ) : null}

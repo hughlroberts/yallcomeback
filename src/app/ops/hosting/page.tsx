@@ -81,12 +81,15 @@ export default async function OpsHostingPage() {
           <h1 className="text-2xl font-semibold">Website hosting</h1>
           <p className="mt-1 max-w-2xl text-sm text-stone-500">
             Hosts who do not self-host get a site on this platform. After you
-            approve them, charge a{" "}
+            approve them, charge hosting:{" "}
             <strong className="font-medium text-stone-700">
-              monthly hosting fee per property
+              $25/mo for a branded website
             </strong>{" "}
-            (scales with listings; not a cut of each booking). Stripe invoices
-            when configured; otherwise mark paid manually.
+            (whole site, any listings) or{" "}
+            <strong className="font-medium text-stone-700">
+              $5/listing/mo marketplace-only
+            </strong>
+            . Not a cut of each booking.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -187,7 +190,6 @@ export default async function OpsHostingPage() {
                       {plans.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.name} · {formatPlanPrice(p, formatMoney)}
-                          {p.monthlyPrice <= 0 ? " (no charge)" : ""}
                         </option>
                       ))}
                     </select>

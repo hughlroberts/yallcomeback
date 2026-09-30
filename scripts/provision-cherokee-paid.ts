@@ -77,7 +77,7 @@ async function main() {
       slug: "complimentary",
       description: "Free hosting for own brand or partners.",
       monthlyPrice: 0,
-      pricingModel: "PER_PROPERTY",
+      pricingModel: "FLAT",
       minProperties: 1,
       currency: "USD",
       isActive: true,

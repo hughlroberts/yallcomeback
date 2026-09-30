@@ -75,7 +75,7 @@ async function main() {
       description:
         "Free hosting for your own brand or partner accounts. Still a full platform customer — no monthly fee.",
       monthlyPrice: 0,
-      pricingModel: "PER_PROPERTY",
+      pricingModel: "FLAT",
       minProperties: 1,
       currency: "USD",
       isActive: true,
@@ -85,6 +85,7 @@ async function main() {
     update: {
       name: "Complimentary",
       monthlyPrice: 0,
+      pricingModel: "FLAT",
       isActive: true,
       isDefault: false,
       sortOrder: 99,
@@ -113,6 +114,34 @@ async function main() {
     data: { isDefault: false },
   });
 
+  const paidComplimentary = await prisma.host.findMany({
+    where: {
+      hostingMode: "PLATFORM",
+      plan: { monthlyPrice: { lte: 0 } },
+      OR: [
+        { stripeSubscriptionStatus: "active" },
+        {
+          stripeSubscriptionId: { not: null },
+          subscriptionStatus: "ACTIVE",
+        },
+      ],
+    },
+    select: { id: true, name: true, sitePresence: true },
+  });
+  let promoted = 0;
+  for (const host of paidComplimentary) {
+    const paidPlan =
+      host.sitePresence === "STAYLOCAL" ? marketplace : branded;
+    await prisma.host.update({
+      where: { id: host.id },
+      data: { planId: paidPlan.id },
+    });
+    promoted += 1;
+    console.log(
+      `  promoted ${host.name} off complimentary → ${paidPlan.slug}`,
+    );
+  }
+
   console.log("Plans upserted:");
   console.log(
     `  marketplace → $${marketplace.monthlyPrice} ${marketplace.pricingModel} id=${marketplace.id}`,
@@ -121,6 +150,7 @@ async function main() {
     `  branded     → $${branded.monthlyPrice} ${branded.pricingModel} id=${branded.id}`,
   );
   console.log(`  hosts moved from legacy listing → branded: ${movedHosts}`);
+  console.log(`  complimentary hosts who already paid → paid plan: ${promoted}`);
 }
 
 main()

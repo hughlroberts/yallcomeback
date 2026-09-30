@@ -121,7 +121,7 @@ export default function SelfHostPage() {
               We run it for you
             </h2>
             <ul className="mt-4 space-y-2 text-sm leading-relaxed text-stone-700">
-              <li>· Monthly fee per property (not per booking)</li>
+              <li>· $25/mo website or $5/listing marketplace (not per booking)</li>
               <li>
                 · Choose guest surface: Yall Come Back listing URLs, your domain, or
                 both

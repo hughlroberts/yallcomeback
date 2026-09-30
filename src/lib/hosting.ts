@@ -310,14 +310,12 @@ export function formatPlanPrice(
   formatMoney: (n: number, symbol?: string) => string
 ): string {
   if (plan.monthlyPrice <= 0) {
-    return plan.pricingModel === "PER_PROPERTY"
-      ? "Free / listing / mo"
-      : "Free / mo";
+    return "Free (never billed)";
   }
   const money = formatMoney(plan.monthlyPrice);
   return plan.pricingModel === "PER_PROPERTY"
     ? `${money}/listing/mo`
-    : `${money}/mo`;
+    : `${money}/mo total (whole website)`;
 }
 
 /** Guest- and host-facing sentence for the monthly fee. */

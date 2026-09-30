@@ -147,14 +147,14 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
   },
   {
     category: "Platform website hosting & billing",
-    summary: "Monthly hosting fee per property - not a cut of bookings.",
+    summary: "Monthly hosting fee — $25/mo website or $5/listing marketplace, not a cut of bookings.",
     items: [
       "Host application form with plan selection",
       "Approval workflow (pending / approved / rejected / suspended)",
       "PLATFORM vs SELF hosting modes",
       "Optional marketplace for paid and free self-host",
       "Remote open-source → marketplace syndication API (Bearer key)",
-      "Hosting plans: per-property or flat monthly",
+      "Hosting plans: $5/listing marketplace or $25/mo flat website",
       "Hosting invoices (Stripe invoice when configured, else manual)",
       "Subscription statuses: none, pending payment, active, past due, cancelled",
       "Optional $500 one-time full setup (listings, brand, custom website)",

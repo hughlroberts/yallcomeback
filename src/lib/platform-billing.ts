@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/db";
 import { PRODUCT_ORIGIN } from "@/lib/features";
+import { planSlugForSitePresence } from "@/lib/hosting";
 import {
   CARD_PROCESSING_LINE,
   hostingPriceId,
@@ -314,7 +315,7 @@ export async function applyHostingSubscriptionFromStripe(opts: {
     subscriptionStatus = "CANCELLED";
   else if (opts.cancelAtPeriodEnd) subscriptionStatus = "CANCELLED";
 
-  return prisma.host.update({
+  const updated = await prisma.host.update({
     where: { id: host.id },
     data: {
       stripeCustomerId: opts.customerId || host.stripeCustomerId,
@@ -327,6 +328,34 @@ export async function applyHostingSubscriptionFromStripe(opts: {
         ? { hostingDunningReminderSentAt }
         : {}),
     },
+  });
+  if (subscriptionStatus === "ACTIVE") {
+    await promoteComplimentaryHostIfPaid(updated.id);
+  }
+  return updated;
+}
+
+/**
+ * Complimentary is $0 forever — until they actually pay. A successful hosting
+ * charge moves them onto the matching paid plan (website $25 flat, or
+ * marketplace $5/listing) so Ops does not stay out of sync.
+ */
+export async function promoteComplimentaryHostIfPaid(hostId: string) {
+  const host = await prisma.host.findUnique({
+    where: { id: hostId },
+    include: { plan: true },
+  });
+  if (!host || host.hostingMode !== "PLATFORM") return host;
+  if (host.plan && host.plan.monthlyPrice > 0) return host;
+  const slug = planSlugForSitePresence(host.sitePresence);
+  const paid = await prisma.hostingPlan.findFirst({
+    where: { slug, isActive: true, monthlyPrice: { gt: 0 } },
+  });
+  if (!paid) return host;
+  return prisma.host.update({
+    where: { id: host.id },
+    data: { planId: paid.id },
+    include: { plan: true },
   });
 }
 

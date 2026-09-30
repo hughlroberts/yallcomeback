@@ -260,7 +260,8 @@ export async function assignHostPlan(formData: FormData) {
 /**
  * Platform ops: edit an existing host brand (plan, billing, domain, marketplace).
  * Complimentary plan = free forever for your own brand / partners; still PLATFORM
- * so multi-listing businesses stay on your stack without per-property charges.
+ * so multi-listing businesses stay on your stack. A later hosting payment
+ * moves them onto the matching paid plan.
  */
 export async function updateHostOps(formData: FormData) {
   await ensurePlatform();

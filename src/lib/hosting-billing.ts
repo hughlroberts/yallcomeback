@@ -15,6 +15,7 @@ import {
 import {
   customerHasCardOnFile,
   ensurePlatformCustomer,
+  promoteComplimentaryHostIfPaid,
   stripeObjectId,
 } from "@/lib/platform-billing";
 import type { HostingInvoiceStatus } from "@prisma/client";
@@ -405,7 +406,7 @@ export async function recordStripePlatformInvoice(inv: StripeInvoiceLike) {
 
   const customerId = stripeObjectId(inv.customer);
   const subscriptionId = invoiceSubscriptionId(inv);
-  const host = await findHostForPlatformInvoice(inv);
+  let host = await findHostForPlatformInvoice(inv);
   if (!host) return null;
 
   const cents =
@@ -413,6 +414,10 @@ export async function recordStripePlatformInvoice(inv: StripeInvoiceLike) {
       ? (inv.amount_paid ?? inv.amount_due ?? 0)
       : (inv.amount_due ?? inv.amount_paid ?? 0);
   const amount = Math.round(Number(cents) || 0) / 100;
+  if (invoiceStatusFromStripe(inv.status) === "PAID" && amount > 0) {
+    const promoted = await promoteComplimentaryHostIfPaid(host.id);
+    if (promoted) host = promoted;
+  }
   const line = inv.lines?.data?.[0];
   const periodStart = inv.period_start
     ? new Date(inv.period_start * 1000)
