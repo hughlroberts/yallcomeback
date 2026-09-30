@@ -19,8 +19,11 @@ import {
 import { hostProductPath } from "@/lib/hosting";
 import { isStripeConfigured, toStripeAmount } from "@/lib/stripe";
 
-async function requireBrandHost() {
-  const access = await requireHostAdmin();
+async function requireBrandHost(formData?: FormData) {
+  const requested = formData
+    ? String(formData.get("hostId") || "").trim() || undefined
+    : undefined;
+  const access = await requireHostAdmin(requested);
   if (!access?.hostId) {
     throw new Error("Pick a host brand first.");
   }
@@ -85,9 +88,9 @@ export async function createHostProduct(formData: FormData) {
   revalidatePath(`/pay/${host.slug}`);
 }
 
-export async function startHostingSubscription() {
+export async function startHostingSubscription(formData?: FormData) {
   assertStripeOn();
-  const host = await requireBrandHost();
+  const host = await requireBrandHost(formData);
   if (hostProductPath(host) !== "website") {
     throw new Error(
       "Card checkout is the $25 / month branded website plan. Marketplace-only hosts are billed $5 per listing by invoice.",
@@ -105,9 +108,9 @@ export async function startHostingSubscription() {
   redirect(session.url);
 }
 
-export async function openBillingPortal() {
+export async function openBillingPortal(formData?: FormData) {
   assertStripeOn();
-  const host = await requireBrandHost();
+  const host = await requireBrandHost(formData);
   const customerId = await ensurePlatformCustomer(host);
   const session = await createPlatformBillingPortalSession(customerId);
   if (!session.url) throw new Error("Billing portal did not return a URL.");

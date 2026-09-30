@@ -173,7 +173,7 @@ export async function ensureCustomerDefaultCard(
  */
 export async function applyHostingCheckoutSession(opts: {
   sessionId: string;
-  expectedHostId: string;
+  expectedHostId?: string | null;
 }): Promise<{ ok: boolean; cardLabel: string | null }> {
   if (!opts.sessionId.startsWith("cs_")) {
     return { ok: false, cardLabel: null };
@@ -185,16 +185,14 @@ export async function applyHostingCheckoutSession(opts: {
   if (session.metadata?.kind !== "hosting_subscription") {
     return { ok: false, cardLabel: null };
   }
-  if (
-    session.metadata.hostId &&
-    session.metadata.hostId !== opts.expectedHostId
-  ) {
+  const hostId = session.metadata?.hostId || opts.expectedHostId || "";
+  if (!hostId) {
     return { ok: false, cardLabel: null };
   }
   const customerId = stripeObjectId(session.customer);
   const subscriptionId = stripeObjectId(session.subscription);
   await applyHostingSubscriptionFromStripe({
-    hostId: opts.expectedHostId,
+    hostId,
     customerId,
     subscriptionId,
     stripeStatus:

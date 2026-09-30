@@ -24,9 +24,12 @@ import {
 } from "@/lib/hosting";
 import { hostingPriceId, isStripeConfigured } from "@/lib/stripe";
 import { formatMoney } from "@/lib/utils";
+import type { Host, HostingPlan } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Subscription" };
+
+type HostWithPlan = Host & { plan: HostingPlan | null };
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -66,105 +69,104 @@ export default async function AccountSubscriptionPage({
   if (!access) {
     redirect("/account/settings");
   }
+  const isPlatform = access.isPlatform;
+  const scopedHostId = access.hostId;
 
   const sp = await searchParams;
 
-  if (!access.hostId) {
-    return (
-      <AccountSettingsShell
-        active="subscription"
-        isHost
-        title="Subscription"
-        description="Your Yall Come Back hosting plan — separate from guest stay payments."
-      >
-        <p className="text-sm text-stone-600">
-          Pick a host brand first (brand switcher in Admin), then come back here
-          to manage the plan.
-        </p>
-      </AccountSettingsShell>
-    );
-  }
-
-  let host = await prisma.host.findUnique({
-    where: { id: access.hostId },
-    include: { plan: true },
-  });
-  if (!host) redirect("/account/settings");
-
   if (sp.session_id) {
     try {
-      await applyHostingCheckoutSession({
-        sessionId: sp.session_id,
-        expectedHostId: host.id,
-      });
+      await applyHostingCheckoutSession({ sessionId: sp.session_id });
     } catch {
       // Webhook will catch up if Checkout retrieve fails.
     }
-    host = await prisma.host.findUnique({
-      where: { id: access.hostId },
-      include: { plan: true },
-    });
-    if (!host) redirect("/account/settings");
   }
 
-  if (
-    host.plan &&
-    host.plan.monthlyPrice <= 0 &&
-    host.hostingMode === "PLATFORM" &&
-    (host.stripeSubscriptionStatus === "active" ||
-      Boolean(host.stripeSubscriptionId && host.subscriptionStatus === "ACTIVE"))
-  ) {
-    const promoted = await promoteComplimentaryHostIfPaid(host.id);
-    if (promoted) host = promoted;
+  async function loadBrands(): Promise<HostWithPlan[]> {
+    if (isPlatform) {
+      return prisma.host.findMany({
+        where: { hostingMode: "PLATFORM" },
+        include: { plan: true },
+        orderBy: { name: "asc" },
+      });
+    }
+    if (!scopedHostId) return [];
+    const one = await prisma.host.findUnique({
+      where: { id: scopedHostId },
+      include: { plan: true },
+    });
+    return one ? [one] : [];
   }
+
+  const scopedHosts = await loadBrands();
+
+  const publishedGroups = scopedHosts.length
+    ? await prisma.property.groupBy({
+        by: ["hostId"],
+        where: {
+          hostId: { in: scopedHosts.map((h) => h.id) },
+          published: true,
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const publishedByHost = new Map(
+    publishedGroups.map((g) => [g.hostId, g._count._all]),
+  );
 
   const stripeOn = isStripeConfigured();
   const priceConfigured = Boolean(hostingPriceId());
-  let cardOnFile: string | null = null;
-  if (stripeOn && host.stripeCustomerId) {
-    try {
-      cardOnFile = await ensureCustomerDefaultCard(
-        host.stripeCustomerId,
-        host.stripeSubscriptionId,
-      );
-      if (!cardOnFile) {
-        cardOnFile = await describePlatformCard(host.stripeCustomerId);
-      }
-    } catch {
-      cardOnFile = null;
-    }
-  }
 
-  const publishedCount = await prisma.property.count({
-    where: { hostId: host.id, published: true },
-  });
-  const product = hostProductPath(host);
-  const marketplaceOnly = product === "marketplace";
-  const branded = product === "website";
-  const selfHost = product === "open_source";
-  const complimentary = Boolean(host.plan && host.plan.monthlyPrice <= 0);
-  const estimate = host.plan
-    ? calculateHostingAmount(host.plan, publishedCount)
-    : null;
+  const cards = new Map<string, string | null>();
+  await Promise.all(
+    scopedHosts.map(async (host) => {
+      if (
+        host.plan &&
+        host.plan.monthlyPrice <= 0 &&
+        (host.stripeSubscriptionStatus === "active" ||
+          Boolean(
+            host.stripeSubscriptionId && host.subscriptionStatus === "ACTIVE",
+          ))
+      ) {
+        await promoteComplimentaryHostIfPaid(host.id);
+      }
+      if (!stripeOn || !host.stripeCustomerId) {
+        cards.set(host.id, null);
+        return;
+      }
+      try {
+        let label = await ensureCustomerDefaultCard(
+          host.stripeCustomerId,
+          host.stripeSubscriptionId,
+        );
+        if (!label) {
+          label = await describePlatformCard(host.stripeCustomerId);
+        }
+        cards.set(host.id, label);
+      } catch {
+        cards.set(host.id, null);
+      }
+    }),
+  );
+
+  const hostsNow = await loadBrands();
 
   const flash = sp.subscribed
     ? {
         title: "You're subscribed",
-        body: cardOnFile
-          ? `Hosting is active. Card on file: ${cardOnFile}. This is what you pay Yall Come Back — not guest stay money.`
-          : "Hosting is active. We'll charge the card you just added each month. This is separate from guest stay payments.",
+        body: "Hosting is active on that brand. The card is stored on the brand, not on your personal account.",
         variant: "success" as const,
       }
     : sp.upgraded === "website"
       ? {
           title: "Branded website is on",
-          body: "You're on the $25 / month website plan — that covers every listing. Marketplace listing stays included. Next: logo, colors, and your domain under Brand & website.",
+          body: "That brand is on the $25 / month website plan — it covers every listing. Next: logo, colors, and domain under Brand & website.",
           variant: "success" as const,
         }
       : sp.welcome
         ? {
             title: "Welcome — you're hosting",
-            body: "This tab is your Yall Come Back subscription. Add a card when you are ready to go live. Guest cards are set up separately under Admin → Payments.",
+            body: "Each brand has its own Yall Come Back plan and card. Guest cards stay under Admin → Payments.",
             variant: "info" as const,
           }
         : sp.canceled
@@ -180,7 +182,7 @@ export default async function AccountSubscriptionPage({
       active="subscription"
       isHost
       title="Subscription"
-      description="What you pay Yall Come Back. Guest stay payments live under Admin → Payments — they never mix."
+      description="Hosting is billed per brand, not on your personal login. Guest stay payments live under Admin → Payments — they never mix."
     >
       {flash ? (
         <FlashToast
@@ -190,26 +192,85 @@ export default async function AccountSubscriptionPage({
         />
       ) : null}
 
+      {hostsNow.length === 0 ? (
+        <p className="text-sm text-stone-600">
+          Pick a host brand first (brand switcher in Admin), then come back here
+          to manage that brand&apos;s plan.
+        </p>
+      ) : (
+        <div className="space-y-6">
+          {hostsNow.map((host) => (
+            <BrandHostingCard
+              key={host.id}
+              host={host}
+              publishedCount={publishedByHost.get(host.id) ?? 0}
+              cardOnFile={cards.get(host.id) ?? null}
+              stripeOn={stripeOn}
+              priceConfigured={priceConfigured}
+            />
+          ))}
+        </div>
+      )}
+
+      <p className="mt-6 text-xs leading-relaxed text-stone-400">
+        Guest cards, website deposit method, and extras stay under{" "}
+        <Link href="/admin/payments" className="underline hover:text-stone-600">
+          Admin → Payments
+        </Link>
+        . The card on a brand above is only that brand&apos;s Yall Come Back
+        hosting.
+      </p>
+    </AccountSettingsShell>
+  );
+}
+
+function BrandHostingCard({
+  host,
+  publishedCount,
+  cardOnFile,
+  stripeOn,
+  priceConfigured,
+}: {
+  host: HostWithPlan;
+  publishedCount: number;
+  cardOnFile: string | null;
+  stripeOn: boolean;
+  priceConfigured: boolean;
+}) {
+  const product = hostProductPath(host);
+  const marketplaceOnly = product === "marketplace";
+  const branded = product === "website";
+  const selfHost = product === "open_source";
+  const complimentary = Boolean(host.plan && host.plan.monthlyPrice <= 0);
+  const estimate = host.plan
+    ? calculateHostingAmount(host.plan, publishedCount)
+    : null;
+
+  return (
+    <div className="space-y-4">
       <Card className="space-y-4 p-5 sm:p-6">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-bonnet">
-            Your plan
+            Brand
           </p>
           <h2 className="mt-1 text-lg font-semibold text-stone-900">
+            {host.name}
+          </h2>
+          <p className="mt-1 text-sm font-medium text-stone-800">
             {selfHost
               ? "Free self-host"
               : complimentary
                 ? "Complimentary"
                 : sitePresenceLabel(host.sitePresence)}
-          </h2>
+          </p>
           <p className="mt-1 text-sm text-stone-600">
             {selfHost
-              ? "You run the site yourself. No monthly platform fee."
+              ? "This brand runs the site itself. No monthly platform fee."
               : complimentary
                 ? "No monthly hosting fee on this brand."
                 : marketplaceOnly
-                  ? `${formatMoney(host.plan?.monthlyPrice ?? 5)} per published listing / month. Guests find you on Find a Place.`
-                  : `${formatMoney(host.plan?.monthlyPrice ?? 25)} / month for the whole website. Brand site on your domain; add as many listings as you want. Marketplace listing included.`}
+                  ? `${formatMoney(host.plan?.monthlyPrice ?? 5)} per published listing / month. Guests find this brand on Find a Place.`
+                  : `${formatMoney(host.plan?.monthlyPrice ?? 25)} / month for the whole website. Add as many listings as you want. Marketplace listing included.`}
           </p>
         </div>
 
@@ -246,10 +307,10 @@ export default async function AccountSubscriptionPage({
               Upgrade to a branded website
             </p>
             <p className="mt-1 text-sm leading-relaxed text-stone-600">
-              Your own domain, logo, colors, and About page. Marketplace
-              listing stays included — you do not pay $5 on top.{" "}
-              <strong>{formatMoney(25)} / month for the whole website</strong>
-              , no matter how many listings you publish.
+              Own domain, logo, colors, and About page. Marketplace listing
+              stays included.{" "}
+              <strong>{formatMoney(25)} / month for the whole website</strong>,
+              no matter how many listings you publish.
             </p>
             <form
               action={upgradeToBrandedWebsite}
@@ -287,7 +348,7 @@ export default async function AccountSubscriptionPage({
         {complimentary && !selfHost ? (
           <p className="rounded-xl border border-sage/40 bg-sage/15 px-3 py-2 text-sm text-stone-800">
             Complimentary is $0 and is not billed. If you add a card and
-            subscribe, this brand moves off complimentary onto{" "}
+            subscribe, <strong>{host.name}</strong> moves off complimentary onto{" "}
             {marketplaceOnly
               ? `${formatMoney(5)} per published listing / month (marketplace).`
               : `${formatMoney(25)} / month for the whole website.`}
@@ -296,18 +357,18 @@ export default async function AccountSubscriptionPage({
       </Card>
 
       {!selfHost && (!complimentary || branded) ? (
-        <Card className="mt-4 space-y-4 p-5 sm:p-6">
+        <Card className="space-y-4 p-5 sm:p-6">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-bonnet">
-              Billing
+              {host.name} · billing
             </p>
             <h2 className="mt-1 text-lg font-semibold text-stone-900">
-              Card on file
+              Card on file for this brand
             </h2>
             <p className="mt-1 text-sm text-stone-600">
               {complimentary
-                ? "Subscribing ends complimentary on this brand and starts the $25 / month website plan. Guests still pay you separately."
-                : "Yall Come Back charges this card for hosting. Guests pay you on a different account."}
+                ? `Subscribing ends complimentary on ${host.name} and starts the $25 / month website plan. This is not your personal card.`
+                : `Yall Come Back charges this card for ${host.name} hosting only. It is not your personal account card. Guests pay the host on a different account.`}
             </p>
           </div>
 
@@ -331,39 +392,27 @@ export default async function AccountSubscriptionPage({
 
           {host.subscriptionStatus === "PAST_DUE" ? (
             <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950">
-              Payment is late. You have a 3-day grace period. After 5 unpaid
-              days we pause new listings and new stays. Existing listings stay.
+              Payment is late. 3-day grace, then pause after 5 unpaid days.
+              Existing listings stay.
             </p>
           ) : null}
           {host.subscriptionStatus === "PAUSED" ? (
             <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-950">
               Hosting is paused. Add a card and pay to take new stays again.
-              Existing listings and bookings are unchanged.
-            </p>
-          ) : null}
-          {host.subscriptionStatus === "ACTIVE" && !cardOnFile ? (
-            <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950">
-              Hosting is active, but we do not see a default card yet. Use
-              Update card so monthly invoices can charge it.
             </p>
           ) : null}
           {marketplaceOnly ? (
             <p className="text-sm text-stone-600">
-              Marketplace-only is billed {formatMoney(host.plan?.monthlyPrice ?? 5)}{" "}
-              per published listing. That is not the $25 website subscription —
-              Ops invoices from your listing count.
-            </p>
-          ) : null}
-          {!priceConfigured && branded ? (
-            <p className="text-sm text-amber-800">
-              Card checkout is not configured yet. Ops still invoices from your
-              plan price.
+              Marketplace-only is billed{" "}
+              {formatMoney(host.plan?.monthlyPrice ?? 5)} per published listing.
+              That is not the $25 website subscription.
             </p>
           ) : null}
 
           <div className="flex flex-wrap gap-3">
             {branded ? (
               <form action={startHostingSubscription}>
+                <input type="hidden" name="hostId" value={host.id} />
                 <Button type="submit" disabled={!stripeOn || !priceConfigured}>
                   {complimentary
                     ? "Move to $25/mo website and subscribe"
@@ -374,6 +423,7 @@ export default async function AccountSubscriptionPage({
               </form>
             ) : null}
             <form action={openBillingPortal}>
+              <input type="hidden" name="hostId" value={host.id} />
               <Button type="submit" variant="secondary" disabled={!stripeOn}>
                 {cardOnFile ? "Update card" : "Add a card"}
               </Button>
@@ -381,14 +431,6 @@ export default async function AccountSubscriptionPage({
           </div>
         </Card>
       ) : null}
-
-      <p className="mt-6 text-xs leading-relaxed text-stone-400">
-        Guest cards, website deposit method, and extras stay under{" "}
-        <Link href="/admin/payments" className="underline hover:text-stone-600">
-          Admin → Payments
-        </Link>
-        . This page is only your Yall Come Back subscription.
-      </p>
-    </AccountSettingsShell>
+    </div>
   );
 }
