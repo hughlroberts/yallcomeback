@@ -2,16 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card } from "@/components/ui";
 import { saveWebsitePaymentMethod } from "@/app/actions/host-payments";
 import { WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
-import {
-  createHostProduct,
-  startConnectOnboarding,
-} from "@/app/actions/stripe-connect";
+import { startConnectOnboarding } from "@/app/actions/stripe-connect";
 import { isStripeConfigured } from "@/lib/stripe";
 import {
-  listProductsOnConnectedAccount,
   retrieveConnectStatus,
   type ConnectOnboardingStatus,
 } from "@/lib/stripe-connect";
@@ -59,46 +55,6 @@ export default async function AdminPaymentsPage({
       status = await retrieveConnectStatus(host.stripeAccountId);
     } catch (e) {
       statusError = e instanceof Error ? e.message : "Could not load account status";
-    }
-  }
-
-  let products: {
-    id: string;
-    name: string;
-    description: string | null;
-    unitAmount: number | null;
-    currency: string | null;
-    priceId: string | null;
-  }[] = [];
-  if (stripeOn && host.stripeAccountId && status?.readyToProcessPayments) {
-    try {
-      const list = await listProductsOnConnectedAccount(host.stripeAccountId);
-      products = list.data.map((p) => {
-        const price = p.default_price;
-        const expanded =
-          price && typeof price === "object" ? price : null;
-        return {
-          id: p.id,
-          name: p.name,
-          description: p.description,
-          unitAmount:
-            expanded && "unit_amount" in expanded
-              ? (expanded.unit_amount as number | null)
-              : null,
-          currency:
-            expanded && "currency" in expanded
-              ? String(expanded.currency)
-              : null,
-          priceId:
-            typeof price === "string"
-              ? price
-              : expanded && "id" in expanded
-                ? String(expanded.id)
-                : null,
-        };
-      });
-    } catch {
-      products = [];
     }
   }
 
@@ -233,68 +189,6 @@ export default async function AdminPaymentsPage({
             Onboard to collect guest cards
           </Button>
         </form>
-      </Card>
-
-      <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">Extras guests can buy</h2>
-        <p className="text-sm text-stone-600">
-          Products live on your connected account. Guests check out at{" "}
-          <Link className="font-medium text-bonnet underline" href={`/pay/${host.slug}`}>
-            /pay/{host.slug}
-          </Link>
-          .
-        </p>
-        <form action={createHostProduct} className="space-y-3">
-          <div>
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" required placeholder="Boat day" />
-          </div>
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" name="description" rows={2} />
-          </div>
-          <div>
-            <Label htmlFor="price">Price (USD)</Label>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              min="1"
-              step="0.01"
-              required
-            />
-          </div>
-          <Button
-            type="submit"
-            variant="secondary"
-            disabled={!stripeOn || !status?.readyToProcessPayments}
-          >
-            Create product
-          </Button>
-        </form>
-        {products.length > 0 ? (
-          <ul className="divide-y divide-stone-100 text-sm">
-            {products.map((p) => (
-              <li key={p.id} className="flex justify-between gap-3 py-2">
-                <span>
-                  <span className="font-medium">{p.name}</span>
-                  {p.description ? (
-                    <span className="mt-0.5 block text-xs text-stone-500">
-                      {p.description}
-                    </span>
-                  ) : null}
-                </span>
-                <span className="shrink-0 text-stone-700">
-                  {p.unitAmount != null
-                    ? `$${(p.unitAmount / 100).toFixed(2)}`
-                    : "—"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-stone-500">No products yet.</p>
-        )}
       </Card>
     </div>
   );

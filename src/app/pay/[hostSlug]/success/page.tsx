@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Card } from "@/components/ui";
 
 export const metadata = { title: "Payment received" };
@@ -10,6 +11,7 @@ export default async function PaySuccessPage({
   params: Promise<{ hostSlug: string }>;
   searchParams: Promise<{ session_id?: string }>;
 }) {
+  notFound();
   const { hostSlug } = await params;
   const sp = await searchParams;
   return (

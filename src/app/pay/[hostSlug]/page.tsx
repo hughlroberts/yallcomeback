@@ -22,6 +22,7 @@ export default async function HostPayPage({
 }: {
   params: Promise<{ hostSlug: string }>;
 }) {
+  notFound();
   const { hostSlug } = await params;
   const host = await prisma.host.findUnique({ where: { slug: hostSlug } });
   if (!host || !host.active) notFound();
