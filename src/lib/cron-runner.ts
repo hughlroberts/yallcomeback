@@ -37,7 +37,7 @@ async function tick() {
       (m.weekBefore?.sent ?? 0) + (m.dayBefore?.sent ?? 0);
     const hp = result.hostingPayments;
     console.log(
-      `[cron] ok in ${Date.now() - started}ms · ical=${result.ical.synced} · messages_sent=${sent} · hosting_payments=${hp.skipped ? "skipped" : `checked=${hp.checked} paid=${hp.confirmedPaid} past_due=${hp.markedPastDue} paused=${hp.paused}`}`,
+      `[cron] ok in ${Date.now() - started}ms · ical=${result.ical.synced} · messages_sent=${sent} · hosting_payments=${hp.skipped ? "skipped" : `checked=${hp.checked} paid=${hp.confirmedPaid} past_due=${hp.markedPastDue} paused=${hp.paused}`} · backup=${result.backup.skipped ? "skipped" : result.backup.persisted ? result.backup.file : result.backup.summary}`,
     );
   } catch (e) {
     console.error("[cron] failed", e);

@@ -5,6 +5,7 @@
  *   npx tsx scripts/run-cron.ts ical
  *   npx tsx scripts/run-cron.ts messages
  *   npx tsx scripts/run-cron.ts hosting
+ *   npx tsx scripts/run-cron.ts backup
  */
 import {
   runAllCronJobs,
@@ -12,6 +13,7 @@ import {
   runIcalSync,
 } from "../src/lib/cron-jobs";
 import { runDailyHostingPaymentCheck } from "../src/lib/hosting-payment-check";
+import { runDailyBackup } from "../src/lib/backup";
 
 async function main() {
   const which = (process.argv[2] || "all").toLowerCase();
@@ -21,6 +23,8 @@ async function main() {
     console.log(JSON.stringify(await runBookingMessages(), null, 2));
   } else if (which === "hosting" || which === "payments") {
     console.log(JSON.stringify(await runDailyHostingPaymentCheck(), null, 2));
+  } else if (which === "backup") {
+    console.log(JSON.stringify(await runDailyBackup(), null, 2));
   } else {
     console.log(JSON.stringify(await runAllCronJobs(), null, 2));
   }

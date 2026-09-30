@@ -46,6 +46,7 @@ export async function runAllCronJobs(): Promise<{
   ical: IcalSyncResult;
   messages: BookingMessagesResult;
   hostingPayments: import("@/lib/hosting-payment-check").HostingPaymentCheckResult;
+  backup: import("@/lib/backup").DailyBackupResult;
   pricing?: { skipped: boolean; hostsProcessed: number; errors: string[] };
 }> {
   const ical = await runIcalSync();
@@ -70,6 +71,25 @@ export async function runAllCronJobs(): Promise<{
     console.error("[cron:hosting-payments]", e);
   }
 
+  let backup: import("@/lib/backup").DailyBackupResult = {
+    skipped: true,
+    ranAt: new Date().toISOString(),
+    persisted: false,
+    summary: "not attempted",
+  };
+  try {
+    const { maybeRunDailyBackup } = await import("@/lib/backup");
+    backup = await maybeRunDailyBackup();
+  } catch (e) {
+    console.error("[cron:backup]", e);
+    backup = {
+      skipped: false,
+      ranAt: new Date().toISOString(),
+      persisted: false,
+      summary: e instanceof Error ? e.message : "backup failed",
+    };
+  }
+
   // Monthly pricing intelligence: only if explicitly enabled in-process.
   // Prefer external monthly hit to /api/cron/pricing-intelligence.
   let pricing:
@@ -85,5 +105,5 @@ export async function runAllCronJobs(): Promise<{
     pricing = await runMonthlyPricingIntelligence();
   }
 
-  return { ical, messages, hostingPayments, pricing };
+  return { ical, messages, hostingPayments, backup, pricing };
 }

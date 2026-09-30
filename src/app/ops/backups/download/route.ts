@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { requirePlatformAdmin } from "@/lib/auth";
 import {
-  createFullBackup,
-  publicManifest,
+  createAndPersistBackup,
   recordBackupRun,
-  serializeBackup,
 } from "@/lib/backup";
 
 export const maxDuration = 60;
@@ -18,11 +16,8 @@ export async function GET() {
 
   const startedAt = new Date();
   try {
-    const backup = await createFullBackup();
-    const manifest = publicManifest(backup);
-    const summary = `ops-download ${manifest.createdAt} hosts=${manifest.hostCount} invoices=${manifest.invoiceCount} properties=${manifest.counts.Property ?? 0}`;
-    await recordBackupRun({ ok: true, summary, startedAt });
-    const body = serializeBackup(backup);
+    const { backup, body, summary } = await createAndPersistBackup();
+    await recordBackupRun({ ok: true, summary: `ops-download ${summary}`, startedAt });
     const stamp = backup.createdAt.replace(/[:.]/g, "-");
     return new NextResponse(new Uint8Array(body), {
       status: 200,

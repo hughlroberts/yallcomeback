@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import {
-  createFullBackup,
-  publicManifest,
+  createAndPersistBackup,
   recordBackupRun,
-  serializeBackup,
 } from "@/lib/backup";
 
 /**
@@ -45,17 +43,20 @@ export async function GET(req: Request) {
   const startedAt = new Date();
 
   try {
-    const backup = await createFullBackup();
-    const manifest = publicManifest(backup);
-    const summary = `${manifest.createdAt} hosts=${manifest.hostCount} invoices=${manifest.invoiceCount} properties=${manifest.counts.Property ?? 0} bookings=${manifest.counts.Booking ?? 0} uploads=${manifest.uploads.length}`;
+    const { backup, body, manifest, file, summary } =
+      await createAndPersistBackup();
 
     await recordBackupRun({ ok: true, summary, startedAt });
 
     if (metaOnly) {
-      return NextResponse.json({ ok: true, ...manifest });
+      return NextResponse.json({
+        ok: true,
+        persisted: Boolean(file),
+        file: file || null,
+        ...manifest,
+      });
     }
 
-    const body = serializeBackup(backup);
     const stamp = backup.createdAt.replace(/[:.]/g, "-");
     return new NextResponse(new Uint8Array(body), {
       status: 200,

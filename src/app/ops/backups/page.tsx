@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/ui";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { backupOpsSnapshot } from "@/lib/backup";
+import { BACKUP_RETENTION_DAYS, backupOpsSnapshot } from "@/lib/backup";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Backups · Ops" };
@@ -14,6 +13,12 @@ function ageLabel(at: Date | null, now: Date): string {
   if (hours < 1) return `${Math.round(hours * 60)} min ago`;
   if (hours < 48) return `${Math.round(hours)}h ago`;
   return `${Math.round(hours / 24)} days ago`;
+}
+
+function bytesLabel(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default async function OpsBackupsPage() {
@@ -28,7 +33,7 @@ export default async function OpsBackupsPage() {
       prisma.hostingInvoice.count(),
       prisma.booking.count(),
     ]);
-  const { last, stale } = snap;
+  const { last, stale, storage, files } = snap;
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -38,61 +43,93 @@ export default async function OpsBackupsPage() {
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-ink-muted">
           Full copy of listings, hosts, calendar, bookings, and website hosting
-          history. Daily encrypted copies live on GitHub (off Railway) so a hack
-          that wipes the database is recoverable.
+          history. Copies are stored on a Railway volume (separate from
+          Postgres) and kept {BACKUP_RETENTION_DAYS} days.
         </p>
       </div>
 
       <Card>
-        <h2 className="font-semibold text-ink">Last off-site backup</h2>
+        <h2 className="font-semibold text-ink">Railway volume</h2>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-stone-500">Status</dt>
+            <dt className="text-stone-500">Storage</dt>
+            <dd
+              className={`mt-0.5 font-medium ${storage.writable ? "text-emerald-800" : "text-amber-800"}`}
+            >
+              {!storage.configured
+                ? "BACKUP_DIR not set"
+                : storage.writable
+                  ? `Writable · ${storage.fileCount} file${storage.fileCount === 1 ? "" : "s"}`
+                  : `Not writable${storage.error ? ` · ${storage.error}` : ""}`}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-stone-500">Path</dt>
+            <dd className="mt-0.5 font-mono text-xs text-stone-700">
+              {storage.dir || "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-stone-500">Last run</dt>
             <dd
               className={`mt-0.5 font-medium ${stale ? "text-amber-800" : "text-emerald-800"}`}
             >
               {!last
-                ? "Never run"
-                : last.lastOk
-                  ? "OK"
-                  : "Last run failed"}
+                ? "Never"
+                : `${last.lastOk ? "OK" : "Failed"} · ${ageLabel(last.lastFinishedAt, snap.now)}`}
             </dd>
           </div>
           <div>
-            <dt className="text-stone-500">When</dt>
-            <dd className="mt-0.5 font-medium text-ink">
-              {last?.lastFinishedAt
-                ? `${last.lastFinishedAt.toLocaleString()} · ${ageLabel(last.lastFinishedAt, snap.now)}`
-                : "—"}
-            </dd>
-          </div>
-          <div className="sm:col-span-2">
             <dt className="text-stone-500">Summary</dt>
             <dd className="mt-0.5 font-mono text-xs text-stone-700">
-              {last?.lastSummary || "No run recorded yet. Trigger GitHub Actions → Daily full backup, or download one now."}
+              {last?.lastSummary || "No run yet"}
             </dd>
           </div>
         </dl>
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-6">
           <a
             href="/ops/backups/download"
             className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"
           >
-            Download backup now
+            Run backup now
           </a>
-          <Link
-            href="https://github.com/hughlroberts/yallcomeback/actions/workflows/cron-backup.yml"
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet shadow-sm hover:bg-petal"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub Actions runs
-          </Link>
         </div>
         <p className="mt-3 text-xs text-stone-500">
-          The download is a gzipped JSON dump. Daily GitHub copies are encrypted
-          with BACKUP_ENCRYPTION_KEY (password manager — not this site).
+          Writes a gzipped dump onto the volume and downloads it. The in-process
+          scheduler also takes one copy per UTC day.
         </p>
+      </Card>
+
+      <Card>
+        <h2 className="font-semibold text-ink">Stored copies</h2>
+        {files.length === 0 ? (
+          <p className="mt-3 text-sm text-stone-600">
+            No files on the volume yet. Use Run backup now, or wait for the
+            daily job after this volume is mounted.
+          </p>
+        ) : (
+          <ul className="mt-3 divide-y divide-stone-100">
+            {files.map((f) => (
+              <li
+                key={f.name}
+                className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm"
+              >
+                <div>
+                  <p className="font-mono text-xs text-stone-800">{f.name}</p>
+                  <p className="text-xs text-stone-500">
+                    {new Date(f.mtime).toLocaleString()} · {bytesLabel(f.size)}
+                  </p>
+                </div>
+                <a
+                  href={`/ops/backups/file/${encodeURIComponent(f.name)}`}
+                  className="font-medium text-bonnet hover:underline"
+                >
+                  Download
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <Card>

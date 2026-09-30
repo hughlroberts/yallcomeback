@@ -55,4 +55,4 @@ EXPOSE 3000
 # Real DATABASE_URL must come from Railway Variables (link Postgres → this service).
 # --accept-data-loss is required for additive unique indexes and intended column
 # drops (db push, not migrate). --skip-generate: client was built in the image.
-CMD ["sh", "-c", "if [ -z \"$DATABASE_URL\" ]; then echo 'FATAL: DATABASE_URL is not set on this service. In Railway: add Postgres, then on the web service Variables add DATABASE_URL = ${{ Postgres.DATABASE_URL }} (use Variable Reference).'; exit 1; fi; npx prisma db push --schema=prisma/schema.prisma --accept-data-loss --skip-generate && node server.js"]
+CMD ["sh", "-c", "if [ -z \"$DATABASE_URL\" ]; then echo 'FATAL: DATABASE_URL is not set on this service. In Railway: add Postgres, then on the web service Variables add DATABASE_URL = ${{ Postgres.DATABASE_URL }} (use Variable Reference).'; exit 1; fi; if [ -n \"$BACKUP_DIR\" ]; then mkdir -p \"$BACKUP_DIR\" || echo \"WARN: cannot create BACKUP_DIR $BACKUP_DIR\"; fi; npx prisma db push --schema=prisma/schema.prisma --accept-data-loss --skip-generate && node server.js"]

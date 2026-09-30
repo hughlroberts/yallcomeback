@@ -161,7 +161,7 @@ On each property admin page:
 
 - **In-process** on Railway: `instrumentation.ts` runs iCal sync + booking auto-messages every ~20 minutes in production (`CRON_IN_PROCESS=true`). Hosting payments are reconciled **once per UTC day** on that same ticker (and retried if the last run failed).
 - **GitHub Actions backup**: `.github/workflows/cron.yml` pings iCal + messages every 20 minutes (needs secrets `CRON_SECRET` + `CRON_BASE_URL`). Ping `/api/cron/hosting-payments` daily the same way if you want a second check outside the app.
-- **Daily full backup** (hack recovery): `.github/workflows/cron-backup.yml` pulls every listing, host, hosting invoice, calendar, and booking, encrypts it, and keeps the file as a GitHub Actions artifact for 90 days. Needs `BACKUP_ENCRYPTION_KEY` in addition to the cron secrets. Ops → Backups shows the last run. Restore steps: `docs/backup-and-restore.md`.
+- **Daily full backup**: the in-process scheduler writes a gzipped dump of listings, hosts, hosting invoices, calendar, and bookings to the Railway volume at `BACKUP_DIR` (`/data/backups`) once per UTC day, kept 90 days. Ops → Backups lists and downloads copies. Restore: `docs/backup-and-restore.md`.
 
 **Manual / external cron:**
 

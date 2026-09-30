@@ -160,7 +160,32 @@ export async function runSystemChecks(): Promise<{
   }
 
   try {
-    const { lastBackupRun, backupRunIsStale } = await import("@/lib/backup");
+    const { lastBackupRun, backupRunIsStale, backupStorageStatus } =
+      await import("@/lib/backup");
+    const storage = await backupStorageStatus();
+    rows.push({
+      label: "Backup volume",
+      value: !storage.configured
+        ? "BACKUP_DIR not set"
+        : storage.writable
+          ? `OK · ${storage.fileCount} file${storage.fileCount === 1 ? "" : "s"}`
+          : "Not writable",
+      tone: storage.writable ? "ok" : "bad",
+    });
+    if (!storage.configured || !storage.writable) {
+      findings.push({
+        id: "backup:volume",
+        checkId: "backup_check",
+        severity: "critical",
+        title: storage.configured
+          ? "Backup volume is not writable"
+          : "Backup volume is not configured",
+        detail:
+          storage.error ||
+          "Attach a Railway volume to this service and set BACKUP_DIR=/data/backups.",
+        href: "/ops/backups",
+      });
+    }
     const last = await lastBackupRun();
     if (!last?.lastFinishedAt) {
       rows.push({
@@ -172,9 +197,9 @@ export async function runSystemChecks(): Promise<{
         id: "backup:never",
         checkId: "backup_check",
         severity: "warning",
-        title: "No off-site backup has been recorded",
+        title: "No Railway backup has been recorded",
         detail:
-          "GitHub Actions should pull /api/cron/backup daily. Ops → Backups can also download a copy now.",
+          "The daily job writes gzipped dumps to the backups volume. Ops → Backups can also run one now.",
         href: "/ops/backups",
       });
     } else {
@@ -192,11 +217,11 @@ export async function runSystemChecks(): Promise<{
           checkId: "backup_check",
           severity: ageH > 36 ? "critical" : "warning",
           title: ageH > 36
-            ? "Off-site backup is stale"
-            : "Last off-site backup failed",
+            ? "Railway backup is stale"
+            : "Last Railway backup failed",
           detail:
             last.lastSummary ||
-            "Run the Daily full backup GitHub Action or GET /api/cron/backup with CRON_SECRET.",
+            "Run Ops → Backups → Run backup now, or GET /api/cron/backup with CRON_SECRET.",
           href: "/ops/backups",
         });
       }

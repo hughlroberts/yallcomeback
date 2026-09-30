@@ -2,9 +2,8 @@
  * Full-site backup: every database table (listings, hosts, calendar, bookings,
  * hosting invoices / plans, users) plus an inventory of local /uploads files.
  *
- * Off-site copies are written by GET /api/cron/backup (GitHub Actions encrypts
- * and stores the artifact). Do not keep the only copy on Railway — a hack that
- * drops Postgres would take that with it.
+ * Daily copies are written to BACKUP_DIR (Railway volume at /data/backups).
+ * That volume survives deploys and is separate from Postgres.
  */
 
 import { gzipSync, gunzipSync } from "zlib";
@@ -16,6 +15,8 @@ import { prisma } from "@/lib/db";
 
 export const DAILY_BACKUP_JOB = "daily_full_backup";
 export const BACKUP_FORMAT_VERSION = 1;
+export const BACKUP_RETENTION_DAYS = 90;
+const BACKUP_FILE_RE = /^yallcomeback-backup-[0-9T.-]+Z\.json\.gz$/;
 /** Skip embedding upload bytes once the bundle would exceed this. */
 const MAX_EMBEDDED_UPLOAD_BYTES = 40 * 1024 * 1024;
 
@@ -418,10 +419,222 @@ export async function backupOpsSnapshot(): Promise<{
   last: Awaited<ReturnType<typeof lastBackupRun>>;
   stale: boolean;
   now: Date;
+  storage: BackupStorageStatus;
+  files: StoredBackupFile[];
 }> {
   const now = new Date();
   const last = await lastBackupRun();
-  return { last, stale: backupRunIsStale(last, now), now };
+  const [storage, files] = await Promise.all([
+    backupStorageStatus(),
+    listStoredBackups(),
+  ]);
+  return {
+    last,
+    stale: backupRunIsStale(last, now),
+    now,
+    storage,
+    files,
+  };
+}
+
+export function backupDir(): string | null {
+  const raw = process.env.BACKUP_DIR?.trim();
+  return raw || null;
+}
+
+export type StoredBackupFile = {
+  name: string;
+  size: number;
+  mtime: string;
+};
+
+export type BackupStorageStatus = {
+  configured: boolean;
+  writable: boolean;
+  dir: string | null;
+  fileCount: number;
+  error?: string;
+};
+
+export function isStoredBackupName(name: string): boolean {
+  return BACKUP_FILE_RE.test(name);
+}
+
+export async function backupStorageStatus(): Promise<BackupStorageStatus> {
+  const dir = backupDir();
+  if (!dir) {
+    return { configured: false, writable: false, dir: null, fileCount: 0 };
+  }
+  try {
+    await fs.mkdir(dir, { recursive: true });
+    const probe = path.join(dir, `.write-test-${process.pid}`);
+    await fs.writeFile(probe, "ok");
+    await fs.unlink(probe);
+    const files = await listStoredBackups();
+    return {
+      configured: true,
+      writable: true,
+      dir,
+      fileCount: files.length,
+    };
+  } catch (e) {
+    return {
+      configured: true,
+      writable: false,
+      dir,
+      fileCount: 0,
+      error: e instanceof Error ? e.message : "not writable",
+    };
+  }
+}
+
+export async function listStoredBackups(): Promise<StoredBackupFile[]> {
+  const dir = backupDir();
+  if (!dir) return [];
+  let names: string[];
+  try {
+    names = await fs.readdir(dir);
+  } catch {
+    return [];
+  }
+  const out: StoredBackupFile[] = [];
+  for (const name of names) {
+    if (!isStoredBackupName(name)) continue;
+    try {
+      const st = await fs.stat(path.join(dir, name));
+      if (!st.isFile()) continue;
+      out.push({
+        name,
+        size: st.size,
+        mtime: st.mtime.toISOString(),
+      });
+    } catch {
+      /* skip */
+    }
+  }
+  out.sort((a, b) => b.mtime.localeCompare(a.mtime));
+  return out;
+}
+
+export async function readStoredBackup(name: string): Promise<Buffer> {
+  if (!isStoredBackupName(name)) {
+    throw new Error("Invalid backup file name");
+  }
+  const dir = backupDir();
+  if (!dir) throw new Error("BACKUP_DIR is not set");
+  return fs.readFile(path.join(dir, name));
+}
+
+export async function persistBackupFile(
+  body: Buffer,
+  createdAt: string,
+): Promise<{ name: string; dir: string }> {
+  const dir = backupDir();
+  if (!dir) {
+    throw new Error("BACKUP_DIR is not set (mount a Railway volume and set BACKUP_DIR)");
+  }
+  await fs.mkdir(dir, { recursive: true });
+  const stamp = createdAt.replace(/[:.]/g, "-");
+  const name = `yallcomeback-backup-${stamp}.json.gz`;
+  if (!isStoredBackupName(name)) {
+    throw new Error(`Refusing to write unexpected backup name ${name}`);
+  }
+  const abs = path.join(dir, name);
+  await fs.writeFile(abs, body);
+  await pruneStoredBackups(dir);
+  return { name, dir };
+}
+
+async function pruneStoredBackups(dir: string): Promise<void> {
+  const cutoff = Date.now() - BACKUP_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const files = await listStoredBackups();
+  for (const f of files) {
+    if (Date.parse(f.mtime) < cutoff) {
+      await fs.unlink(path.join(dir, f.name)).catch(() => undefined);
+    }
+  }
+}
+
+function utcDay(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+export type DailyBackupResult = {
+  skipped: boolean;
+  ranAt: string;
+  persisted: boolean;
+  file?: string;
+  bytes?: number;
+  summary: string;
+};
+
+export async function maybeRunDailyBackup(
+  now = new Date(),
+): Promise<DailyBackupResult> {
+  const existing = await prisma.cronRun.findUnique({
+    where: { name: DAILY_BACKUP_JOB },
+  });
+  if (
+    existing?.lastOk &&
+    existing.lastFinishedAt &&
+    utcDay(existing.lastFinishedAt) === utcDay(now)
+  ) {
+    const files = await listStoredBackups();
+    const todayPrefix = `yallcomeback-backup-${utcDay(now)}`;
+    const onVolume = files.some((f) => f.name.startsWith(todayPrefix));
+    if (onVolume || !backupDir()) {
+      return {
+        skipped: true,
+        ranAt: now.toISOString(),
+        persisted: onVolume,
+        file: files[0]?.name,
+        summary: onVolume ? "already on volume today" : "already ran today",
+      };
+    }
+  }
+  return runDailyBackup(now);
+}
+
+export async function createAndPersistBackup(): Promise<{
+  backup: FullBackup;
+  body: Buffer;
+  manifest: ReturnType<typeof publicManifest>;
+  file?: string;
+  summary: string;
+}> {
+  const backup = await createFullBackup();
+  const body = serializeBackup(backup);
+  const manifest = publicManifest(backup);
+  let file: string | undefined;
+  if (backupDir()) {
+    file = (await persistBackupFile(body, backup.createdAt)).name;
+  }
+  const summary = `${backup.createdAt} persisted=${file || "no"} hosts=${manifest.hostCount} invoices=${manifest.invoiceCount} properties=${manifest.counts.Property ?? 0} bookings=${manifest.counts.Booking ?? 0}`;
+  return { backup, body, manifest, file, summary };
+}
+
+export async function runDailyBackup(
+  now = new Date(),
+): Promise<DailyBackupResult> {
+  const startedAt = now;
+  try {
+    const { body, file, summary, backup } = await createAndPersistBackup();
+    await recordBackupRun({ ok: true, summary, startedAt });
+    return {
+      skipped: false,
+      ranAt: backup.createdAt,
+      persisted: Boolean(file),
+      file,
+      bytes: body.length,
+      summary,
+    };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "backup failed";
+    await recordBackupRun({ ok: false, summary: message, startedAt }).catch(
+      () => undefined,
+    );
+    throw e;
+  }
 }
 
 const CREATE_CHUNK = 400;

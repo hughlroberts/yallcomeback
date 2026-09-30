@@ -69,4 +69,5 @@ export const RESIDUAL_RISKS: string[] = [
   "Deleting a booking calendar block can reopen nights while the booking row stays active.",
   "Pending payment holds do not auto-expire — abandoned requests can block dates indefinitely.",
   "Listing photos stored under /uploads live on ephemeral Railway disk and can vanish on redeploy; the daily backup embeds them only when the total is under 40 MB.",
+  "Backups live on a Railway volume next to the app, not on a second cloud. A wipe of the whole Railway project would take Postgres and the backup volume together.",
 ];
