@@ -47,11 +47,7 @@ export default async function OpsLayout({
     },
     { href: "/ops/hosting/plans", label: "Plans & pricing" },
     { href: "/ops/users", label: "Users" },
-    { href: "/admin/pricing", label: "Pricing intelligence" },
     { href: "/ops/pricing-comps", label: "Pricing comps" },
-    { href: "/ops/managers", label: "Managers" },
-    { href: "/ops/health", label: "Health" },
-    { href: "/ops/backups", label: "Backups" },
     { href: "/ops/settings", label: "Platform settings" },
   ];
 
@@ -78,14 +74,6 @@ export default async function OpsLayout({
               </Link>
             </div>
             <OpsNav links={links} />
-            <div className="ml-auto flex items-center gap-3 text-sm">
-              <Link
-                href="/admin"
-                className="font-medium text-bonnet hover:text-bonnet-hover"
-              >
-                ← Host admin
-              </Link>
-            </div>
           </div>
         </div>
       )}

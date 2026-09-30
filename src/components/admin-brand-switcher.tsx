@@ -82,7 +82,7 @@ export function AdminBrandSwitcher({
                 Guest site →
               </Link>
               <Link
-                href={`/ops/hosting/${active.id}`}
+                href="/ops"
                 className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
               >
                 ← Exit to Ops Panel

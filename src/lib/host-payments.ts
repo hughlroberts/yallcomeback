@@ -1,7 +1,7 @@
 /**
  * Payment rules by booking channel:
  * - Marketplace: always online card (Stripe Connect).
- * - Host website: one host-chosen default (Stripe unless they change it).
+ * - Host website / direct: the listing's deposit method (host fallback for older listings).
  * - Admin calendar: host picks the method on that booking.
  */
 
@@ -47,6 +47,23 @@ export const WEBSITE_PAY_CHOICES: {
     hint: "Guest sends BTC for the USD deposit. You paste the tx id.",
   },
 ];
+
+const ALLOWED_METHODS: PaymentMethod[] = [
+  "STRIPE",
+  "MANUAL",
+  "BITCOIN",
+  "IN_PERSON_CARD",
+];
+
+export function parsePaymentMethod(
+  raw: unknown,
+  fallback: PaymentMethod = "STRIPE",
+): PaymentMethod {
+  const value = String(raw || "").trim();
+  return ALLOWED_METHODS.includes(value as PaymentMethod)
+    ? (value as PaymentMethod)
+    : fallback;
+}
 
 export function paymentMethodToGuestValue(
   method: PaymentMethod,
@@ -130,17 +147,29 @@ function optionForMethod(
   };
 }
 
+export function listingDepositMethod(input: {
+  listing?: { websitePaymentMethod?: PaymentMethod | null } | null;
+  host?: { websitePaymentMethod?: PaymentMethod | null } | null;
+}): PaymentMethod {
+  return (
+    input.listing?.websitePaymentMethod ||
+    input.host?.websitePaymentMethod ||
+    "STRIPE"
+  );
+}
+
 export function guestPaymentOptions(
   host: {
     stripeAccountId?: string | null;
     websitePaymentMethod?: PaymentMethod | null;
   },
   channel: BookingChannel,
+  listing?: { websitePaymentMethod?: PaymentMethod | null } | null,
 ): GuestPayOption[] {
   if (channel === "marketplace") {
     return [optionForMethod("STRIPE", host)];
   }
-  const method = host.websitePaymentMethod || "STRIPE";
+  const method = listingDepositMethod({ listing, host });
   return [optionForMethod(method, host)];
 }
 

@@ -245,7 +245,7 @@ model Host {
   /// Day-5 unpaid reminder already sent.
   hostingDunningReminderSentAt DateTime?
   stripeCustomerId     String?
-  /// Default for guest checkout on the host website (not marketplace).
+  /// Legacy fallback for listings that have not set their own deposit method.
   websitePaymentMethod PaymentMethod       @default(STRIPE)
   /// Stripe Connect v2 account (acct_...) — needed for marketplace + online card
   stripeAccountId      String?             @unique
@@ -500,6 +500,8 @@ model Property {
   /// Max dogs/pets when petsAllowed. Default 2; hosts may raise (e.g. 3+). 0 = no fixed cap.
   maxPets          Int              @default(2)
   depositPercent   Float            @default(30)
+  /// How guests pay the deposit on this listing's host site. Marketplace is always card.
+  websitePaymentMethod PaymentMethod @default(STRIPE)
   checkInTime      String           @default("16:00")
   checkOutTime     String           @default("11:00")
   houseRules       String?

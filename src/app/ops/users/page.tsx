@@ -192,7 +192,7 @@ export default async function OpsUsersPage({
             Filter
           </Button>
         </form>
-        <Link href="/ops/managers" className="text-sm font-medium text-bonnet hover:underline">
+        <Link href="/ops/settings/managers" className="text-sm font-medium text-bonnet hover:underline">
           Platform managers →
         </Link>
       </div>

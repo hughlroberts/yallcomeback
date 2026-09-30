@@ -6,8 +6,8 @@ import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import {
-  createAccountOnboardingLink,
-  createConnectedAccountForHost,
+  connectOnboardingErrorMessage,
+  createConnectOnboardingUrlForHost,
   createDirectChargeCheckout,
   createProductOnConnectedAccount,
 } from "@/lib/stripe-connect";
@@ -52,14 +52,24 @@ function assertStripeOn() {
 }
 
 export async function startConnectOnboarding() {
-  assertStripeOn();
-  const host = await requireBrandHost();
-  let accountId = host.stripeAccountId;
-  if (!accountId) {
-    accountId = await createConnectedAccountForHost(host);
+  try {
+    assertStripeOn();
+    const host = await requireBrandHost();
+    const url = await createConnectOnboardingUrlForHost(host);
+    redirect(url);
+  } catch (error) {
+    const digest =
+      typeof error === "object" &&
+      error !== null &&
+      "digest" in error &&
+      typeof (error as { digest: unknown }).digest === "string"
+        ? (error as { digest: string }).digest
+        : "";
+    if (digest.startsWith("NEXT_REDIRECT")) throw error;
+    redirect(
+      `/admin/payments?error=${encodeURIComponent(connectOnboardingErrorMessage(error))}`,
+    );
   }
-  const url = await createAccountOnboardingLink(accountId);
-  redirect(url);
 }
 
 export async function createHostProduct(formData: FormData) {

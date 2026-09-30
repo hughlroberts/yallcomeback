@@ -17,6 +17,7 @@ import {
   writePublicUpload,
 } from "@/lib/upload-image";
 import { assertSafeOutboundUrl } from "@/lib/safe-url";
+import { parsePaymentMethod } from "@/lib/host-payments";
 
 export async function createProperty(formData: FormData) {
   const access = await ensureHostAccess();
@@ -54,6 +55,7 @@ export async function createProperty(formData: FormData) {
       city: String(formData.get("city") || "") || null,
       published: false,
       listOnMarketplace: host.listOnMarketplace,
+      websitePaymentMethod: host.websitePaymentMethod,
     },
   });
 
@@ -182,6 +184,7 @@ export async function duplicateProperty(formData: FormData) {
       published: false,
       featured: false,
       listOnMarketplace: source.listOnMarketplace,
+      websitePaymentMethod: source.websitePaymentMethod,
       images: {
         create: source.images.map((img) => ({
           url: img.url,
@@ -251,6 +254,7 @@ export async function startListingDraft(formData: FormData) {
       bathrooms: 1,
       published: false,
       listOnMarketplace: host.listOnMarketplace,
+      websitePaymentMethod: host.websitePaymentMethod,
     },
   });
 
@@ -626,6 +630,9 @@ export async function saveListingPrices(formData: FormData) {
     data: {
       baseNightlyRate: Math.round(baseNightlyRate * 100) / 100,
       weekendPremiumPercent: Math.round(weekendPremiumPercent * 10) / 10,
+      websitePaymentMethod: parsePaymentMethod(
+        formData.get("websitePaymentMethod"),
+      ),
     },
   });
 
@@ -856,6 +863,10 @@ export async function updateProperty(formData: FormData) {
       featured: formData.get("featured") === "on",
       listOnMarketplace,
       locationId,
+      websitePaymentMethod: parsePaymentMethod(
+        formData.get("websitePaymentMethod"),
+        existing.websitePaymentMethod,
+      ),
     },
     include: { host: true },
   });
@@ -1080,6 +1091,9 @@ export async function addCalendarBlock(formData: FormData) {
     payRaw === "IN_PERSON_CARD"
       ? payRaw
       : null;
+  if (blockType === "OFFLINE" && !paymentMethod) {
+    throw new Error("Choose how this stay is paid.");
+  }
 
   const block = await prisma.calendarBlock.create({
     data: {

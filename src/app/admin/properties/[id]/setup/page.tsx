@@ -130,6 +130,7 @@ export default async function ListingSetupPage({
         initial={{
           baseNightlyRate: property.baseNightlyRate,
           weekendPremiumPercent: property.weekendPremiumPercent,
+          websitePaymentMethod: property.websitePaymentMethod,
         }}
       />
     );

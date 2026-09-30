@@ -79,7 +79,7 @@ export async function registerHost(formData: FormData) {
 
   const existingHost = await prisma.host.findUnique({ where: { slug } });
   if (existingHost) {
-    return { error: "That site slug is already taken. Try another." };
+    return { error: "That URL name is already taken. Try another." };
   }
 
   const passwordHash = await hashPassword(password);
@@ -220,11 +220,11 @@ export async function startHosting(formData: FormData) {
     String(formData.get("websiteUrl") || ""),
   );
   if (!displayName || !slug) {
-    return { error: "Add a host / brand name and slug." };
+    return { error: "Add a host / brand name and URL name." };
   }
   const existingHost = await prisma.host.findUnique({ where: { slug } });
   if (existingHost) {
-    return { error: "That site slug is already taken. Try another." };
+    return { error: "That URL name is already taken. Try another." };
   }
 
   const hostingModeRaw = String(formData.get("hostingMode") || "PLATFORM");
@@ -307,10 +307,13 @@ export async function startHosting(formData: FormData) {
   revalidatePath("/admin/payments");
   revalidatePath("/account/settings/subscription");
   revalidatePath("/for-hosts");
+  const collectGuestCards = formData.get("collectGuestCards") === "1";
   redirect(
-    hostingMode === "PLATFORM"
-      ? "/account/settings/subscription?welcome=1"
-      : "/admin?welcome=1",
+    collectGuestCards
+      ? "/admin/payments?startOnboarding=1"
+      : hostingMode === "PLATFORM"
+        ? "/account/settings/subscription?welcome=1"
+        : "/admin?welcome=1",
   );
 }
 

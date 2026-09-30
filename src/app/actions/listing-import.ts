@@ -104,6 +104,7 @@ export async function importListingFromUrl(
         houseRules: draft.houseRules,
         published: false,
         listOnMarketplace: host.listOnMarketplace,
+        websitePaymentMethod: host.websitePaymentMethod,
         featured: false,
       },
     });

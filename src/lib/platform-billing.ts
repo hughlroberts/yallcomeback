@@ -11,6 +11,7 @@ import { PRODUCT_ORIGIN } from "@/lib/features";
 import { planSlugForSitePresence } from "@/lib/hosting";
 import {
   CARD_PROCESSING_LINE,
+  getStripe,
   hostingPriceId,
   processingFeeToNetCents,
   requireStripeClient,
@@ -272,6 +273,40 @@ export async function createPlatformBillingPortalSession(customerId: string) {
   });
 }
 
+/** Stripe `pause_collection` is set while Ops has moved the host to complimentary. */
+export function stripeCollectionIsPaused(
+  pauseCollection: unknown,
+): boolean {
+  return Boolean(pauseCollection && typeof pauseCollection === "object");
+}
+
+/**
+ * Stop invoicing a platform hosting subscription without canceling it.
+ * `void` means Stripe will not create invoices while paused.
+ */
+export async function pausePlatformHostingSubscription(
+  subscriptionId: string | null | undefined,
+): Promise<boolean> {
+  if (!subscriptionId) return false;
+  const stripe = getStripe();
+  if (!stripe) return false;
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    if (sub.status === "canceled" || sub.status === "incomplete_expired") {
+      return false;
+    }
+    if (stripeCollectionIsPaused(sub.pause_collection)) return true;
+    await stripe.subscriptions.update(subscriptionId, {
+      pause_collection: { behavior: "void" },
+    });
+    return true;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/no such subscription/i.test(message)) return false;
+    throw err;
+  }
+}
+
 /** Persist hosting subscription status from platform Billing webhooks. */
 export async function applyHostingSubscriptionFromStripe(opts: {
   hostId?: string | null;
@@ -279,6 +314,7 @@ export async function applyHostingSubscriptionFromStripe(opts: {
   subscriptionId?: string | null;
   stripeStatus?: string | null;
   cancelAtPeriodEnd?: boolean;
+  pauseCollection?: unknown;
 }) {
   let host = opts.hostId
     ? await prisma.host.findUnique({ where: { id: opts.hostId } })
@@ -291,6 +327,7 @@ export async function applyHostingSubscriptionFromStripe(opts: {
   if (!host) return null;
 
   const raw = (opts.stripeStatus || "").toLowerCase();
+  const paused = stripeCollectionIsPaused(opts.pauseCollection);
   let subscriptionStatus:
     | "NONE"
     | "PENDING_PAYMENT"
@@ -313,13 +350,16 @@ export async function applyHostingSubscriptionFromStripe(opts: {
     subscriptionStatus = "CANCELLED";
   else if (opts.cancelAtPeriodEnd) subscriptionStatus = "CANCELLED";
 
+  const stripeSubscriptionStatus = paused
+    ? "paused"
+    : opts.stripeStatus || host.stripeSubscriptionStatus;
+
   const updated = await prisma.host.update({
     where: { id: host.id },
     data: {
       stripeCustomerId: opts.customerId || host.stripeCustomerId,
       stripeSubscriptionId: opts.subscriptionId || host.stripeSubscriptionId,
-      stripeSubscriptionStatus:
-        opts.stripeStatus || host.stripeSubscriptionStatus,
+      stripeSubscriptionStatus,
       subscriptionStatus,
       ...(hostingPastDueAt !== undefined ? { hostingPastDueAt } : {}),
       ...(hostingDunningReminderSentAt !== undefined
@@ -327,7 +367,7 @@ export async function applyHostingSubscriptionFromStripe(opts: {
         : {}),
     },
   });
-  if (subscriptionStatus === "ACTIVE") {
+  if (subscriptionStatus === "ACTIVE" && !paused) {
     await promoteComplimentaryHostIfPaid(updated.id);
   }
   return updated;
@@ -345,6 +385,9 @@ export async function promoteComplimentaryHostIfPaid(hostId: string) {
   });
   if (!host || host.hostingMode !== "PLATFORM") return host;
   if (host.plan && host.plan.monthlyPrice > 0) return host;
+  if ((host.stripeSubscriptionStatus || "").toLowerCase() === "paused") {
+    return host;
+  }
   const slug = planSlugForSitePresence(host.sitePresence);
   const paid = await prisma.hostingPlan.findFirst({
     where: { slug, isActive: true, monthlyPrice: { gt: 0 } },

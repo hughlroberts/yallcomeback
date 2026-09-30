@@ -1,19 +1,13 @@
 "use server";
 
-import type { PaymentMethod } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
+import { parsePaymentMethod } from "@/lib/host-payments";
+import { assertPropertyAccess } from "@/lib/scope";
 
-const ALLOWED: PaymentMethod[] = [
-  "STRIPE",
-  "MANUAL",
-  "BITCOIN",
-  "IN_PERSON_CARD",
-];
-
-export async function saveWebsitePaymentMethod(formData: FormData) {
+export async function saveListingPaymentMethod(formData: FormData) {
   const access = await requireHostAdmin();
   if (!access?.hostId) throw new Error("Pick a host brand first.");
   const info = resolveHostAccessInfo({
@@ -25,14 +19,20 @@ export async function saveWebsitePaymentMethod(formData: FormData) {
     throw new Error("You cannot change payment methods for this brand.");
   }
 
-  const raw = String(formData.get("websitePaymentMethod") || "STRIPE");
-  const websitePaymentMethod = (ALLOWED.includes(raw as PaymentMethod)
-    ? raw
-    : "STRIPE") as PaymentMethod;
+  const id = String(formData.get("id") || formData.get("propertyId") || "");
+  if (!id) throw new Error("Listing is required.");
+  await assertPropertyAccess(id, access);
 
-  await prisma.host.update({
-    where: { id: access.hostId },
+  const websitePaymentMethod = parsePaymentMethod(
+    formData.get("websitePaymentMethod"),
+  );
+
+  const property = await prisma.property.update({
+    where: { id },
     data: { websitePaymentMethod },
+    select: { id: true, host: { select: { slug: true } } },
   });
-  revalidatePath("/admin/payments");
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${property.id}`);
+  revalidatePath(`/h/${property.host.slug}`);
 }

@@ -78,9 +78,9 @@ export function canRunPricingIntelligence(host: {
 }
 
 /**
- * Who sees the Admin nav item and can open /admin/pricing.
- * - Platform ADMIN: always (secret ops tool)
- * - HOST: only if ops enabled access for their brand
+ * Who can open pricing intelligence (Ops → Pricing intelligence for now).
+ * - Platform ADMIN: always (secret ops tool — not in host Admin yet)
+ * - HOST: only if ops enabled access for their brand, once published there
  */
 export function canSeePricingIntelligenceNav(opts: {
   isPlatformAdmin: boolean;

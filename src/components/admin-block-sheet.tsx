@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { addCalendarBlock } from "@/app/actions/properties";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui";
+import { WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
 import { cn, formatMoney } from "@/lib/utils";
 
 type Props = {
@@ -195,20 +196,53 @@ export function AdminBlockSheet({
                 placeholder="(555) 555-1234"
               />
             </div>
-            <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="sheet-pay">How this stay is paid</Label>
-              <Select id="sheet-pay" name="paymentMethod" defaultValue="">
-                <option value="">Not a paid stay</option>
-                <option value="STRIPE">Online card / invoice</option>
-                <option value="MANUAL">Cash or bank</option>
-                <option value="IN_PERSON_CARD">Card in person</option>
-                <option value="BITCOIN">Bitcoin</option>
-              </Select>
-              <p className="text-xs text-stone-400">
-                Only for a real stay you entered. Owner / maintenance blocks can
-                stay unpaid.
+            <fieldset className="space-y-2 sm:col-span-2">
+              <legend className="text-sm font-medium text-stone-800">
+                How is this stay paid?
+              </legend>
+              <p className="text-xs text-stone-500">
+                Required for an offline booking. Owner or maintenance can be
+                unpaid.
               </p>
-            </div>
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value=""
+                  required
+                  className="mt-1"
+                />
+                <span>
+                  <span className="font-medium text-stone-900">
+                    Not a paid stay
+                  </span>
+                  <span className="mt-0.5 block text-xs text-stone-500">
+                    Owner use, maintenance, or a complimentary stay.
+                  </span>
+                </span>
+              </label>
+              {WEBSITE_PAY_CHOICES.map((choice) => (
+                <label
+                  key={choice.value}
+                  className="flex items-start gap-2 text-sm"
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={choice.value}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="font-medium text-stone-900">
+                      {choice.label}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-stone-500">
+                      {choice.hint}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
             <div className="space-y-1 sm:col-span-2">
               <Label htmlFor="sheet-amount">
                 Invoice amount ($) · ~{formatMoney(suggested)} suggested

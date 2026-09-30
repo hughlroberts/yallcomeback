@@ -183,7 +183,7 @@ export async function runSystemChecks(): Promise<{
         detail:
           storage.error ||
           "Attach a Railway volume to this service and set BACKUP_DIR=/data/backups.",
-        href: "/ops/backups",
+        href: "/ops/settings/backups",
       });
     }
     const last = await lastBackupRun();
@@ -199,8 +199,8 @@ export async function runSystemChecks(): Promise<{
         severity: "warning",
         title: "No Railway backup has been recorded",
         detail:
-          "The daily job writes gzipped dumps to the backups volume. Ops → Backups can also run one now.",
-        href: "/ops/backups",
+          "The daily job writes gzipped dumps to the backups volume. Ops → Platform settings → Backups can also run one now.",
+        href: "/ops/settings/backups",
       });
     } else {
       const ageH =
@@ -221,8 +221,8 @@ export async function runSystemChecks(): Promise<{
             : "Last Railway backup failed",
           detail:
             last.lastSummary ||
-            "Run Ops → Backups → Run backup now, or GET /api/cron/backup with CRON_SECRET.",
-          href: "/ops/backups",
+            "Run Ops → Platform settings → Backups → Run backup now, or GET /api/cron/backup with CRON_SECRET.",
+          href: "/ops/settings/backups",
         });
       }
     }

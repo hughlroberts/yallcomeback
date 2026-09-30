@@ -3,10 +3,8 @@ import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button, Card } from "@/components/ui";
-import { saveWebsitePaymentMethod } from "@/app/actions/host-payments";
-import { WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
-import { startConnectOnboarding } from "@/app/actions/stripe-connect";
 import { isStripeConfigured } from "@/lib/stripe";
+import { AutoStartConnectOnboarding } from "@/components/auto-start-connect-onboarding";
 import {
   retrieveConnectStatus,
   type ConnectOnboardingStatus,
@@ -25,6 +23,8 @@ export default async function AdminPaymentsPage({
     canceled?: string;
     welcome?: string;
     session_id?: string;
+    startOnboarding?: string;
+    error?: string;
   }>;
 }) {
   const access = await requireHostAdmin();
@@ -68,13 +68,18 @@ export default async function AdminPaymentsPage({
     redirect(`/account/settings/subscription?${q.toString()}`);
   }
 
+  const needsOnboarding = !status?.onboardingComplete;
+  const autoStart =
+    Boolean(sp.startOnboarding) && stripeOn && needsOnboarding;
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-stone-900">Payments</h1>
         <p className="mt-1 text-sm text-stone-600">
-          How guests pay you. Yall Come Back does not take a cut of the stay.
-          Your hosting plan and card for Yall Come Back live under{" "}
+          Collect guest cards. Deposit method is set on each listing (and asked
+          again when you add a booking). Yall Come Back does not take a cut of
+          the stay. Your hosting plan and card for Yall Come Back live under{" "}
           <Link
             href="/account/settings/subscription"
             className="font-semibold text-bonnet hover:underline"
@@ -84,38 +89,6 @@ export default async function AdminPaymentsPage({
           .
         </p>
       </div>
-
-      <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">Host website deposits</h2>
-        <p className="text-sm text-stone-600">
-          Guests who book on your site pay this way. Find a Place (marketplace)
-          always uses online card.
-        </p>
-        <form action={saveWebsitePaymentMethod} className="space-y-3">
-          {WEBSITE_PAY_CHOICES.map((choice) => (
-            <label key={choice.value} className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="websitePaymentMethod"
-                value={choice.value}
-                defaultChecked={
-                  (host.websitePaymentMethod || "STRIPE") === choice.value
-                }
-                className="mt-1"
-              />
-              <span>
-                <span className="font-medium text-stone-900">{choice.label}</span>
-                <span className="mt-0.5 block text-xs text-stone-500">
-                  {choice.hint}
-                </span>
-              </span>
-            </label>
-          ))}
-          <Button type="submit" variant="secondary">
-            Save website default
-          </Button>
-        </form>
-      </Card>
 
       {!stripeOn ? (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
@@ -141,18 +114,31 @@ export default async function AdminPaymentsPage({
         </p>
       ) : null}
 
-      <Card className="space-y-4 p-6">
-        <h2 className="font-semibold text-stone-900">
-          Collect guest cards
-        </h2>
-        <p className="text-sm text-stone-600">
-          Guests pay you. Payouts and the processor fee stay on this connected
-          account — never on Yall Come Back. Required for Find a Place, and if
-          your website default is online card.
+      {sp.error ? (
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+          {sp.error}
         </p>
+      ) : null}
+
+      <Card className="space-y-4 p-6">
+        <h2 className="font-semibold text-stone-900">Collect guest cards</h2>
+        {needsOnboarding ? (
+          <p className="text-sm text-stone-600">
+            Guests pay you. Payouts and the processor fee stay on this connected
+            account — never on Yall Come Back. Required for Find a Place, and for
+            any listing you set to online card. You can skip and come back here
+            later.
+          </p>
+        ) : (
+          <p className="text-sm text-stone-600">
+            Guests pay you. Payouts and the processor fee stay on this connected
+            account — never on Yall Come Back.
+          </p>
+        )}
         {statusError ? (
           <p className="text-sm text-red-700">{statusError}</p>
         ) : null}
+        {autoStart ? <AutoStartConnectOnboarding /> : null}
         {status ? (
           <dl className="grid gap-2 text-sm sm:grid-cols-2">
             <div>
@@ -178,17 +164,36 @@ export default async function AdminPaymentsPage({
               <dd>{status.requirementsStatus || "—"}</dd>
             </div>
           </dl>
-        ) : (
-          <p className="text-sm text-stone-600">
-            Not onboarded yet. Stripe hosts a form for identity and bank
-            details. We store only the account id on this brand.
-          </p>
-        )}
-        <form action={startConnectOnboarding}>
-          <Button type="submit" disabled={!stripeOn}>
-            Onboard to collect guest cards
-          </Button>
-        </form>
+        ) : !autoStart ? (
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium text-stone-800">
+              Set up card collection now?
+            </legend>
+            <p className="text-xs text-stone-500">
+              Stripe hosts a form for identity and bank details. We store only
+              the account id on this brand.
+            </p>
+          </fieldset>
+        ) : null}
+        {!autoStart ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <form action="/api/stripe/connect/onboard" method="post">
+              <Button type="submit" disabled={!stripeOn}>
+                {status
+                  ? "Continue card onboarding"
+                  : "Yes, collect guest cards"}
+              </Button>
+            </form>
+            {needsOnboarding ? (
+              <Link
+                href="/admin"
+                className="text-sm font-medium text-stone-600 underline-offset-2 hover:text-bonnet hover:underline"
+              >
+                Skip for now
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </Card>
     </div>
   );

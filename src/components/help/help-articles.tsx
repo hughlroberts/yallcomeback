@@ -415,9 +415,8 @@ function Payments({ article }: { article: HelpArticle }) {
             not pay that fee and does not take a stay cut.
           </li>
           <li>
-            <strong>Host website</strong> — Guests pay the one method the host
-            set as the website default (card, cash or bank, card in person, or
-            Bitcoin).
+            <strong>Host website</strong> — Guests pay the method the host set
+            on that listing (card, cash or bank, card in person, or Bitcoin).
           </li>
           <li>
             <strong>Calendar stays</strong> — The host picks the method for that
@@ -880,9 +879,9 @@ function Listings({ article }: { article: HelpArticle }) {
           <li>
             Open{" "}
             <strong className="font-semibold text-stone-800">
-              Admin → Fridge magnets
+              Fridge magnet
             </strong>{" "}
-            (or Fridge magnet on a listing).
+            on a listing under Admin → Properties.
           </li>
           <li>
             Before you print, choose where the QR code opens:{" "}

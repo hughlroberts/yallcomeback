@@ -35,7 +35,8 @@ import {
   listHostInsightsOptions,
 } from "@/lib/listing-insights";
 import { isStripeConfigured } from "@/lib/stripe";
-import { paymentMethodLabel } from "@/lib/host-payments";
+import { paymentMethodLabel, WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
+import { ListingPaymentMethodFields } from "@/components/listing-payment-method-fields";
 import {
   DEFAULT_PEAK_MIN_NIGHTS,
   upcomingPeakHolidays,
@@ -299,6 +300,11 @@ export default async function AdminPropertyDetailPage({
             type="number"
             step="1"
             defaultValue={property.depositPercent}
+          />
+        </div>
+        <div className="sm:col-span-2 rounded-xl border border-stone-200 bg-white px-4 py-3">
+          <ListingPaymentMethodFields
+            defaultValue={property.websitePaymentMethod}
           />
         </div>
         <label className="flex items-center gap-2 text-sm sm:col-span-2">
@@ -779,16 +785,45 @@ export default async function AdminPropertyDetailPage({
             Optional — for text / call follow-up later
           </p>
         </div>
-        <div>
-          <Label>How this stay is paid</Label>
-          <Select name="paymentMethod" defaultValue="">
-            <option value="">Not a paid stay</option>
-            <option value="STRIPE">Online card / invoice</option>
-            <option value="MANUAL">Cash or bank</option>
-            <option value="IN_PERSON_CARD">Card in person</option>
-            <option value="BITCOIN">Bitcoin</option>
-          </Select>
-        </div>
+        <fieldset className="sm:col-span-2 space-y-2">
+          <legend className="text-sm font-medium text-stone-800">
+            How is this stay paid?
+          </legend>
+          <p className="text-xs text-stone-500">
+            Required for an offline booking. Owner or maintenance can be unpaid.
+          </p>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value=""
+              required
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">Not a paid stay</span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Owner use, maintenance, or a complimentary stay.
+              </span>
+            </span>
+          </label>
+          {WEBSITE_PAY_CHOICES.map((choice) => (
+            <label key={choice.value} className="flex items-start gap-2 text-sm">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value={choice.value}
+                className="mt-1"
+              />
+              <span>
+                <span className="font-medium text-stone-900">{choice.label}</span>
+                <span className="mt-0.5 block text-xs text-stone-500">
+                  {choice.hint}
+                </span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
         <div>
           <Label>Invoice amount ($)</Label>
           <Input

@@ -132,7 +132,7 @@ export default async function BookPage({
       })
     : null;
   const isSignedIn = Boolean(signedInUser?.email);
-  const payOptions = guestPaymentOptions(property.host, channel);
+  const payOptions = guestPaymentOptions(property.host, channel, property);
   const defaultPay = defaultGuestPayMethod(payOptions);
   const bitcoinOffered = payOptions.some((o) => o.value === "bitcoin" && o.ready);
   const onlineCardOffered = payOptions.some((o) => o.value === "card" && o.ready);

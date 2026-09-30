@@ -39,26 +39,26 @@ function assertEnabled() {
 export async function requestPricingIntelligenceAddon(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin/pricing");
+  if (!access) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
 
   const hostId = access.isPlatform
     ? String(formData.get("hostId") || access.hostId || "")
     : access.hostId || "";
-  if (!hostId) redirect("/admin/pricing?error=host");
+  if (!hostId) redirect("/ops/pricing-comps/intelligence?error=host");
   if (!access.isPlatform && access.hostId !== hostId) {
-    redirect("/admin/pricing?error=forbidden");
+    redirect("/ops/pricing-comps/intelligence?error=forbidden");
   }
 
   const host = await prisma.host.findUnique({
     where: { id: hostId },
     include: { users: { where: { role: "HOST" }, take: 1 } },
   });
-  if (!host) redirect("/admin/pricing?error=missing");
+  if (!host) redirect("/ops/pricing-comps/intelligence?error=missing");
   if (!host.pricingIntelligenceEnabled && !access.isPlatform) {
-    redirect("/admin/pricing?error=access_off");
+    redirect("/ops/pricing-comps/intelligence?error=access_off");
   }
   if (host.pricingIntelligenceAddonStatus === "ACTIVE") {
-    redirect("/admin/pricing?error=already_active");
+    redirect("/ops/pricing-comps/intelligence?error=already_active");
   }
 
   const amount = host.pricingIntelligenceAddonAmount || PRICING_INTELLIGENCE_ADDON_USD;
@@ -94,8 +94,8 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
       mode: "subscription",
       customer: customerId,
       client_reference_id: host.id,
-      success_url: `${origin}/admin/pricing?checkout=success`,
-      cancel_url: `${origin}/admin/pricing?checkout=cancel`,
+      success_url: `${origin}/ops/pricing-comps/intelligence?checkout=success`,
+      cancel_url: `${origin}/ops/pricing-comps/intelligence?checkout=cancel`,
       line_items: [
         {
           quantity: 1,
@@ -158,23 +158,23 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
     },
   });
 
-  revalidatePath("/admin/pricing");
+  revalidatePath("/ops/pricing-comps/intelligence");
   revalidatePath(`/ops/hosting/${hostId}`);
-  redirect("/admin/pricing?requested=1");
+  redirect("/ops/pricing-comps/intelligence?requested=1");
 }
 
 /** Host cancels the add-on at period end (immediate cancel for v1). */
 export async function cancelPricingIntelligenceAddon(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin/pricing");
+  if (!access) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
 
   const hostId = access.isPlatform
     ? String(formData.get("hostId") || access.hostId || "")
     : access.hostId || "";
-  if (!hostId) redirect("/admin/pricing?error=host");
+  if (!hostId) redirect("/ops/pricing-comps/intelligence?error=host");
   if (!access.isPlatform && access.hostId !== hostId) {
-    redirect("/admin/pricing?error=forbidden");
+    redirect("/ops/pricing-comps/intelligence?error=forbidden");
   }
 
   await prisma.host.update({
@@ -185,9 +185,9 @@ export async function cancelPricingIntelligenceAddon(formData: FormData) {
     },
   });
 
-  revalidatePath("/admin/pricing");
+  revalidatePath("/ops/pricing-comps/intelligence");
   revalidatePath(`/ops/hosting/${hostId}`);
-  redirect("/admin/pricing?cancelled=1");
+  redirect("/ops/pricing-comps/intelligence?cancelled=1");
 }
 
 /**
@@ -226,22 +226,22 @@ export async function setPricingIntelligenceAddonStatus(formData: FormData) {
   });
 
   revalidatePath(`/ops/hosting/${hostId}`);
-  revalidatePath("/admin/pricing");
+  revalidatePath("/ops/pricing-comps/intelligence");
   redirect(`/ops/hosting/${hostId}?addon=1`);
 }
 
 export async function startPricingResearch(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin/pricing");
+  if (!access) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
 
   const hostId = access.isPlatform
     ? String(formData.get("hostId") || access.hostId || "")
     : access.hostId || "";
-  if (!hostId) redirect("/admin/pricing?error=host");
+  if (!hostId) redirect("/ops/pricing-comps/intelligence?error=host");
 
   if (!access.isPlatform && access.hostId !== hostId) {
-    redirect("/admin/pricing?error=forbidden");
+    redirect("/ops/pricing-comps/intelligence?error=forbidden");
   }
 
   const host = await prisma.host.findUnique({
@@ -251,17 +251,17 @@ export async function startPricingResearch(formData: FormData) {
       pricingIntelligenceAddonStatus: true,
     },
   });
-  if (!host) redirect("/admin/pricing?error=missing");
+  if (!host) redirect("/ops/pricing-comps/intelligence?error=missing");
 
   // Platform admin may force a run for testing (you) without paid status
   const bypass =
     access.isPlatform && formData.get("bypassAddon") === "1";
   if (!bypass) {
     if (!host.pricingIntelligenceEnabled) {
-      redirect("/admin/pricing?error=access_off");
+      redirect("/ops/pricing-comps/intelligence?error=access_off");
     }
     if (!hostHasPricingIntelligenceAddon(host)) {
-      redirect("/admin/pricing?error=addon_required");
+      redirect("/ops/pricing-comps/intelligence?error=addon_required");
     }
   }
 
@@ -287,17 +287,17 @@ export async function startPricingResearch(formData: FormData) {
           periodStart,
           periodEnd,
         });
-        revalidatePath("/admin/pricing");
-        revalidatePath(`/admin/pricing/${runId}`);
+        revalidatePath("/ops/pricing-comps/intelligence");
+        revalidatePath(`/ops/pricing-comps/intelligence/${runId}`);
       } catch (err) {
         console.error("[pricing-intelligence] pipeline failed", err);
       }
     });
 
-    revalidatePath("/admin/pricing");
-    revalidatePath(`/admin/pricing/${runId}`);
+    revalidatePath("/ops/pricing-comps/intelligence");
+    revalidatePath(`/ops/pricing-comps/intelligence/${runId}`);
     // redirect() throws NEXT_REDIRECT — must not be caught below
-    redirect(`/admin/pricing/${runId}?running=1`);
+    redirect(`/ops/pricing-comps/intelligence/${runId}?running=1`);
   } catch (e) {
     // Next.js redirect() and notFound() use thrown digests — rethrow them
     if (
@@ -310,7 +310,7 @@ export async function startPricingResearch(formData: FormData) {
       throw e;
     }
     const msg = e instanceof Error ? e.message : "run_failed";
-    redirect(`/admin/pricing?error=${encodeURIComponent(msg.slice(0, 160))}`);
+    redirect(`/ops/pricing-comps/intelligence?error=${encodeURIComponent(msg.slice(0, 160))}`);
   }
 }
 
@@ -334,7 +334,7 @@ function parseFeedbackFromForm(formData: FormData): {
 export async function decidePricingRecommendation(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin/pricing");
+  if (!access) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
 
   const id = String(formData.get("id") || "");
   const decision = String(formData.get("decision") || ""); // approve | reject
@@ -346,15 +346,15 @@ export async function decidePricingRecommendation(formData: FormData) {
       property: { select: { hostId: true, title: true } },
     },
   });
-  if (!rec) redirect("/admin/pricing?error=missing");
+  if (!rec) redirect("/ops/pricing-comps/intelligence?error=missing");
   if (
     !access.isPlatform &&
     access.hostId !== rec.run.hostId
   ) {
-    redirect("/admin/pricing?error=forbidden");
+    redirect("/ops/pricing-comps/intelligence?error=forbidden");
   }
   if (rec.status !== "PENDING") {
-    redirect(`/admin/pricing/${rec.runId}?error=already_decided`);
+    redirect(`/ops/pricing-comps/intelligence/${rec.runId}?error=already_decided`);
   }
 
   await prisma.pricingRecommendation.update({
@@ -367,9 +367,9 @@ export async function decidePricingRecommendation(formData: FormData) {
     },
   });
 
-  revalidatePath(`/admin/pricing/${rec.runId}`);
-  revalidatePath("/admin/pricing");
-  redirect(`/admin/pricing/${rec.runId}?decided=1`);
+  revalidatePath(`/ops/pricing-comps/intelligence/${rec.runId}`);
+  revalidatePath("/ops/pricing-comps/intelligence");
+  redirect(`/ops/pricing-comps/intelligence/${rec.runId}?decided=1`);
 }
 
 /**
@@ -378,7 +378,7 @@ export async function decidePricingRecommendation(formData: FormData) {
 export async function applyPricingRecommendation(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin/pricing");
+  if (!access) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
 
   const id = String(formData.get("id") || "");
   const rec = await prisma.pricingRecommendation.findUnique({
@@ -388,12 +388,12 @@ export async function applyPricingRecommendation(formData: FormData) {
       property: { select: { id: true, hostId: true, title: true } },
     },
   });
-  if (!rec) redirect("/admin/pricing?error=missing");
+  if (!rec) redirect("/ops/pricing-comps/intelligence?error=missing");
   if (!access.isPlatform && access.hostId !== rec.run.hostId) {
-    redirect("/admin/pricing?error=forbidden");
+    redirect("/ops/pricing-comps/intelligence?error=forbidden");
   }
   if (rec.status !== "APPROVED") {
-    redirect(`/admin/pricing/${rec.runId}?error=not_approved`);
+    redirect(`/ops/pricing-comps/intelligence/${rec.runId}?error=not_approved`);
   }
 
   const feedback = parseFeedbackFromForm(formData);
@@ -426,8 +426,8 @@ export async function applyPricingRecommendation(formData: FormData) {
     }),
   ]);
 
-  revalidatePath(`/admin/pricing/${rec.runId}`);
+  revalidatePath(`/ops/pricing-comps/intelligence/${rec.runId}`);
   revalidatePath(`/admin/properties/${rec.propertyId}`);
   revalidatePath("/marketplace");
-  redirect(`/admin/pricing/${rec.runId}?applied=1`);
+  redirect(`/ops/pricing-comps/intelligence/${rec.runId}?applied=1`);
 }

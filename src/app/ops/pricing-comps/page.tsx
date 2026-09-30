@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/utils";
 import { Button, Card } from "@/components/ui";
@@ -41,10 +40,8 @@ export default async function OpsPricingCompsPage({
           deep.
         </p>
         <p className="mt-2 text-sm text-stone-500">
-          {active} active · {comps.length} total ·{" "}
-          <Link href="/admin/pricing" className="font-medium text-bonnet hover:underline">
-            Pricing intelligence →
-          </Link>
+          {active} active · {comps.length} total. Intelligence runs sit on the
+          tab above and use these comps as peers.
         </p>
       </div>
 

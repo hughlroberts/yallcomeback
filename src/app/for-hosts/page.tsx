@@ -7,7 +7,6 @@ import { auth } from "@/lib/auth";
 import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
-  formatPlanPrice,
 } from "@/lib/hosting";
 import { formatMoney } from "@/lib/utils";
 
@@ -164,14 +163,11 @@ export default async function ForHostsPage({
             </p>
           </div>
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            <Link
-              href="/for-hosts?path=paid&plan=marketplace#apply"
-              className="group flex flex-col rounded-3xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-black/5 transition hover:border-bonnet/30 hover:shadow-md"
-            >
+            <div className="flex cursor-default flex-col rounded-3xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-black/5">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
                 1 · Marketplace only · $5/listing/mo
               </p>
-              <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
+              <h3 className="mt-2 text-xl font-semibold text-stone-900">
                 List on Yall Come Back. Keep more of every stay.
               </h3>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-stone-600">
@@ -192,20 +188,15 @@ export default async function ForHostsPage({
                 <li>✓ $5 / published listing / month</li>
                 <li>✓ Listing-first URLs (not a host mini-site)</li>
                 <li>✓ Zero commission · marketplace only</li>
+                <li>✓ Stripe for automated payments and invoices</li>
               </ul>
-              <p className="mt-5 text-sm font-semibold text-bonnet">
-                Start on the marketplace →
-              </p>
-            </Link>
+            </div>
 
-            <Link
-              href="/for-hosts?path=paid&plan=branded#apply"
-              className="group flex flex-col rounded-3xl border border-bonnet/25 bg-gradient-to-br from-petal/60 to-white p-6 shadow-sm ring-1 ring-bonnet/10 transition hover:border-bonnet/40 hover:shadow-md"
-            >
+            <div className="flex cursor-default flex-col rounded-3xl border border-bonnet/25 bg-gradient-to-br from-petal/60 to-white p-6 shadow-sm ring-1 ring-bonnet/10">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
                 2 · Branded website · $25/mo
               </p>
-              <h3 className="mt-2 text-xl font-semibold text-stone-900 group-hover:text-bonnet">
+              <h3 className="mt-2 text-xl font-semibold text-stone-900">
                 Your brand, your domain. $25 covers the whole site.
               </h3>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-stone-600">
@@ -227,11 +218,9 @@ export default async function ForHostsPage({
                 <li>✓ $25 / month for the whole website (not per listing)</li>
                 <li>✓ Branded site + DNS on your domain</li>
                 <li>✓ Demo to Live publish before DNS cutover</li>
+                <li>✓ Stripe for automated payments and invoices</li>
               </ul>
-              <p className="mt-5 text-sm font-semibold text-bonnet">
-                Build my website →
-              </p>
-            </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -282,43 +271,6 @@ export default async function ForHostsPage({
                 </div>
               ))}
             </div>
-
-            {plans.filter((p) => p.monthlyPrice > 0).length > 0 ? (
-              <div className="rounded-3xl border border-stone-200 bg-stone-50 p-6">
-                <h2 className="text-xl font-semibold text-stone-900">
-                  What it costs
-                </h2>
-                <p className="mt-2 text-sm text-stone-600">
-                  A small monthly hosting fee — not a cut of each stay. A
-                  branded website is $25 for the whole site; marketplace-only
-                  is $5 per listing if you do not need your own website.
-                </p>
-                <ul className="mt-4 space-y-3">
-                  {plans
-                    .filter((p) => p.monthlyPrice > 0)
-                    .map((plan) => (
-                      <li
-                        key={plan.id}
-                        className="flex flex-wrap items-baseline justify-between gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-4"
-                      >
-                        <div>
-                          <p className="font-medium text-stone-900">
-                            {plan.name}
-                          </p>
-                          {plan.description ? (
-                            <p className="mt-0.5 text-sm text-stone-500">
-                              {plan.description}
-                            </p>
-                          ) : null}
-                        </div>
-                        <p className="text-lg font-semibold text-bonnet">
-                          {formatPlanPrice(plan, formatMoney)}
-                        </p>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ) : null}
 
             <div className="rounded-3xl border border-honey/50 bg-honey/10 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-bonnet">

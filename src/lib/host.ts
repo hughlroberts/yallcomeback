@@ -332,6 +332,22 @@ export async function getMarketplacePlaceSuggestions(limit = 80) {
     .slice(0, limit);
 }
 
+/** Distinct city names from Where suggestions (drops "City, State" duplicates). */
+export function uniqueCitiesFromPlaceSuggestions(labels: string[]): string[] {
+  const cities = new Set<string>();
+  for (const label of labels) {
+    const city = label.split(",")[0]?.trim();
+    if (city) cities.add(city);
+  }
+  return Array.from(cities);
+}
+
+/** When the marketplace only has one city, prefill Where with it. */
+export function soleMarketplaceCity(labels: string[]): string | null {
+  const cities = uniqueCitiesFromPlaceSuggestions(labels);
+  return cities.length === 1 ? cities[0]! : null;
+}
+
 export type NearbyListing = PropertyWithHost & {
   /** Distance in miles (US / Texas). */
   distanceMiles: number | null;

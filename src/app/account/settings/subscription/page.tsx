@@ -123,6 +123,7 @@ export default async function AccountSubscriptionPage({
       if (
         host.plan &&
         host.plan.monthlyPrice <= 0 &&
+        host.stripeSubscriptionStatus !== "paused" &&
         (host.stripeSubscriptionStatus === "active" ||
           Boolean(
             host.stripeSubscriptionId && host.subscriptionStatus === "ACTIVE",

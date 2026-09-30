@@ -9,6 +9,7 @@ import {
   markHostingInvoicePaid,
 } from "@/lib/hosting-billing";
 import { applyMarketplaceOptIn } from "@/lib/hosting";
+import { pausePlatformHostingSubscription } from "@/lib/platform-billing";
 
 async function ensurePlatform() {
   const session = await requirePlatformAdmin();
@@ -266,7 +267,10 @@ export async function assignHostPlan(formData: FormData) {
 export async function updateHostOps(formData: FormData) {
   await ensurePlatform();
   const hostId = String(formData.get("hostId") || "");
-  const host = await prisma.host.findUnique({ where: { id: hostId } });
+  const host = await prisma.host.findUnique({
+    where: { id: hostId },
+    include: { plan: true },
+  });
   if (!host) throw new Error("Host not found");
 
   const planId = String(formData.get("planId") || "").trim() || null;
@@ -405,6 +409,7 @@ export async function updateHostOps(formData: FormData) {
     approvalStatus?: "APPROVED" | "SUSPENDED";
     currentPeriodStart?: Date | null;
     currentPeriodEnd?: Date | null;
+    stripeSubscriptionStatus?: string | null;
   } = {
     name,
     tagline,
@@ -448,6 +453,25 @@ export async function updateHostOps(formData: FormData) {
       const end = new Date();
       end.setFullYear(end.getFullYear() + 10);
       data.currentPeriodEnd = end;
+    }
+    const leavingPaid =
+      (host.plan?.monthlyPrice ?? 0) > 0 || Boolean(host.stripeSubscriptionId);
+    if (leavingPaid && host.stripeSubscriptionId) {
+      if (host.stripeSubscriptionStatus === "paused") {
+        data.stripeSubscriptionStatus = "paused";
+      } else {
+        try {
+          const paused = await pausePlatformHostingSubscription(
+            host.stripeSubscriptionId,
+          );
+          if (paused) data.stripeSubscriptionStatus = "paused";
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          throw new Error(
+            `Could not pause the Stripe subscription before moving ${host.name} to complimentary: ${message}`,
+          );
+        }
+      }
     }
   }
 

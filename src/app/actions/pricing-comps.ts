@@ -20,7 +20,7 @@ export async function setPricingMarketCompActive(formData: FormData) {
     data: { active },
   });
   revalidatePath(PATH);
-  revalidatePath("/admin/pricing");
+  revalidatePath("/ops/pricing-comps/intelligence");
   redirect(PATH);
 }
 
@@ -90,6 +90,6 @@ export async function upsertPricingMarketComp(formData: FormData) {
   });
 
   revalidatePath(PATH);
-  revalidatePath("/admin/pricing");
+  revalidatePath("/ops/pricing-comps/intelligence");
   redirect(`${PATH}?saved=1`);
 }

@@ -9,6 +9,7 @@ import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { OpsHostDomainGuide } from "@/components/ops-host-domain-guide";
+import { OpsHostEditForm } from "@/components/ops-host-edit-form";
 import {
   approvalLabel,
   formatPlanPrice,
@@ -194,7 +195,7 @@ export default async function OpsHostDetailPage({
             Guest site preview →
           </Link>
           <Link
-            href={`/admin/pricing`}
+            href="/ops/pricing-comps/intelligence"
             className="rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-50"
           >
             Pricing intelligence
@@ -261,8 +262,22 @@ export default async function OpsHostDetailPage({
           <strong>Marketplace only</strong> $5 / published listing, or{" "}
           <strong>Branded website</strong> $25 / month for the whole site
           (marketplace included — listing count does not change the bill).
+          Moving someone off a paid plan onto Complimentary asks you to confirm,
+          then pauses their Stripe subscription so they are not billed again.
         </p>
-        <form action={updateHostOps} className="mt-6 grid gap-4 sm:grid-cols-2">
+        <OpsHostEditForm
+          action={updateHostOps}
+          hostName={host.name}
+          currentPlanId={host.planId}
+          currentPlanName={host.plan?.name ?? null}
+          currentMonthlyPrice={host.plan?.monthlyPrice ?? 0}
+          hasStripeSubscription={Boolean(host.stripeSubscriptionId)}
+          plans={plans.map((p) => ({
+            id: p.id,
+            name: p.name,
+            monthlyPrice: p.monthlyPrice,
+          }))}
+        >
           <input type="hidden" name="hostId" value={host.id} />
           <div>
             <Label htmlFor="name">Brand name</Label>
@@ -328,6 +343,12 @@ export default async function OpsHostDetailPage({
                 </option>
               ))}
             </select>
+            {host.stripeSubscriptionId && !isComplimentary ? (
+              <p className="mt-1 text-xs text-ink-muted">
+                Switching to Complimentary will pause Stripe billing after you
+                confirm.
+              </p>
+            ) : null}
           </div>
           <div>
             <Label htmlFor="subscriptionStatus">Subscription status</Label>
@@ -378,8 +399,9 @@ export default async function OpsHostDetailPage({
             </p>
             <p className="mt-1 text-xs text-ink-muted">
               Not public. Not in open source. Not included in hosting. The
-              tool lives in Ops → Pricing intelligence for now — not in host
-              Admin. Set <strong>ACTIVE</strong> only after they pay $35/mo.
+              tool lives in Ops → Pricing comps → Intelligence for now — not
+              in host Admin. Set <strong>ACTIVE</strong> only after they pay
+              $35/mo.
             </p>
             <label className="mt-3 flex items-start gap-2 text-sm text-ink">
               <input
@@ -510,7 +532,7 @@ export default async function OpsHostDetailPage({
           <div className="sm:col-span-2">
             <Button type="submit">Save changes</Button>
           </div>
-        </form>
+        </OpsHostEditForm>
       </Card>
 
       <Card>

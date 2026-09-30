@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
+import type { PaymentMethod } from "@prisma/client";
 import { saveListingPrices } from "@/app/actions/properties";
+import { ListingPaymentMethodFields } from "@/components/listing-payment-method-fields";
 
 type Props = {
   propertyId: string;
   initial: {
     baseNightlyRate: number;
     weekendPremiumPercent: number;
+    websitePaymentMethod?: PaymentMethod | string;
   };
 };
 
@@ -18,6 +21,9 @@ export function ListingWizardPriceStep({ propertyId, initial }: Props) {
   );
   const [weekend, setWeekend] = useState(
     String(initial.weekendPremiumPercent || 0),
+  );
+  const [payMethod, setPayMethod] = useState<PaymentMethod>(
+    (initial.websitePaymentMethod as PaymentMethod) || "STRIPE",
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -47,6 +53,7 @@ export function ListingWizardPriceStep({ propertyId, initial }: Props) {
         fd.set("id", propertyId);
         fd.set("baseNightlyRate", String(baseNum));
         fd.set("weekendPremiumPercent", String(weekendNum));
+        fd.set("websitePaymentMethod", payMethod);
         await saveListingPrices(fd);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
@@ -120,6 +127,13 @@ export function ListingWizardPriceStep({ propertyId, initial }: Props) {
               )}
             </div>
           </label>
+
+          <div className="rounded-2xl border border-stone-200 bg-white px-5 py-4">
+            <ListingPaymentMethodFields
+              value={payMethod}
+              onChange={setPayMethod}
+            />
+          </div>
         </div>
 
         {error ? (

@@ -137,7 +137,7 @@ export async function createBooking(formData: FormData) {
     sourceChannel === "marketplace" || sourceChannel === "direct"
       ? sourceChannel
       : "host_site";
-  const payOptions = guestPaymentOptions(property.host, channel);
+  const payOptions = guestPaymentOptions(property.host, channel, property);
   const allowed = new Set(payOptions.filter((o) => o.ready).map((o) => o.value));
   if (allowed.size === 0) {
     throw new Error(

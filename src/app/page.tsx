@@ -5,6 +5,7 @@ import {
   getMarketplaceListings,
   getMarketplacePlaceSuggestions,
   marketplaceDiscoveryEnabled,
+  soleMarketplaceCity,
 } from "@/lib/host";
 import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
@@ -129,6 +130,7 @@ export default async function HomePage() {
           <div className="mt-8 w-full max-w-4xl">
             <StaySearchForm
               variant="hero"
+              defaultWhere={soleMarketplaceCity(placeSuggestions) ?? ""}
               placeSuggestions={placeSuggestions}
             />
           </div>

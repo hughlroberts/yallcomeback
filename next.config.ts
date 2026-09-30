@@ -58,6 +58,51 @@ const nextConfig: NextConfig = {
         destination: "/messages",
         permanent: false,
       },
+      {
+        source: "/admin/pricing",
+        destination: "/ops/pricing-comps/intelligence",
+        permanent: false,
+      },
+      {
+        source: "/admin/pricing/:runId",
+        destination: "/ops/pricing-comps/intelligence/:runId",
+        permanent: false,
+      },
+      {
+        source: "/ops/pricing",
+        destination: "/ops/pricing-comps/intelligence",
+        permanent: false,
+      },
+      {
+        source: "/ops/pricing/:runId",
+        destination: "/ops/pricing-comps/intelligence/:runId",
+        permanent: false,
+      },
+      {
+        source: "/ops/managers",
+        destination: "/ops/settings/managers",
+        permanent: false,
+      },
+      {
+        source: "/ops/health",
+        destination: "/ops/settings/health",
+        permanent: false,
+      },
+      {
+        source: "/ops/backups",
+        destination: "/ops/settings/backups",
+        permanent: false,
+      },
+      {
+        source: "/ops/backups/download",
+        destination: "/ops/settings/backups/download",
+        permanent: false,
+      },
+      {
+        source: "/ops/backups/file/:name",
+        destination: "/ops/settings/backups/file/:name",
+        permanent: false,
+      },
     ];
   },
 };

@@ -20,15 +20,15 @@ export async function addPlatformManager(formData: FormData) {
   const password = String(formData.get("password") || "");
 
   if (!email.includes("@")) {
-    redirect("/ops/managers?error=email");
+    redirect("/ops/settings/managers?error=email");
   }
   if (password.length < 8) {
-    redirect("/ops/managers?error=password");
+    redirect("/ops/settings/managers?error=password");
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing && existing.role === "ADMIN") {
-    redirect("/ops/managers?error=exists");
+    redirect("/ops/settings/managers?error=exists");
   }
 
   const passwordHash = await hashPassword(password);
@@ -55,8 +55,8 @@ export async function addPlatformManager(formData: FormData) {
     });
   }
 
-  revalidatePath("/ops/managers");
-  redirect("/ops/managers?saved=1");
+  revalidatePath("/ops/settings/managers");
+  redirect("/ops/settings/managers?saved=1");
 }
 
 /** Demote platform admin to guest (cannot demote yourself). */
@@ -66,12 +66,12 @@ export async function removePlatformManager(formData: FormData) {
 
   const id = String(formData.get("id") || "");
   if (!id || id === session.user.id) {
-    redirect("/ops/managers?error=self");
+    redirect("/ops/settings/managers?error=self");
   }
 
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user || user.role !== "ADMIN") {
-    redirect("/ops/managers?error=missing");
+    redirect("/ops/settings/managers?error=missing");
   }
 
   await prisma.user.update({
@@ -79,6 +79,6 @@ export async function removePlatformManager(formData: FormData) {
     data: { role: "GUEST", hostId: null },
   });
 
-  revalidatePath("/ops/managers");
-  redirect("/ops/managers?saved=1");
+  revalidatePath("/ops/settings/managers");
+  redirect("/ops/settings/managers?saved=1");
 }

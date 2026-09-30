@@ -142,6 +142,29 @@ export async function createAccountOnboardingLink(
   return accountLink.url;
 }
 
+/** Create the connected account if needed, then a hosted onboarding URL. */
+export async function createConnectOnboardingUrlForHost(host: {
+  id: string;
+  name: string;
+  stripeAccountId: string | null;
+  contactEmail: string | null;
+  billingEmail: string | null;
+  users: { email: string | null }[];
+}): Promise<string> {
+  let accountId = host.stripeAccountId;
+  if (!accountId) {
+    accountId = await createConnectedAccountForHost(host);
+  }
+  return createAccountOnboardingLink(accountId);
+}
+
+export function connectOnboardingErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim().slice(0, 280);
+  }
+  return "Could not start card onboarding.";
+}
+
 /** Create a product on the connected account (Stripe-Account header). */
 export async function createProductOnConnectedAccount(opts: {
   accountId: string;

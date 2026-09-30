@@ -30,6 +30,7 @@ import {
   hostProfileFaceUrl,
   hostSiteMarkUrl,
 } from "@/lib/host-images";
+import { BrandPageNav } from "@/components/brand-page-nav";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Brand & website" };
@@ -198,10 +199,45 @@ export default async function AdminBrandPage({
   const hasLogo = Boolean(host.logoUrl?.trim());
   const facePreview = hostProfileFaceUrl(host, profileAvatarUrl);
   const siteMarkPreview = hostSiteMarkUrl(host, profileAvatarUrl);
+  const showSyndication =
+    product === "open_source" ||
+    Boolean(host.syndicationApiKey) ||
+    Boolean(params.synKey);
+
+  const navItems = [
+    { id: "find-you", label: "How guests find you" },
+    ...(!branded
+      ? [{ id: "listing-urls", label: "Your listing URLs" }]
+      : []),
+    {
+      id: "identity",
+      label: branded ? "Identity & palette" : "Account name",
+    },
+    ...(branded
+      ? [
+          { id: "brand-logo", label: "Brand logo" },
+          { id: "publish", label: "Publish" },
+          { id: "pages", label: "Pages" },
+          { id: "about-content", label: "About content" },
+          { id: "contact-details", label: "Contact details" },
+          { id: "other-services", label: "Other services" },
+          { id: "social-links", label: "Social links" },
+          { id: "domain-setup", label: "Domain & guest site" },
+          { id: "marketplace", label: "Marketplace" },
+        ]
+      : []),
+    { id: "disclaimer", label: "Booking disclaimer" },
+    ...(branded
+      ? [{ id: "services-builder", label: "Services editor" }]
+      : []),
+    ...(showSyndication
+      ? [{ id: "syndication", label: "Syndication key" }]
+      : []),
+  ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <div>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <div className="max-w-3xl">
         <h1 className="text-2xl font-semibold text-stone-900">
           Brand & website
         </h1>
@@ -266,7 +302,9 @@ export default async function AdminBrandPage({
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-6">
+      <div className="lg:grid lg:grid-cols-[12.5rem_minmax(0,40rem)] lg:items-start lg:gap-8 xl:grid-cols-[13rem_minmax(0,48rem)]">
+        <BrandPageNav items={navItems} />
+        <div className="flex min-w-0 flex-col gap-6">
         <form
           id="brand-form"
           action={updateHostProfile}
@@ -277,7 +315,10 @@ export default async function AdminBrandPage({
           {host.active ? <input type="hidden" name="active" value="on" /> : null}
 
           {/* —— Product path —— */}
-          <Card className="order-1 space-y-4 border-bonnet/20 bg-gradient-to-br from-petal/50 to-white p-6">
+          <Card
+            id="find-you"
+            className="order-1 scroll-mt-28 space-y-4 border-bonnet/20 bg-gradient-to-br from-petal/50 to-white p-6"
+          >
             <div>
               <h2 className="text-lg font-semibold text-stone-900">
                 How guests find you
@@ -373,7 +414,7 @@ export default async function AdminBrandPage({
 
           {/* —— Marketplace-only: listing URLs —— */}
           {!branded ? (
-            <Card className="order-3 space-y-4 p-6">
+            <Card id="listing-urls" className="order-3 scroll-mt-28 space-y-4 p-6">
               <div>
                 <h2 className="text-lg font-semibold text-stone-900">
                   Your listing URLs
@@ -442,7 +483,7 @@ export default async function AdminBrandPage({
           ) : null}
 
           {/* —— Minimal identity (always) —— */}
-          <Card className="order-3 space-y-5 p-6">
+          <Card id="identity" className="order-3 scroll-mt-28 space-y-5 p-6">
             <div>
               <h2 className="text-lg font-semibold text-stone-900">
                 {branded ? "Identity & palette" : "Account name"}
@@ -621,7 +662,7 @@ export default async function AdminBrandPage({
 
           {/* —— Publish (branded sites only) —— */}
           {branded ? (
-            <Card className="order-5 space-y-4 p-6">
+            <Card id="publish" className="order-5 scroll-mt-28 space-y-4 p-6">
               <div>
                 <h2 className="text-lg font-semibold text-stone-900">Publish</h2>
                 <p className="mt-1 text-sm text-stone-600">
@@ -677,7 +718,7 @@ export default async function AdminBrandPage({
 
           {/* —— Fixed pages (branded) —— */}
           {branded ? (
-            <Card id="pages" className="order-6 scroll-mt-24 space-y-5 p-6">
+            <Card id="pages" className="order-6 scroll-mt-28 space-y-5 p-6">
               <div>
                 <h2 className="text-lg font-semibold text-stone-900">
                   Pages (fixed set)
@@ -753,7 +794,7 @@ export default async function AdminBrandPage({
 
           {/* —— About story (branded) —— */}
           {branded ? (
-            <Card className="order-7 space-y-5 p-6">
+            <Card id="about-content" className="order-7 scroll-mt-28 space-y-5 p-6">
               <h2 className="text-lg font-semibold text-stone-900">
                 About content
               </h2>
@@ -776,7 +817,7 @@ export default async function AdminBrandPage({
 
           {/* —— Public contact → About + footer —— */}
           {branded ? (
-            <Card id="contact-details" className="order-7 space-y-5 p-6">
+            <Card id="contact-details" className="order-7 scroll-mt-28 space-y-5 p-6">
               <h2 className="text-lg font-semibold text-stone-900">
                 Contact details
               </h2>
@@ -834,7 +875,7 @@ export default async function AdminBrandPage({
 
           {/* —— Services title (branded) —— */}
           {branded ? (
-            <Card className="order-8 space-y-5 p-6">
+            <Card id="other-services" className="order-8 scroll-mt-28 space-y-5 p-6">
               <h2 className="text-lg font-semibold text-stone-900">
                 Other services page
               </h2>
@@ -895,7 +936,7 @@ export default async function AdminBrandPage({
 
           {/* —— Socials (branded) —— */}
           {branded ? (
-            <Card className="order-9 space-y-5 p-6">
+            <Card id="social-links" className="order-9 scroll-mt-28 space-y-5 p-6">
               <h2 className="text-lg font-semibold text-stone-900">
                 Social links
               </h2>
@@ -945,7 +986,7 @@ export default async function AdminBrandPage({
 
           {/* —— Domain (branded) —— */}
           {branded ? (
-            <Card id="domain-setup" className="order-10 scroll-mt-24 space-y-5 p-6">
+            <Card id="domain-setup" className="order-10 scroll-mt-28 space-y-5 p-6">
               <div>
                 <h2 className="text-lg font-semibold text-stone-900">
                   Domain & guest site
@@ -1113,7 +1154,7 @@ export default async function AdminBrandPage({
 
           {/* —— Marketplace opt-in (not for marketplace-only; always on) —— */}
           {branded ? (
-            <Card className="order-11 space-y-5 p-6">
+            <Card id="marketplace" className="order-11 scroll-mt-28 space-y-5 p-6">
               <h2 className="text-lg font-semibold text-stone-900">
                 Marketplace (optional)
               </h2>
@@ -1159,7 +1200,7 @@ export default async function AdminBrandPage({
           )}
 
           {/* —— Disclaimer (always) —— */}
-          <Card className="order-12 space-y-3 p-6">
+          <Card id="disclaimer" className="order-12 scroll-mt-28 space-y-3 p-6">
             <h2 className="text-lg font-semibold text-stone-900">
               Booking disclaimer
             </h2>
@@ -1205,21 +1246,16 @@ export default async function AdminBrandPage({
 
         {/* Optional brand logo upload — only needed if “use logo” is checked */}
         {branded ? (
-          <Card className="order-4 space-y-4 border-stone-200 p-6">
+          <Card
+            id="brand-logo"
+            className="order-4 scroll-mt-28 space-y-4 border-stone-200 p-6"
+          >
             <h2 className="text-lg font-semibold text-stone-900">
               Brand logo (optional)
             </h2>
             <p className="text-sm text-stone-500">
-              Upload only if you want a logo in the guest website header instead
-              of your profile photo. Square PNG or JPG under 4&nbsp;MB.
-            </p>
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-              Note: files uploaded here are stored on the app server and can be
-              lost when the site redeploys. For a permanent logo, put the file
-              under <code className="font-mono">public/brand/hosts/</code> in
-              the project and paste that path (e.g.{" "}
-              <code className="font-mono">/brand/hosts/cherokee-landing-logo.png</code>
-              ), or re-upload after deploy.
+              Upload a square PNG or JPG (under 4&nbsp;MB) if you want a logo
+              in the guest website header instead of your profile photo.
             </p>
             <form
               action={uploadHostLogo}
@@ -1260,7 +1296,7 @@ export default async function AdminBrandPage({
         {branded && host.sitePageServices ? (
           <Card
             id="services-builder"
-            className="order-14 scroll-mt-24 space-y-3 p-6"
+            className="order-14 scroll-mt-28 space-y-3 p-6"
           >
             <h2 className="text-lg font-semibold text-stone-900">
               Boat rentals / other services
@@ -1301,7 +1337,7 @@ export default async function AdminBrandPage({
         ) : branded ? (
           <Card
             id="services-builder"
-            className="order-14 scroll-mt-24 p-6 text-sm text-stone-500"
+            className="order-14 scroll-mt-28 p-6 text-sm text-stone-500"
           >
             Turn on <strong>Other services</strong> under{" "}
             <a href="#pages" className="font-medium text-bonnet hover:underline">
@@ -1316,7 +1352,10 @@ export default async function AdminBrandPage({
         {product === "open_source" ||
         host.syndicationApiKey ||
         params.synKey ? (
-          <Card className="order-15 space-y-4 border-stone-200 bg-stone-50/50 p-6">
+          <Card
+            id="syndication"
+            className="order-15 scroll-mt-28 space-y-4 border-stone-200 bg-stone-50/50 p-6"
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -1382,6 +1421,7 @@ export default async function AdminBrandPage({
             </form>
           </Card>
         ) : null}
+        </div>
       </div>
     </div>
   );

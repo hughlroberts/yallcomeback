@@ -168,6 +168,7 @@ export async function POST(req: Request) {
           subscriptionId: sub.id,
           stripeStatus: sub.status,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
+          pauseCollection: sub.pause_collection,
         });
       }
       if (

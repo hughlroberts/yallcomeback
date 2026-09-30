@@ -118,6 +118,7 @@ async function main() {
     where: {
       hostingMode: "PLATFORM",
       plan: { monthlyPrice: { lte: 0 } },
+      NOT: { stripeSubscriptionStatus: "paused" },
       OR: [
         { stripeSubscriptionStatus: "active" },
         {

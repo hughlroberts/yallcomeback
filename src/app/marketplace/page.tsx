@@ -4,6 +4,7 @@ import {
   getMarketplaceListings,
   getMarketplacePlaceSuggestions,
   marketplaceDiscoveryEnabled,
+  soleMarketplaceCity,
 } from "@/lib/host";
 import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
@@ -56,6 +57,7 @@ export default async function MarketplacePage({
       : 0;
 
   const placeSuggestions = await getMarketplacePlaceSuggestions();
+  const onlyCity = soleMarketplaceCity(placeSuggestions);
 
   return (
     <div>
@@ -84,7 +86,7 @@ export default async function MarketplacePage({
           </p>
 
           <StaySearchForm
-            defaultWhere={where ?? ""}
+            defaultWhere={where ?? onlyCity ?? ""}
             defaultCheckIn={checkIn ?? ""}
             defaultCheckOut={checkOut ?? ""}
             defaultDateFlex={dateFlex || ""}
@@ -144,7 +146,7 @@ async function StaysPanel({
 
   const filters: string[] = [];
   if (where) filters.push(`near “${where}”`);
-  else filters.push("anywhere");
+  else filters.push("we're new and still getting started");
   if (checkIn && checkOut) {
     filters.push(
       dateFlex > 0

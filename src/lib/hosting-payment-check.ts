@@ -202,6 +202,7 @@ async function reconcileHostingPayments(now: Date): Promise<{
           subscriptionId: sub.id,
           stripeStatus: status,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
+          pauseCollection: sub.pause_collection,
         });
         if (status === "active" || status === "trialing") paid = true;
         if (status === "past_due" || status === "unpaid") unpaid = true;

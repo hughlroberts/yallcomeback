@@ -40,6 +40,9 @@ export function HostSignupForm({
   const [path, setPath] = useState<Path>(initialPath);
   const [paidPlan, setPaidPlan] = useState<PaidPlan>(initialPlan);
   const [listOnMarketplace, setListOnMarketplace] = useState(true);
+  const [collectGuestCards, setCollectGuestCards] = useState<
+    "yes" | "skip" | ""
+  >("");
 
   const marketplacePlanId =
     plans.find((p) => p.slug === "marketplace")?.id ||
@@ -78,6 +81,16 @@ export function HostSignupForm({
     } else {
       formData.delete("listOnMarketplace");
     }
+    if (!collectGuestCards) {
+      setError("Choose whether to collect guest cards now.");
+      setPending(false);
+      return;
+    }
+    if (collectGuestCards === "yes") {
+      formData.set("collectGuestCards", "1");
+    } else {
+      formData.delete("collectGuestCards");
+    }
     if (existingAccount) {
       const result = await startHosting(formData);
       setPending(false);
@@ -93,8 +106,14 @@ export function HostSignupForm({
       setError(result.error);
       return;
     }
+    const afterLogin =
+      collectGuestCards === "yes"
+        ? "/admin/payments?startOnboarding=1"
+        : path === "self"
+          ? "/admin?welcome=1"
+          : "/account/settings/subscription?welcome=1";
     router.push(
-      "/login?registered=host&callbackUrl=/account/settings/subscription?welcome=1",
+      `/login?registered=host&callbackUrl=${encodeURIComponent(afterLogin)}`,
     );
     router.refresh();
   }
@@ -143,11 +162,11 @@ export function HostSignupForm({
           placeholder="Lakeside Cabins"
         />
         <Field
-          label="Brand slug"
+          label="URL name"
           name="slug"
           required
           placeholder="lakeside-cabins"
-          hint="Internal id on Yall Come Back"
+          hint="Used in your site address, like /h/lakeside-cabins. Letters, numbers, and hyphens."
         />
         <Field
           label="Tagline"
@@ -281,6 +300,53 @@ export function HostSignupForm({
             </span>
           </span>
         </label>
+
+        <fieldset className="space-y-2 rounded-xl border border-stone-200 px-3 py-3">
+          <legend className="text-sm font-medium text-stone-800">
+            Collect guest cards now?
+          </legend>
+          <p className="text-xs text-stone-500">
+            Needed for Find a Place, and for listings you set to online card.
+            You can skip and do this later under Admin → Payments.
+          </p>
+          <label className="flex cursor-pointer items-start gap-2 text-sm">
+            <input
+              type="radio"
+              name="collectGuestCards"
+              value="yes"
+              required
+              checked={collectGuestCards === "yes"}
+              onChange={() => setCollectGuestCards("yes")}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">
+                Yes, set up card collection
+              </span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Stripe hosts a form for identity and bank details after you
+                sign in.
+              </span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-2 text-sm">
+            <input
+              type="radio"
+              name="collectGuestCards"
+              value="skip"
+              required
+              checked={collectGuestCards === "skip"}
+              onChange={() => setCollectGuestCards("skip")}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">Skip for now</span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                We’ll ask again on the Payments tab if you have not onboarded.
+              </span>
+            </span>
+          </label>
+        </fieldset>
 
         {/* $500 setup — always offered, including free self-host */}
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-honey/50 bg-honey/10 px-4 py-3 text-sm text-stone-800">
