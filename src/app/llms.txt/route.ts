@@ -50,7 +50,7 @@ Homepage-style flexibility:
 
 GET ${origin}/api/v1/listings/{slug}?checkIn=2026-08-15&checkOut=2026-08-18&pets=1
 
-Returns description, amenities, house rules, photos, host contact, nextWindows, and a quote when dates are given.
+Returns description, amenities, house rules, photos, host name, nextWindows, and a quote when dates are given. Host email and phone are not included. Street, postal code, and coordinates are included only when the listing shows a precise location.
 
 ## Calendar / next free windows
 

@@ -20,6 +20,7 @@ import {
   connectOriginFromHeaders,
   isTrustedConnectRequest,
 } from "@/lib/stripe-connect";
+import { publicListingLocation } from "@/lib/agent/listing";
 
 describe("resolveBookingChannel", () => {
   it("treats Find a Place as marketplace even if a guest posts via=host_site", () => {
@@ -232,6 +233,32 @@ describe("formatContinueSearchText", () => {
     expect(formatContinueSearchText({ where: "Malakoff", searchedAt: 0 })).toBe(
       "Continue searching for homes near Malakoff",
     );
+  });
+});
+
+describe("publicListingLocation", () => {
+  const precise = {
+    address: "123 Lake Rd",
+    postalCode: "75148",
+    latitude: 32.1,
+    longitude: -96.0,
+  };
+
+  it("omits street, postal, and pin when precise location is off", () => {
+    expect(
+      publicListingLocation({ showPreciseLocation: false, ...precise }),
+    ).toEqual({
+      address: null,
+      postalCode: null,
+      latitude: null,
+      longitude: null,
+    });
+  });
+
+  it("keeps street, postal, and pin when the guest listing shows them", () => {
+    expect(
+      publicListingLocation({ showPreciseLocation: true, ...precise }),
+    ).toEqual(precise);
   });
 });
 

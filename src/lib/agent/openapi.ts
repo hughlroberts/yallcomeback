@@ -115,6 +115,8 @@ export function buildOpenApiDocument(origin: string) {
         get: {
           operationId: "getListing",
           summary: "Listing detail + availability",
+          description:
+            "Public listing for booking. Host email and phone are omitted. Street, postal code, and coordinates are included only when the listing shows a precise location to guests.",
           parameters: [
             {
               name: "slug",

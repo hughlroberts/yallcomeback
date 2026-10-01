@@ -11,6 +11,30 @@ import {
 } from "@/lib/agent/availability";
 import { absoluteUrl } from "@/lib/agent/origin";
 
+/** Street and pin only when the guest listing already shows them. */
+export function publicListingLocation(listing: {
+  showPreciseLocation: boolean;
+  address: string | null;
+  postalCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}) {
+  if (listing.showPreciseLocation) {
+    return {
+      address: listing.address,
+      postalCode: listing.postalCode,
+      latitude: listing.latitude,
+      longitude: listing.longitude,
+    };
+  }
+  return {
+    address: null,
+    postalCode: null,
+    latitude: null,
+    longitude: null,
+  };
+}
+
 export type AgentListingDetail = {
   id: string;
   slug: string;
@@ -51,8 +75,6 @@ export type AgentListingDetail = {
     name: string;
     slug: string;
     tagline: string | null;
-    contactEmail: string | null;
-    contactPhone: string | null;
   };
   url: string;
   bookUrl: string;
@@ -101,8 +123,6 @@ export async function getAgentListingDetail(
           name: true,
           slug: true,
           tagline: true,
-          contactEmail: true,
-          contactPhone: true,
         },
       },
       images: {
@@ -187,13 +207,10 @@ export async function getAgentListingDetail(
     description: property.description,
     propertyType: property.propertyType,
     spaceType: property.spaceType,
-    address: property.showPreciseLocation ? property.address : null,
+    ...publicListingLocation(property),
     city: property.city,
     region: property.region,
     country: property.country,
-    postalCode: property.postalCode,
-    latitude: property.showPreciseLocation ? property.latitude : null,
-    longitude: property.showPreciseLocation ? property.longitude : null,
     showPreciseLocation: property.showPreciseLocation,
     bedrooms: property.bedrooms,
     bathrooms: property.bathrooms,
@@ -223,8 +240,6 @@ export async function getAgentListingDetail(
       name: property.host.name,
       slug: property.host.slug,
       tagline: property.host.tagline,
-      contactEmail: property.host.contactEmail,
-      contactPhone: property.host.contactPhone,
     },
     url: absoluteUrl(origin, path),
     bookUrl: absoluteUrl(
