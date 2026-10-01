@@ -26,6 +26,7 @@ COPY . .
 # Explicit path — fails loudly if schema missing from context
 RUN test -f prisma/schema.prisma \
   && npx prisma generate --schema=prisma/schema.prisma
+RUN npx vitest run
 RUN npm run build
 
 # --- Runtime ---
