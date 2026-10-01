@@ -59,6 +59,7 @@ export default async function AccountSubscriptionPage({
     canceled?: string;
     welcome?: string;
     upgraded?: string;
+    collectCards?: string;
   }>;
 }) {
   const session = await auth();
@@ -155,7 +156,9 @@ export default async function AccountSubscriptionPage({
   const flash = sp.subscribed
     ? {
         title: "You're subscribed",
-        body: "Hosting is active on that brand. The card is stored on the brand, not on your personal account.",
+        body: sp.collectCards
+          ? "Hosting is active on that brand. Guest cards are optional — set them up under Admin → Payments when you are ready."
+          : "Hosting is active on that brand. The card is stored on the brand, not on your personal account.",
         variant: "success" as const,
       }
     : sp.upgraded === "website"
@@ -167,7 +170,9 @@ export default async function AccountSubscriptionPage({
       : sp.welcome
         ? {
             title: "Welcome — you're hosting",
-            body: "Each brand has its own Yall Come Back plan and card. Guest cards stay under Admin → Payments.",
+            body: sp.collectCards
+              ? "Add this brand’s hosting card first so Yall Come Back can bill you. Collecting guest cards is optional after that, under Admin → Payments."
+              : "Each brand has its own Yall Come Back plan and card. Guest cards stay under Admin → Payments.",
             variant: "info" as const,
           }
         : sp.canceled
@@ -243,6 +248,13 @@ function BrandHostingCard({
   const branded = product === "website";
   const selfHost = product === "open_source";
   const complimentary = Boolean(host.plan && host.plan.monthlyPrice <= 0);
+  const stripePaused =
+    (host.stripeSubscriptionStatus || "").toLowerCase() === "paused";
+  const needsFreshSubscribe =
+    complimentary ||
+    stripePaused ||
+    host.subscriptionStatus !== "ACTIVE" ||
+    !host.stripeSubscriptionId;
   const estimate = host.plan
     ? calculateHostingAmount(host.plan, publishedCount)
     : null;
@@ -417,9 +429,9 @@ function BrandHostingCard({
                 <Button type="submit" disabled={!stripeOn || !priceConfigured}>
                   {complimentary
                     ? "Move to $25/mo website and subscribe"
-                    : host.subscriptionStatus === "ACTIVE"
-                      ? "Manage billing"
-                      : "Add card and subscribe"}
+                    : needsFreshSubscribe
+                      ? "Add card and subscribe"
+                      : "Manage billing"}
                 </Button>
               </form>
             ) : null}

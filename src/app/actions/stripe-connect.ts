@@ -14,6 +14,7 @@ import {
   createProductOnConnectedAccount,
 } from "@/lib/stripe-connect";
 import {
+  cancelPlatformHostingSubscription,
   createHostingSubscriptionCheckout,
   createPlatformBillingPortalSession,
   ensurePlatformCustomer,
@@ -108,6 +109,27 @@ export async function startHostingSubscription(formData?: FormData) {
     throw new Error(
       "Card checkout is the $25 / month branded website plan. Marketplace-only hosts are billed $5 per listing by invoice.",
     );
+  }
+  const stripeStatus = (host.stripeSubscriptionStatus || "").toLowerCase();
+  const needsFreshCheckout =
+    stripeStatus === "paused" ||
+    stripeStatus === "canceled" ||
+    stripeStatus === "incomplete_expired" ||
+    !host.stripeSubscriptionId;
+  if (needsFreshCheckout) {
+    if (host.stripeSubscriptionId) {
+      await cancelPlatformHostingSubscription(host.stripeSubscriptionId);
+      await prisma.host.update({
+        where: { id: host.id },
+        data: {
+          stripeSubscriptionId: null,
+          stripeSubscriptionStatus: "canceled",
+        },
+      });
+    }
+    const fresh = await createHostingSubscriptionCheckout(host);
+    if (!fresh.url) throw new Error("Card checkout did not return a URL.");
+    redirect(fresh.url);
   }
   if (host.subscriptionStatus === "ACTIVE" && host.stripeCustomerId) {
     const portal = await createPlatformBillingPortalSession(

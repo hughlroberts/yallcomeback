@@ -9,7 +9,10 @@ import {
   markHostingInvoicePaid,
 } from "@/lib/hosting-billing";
 import { applyMarketplaceOptIn } from "@/lib/hosting";
-import { pausePlatformHostingSubscription } from "@/lib/platform-billing";
+import {
+  cancelPlatformHostingSubscription,
+  pausePlatformHostingSubscription,
+} from "@/lib/platform-billing";
 
 async function ensurePlatform() {
   const session = await requirePlatformAdmin();
@@ -409,6 +412,7 @@ export async function updateHostOps(formData: FormData) {
     approvalStatus?: "APPROVED" | "SUSPENDED";
     currentPeriodStart?: Date | null;
     currentPeriodEnd?: Date | null;
+    stripeSubscriptionId?: string | null;
     stripeSubscriptionStatus?: string | null;
   } = {
     name,
@@ -472,6 +476,24 @@ export async function updateHostOps(formData: FormData) {
         }
       }
     }
+  } else if (
+    hostingMode === "PLATFORM" &&
+    planMonthly > 0 &&
+    ((host.plan?.monthlyPrice ?? 0) <= 0 ||
+      (host.stripeSubscriptionStatus || "").toLowerCase() === "paused")
+  ) {
+    if (host.stripeSubscriptionId) {
+      try {
+        await cancelPlatformHostingSubscription(host.stripeSubscriptionId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(
+          `Could not cancel the paused Stripe subscription before moving ${host.name} to a paid plan: ${message}`,
+        );
+      }
+    }
+    data.stripeSubscriptionId = null;
+    data.stripeSubscriptionStatus = "canceled";
   }
 
   if (hostingMode === "SELF") {

@@ -107,10 +107,10 @@ export function HostSignupForm({
       return;
     }
     const afterLogin =
-      collectGuestCards === "yes"
-        ? "/admin/payments?startOnboarding=1"
-        : path === "self"
-          ? "/admin?welcome=1"
+      path === "self"
+        ? "/admin?welcome=1"
+        : collectGuestCards === "yes"
+          ? "/account/settings/subscription?welcome=1&collectCards=1"
           : "/account/settings/subscription?welcome=1";
     router.push(
       `/login?registered=host&callbackUrl=${encodeURIComponent(afterLogin)}`,
@@ -303,11 +303,12 @@ export function HostSignupForm({
 
         <fieldset className="space-y-2 rounded-xl border border-stone-200 px-3 py-3">
           <legend className="text-sm font-medium text-stone-800">
-            Collect guest cards now?
+            Collect guest cards?
           </legend>
           <p className="text-xs text-stone-500">
-            Needed for Find a Place, and for listings you set to online card.
-            You can skip and do this later under Admin → Payments.
+            First you add the hosting card so Yall Come Back can bill this
+            brand. Guest cards are optional on a branded site — needed for Find
+            a Place, and for listings you set to online card.
           </p>
           <label className="flex cursor-pointer items-start gap-2 text-sm">
             <input
@@ -321,11 +322,11 @@ export function HostSignupForm({
             />
             <span>
               <span className="font-medium text-stone-900">
-                Yes, set up card collection
+                Yes, remind me after I subscribe
               </span>
               <span className="mt-0.5 block text-xs text-stone-500">
-                Stripe hosts a form for identity and bank details after you
-                sign in.
+                After hosting checkout you can set this up under Admin →
+                Payments. It is not required to finish signup.
               </span>
             </span>
           </label>
@@ -342,7 +343,7 @@ export function HostSignupForm({
             <span>
               <span className="font-medium text-stone-900">Skip for now</span>
               <span className="mt-0.5 block text-xs text-stone-500">
-                We’ll ask again on the Payments tab if you have not onboarded.
+                You can still add guest cards later under Admin → Payments.
               </span>
             </span>
           </label>

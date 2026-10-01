@@ -307,6 +307,30 @@ export async function pausePlatformHostingSubscription(
   }
 }
 
+/**
+ * End a platform hosting subscription so the next Checkout creates a new one.
+ * Used when Ops moves a complimentary (paused) host onto a paid plan.
+ */
+export async function cancelPlatformHostingSubscription(
+  subscriptionId: string | null | undefined,
+): Promise<boolean> {
+  if (!subscriptionId) return false;
+  const stripe = getStripe();
+  if (!stripe) return false;
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    if (sub.status === "canceled" || sub.status === "incomplete_expired") {
+      return true;
+    }
+    await stripe.subscriptions.cancel(subscriptionId);
+    return true;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/no such subscription/i.test(message)) return true;
+    throw err;
+  }
+}
+
 /** Persist hosting subscription status from platform Billing webhooks. */
 export async function applyHostingSubscriptionFromStripe(opts: {
   hostId?: string | null;
@@ -317,20 +341,40 @@ export async function applyHostingSubscriptionFromStripe(opts: {
   pauseCollection?: unknown;
 }) {
   let host = opts.hostId
-    ? await prisma.host.findUnique({ where: { id: opts.hostId } })
+    ? await prisma.host.findUnique({
+        where: { id: opts.hostId },
+        include: { plan: true },
+      })
     : null;
   if (!host && opts.customerId) {
     host = await prisma.host.findFirst({
       where: { stripeCustomerId: opts.customerId },
+      include: { plan: true },
     });
   }
   if (!host) return null;
 
   const raw = (opts.stripeStatus || "").toLowerCase();
+  const incomingSubId = opts.subscriptionId || null;
+  const existingSubId = host.stripeSubscriptionId;
+  if (
+    (raw === "canceled" || raw === "incomplete_expired") &&
+    existingSubId &&
+    incomingSubId &&
+    existingSubId !== incomingSubId
+  ) {
+    return host;
+  }
+
   const pauseProvided = opts.pauseCollection !== undefined;
+  const isNewSubscription = Boolean(
+    incomingSubId && incomingSubId !== existingSubId,
+  );
   const paused = pauseProvided
     ? stripeCollectionIsPaused(opts.pauseCollection)
-    : (host.stripeSubscriptionStatus || "").toLowerCase() === "paused";
+    : isNewSubscription
+      ? false
+      : (host.stripeSubscriptionStatus || "").toLowerCase() === "paused";
   let subscriptionStatus:
     | "NONE"
     | "PENDING_PAYMENT"
@@ -349,9 +393,21 @@ export async function applyHostingSubscriptionFromStripe(opts: {
       subscriptionStatus = "PAST_DUE";
     }
     hostingPastDueAt = host.hostingPastDueAt ?? new Date();
-  } else if (raw === "canceled" || raw === "incomplete_expired")
+  } else if (raw === "canceled" || raw === "incomplete_expired") {
+    const wasPaused =
+      (host.stripeSubscriptionStatus || "").toLowerCase() === "paused";
+    const paidPlan = (host.plan?.monthlyPrice ?? 0) > 0;
+    if (wasPaused || paidPlan) {
+      return prisma.host.update({
+        where: { id: host.id },
+        data: {
+          stripeSubscriptionId: null,
+          stripeSubscriptionStatus: "canceled",
+        },
+      });
+    }
     subscriptionStatus = "CANCELLED";
-  else if (opts.cancelAtPeriodEnd) subscriptionStatus = "CANCELLED";
+  } else if (opts.cancelAtPeriodEnd) subscriptionStatus = "CANCELLED";
 
   const stripeSubscriptionStatus = paused
     ? "paused"

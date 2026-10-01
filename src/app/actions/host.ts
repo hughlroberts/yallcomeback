@@ -282,11 +282,11 @@ export async function startHosting(formData: FormData) {
   revalidatePath("/for-hosts");
   const collectGuestCards = formData.get("collectGuestCards") === "1";
   redirect(
-    collectGuestCards
-      ? "/admin/payments?startOnboarding=1"
-      : hostingMode === "PLATFORM"
-        ? "/account/settings/subscription?welcome=1"
-        : "/admin?welcome=1",
+    hostingMode === "PLATFORM"
+      ? collectGuestCards
+        ? "/account/settings/subscription?welcome=1&collectCards=1"
+        : "/account/settings/subscription?welcome=1"
+      : "/admin?welcome=1",
   );
 }
 
