@@ -660,6 +660,72 @@ export default async function AdminBrandPage({
             ) : null}
           </Card>
 
+          {branded ? (
+            <Card
+              id="brand-logo"
+              className="order-4 scroll-mt-28 space-y-4 border-stone-200 p-6"
+            >
+              <h2 className="text-lg font-semibold text-stone-900">
+                Brand logo (optional)
+              </h2>
+              <p className="text-sm text-stone-500">
+                Upload a square PNG or JPG (under 4&nbsp;MB) if you want a logo
+                in the guest website header instead of your profile photo.
+              </p>
+              <div className="flex flex-wrap items-end gap-3">
+                <input
+                  type="hidden"
+                  name="hostId"
+                  value={host.id}
+                  form="logo-upload-form"
+                />
+                <input
+                  type="hidden"
+                  name="returnTo"
+                  value={returnTo}
+                  form="logo-upload-form"
+                />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Label htmlFor="logoFile">Logo file</Label>
+                  <Input
+                    id="logoFile"
+                    name="file"
+                    type="file"
+                    form="logo-upload-form"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    required
+                  />
+                </div>
+                <Button type="submit" form="logo-upload-form" variant="secondary">
+                  Upload logo
+                </Button>
+              </div>
+              {hasLogo ? (
+                <div className="pt-1">
+                  <input
+                    type="hidden"
+                    name="hostId"
+                    value={host.id}
+                    form="logo-clear-form"
+                  />
+                  <input
+                    type="hidden"
+                    name="returnTo"
+                    value={returnTo}
+                    form="logo-clear-form"
+                  />
+                  <button
+                    type="submit"
+                    form="logo-clear-form"
+                    className="text-sm font-medium text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline"
+                  >
+                    Remove logo (use profile photo on site)
+                  </button>
+                </div>
+              ) : null}
+            </Card>
+          ) : null}
+
           {/* —— Publish (branded sites only) —— */}
           {branded ? (
             <Card id="publish" className="order-5 scroll-mt-28 space-y-4 p-6">
@@ -1243,54 +1309,8 @@ export default async function AdminBrandPage({
             </Link>
           </div>
         </form>
-
-        {/* Optional brand logo upload — only needed if “use logo” is checked */}
-        {branded ? (
-          <Card
-            id="brand-logo"
-            className="order-4 scroll-mt-28 space-y-4 border-stone-200 p-6"
-          >
-            <h2 className="text-lg font-semibold text-stone-900">
-              Brand logo (optional)
-            </h2>
-            <p className="text-sm text-stone-500">
-              Upload a square PNG or JPG (under 4&nbsp;MB) if you want a logo
-              in the guest website header instead of your profile photo.
-            </p>
-            <form
-              action={uploadHostLogo}
-              className="flex flex-wrap items-end gap-3"
-            >
-              <input type="hidden" name="hostId" value={host.id} />
-              <input type="hidden" name="returnTo" value={returnTo} />
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <Label htmlFor="logoFile">Logo file</Label>
-                <Input
-                  id="logoFile"
-                  name="file"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  required
-                />
-              </div>
-              <Button type="submit" variant="secondary">
-                Upload logo
-              </Button>
-            </form>
-            {hasLogo ? (
-              <form action={clearHostLogo} className="pt-1">
-                <input type="hidden" name="hostId" value={host.id} />
-                <input type="hidden" name="returnTo" value={returnTo} />
-                <button
-                  type="submit"
-                  className="text-sm font-medium text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline"
-                >
-                  Remove logo (use profile photo on site)
-                </button>
-              </form>
-            ) : null}
-          </Card>
-        ) : null}
+        <form id="logo-upload-form" action={uploadHostLogo} hidden />
+        <form id="logo-clear-form" action={clearHostLogo} hidden />
 
         {/* Services — edit live on the guest demo page */}
         {branded && host.sitePageServices ? (

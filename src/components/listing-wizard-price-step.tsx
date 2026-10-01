@@ -8,6 +8,7 @@ import { ListingPaymentMethodFields } from "@/components/listing-payment-method-
 
 type Props = {
   propertyId: string;
+  canEditDepositMethod?: boolean;
   initial: {
     baseNightlyRate: number;
     weekendPremiumPercent: number;
@@ -15,7 +16,11 @@ type Props = {
   };
 };
 
-export function ListingWizardPriceStep({ propertyId, initial }: Props) {
+export function ListingWizardPriceStep({
+  propertyId,
+  canEditDepositMethod = true,
+  initial,
+}: Props) {
   const [base, setBase] = useState(
     String(initial.baseNightlyRate > 0 ? initial.baseNightlyRate : 150),
   );
@@ -53,7 +58,9 @@ export function ListingWizardPriceStep({ propertyId, initial }: Props) {
         fd.set("id", propertyId);
         fd.set("baseNightlyRate", String(baseNum));
         fd.set("weekendPremiumPercent", String(weekendNum));
-        fd.set("websitePaymentMethod", payMethod);
+        if (canEditDepositMethod) {
+          fd.set("websitePaymentMethod", payMethod);
+        }
         await saveListingPrices(fd);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
@@ -128,12 +135,14 @@ export function ListingWizardPriceStep({ propertyId, initial }: Props) {
             </div>
           </label>
 
-          <div className="rounded-2xl border border-stone-200 bg-white px-5 py-4">
-            <ListingPaymentMethodFields
-              value={payMethod}
-              onChange={setPayMethod}
-            />
-          </div>
+          {canEditDepositMethod ? (
+            <div className="rounded-2xl border border-stone-200 bg-white px-5 py-4">
+              <ListingPaymentMethodFields
+                value={payMethod}
+                onChange={setPayMethod}
+              />
+            </div>
+          ) : null}
         </div>
 
         {error ? (

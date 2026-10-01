@@ -2,11 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import {
   connectOnboardingErrorMessage,
+  connectOriginFromHeaders,
   createConnectOnboardingUrlForHost,
   createDirectChargeCheckout,
   createProductOnConnectedAccount,
@@ -17,7 +19,7 @@ import {
   ensurePlatformCustomer,
 } from "@/lib/platform-billing";
 import { hostProductPath } from "@/lib/hosting";
-import { isStripeConfigured, toStripeAmount } from "@/lib/stripe";
+import { isStripeConfigured, requireStripeClient, toStripeAmount } from "@/lib/stripe";
 
 async function requireBrandHost(formData?: FormData) {
   const requested = formData
@@ -55,7 +57,8 @@ export async function startConnectOnboarding() {
   try {
     assertStripeOn();
     const host = await requireBrandHost();
-    const url = await createConnectOnboardingUrlForHost(host);
+    const origin = connectOriginFromHeaders(await headers());
+    const url = await createConnectOnboardingUrlForHost(host, origin);
     redirect(url);
   } catch (error) {
     const digest =
@@ -132,15 +135,32 @@ export async function buyConnectedProduct(formData: FormData) {
   assertStripeOn();
   const hostSlug = String(formData.get("hostSlug") || "").trim();
   const priceId = String(formData.get("priceId") || "").trim();
-  const productName = String(formData.get("productName") || "Stay extra").trim();
-  const amountCents = Number(formData.get("amountCents") || "0");
+  if (!priceId.startsWith("price_")) {
+    throw new Error("This extra is not available.");
+  }
   const host = await prisma.host.findUnique({ where: { slug: hostSlug } });
   if (!host?.stripeAccountId) {
     throw new Error("This host is not collecting card payments yet.");
   }
-  if (!Number.isFinite(amountCents) || amountCents <= 0) {
-    throw new Error("This product has no price.");
+  const stripeClient = requireStripeClient();
+  const price = await stripeClient.prices.retrieve(
+    priceId,
+    { expand: ["product"] },
+    { stripeAccount: host.stripeAccountId },
+  );
+  const amountCents = price.unit_amount;
+  if (!price.active || amountCents == null || amountCents <= 0) {
+    throw new Error("This extra is not available.");
   }
+  const product = price.product;
+  const productName =
+    product &&
+    typeof product === "object" &&
+    !product.deleted &&
+    "name" in product &&
+    product.name
+      ? product.name
+      : "Stay extra";
   const session = await createDirectChargeCheckout({
     accountId: host.stripeAccountId,
     name: productName,
@@ -150,7 +170,7 @@ export async function buyConnectedProduct(formData: FormData) {
     metadata: {
       kind: "connected_product",
       hostId: host.id,
-      priceId,
+      priceId: price.id,
     },
   });
   if (!session.url) throw new Error("Checkout did not return a URL.");

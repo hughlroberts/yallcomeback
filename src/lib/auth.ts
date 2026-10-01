@@ -153,11 +153,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 });
 
-/** Platform operator */
+/** Platform operator — always re-read role from DB (do not trust a stale JWT). */
 export async function requirePlatformAdmin() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") return null;
-  return session;
+  if (!session?.user?.id) return null;
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, hostId: true, hostAccess: true },
+  });
+  if (!dbUser || dbUser.role !== "ADMIN") return null;
+  return {
+    ...session,
+    user: {
+      ...session.user,
+      role: "ADMIN" as const,
+      hostId: dbUser.hostId,
+      hostAccess: dbUser.hostAccess,
+    },
+  };
 }
 
 /**

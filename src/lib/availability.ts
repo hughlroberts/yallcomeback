@@ -38,6 +38,16 @@ export async function getPublicUnavailableRanges(propertyId: string) {
   }));
 }
 
+/** Serialize overlapping booking creates for one listing (Postgres only). */
+export async function lockPropertyBookings(
+  db: DbClient,
+  propertyId: string,
+): Promise<void> {
+  const url = process.env.DATABASE_URL ?? "";
+  if (!url.startsWith("postgres")) return;
+  await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${propertyId}))`;
+}
+
 export async function isRangeAvailable(
   propertyId: string,
   checkIn: Date,

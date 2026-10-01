@@ -30,6 +30,7 @@ import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 import { formatTime12h, nightsBetween, parseAmenities } from "@/lib/utils";
 import { requireHostAdmin } from "@/lib/auth";
 import { propertyScopeWhere } from "@/lib/scope";
+import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import {
   getListingInsights,
   listHostInsightsOptions,
@@ -68,6 +69,13 @@ export default async function AdminPropertyDetailPage({
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/properties");
+  const canEditDepositMethod = canManageBrand(
+    resolveHostAccessInfo({
+      isPlatform: access.isPlatform,
+      hostId: access.hostId,
+      hostAccess: access.hostAccess,
+    }),
+  );
 
   const { id } = await params;
   const sp = await searchParams;
@@ -303,9 +311,19 @@ export default async function AdminPropertyDetailPage({
           />
         </div>
         <div className="sm:col-span-2 rounded-xl border border-stone-200 bg-white px-4 py-3">
-          <ListingPaymentMethodFields
-            defaultValue={property.websitePaymentMethod}
-          />
+          {canEditDepositMethod ? (
+            <ListingPaymentMethodFields
+              defaultValue={property.websitePaymentMethod}
+            />
+          ) : (
+            <p className="text-sm text-stone-600">
+              Deposit method:{" "}
+              <span className="font-medium text-stone-900">
+                {paymentMethodLabel(property.websitePaymentMethod)}
+              </span>
+              . An owner or full co-host can change this.
+            </p>
+          )}
         </div>
         <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <input

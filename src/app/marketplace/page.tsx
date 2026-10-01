@@ -146,7 +146,9 @@ async function StaysPanel({
 
   const filters: string[] = [];
   if (where) filters.push(`near “${where}”`);
-  else filters.push("we're new and still getting started");
+  else if (!showDiscovery) {
+    filters.push("we're new and still getting started");
+  }
   if (checkIn && checkOut) {
     filters.push(
       dateFlex > 0
@@ -189,7 +191,9 @@ async function StaysPanel({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm text-slate-500">
           {listings.length} stay{listings.length === 1 ? "" : "s"}
-          <span className="text-slate-400"> · {filters.join(" · ")}</span>
+          {filters.length > 0 ? (
+            <span className="text-slate-400"> · {filters.join(" · ")}</span>
+          ) : null}
         </p>
         {hasActiveSearch ? (
           <Link

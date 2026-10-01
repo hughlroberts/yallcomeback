@@ -73,29 +73,20 @@ export function AdminBrandSwitcher({
             </button>
           </form>
           {active ? (
-            <>
-              <Link
-                href={`/h/${active.slug}`}
-                target="_blank"
-                className="text-xs font-semibold text-amber-950 underline underline-offset-2"
-              >
-                Guest site →
-              </Link>
-              <Link
-                href="/ops"
-                className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
-              >
-                ← Exit to Ops Panel
-              </Link>
-            </>
-          ) : (
             <Link
-              href="/ops/hosting"
-              className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
+              href={`/h/${active.slug}`}
+              target="_blank"
+              className="text-xs font-semibold text-amber-950 underline underline-offset-2"
             >
-              ← Exit to Ops Panel
+              Guest site →
             </Link>
-          )}
+          ) : null}
+          <Link
+            href="/ops"
+            className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
+          >
+            ← Exit to Ops Panel
+          </Link>
         </div>
       </div>
     </div>

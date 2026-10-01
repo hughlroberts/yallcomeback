@@ -10,6 +10,7 @@ import {
   assertPropertyAccess,
   ensureHostAccess,
   resolveHostIdForCreate,
+  type HostAccess,
 } from "@/lib/scope";
 import {
   PROPERTY_IMAGE_MAX_BYTES,
@@ -18,6 +19,17 @@ import {
 } from "@/lib/upload-image";
 import { assertSafeOutboundUrl } from "@/lib/safe-url";
 import { parsePaymentMethod } from "@/lib/host-payments";
+import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
+
+function canWriteListingDepositMethod(access: HostAccess): boolean {
+  return canManageBrand(
+    resolveHostAccessInfo({
+      isPlatform: access.isPlatform,
+      hostId: access.hostId,
+      hostAccess: access.hostAccess,
+    }),
+  );
+}
 
 export async function createProperty(formData: FormData) {
   const access = await ensureHostAccess();
@@ -635,10 +647,14 @@ export async function saveListingPrices(formData: FormData) {
     data: {
       baseNightlyRate: Math.round(baseNightlyRate * 100) / 100,
       weekendPremiumPercent: Math.round(weekendPremiumPercent * 10) / 10,
-      websitePaymentMethod: parsePaymentMethod(
-        formData.get("websitePaymentMethod"),
-        existing?.websitePaymentMethod,
-      ),
+      ...(canWriteListingDepositMethod(access)
+        ? {
+            websitePaymentMethod: parsePaymentMethod(
+              formData.get("websitePaymentMethod"),
+              existing?.websitePaymentMethod,
+            ),
+          }
+        : {}),
     },
   });
 
@@ -869,10 +885,14 @@ export async function updateProperty(formData: FormData) {
       featured: formData.get("featured") === "on",
       listOnMarketplace,
       locationId,
-      websitePaymentMethod: parsePaymentMethod(
-        formData.get("websitePaymentMethod"),
-        existing.websitePaymentMethod,
-      ),
+      ...(canWriteListingDepositMethod(access)
+        ? {
+            websitePaymentMethod: parsePaymentMethod(
+              formData.get("websitePaymentMethod"),
+              existing.websitePaymentMethod,
+            ),
+          }
+        : {}),
     },
     include: { host: true },
   });

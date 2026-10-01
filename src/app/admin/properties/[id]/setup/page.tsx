@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { assertPropertyAccess, ensureHostAccess } from "@/lib/scope";
+import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import {
   listingTypeLabel,
   spaceTypeLabel,
@@ -127,6 +128,13 @@ export default async function ListingSetupPage({
     return (
       <ListingWizardPriceStep
         propertyId={property.id}
+        canEditDepositMethod={canManageBrand(
+          resolveHostAccessInfo({
+            isPlatform: access.isPlatform,
+            hostId: access.hostId,
+            hostAccess: access.hostAccess,
+          }),
+        )}
         initial={{
           baseNightlyRate: property.baseNightlyRate,
           weekendPremiumPercent: property.weekendPremiumPercent,

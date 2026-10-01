@@ -5,7 +5,7 @@ import type { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { calculateQuote } from "@/lib/pricing";
-import { isRangeAvailable } from "@/lib/availability";
+import { isRangeAvailable, lockPropertyBookings } from "@/lib/availability";
 import { revalidatePath } from "next/cache";
 import {
   getBitcoinAddress,
@@ -162,8 +162,9 @@ export async function createBooking(formData: FormData) {
     }
   }
 
-  // Re-check availability inside a transaction to shrink double-book races
+  // Lock the listing, then re-check availability so overlapping submits cannot both insert.
   const booking = await prisma.$transaction(async (tx) => {
+    await lockPropertyBookings(tx, property.id);
     if (
       !(await isRangeAvailable(
         property.id,
@@ -315,10 +316,11 @@ export async function markDepositPaid(formData: FormData) {
         const method: PaymentMethod =
           methodOverride === "BITCOIN" || p.method === "BITCOIN"
             ? "BITCOIN"
-            : methodOverride === "STRIPE"
+            : methodOverride === "STRIPE" || p.method === "STRIPE"
               ? "STRIPE"
-              : p.method === "STRIPE"
-                ? "STRIPE"
+              : methodOverride === "IN_PERSON_CARD" ||
+                  p.method === "IN_PERSON_CARD"
+                ? "IN_PERSON_CARD"
                 : "MANUAL";
         return prisma.payment.update({
           where: { id: p.id },

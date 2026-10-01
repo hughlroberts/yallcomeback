@@ -8,7 +8,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { PRODUCT_NAME, PRODUCT_ORIGIN } from "@/lib/features";
+import { PRODUCT_DOMAIN, PRODUCT_NAME, PRODUCT_ORIGIN } from "@/lib/features";
 import {
   applicationFeeCents,
   requireStripeClient,
@@ -30,6 +30,85 @@ function publicOrigin(): string {
     process.env.AUTH_URL?.replace(/\/$/, "") ||
     PRODUCT_ORIGIN
   );
+}
+
+function requestHost(headers: Headers): string | null {
+  const raw =
+    headers.get("x-forwarded-host") || headers.get("host") || null;
+  return raw?.split(",")[0]?.trim().toLowerCase() || null;
+}
+
+function originHost(value: string): string | null {
+  try {
+    return new URL(value).host.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function envAllowedHosts(): string[] {
+  const hosts = new Set<string>([PRODUCT_DOMAIN, `www.${PRODUCT_DOMAIN}`]);
+  for (const raw of [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.AUTH_URL,
+    PRODUCT_ORIGIN,
+  ]) {
+    if (!raw) continue;
+    try {
+      hosts.add(new URL(raw).host.toLowerCase());
+    } catch {
+      /* skip */
+    }
+  }
+  return [...hosts];
+}
+
+function hostIsLocal(host: string): boolean {
+  const name = host.split(":")[0] ?? host;
+  return name === "localhost" || name === "127.0.0.1";
+}
+
+/** True when Origin/Referer is this app (CSRF belt-and-suspenders). */
+export function isTrustedConnectRequest(headers: Headers): boolean {
+  const origin = headers.get("origin");
+  const referer = headers.get("referer");
+  const candidate = origin || referer;
+  if (!candidate) return false;
+  const candHost = originHost(candidate);
+  if (!candHost) return false;
+  const host = requestHost(headers);
+  if (host && candHost === host) return true;
+  if (
+    host &&
+    candHost.replace(/^www\./, "") === host.replace(/^www\./, "")
+  ) {
+    return true;
+  }
+  if (hostIsLocal(candHost)) return !host || hostIsLocal(host);
+  return envAllowedHosts().includes(candHost);
+}
+
+/**
+ * Return/refresh origin for Connect Account Links.
+ * Prefer the page the host is on (local/preview) when that host is trusted.
+ */
+export function connectOriginFromHeaders(headers: Headers): string {
+  const origin = headers.get("origin");
+  if (origin && isTrustedConnectRequest(headers)) {
+    return origin.replace(/\/$/, "");
+  }
+  const host = requestHost(headers);
+  const proto =
+    headers.get("x-forwarded-proto") ||
+    (host && hostIsLocal(host) ? "http" : "https");
+  if (host) {
+    const built = `${proto}://${host}`.replace(/\/$/, "");
+    if (hostIsLocal(host) || envAllowedHosts().includes(host)) return built;
+    if (origin && isTrustedConnectRequest(headers)) {
+      return origin.replace(/\/$/, "");
+    }
+  }
+  return publicOrigin();
 }
 
 /**
@@ -122,9 +201,9 @@ export async function retrieveConnectStatus(
 
 export async function createAccountOnboardingLink(
   stripeAccountId: string,
+  origin = publicOrigin(),
 ): Promise<string> {
   const stripeClient = requireStripeClient();
-  const origin = publicOrigin();
   const accountLink = await stripeClient.v2.core.accountLinks.create({
     account: stripeAccountId,
     use_case: {
@@ -143,19 +222,22 @@ export async function createAccountOnboardingLink(
 }
 
 /** Create the connected account if needed, then a hosted onboarding URL. */
-export async function createConnectOnboardingUrlForHost(host: {
-  id: string;
-  name: string;
-  stripeAccountId: string | null;
-  contactEmail: string | null;
-  billingEmail: string | null;
-  users: { email: string | null }[];
-}): Promise<string> {
+export async function createConnectOnboardingUrlForHost(
+  host: {
+    id: string;
+    name: string;
+    stripeAccountId: string | null;
+    contactEmail: string | null;
+    billingEmail: string | null;
+    users: { email: string | null }[];
+  },
+  origin?: string,
+): Promise<string> {
   let accountId = host.stripeAccountId;
   if (!accountId) {
     accountId = await createConnectedAccountForHost(host);
   }
-  return createAccountOnboardingLink(accountId);
+  return createAccountOnboardingLink(accountId, origin ?? publicOrigin());
 }
 
 export function connectOnboardingErrorMessage(error: unknown): string {

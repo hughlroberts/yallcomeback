@@ -95,8 +95,11 @@ export function formatSearchLabel(s: RecentSearch): string {
 
 export function formatContinueSearchText(s: RecentSearch): string {
   const where = s.where?.trim();
-  const near = where ? `near ${where}` : "anywhere";
-  const bits: string[] = [`Continue searching for homes ${near}`];
+  const bits: string[] = [
+    where
+      ? `Continue searching for homes near ${where}`
+      : "Continue searching for homes",
+  ];
   if (s.checkIn && s.checkOut) {
     bits.push(
       `${formatShortDate(s.checkIn)} – ${formatShortDate(s.checkOut)}`,
