@@ -121,9 +121,9 @@ export function HostSignupForm({
   return (
     <form
       action={onSubmit}
-      className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm"
+      className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6"
     >
-      <h2 className="text-xl font-semibold text-stone-900">
+      <h2 className="text-lg font-semibold text-stone-900 sm:text-xl">
         {path === "self" ? "Start free self-host" : "Start hosting"}
       </h2>
       <p className="mt-1 text-sm text-stone-500">
@@ -134,7 +134,7 @@ export function HostSignupForm({
             : "Put your stays and calendar here. Add a card to subscribe. Listings go live when hosting is paid."}
       </p>
 
-      <div className="mt-5 space-y-4">
+      <div className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
         {existingAccount ? (
           <p className="rounded-xl bg-stone-50 px-3 py-2 text-sm text-stone-700">
             Signed in as{" "}
@@ -211,21 +211,19 @@ export function HostSignupForm({
                 How guests find you
               </legend>
               <p className="text-xs text-stone-500">
-                Two plans. Marketplace-only hosts can add a branded site later
-                in Admin → Brand &amp; website. Website hosts can turn Find a
-                Place on or off anytime.
+                You can change this later in Brand &amp; website.
               </p>
               {(
                 [
                   {
                     id: "marketplace" as const,
                     label: "Marketplace only · $5/listing/mo",
-                    hint: "Shared Find a Place look. Listing URLs — no custom brand site, logo, or About page.",
+                    hint: "Find a Place listing URLs. No branded site, logo, or About page.",
                   },
                   {
                     id: "website" as const,
                     label: "Branded website · $25/mo",
-                    hint: "Hosted brand site on your domain (logo, palette, About, services). $25 covers every listing — the bill does not grow when you add cabins or boats. Marketplace listing included — no second fee. Uncheck below if you do not want Find a Place.",
+                    hint: "Your site and domain. $25 covers every listing. Marketplace included — uncheck below to opt out of Find a Place.",
                   },
                 ] as const
               ).map((opt) => (
@@ -306,9 +304,8 @@ export function HostSignupForm({
             Collect guest cards?
           </legend>
           <p className="text-xs text-stone-500">
-            First you add the hosting card so Yall Come Back can bill this
-            brand. Guest cards are optional on a branded site — needed for Find
-            a Place, and for listings you set to online card.
+            Guest cards are optional on a branded site. Needed for Find a Place
+            and for listings set to online card.
           </p>
           <label className="flex cursor-pointer items-start gap-2 text-sm">
             <input
@@ -482,7 +479,7 @@ function Field({
         required={required}
         minLength={minLength}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2"
+        className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-base sm:text-sm"
       />
       {hint ? (
         <span className="mt-1 block text-xs text-stone-500">{hint}</span>
