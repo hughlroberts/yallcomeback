@@ -7,7 +7,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { PRODUCT_ORIGIN } from "@/lib/features";
+import { canonicalSiteOrigin } from "@/lib/features";
 import { planSlugForSitePresence } from "@/lib/hosting";
 import {
   CARD_PROCESSING_LINE,
@@ -28,11 +28,7 @@ export type PlatformHost = {
 };
 
 function publicOrigin(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    process.env.AUTH_URL?.replace(/\/$/, "") ||
-    PRODUCT_ORIGIN
-  );
+  return canonicalSiteOrigin();
 }
 
 function hostBillingEmail(host: PlatformHost): string | null {

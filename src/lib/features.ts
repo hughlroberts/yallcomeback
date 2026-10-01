@@ -11,6 +11,31 @@ export const PRODUCT_NAME = "Yall Come Back";
 export const PRODUCT_DOMAIN = "yallcomeback.app";
 /** Live public origin. Apex yallcomeback.app redirects here. */
 export const PRODUCT_ORIGIN = "https://www.yallcomeback.app";
+
+export function isLocalHostname(host: string): boolean {
+  const name = (host.split(":")[0] || "").toLowerCase();
+  return name === "localhost" || name === "127.0.0.1";
+}
+
+/** Live site origin. Never localhost — Stripe, email, and QR links go here. */
+export function canonicalSiteOrigin(): string {
+  for (const raw of [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.AUTH_URL,
+    process.env.APP_URL,
+    PRODUCT_ORIGIN,
+  ]) {
+    if (!raw) continue;
+    const origin = raw.replace(/\/$/, "");
+    try {
+      if (isLocalHostname(new URL(origin).hostname)) continue;
+    } catch {
+      continue;
+    }
+    return origin;
+  }
+  return PRODUCT_ORIGIN;
+}
 export const PRODUCT_EMAIL = `hello@${PRODUCT_DOMAIN}`;
 /** Primary marketing tagline (sentence case). */
 export const PRODUCT_TAGLINE = "Stay again with a host you know";

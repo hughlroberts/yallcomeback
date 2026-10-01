@@ -12,7 +12,7 @@
  * Do not surface SMS in guest-facing product copy — ops settings only.
  */
 
-import { PRODUCT_NAME, PRODUCT_ORIGIN } from "@/lib/features";
+import { canonicalSiteOrigin, PRODUCT_NAME } from "@/lib/features";
 
 export type ExternalMessageChannel = "SMS" | "EMAIL";
 
@@ -26,14 +26,7 @@ export type DispatchResult = {
 
 /** Absolute origin for inbox links in emails (no request context required). */
 export function messagingSiteOrigin(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    process.env.AUTH_URL?.replace(/\/$/, "") ||
-    process.env.APP_URL?.replace(/\/$/, "") ||
-    (process.env.NODE_ENV === "production"
-      ? PRODUCT_ORIGIN
-      : "http://localhost:3000")
-  );
+  return canonicalSiteOrigin();
 }
 
 function emailFromAddress(): string | null {

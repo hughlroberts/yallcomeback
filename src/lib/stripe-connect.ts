@@ -8,7 +8,13 @@
  */
 
 import { prisma } from "@/lib/db";
-import { PRODUCT_DOMAIN, PRODUCT_NAME, PRODUCT_ORIGIN } from "@/lib/features";
+import {
+  canonicalSiteOrigin,
+  isLocalHostname,
+  PRODUCT_DOMAIN,
+  PRODUCT_NAME,
+  PRODUCT_ORIGIN,
+} from "@/lib/features";
 import {
   applicationFeeCents,
   requireStripeClient,
@@ -25,11 +31,7 @@ export type ConnectOnboardingStatus = {
 };
 
 function publicOrigin(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    process.env.AUTH_URL?.replace(/\/$/, "") ||
-    PRODUCT_ORIGIN
-  );
+  return canonicalSiteOrigin();
 }
 
 function requestHost(headers: Headers): string | null {
@@ -64,8 +66,7 @@ function envAllowedHosts(): string[] {
 }
 
 function hostIsLocal(host: string): boolean {
-  const name = host.split(":")[0] ?? host;
-  return name === "localhost" || name === "127.0.0.1";
+  return isLocalHostname(host);
 }
 
 /** True when Origin/Referer is this app (CSRF belt-and-suspenders). */
@@ -90,23 +91,18 @@ export function isTrustedConnectRequest(headers: Headers): boolean {
 
 /**
  * Return/refresh origin for Connect Account Links.
- * Prefer the page the host is on (local/preview) when that host is trusted.
+ * Always the live site — never localhost.
  */
 export function connectOriginFromHeaders(headers: Headers): string {
   const origin = headers.get("origin");
   if (origin && isTrustedConnectRequest(headers)) {
-    return origin.replace(/\/$/, "");
+    const host = originHost(origin);
+    if (host && !hostIsLocal(host)) return origin.replace(/\/$/, "");
   }
   const host = requestHost(headers);
-  const proto =
-    headers.get("x-forwarded-proto") ||
-    (host && hostIsLocal(host) ? "http" : "https");
-  if (host) {
-    const built = `${proto}://${host}`.replace(/\/$/, "");
-    if (hostIsLocal(host) || envAllowedHosts().includes(host)) return built;
-    if (origin && isTrustedConnectRequest(headers)) {
-      return origin.replace(/\/$/, "");
-    }
+  const proto = headers.get("x-forwarded-proto") || "https";
+  if (host && !hostIsLocal(host) && envAllowedHosts().includes(host)) {
+    return `${proto}://${host}`.replace(/\/$/, "");
   }
   return publicOrigin();
 }

@@ -22,6 +22,7 @@ import {
   toStripeAmount,
 } from "@/lib/stripe";
 import { ensurePlatformCustomer } from "@/lib/platform-billing";
+import { canonicalSiteOrigin } from "@/lib/features";
 import { after } from "next/server";
 
 function assertEnabled() {
@@ -75,11 +76,7 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
   // Prefer Stripe subscription Checkout when keys are live
   const stripe = getStripe();
   if (stripe && isStripeConfigured() && email) {
-    const origin =
-      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-      (process.env.RAILWAY_PUBLIC_DOMAIN
-        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-        : "http://localhost:3000");
+    const origin = canonicalSiteOrigin();
 
     const customerId = await ensurePlatformCustomer({
       id: host.id,
