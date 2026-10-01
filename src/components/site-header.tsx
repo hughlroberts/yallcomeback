@@ -30,7 +30,7 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-[200] overflow-visible border-b border-hairline/80 bg-buttermilk/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
       {/* min-height (not fixed h) + py so a taller cannon never gets cut top/bottom */}
-      <div className="mx-auto flex min-h-16 w-full max-w-6xl items-center justify-between gap-3 overflow-visible px-3 py-2.5 sm:min-h-[4.75rem] sm:gap-4 sm:px-6 md:min-h-[5.5rem] md:py-3">
+      <div className="mx-auto flex min-h-14 w-full max-w-6xl items-center justify-between gap-2 overflow-visible px-3 py-2 sm:min-h-[4.75rem] sm:gap-4 sm:px-6 sm:py-2.5 md:min-h-[5.5rem] md:py-3">
         <BrandLogo />
         <SiteHeaderNav
           isSignedIn={Boolean(session?.user)}

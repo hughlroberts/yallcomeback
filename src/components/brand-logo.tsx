@@ -76,7 +76,7 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn(
-        "ycb-logo group inline-flex shrink-0 items-center gap-2.5 overflow-visible sm:gap-3",
+        "ycb-logo group inline-flex shrink-0 items-center gap-2 overflow-visible sm:gap-3",
         className,
       )}
       aria-label="Yall Come Back, home"
@@ -84,9 +84,9 @@ export function BrandLogo({
       <BrandMark
         size={72}
         priority
-        className="h-10 w-10 sm:h-12 sm:w-12 md:h-[3.25rem] md:w-[3.25rem]"
+        className="h-9 w-9 sm:h-12 sm:w-12 md:h-[3.25rem] md:w-[3.25rem]"
       />
-      <span className="ycb-logo__word inline-flex shrink-0 items-baseline overflow-visible">
+      <span className="ycb-logo__word hidden shrink-0 items-baseline overflow-visible sm:inline-flex">
         <span className="ycb-logo__text">Yall Come Back</span>
       </span>
     </Link>

@@ -62,7 +62,7 @@ export default async function ForHostsPage({
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/85 to-stone-900/40" />
-        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-14 lg:py-20">
+        <div className="relative mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-14 lg:py-20">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-honey/90">
             Host a place
           </p>

@@ -166,7 +166,7 @@ export function HostSignupForm({
           name="slug"
           required
           placeholder="lakeside-cabins"
-          hint="Used in your site address, like /h/lakeside-cabins. Letters, numbers, and hyphens."
+          hint="Letters, numbers, and hyphens. Used in /h/your-name."
         />
         <Field
           label="Tagline"
@@ -196,23 +196,11 @@ export function HostSignupForm({
             {syncedPlanId ? (
               <input type="hidden" name="planId" value={syncedPlanId} />
             ) : null}
-            <p className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600">
-              Plan follows your choice below:{" "}
-              <strong className="text-stone-800">
-                {paidPlan === "marketplace"
-                  ? "Marketplace only · $5 / listing / month"
-                  : "Branded website · $25 / month for the whole site (marketplace included, optional)"}
-              </strong>
-              . You can upgrade or change later in Brand &amp; website.
-            </p>
 
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium text-stone-700">
                 How guests find you
               </legend>
-              <p className="text-xs text-stone-500">
-                You can change this later in Brand &amp; website.
-              </p>
               {(
                 [
                   {
@@ -276,37 +264,31 @@ export function HostSignupForm({
           </div>
         )}
 
-        {/* Marketplace opt-in — website plan and self-host. Marketplace-only is always on. */}
-        <label className="flex items-start gap-2 rounded-xl border border-stone-200 px-3 py-3 text-sm text-stone-700">
-          <input
-            type="checkbox"
-            name="listOnMarketplace"
-            value="1"
-            checked={path === "paid" && paidPlan === "marketplace" ? true : listOnMarketplace}
-            disabled={path === "paid" && paidPlan === "marketplace"}
-            onChange={(e) => setListOnMarketplace(e.target.checked)}
-            className="mt-1"
-          />
-          <span>
-            <span className="font-medium text-stone-900">
-              List on the free Yall Come Back marketplace
+        {path === "paid" && paidPlan === "marketplace" ? null : (
+          <label className="flex items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              name="listOnMarketplace"
+              value="1"
+              checked={listOnMarketplace}
+              onChange={(e) => setListOnMarketplace(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-medium text-stone-900">
+                Also list on Find a Place
+              </span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Included — no second fee. You can change this later.
+              </span>
             </span>
-            <span className="mt-0.5 block text-xs text-stone-500">
-              Included on the branded website plan (no second fee). Marketplace
-              only hosts should leave this on. You can change this later per
-              listing.
-            </span>
-          </span>
-        </label>
+          </label>
+        )}
 
-        <fieldset className="space-y-2 rounded-xl border border-stone-200 px-3 py-3">
+        <fieldset className="space-y-1.5">
           <legend className="text-sm font-medium text-stone-800">
             Collect guest cards?
           </legend>
-          <p className="text-xs text-stone-500">
-            Guest cards are optional on a branded site. Needed for Find a Place
-            and for listings set to online card.
-          </p>
           <label className="flex cursor-pointer items-start gap-2 text-sm">
             <input
               type="radio"
@@ -317,14 +299,8 @@ export function HostSignupForm({
               onChange={() => setCollectGuestCards("yes")}
               className="mt-1"
             />
-            <span>
-              <span className="font-medium text-stone-900">
-                Yes, remind me after I subscribe
-              </span>
-              <span className="mt-0.5 block text-xs text-stone-500">
-                After hosting checkout you can set this up under Admin →
-                Payments. It is not required to finish signup.
-              </span>
+            <span className="font-medium text-stone-900">
+              Yes, remind me after I subscribe
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-2 text-sm">
@@ -337,17 +313,11 @@ export function HostSignupForm({
               onChange={() => setCollectGuestCards("skip")}
               className="mt-1"
             />
-            <span>
-              <span className="font-medium text-stone-900">Skip for now</span>
-              <span className="mt-0.5 block text-xs text-stone-500">
-                You can still add guest cards later under Admin → Payments.
-              </span>
-            </span>
+            <span className="font-medium text-stone-900">Skip for now</span>
           </label>
         </fieldset>
 
-        {/* $500 setup — always offered, including free self-host */}
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-honey/50 bg-honey/10 px-4 py-3 text-sm text-stone-800">
+        <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-honey/50 bg-honey/10 px-3 py-2.5 text-sm text-stone-800">
           <input
             type="checkbox"
             name="setupService"
@@ -359,29 +329,10 @@ export function HostSignupForm({
               {SETUP_SERVICE_LABEL} — {formatMoney(SETUP_SERVICE_FEE_USD)}{" "}
               one-time
             </span>
-            <span className="mt-1 block text-xs leading-relaxed text-stone-600">
-              {path === "self" ? (
-                <>
-                  Self-host software is free. This optional add-on is if you want
-                  us to set everything up for you: import or create listings,
-                  brand, calendars, and your domain / website. One-time only —
-                  not a monthly fee. We’ll confirm scope and invoice after
-                  review.
-                </>
-              ) : (
-                <>
-                  We set up the whole service for you: import or create listings,
-                  brand, calendars, and your own website / domain when you want
-                  it. One-time add-on (separate from monthly hosting). You’ll be
-                  invoiced after we confirm the work.
-                </>
-              )}
+            <span className="mt-0.5 block text-xs leading-snug text-stone-600">
+              We load listings, brand, and calendars for you. Invoiced after we
+              confirm.
             </span>
-            {path === "self" ? (
-              <span className="mt-2 block text-xs font-medium text-emerald-900">
-                Free self-host remains $0 / month even if you add this setup.
-              </span>
-            ) : null}
           </span>
         </label>
       </div>
