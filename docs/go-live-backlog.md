@@ -51,28 +51,19 @@ Railway already covers container health (logs, CPU/memory, failed-deploy alerts)
 
 Related: `src/app/layout.tsx`, `/privacy` § cookies.
 
-## Payments (delayed)
+## Payments — Stripe live
 
-**Status:** deferred — keep manual deposits and hosting invoices  
-**Flags:** `STRIPE_LIVE_READY = false`; `BITCOIN_ENABLED=false`  
+**Status:** done — `STRIPE_LIVE_READY = true`; live keys + snapshot + thin webhooks on Railway  
 **Issue:** [#2](https://github.com/hughlroberts/yallcomeback/issues/2)
 
-Do not turn on card checkout, hosted invoices, or Bitcoin deposits until the items below are done. Guests already see that online card payments are not enabled. Hosts mark deposits and invoices paid in Admin.
+Stay commission is 0 unless `STRIPE_APPLICATION_FEE_CENTS` is set. Channel rules: marketplace always card; host website uses one default (card unless the host changes it); custom calendar stays pick a method per block.
 
-Channel rules are already in the app: marketplace always card; host website uses one default (card unless the host changes it); custom calendar stays pick a method per block.
+Do **not** enable Bitcoin in the same pass unless asked.
 
-When picked up, do **card (Connect) and Bitcoin in the same pass**. Connect code is in the app; keys are not.
+### Bitcoin (stay deposits) — still optional
 
-### Card (Stripe Connect)
-
-1. Create the platform Stripe account (test first, then live).
-2. Env (never commit): `STRIPE_ENABLED=true`, `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_THIN_WEBHOOK_SECRET`, `STRIPE_HOSTING_PRICE_ID`.
-3. Snapshot webhook `POST /api/stripe/webhook` (Checkout, invoices, `customer.subscription.*`).
-4. Thin Connect destination `POST /api/stripe/thin-webhook` for `v2.core.account[requirements].updated` and merchant/customer capability updates (payload style Thin).
-5. Host: Admin → Payments → Onboard to collect payments. Guest: card deposit on a listing, or extras at `/pay/[hostSlug]`.
-6. Smoke-test hosting Subscribe + billing portal. Then `STRIPE_LIVE_READY = true`.
-
-### Bitcoin (stay deposits)
+**Status:** deferred — not required for cards  
+**Flags:** `BITCOIN_ENABLED=false`
 
 Bitcoin is for guest stay deposits only — not hosting invoices. Hosts still paste the tx id in Admin to mark paid. No processor.
 

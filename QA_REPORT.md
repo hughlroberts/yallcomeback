@@ -141,7 +141,7 @@ Cron fail-closed (prior P0-1) still holds in production.
 - Uploads: path allowlist + magic-byte sniff + UUID names.
 - Login `callbackUrl` goes through `safeInternalPath`.
 - Two ways to host cards are static `<div>`s locally (live after `09f3699` deploy; arrows gone).
-- `STRIPE_LIVE_READY` remains false. Stay commission stays 0 unless env is set.
+- `STRIPE_LIVE_READY` is true. Stay commission stays 0 unless env is set.
 - Payments tab is Connect-only; listing deposit method is per listing.
 
 ---
@@ -169,7 +169,6 @@ Cron fail-closed (prior P0-1) still holds in production.
 ## Not done without a decision
 
 - Resume or cancel a paused Stripe hosting subscription when Ops moves $0 → paid.
-- Flip `STRIPE_LIVE_READY`.
 - Agent API contact-field policy.
 - LIMITED co-host vs brand money settings.
 - Push `.github/workflows/cron-hosting-payments.yml` (token lacks `workflow` scope).

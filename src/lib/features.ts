@@ -43,11 +43,10 @@ export const PRODUCT_VERSION = "0.1.0";
 export const LICENSE = "MIT";
 
 /**
- * --- Pre-launch placeholders --- 
- * Leave these unset until go-live. Right before launch, ask the owner for:
+ * --- Remaining launch placeholders ---
+ * Stripe is live (keys + webhooks on Railway). Still unset:
  *   1. Public git repo URL → set REPO_URL below
- *   2. Payments (same pass): Stripe keys + Bitcoin deposit address
- *      (see docs/go-live-backlog.md and GitHub issue #2)
+ *   2. Bitcoin deposit address (optional; not required for cards)
  */
 
 /**
@@ -57,11 +56,10 @@ export const LICENSE = "MIT";
 export const REPO_URL: string | null = null;
 
 /**
- * Stripe is off by default (manual deposits + manual hosting invoices).
- * Keys live only in `.env` - not in this file. Set STRIPE_LIVE_READY to true
- * after env is filled and webhook is verified; use as a go-live checklist flag.
+ * Ops/docs declaration that Stripe is live. Charges already follow
+ * STRIPE_ENABLED + keys on Railway. Stay commission stays 0 unless env is set.
  */
-export const STRIPE_LIVE_READY = false;
+export const STRIPE_LIVE_READY = true;
 
 /** Human-readable status for admin / docs */
 export function stripeSetupLabel(envEnabled: boolean, hasSecret: boolean) {

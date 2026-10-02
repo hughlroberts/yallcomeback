@@ -90,7 +90,7 @@ export default async function AccountPaymentsPage() {
             />
             <PaymentLink
               title="Ops · platform payment settings"
-              description="Stripe keys, Bitcoin address, and go-live placeholders."
+              description="Stripe, Bitcoin, and remaining launch placeholders."
               href="/ops/settings"
               badge="Admin"
             />

@@ -45,7 +45,8 @@ export default async function OpsSettingsPage() {
       <Card>
         <h2 className="font-semibold">Go-live placeholders</h2>
         <p className="mt-2 text-sm text-stone-600">
-          Leave these until launch. Card and Bitcoin ship in the same pass.
+          Stripe is live. Public repo URL and Bitcoin deposits are still
+          optional.
         </p>
         <dl className="mt-4 space-y-2 text-sm">
           <div className="flex justify-between gap-4">
@@ -67,7 +68,13 @@ export default async function OpsSettingsPage() {
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-stone-500">Stripe</dt>
-            <dd className="text-right font-medium text-amber-800">
+            <dd
+              className={`text-right font-medium ${
+                STRIPE_LIVE_READY && stripeEnabled && hasSecret
+                  ? "text-emerald-800"
+                  : "text-amber-800"
+              }`}
+            >
               {stripeSetupLabel(stripeEnabled, hasSecret)}
             </dd>
           </div>
@@ -83,10 +90,10 @@ export default async function OpsSettingsPage() {
       <Card>
         <h2 className="font-semibold">Stripe</h2>
         <p className="mt-2 text-sm text-stone-600">
-          Used for <strong>host website hosting invoices</strong> (monthly fee
-          after approval) and, later, guest booking deposits. Until Stripe is
-          live, mark hosting invoices paid under Admin → Hosting, and guest
-          deposits under Bookings.
+          Used for <strong>host website hosting invoices</strong> (monthly
+          platform fee) and <strong>guest cards</strong> via Connect (Find a
+          Place, and listings set to online card). Stay commission is 0 unless
+          an application fee is set in env.
         </p>
 
         {!STRIPE_LIVE_READY || !configured ? (
@@ -142,6 +149,7 @@ export default async function OpsSettingsPage() {
           </div>
         </dl>
 
+        {STRIPE_LIVE_READY && configured ? null : (
         <div className="mt-6 rounded-lg bg-stone-50 p-4 text-sm text-stone-700">
           <p className="font-semibold text-stone-900">
             When you&apos;re ready (go-live)
@@ -200,6 +208,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...`}
             <li>Restart the app</li>
           </ol>
         </div>
+        )}
       </Card>
 
       <Card>
@@ -231,7 +240,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...`}
           </div>
         </dl>
         <pre className="mt-4 overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">
-{`# Same go-live pass as Stripe — leave unset until then.
+{`# Optional stay deposits — not required for cards.
 BITCOIN_ENABLED=true
 BITCOIN_ADDRESS=bc1q...   # dedicated deposit wallet, not a spending wallet
 BITCOIN_NETWORK=mainnet

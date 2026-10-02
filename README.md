@@ -125,29 +125,32 @@ Highlights:
 4. Monthly invoice (Stripe or manual)  
 5. Paid → public site + marketplace opt-in go live  
 
-## Payments (placeholder until go-live)
+## Payments
 
-Card and Bitcoin ship in the **same pass** (see `docs/go-live-backlog.md`). Until then, payments run in **manual mode**:
+Stripe is **live** for platform hosting invoices and guest cards via Connect. Stay commission is 0 unless `STRIPE_APPLICATION_FEE_CENTS` is set. Bitcoin stay deposits stay optional (`BITCOIN_ENABLED`).
 
-- Guest deposits: Admin → Bookings → mark paid  
-- Hosting invoices: Admin → Hosting → mark paid  
+- Guest deposits: card via Connect when the listing collects online card; otherwise Admin → Bookings → mark paid
+- Hosting invoices: Stripe Checkout / hosted invoices, or Admin → Hosting → mark paid
 
-At go-live, fill `.env` (never commit secrets):
+Env (never commit secrets):
 
 ```env
 STRIPE_ENABLED=true
-STRIPE_SECRET_KEY=sk_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
+STRIPE_SECRET_KEY=sk_live_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_THIN_WEBHOOK_SECRET=whsec_...
+STRIPE_HOSTING_PRICE_ID=price_...
 
-BITCOIN_ENABLED=true
-BITCOIN_ADDRESS=bc1q...
-BITCOIN_NETWORK=mainnet
-BITCOIN_LABEL=Yall Come Back deposit
+# Optional stay deposits — not required for cards
+# BITCOIN_ENABLED=true
+# BITCOIN_ADDRESS=bc1q...
+# BITCOIN_NETWORK=mainnet
+# BITCOIN_LABEL=Yall Come Back deposit
 ```
 
-Webhook: `POST /api/stripe/webhook`  
-Then set `STRIPE_LIVE_READY = true` in `src/lib/features.ts`. Bitcoin is stay deposits only (host pastes the tx id). Status shows under **Admin → Settings**.
+Webhooks: `POST /api/stripe/webhook` (snapshot) and `POST /api/stripe/thin-webhook` (Connect thin).  
+`STRIPE_LIVE_READY = true` in `src/lib/features.ts`. Status shows under **Ops → Settings**.
 
 ## iCal sync & scheduled jobs
 
