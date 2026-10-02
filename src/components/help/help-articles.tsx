@@ -681,10 +681,10 @@ function Account({ article }: { article: HelpArticle }) {
       <HelpSection title="Hosts and admins">
         <HelpP>
           Hosts also use{" "}
-          <Link href="/admin" className="font-semibold text-bonnet">
-            Host dashboard (Admin)
+          <Link href="/admin/calendar" className="font-semibold text-bonnet">
+            Calendar
           </Link>{" "}
-          for properties,{" "}
+          for availability, then{" "}
           <Link href="/admin/brand" className="font-semibold text-bonnet">
             Brand &amp; website
           </Link>

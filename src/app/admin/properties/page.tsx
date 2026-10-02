@@ -111,6 +111,9 @@ export default async function AdminPropertiesPage() {
             p.title === "Untitled listing"
               ? `/admin/properties/${p.id}/setup?step=2`
               : `/admin/properties/${p.id}`;
+          const calendarHref = `/admin/calendar?property=${p.id}`;
+          const primaryHref =
+            p.title === "Untitled listing" ? editHref : calendarHref;
           const vis = visibilityFromFlags(p.published, p.listOnMarketplace);
 
           return (
@@ -118,7 +121,7 @@ export default async function AdminPropertiesPage() {
               key={p.id}
               className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
             >
-              <Link href={editHref} className="min-w-0 flex-1 hover:opacity-90">
+              <Link href={primaryHref} className="min-w-0 flex-1 hover:opacity-90">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-slate-900">{p.title}</span>
                   <span
@@ -153,12 +156,14 @@ export default async function AdminPropertiesPage() {
                 />
               </div>
               <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">
-                <Link
-                  href={`/admin/calendar?property=${p.id}`}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                >
-                  Calendar
-                </Link>
+                {p.title === "Untitled listing" ? null : (
+                  <Link
+                    href={calendarHref}
+                    className="rounded-[var(--radius-control)] bg-bonnet px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"
+                  >
+                    Calendar
+                  </Link>
+                )}
                 <Link
                   href={`/admin/magnets/${p.id}`}
                   className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
@@ -178,9 +183,9 @@ export default async function AdminPropertiesPage() {
                 ) : null}
                 <Link
                   href={editHref}
-                  className="rounded-[var(--radius-control)] bg-bonnet px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
                 >
-                  {p.title === "Untitled listing" ? "Continue setup" : "Edit"}
+                  {p.title === "Untitled listing" ? "Continue setup" : "Edit listing"}
                 </Link>
               </div>
             </div>

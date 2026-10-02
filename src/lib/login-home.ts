@@ -31,6 +31,9 @@ export function homeAfterLogin(
   const isHost = role === "ADMIN" || role === "HOST";
 
   if (isHost) {
+    if (path === "/admin") {
+      return "/admin/calendar";
+    }
     if (
       path.startsWith("/admin") ||
       path.startsWith("/ops") ||

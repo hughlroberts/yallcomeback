@@ -111,7 +111,7 @@ function blockAccentClass(source: string, blockType: string | null): string {
 
 export default async function AdminDashboard() {
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin");
+  if (!access) redirect("/login?callbackUrl=/admin/calendar");
 
   const propWhere = propertyScopeWhere(access);
   const bookWhere = bookingScopeWhere(access);
@@ -176,6 +176,14 @@ export default async function AdminDashboard() {
               </a>
             </>
           ) : undefined
+        }
+        actions={
+          <Link
+            href="/admin/calendar"
+            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"
+          >
+            Open calendar
+          </Link>
         }
       />
 

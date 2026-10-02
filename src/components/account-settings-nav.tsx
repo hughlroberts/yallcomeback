@@ -133,11 +133,11 @@ export function AccountSettingsNav({
         </li>
         {isHost ? (
           <li className="mt-2 border-t border-slate-100 pt-2">
-            <Link href="/admin" className={navClass(false)}>
+            <Link href="/admin/calendar" className={navClass(false)}>
               <span className="text-base leading-none" aria-hidden>
                 🏠
               </span>
-              <span>Host dashboard</span>
+              <span>Calendar</span>
             </Link>
           </li>
         ) : (

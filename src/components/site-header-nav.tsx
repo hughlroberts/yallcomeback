@@ -42,8 +42,8 @@ const FIND_LINK =
 export function SiteHeaderNav(props: Props) {
   const pathname = usePathname() || "/";
 
-  // Guests land on the host pitch; hosts jump to their portal.
-  const hostHref = props.isHostOrAdmin ? "/admin" : "/for-hosts";
+  // Guests land on the host pitch; hosts jump to Calendar (the host home).
+  const hostHref = props.isHostOrAdmin ? "/admin/calendar" : "/for-hosts";
   const findActive = activeFor(pathname, "/marketplace");
   const hostActive = props.isHostOrAdmin
     ? activeFor(pathname, "/admin")

@@ -12,6 +12,11 @@ describe("homeAfterLogin", () => {
     expect(homeAfterLogin("HOST", "/verify-email")).toBe("/admin/calendar");
   });
 
+  it("sends a bare /admin callback to Calendar, not the dashboard", () => {
+    expect(homeAfterLogin("HOST", "/admin")).toBe("/admin/calendar");
+    expect(homeAfterLogin("ADMIN", "/admin")).toBe("/admin/calendar");
+  });
+
   it("keeps host deep links into admin, ops, and account", () => {
     expect(homeAfterLogin("HOST", "/admin/bookings")).toBe("/admin/bookings");
     expect(homeAfterLogin("ADMIN", "/ops")).toBe("/ops");
