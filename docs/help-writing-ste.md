@@ -40,7 +40,7 @@ STE makes help text:
    - Procedures: about **20 words** or fewer when practical
    - Descriptions: about **25 words** or fewer when practical
 3. Use **active voice**.
-   - Good: "Open Admin → Properties."
+   - Good: "Open Admin → Listings."
    - Avoid: "Properties can be managed in Admin."
 4. Use simple verb forms:
    - Present: "The guest pays a deposit."

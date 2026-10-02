@@ -135,7 +135,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: "Become a host",
     body: "Create a host account. Confirm your email. Then publish a listing.",
     description:
-      "How to host on Yall Come Back: platform hosting, self-host, plans, and approval.",
+      "How to host on Yall Come Back: platform hosting, self-host, and plans.",
     related: [
       "listings",
       "branded-website",
@@ -164,9 +164,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Create and manage listings",
-    body: "Add photos, amenities, and house rules. Confirm your email. Then turn bookings on for your website, Find a Place, or both.",
+    body: "Use Listings for photos, on or off, and fridge magnets. Confirm your email. Then turn bookings on.",
     description:
-      "How hosts set up listings and turn bookings on for their website and the marketplace.",
+      "How hosts set up listings, turn bookings on, and print fridge magnets. Use Calendar for nights.",
     related: [
       "branded-website",
       "calendar",
@@ -180,9 +180,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Calendar and availability",
-    body: "Calendar is the host home. Switch stays on the left. Block dates, set prices, and connect Airbnb or VRBO so booked-in-one-place is booked everywhere.",
+    body: "Calendar is the host home. Switch stays on the left. Block dates, set prices, and connect Airbnb or VRBO so a booked night is booked everywhere.",
     description:
-      "Manage availability, manual blocks, and calendar sync for Yall Come Back listings.",
+      "Manage availability, blocks, prices, and Airbnb or VRBO calendar sync.",
     related: ["listings", "search-and-book", "pricing"],
   },
   {
@@ -202,7 +202,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: "Taxes for hosts",
     body: "Taxes are host-level only. You file and pay. Download year CSVs from Admin → Earnings → Tax records.",
     description:
-      "How host-level taxes work on Yall Come Back. Export stay, occupancy, and income worksheets. You file and remit. The platform does not.",
+      "How host-level taxes work on Yall Come Back. Export stay, occupancy, and income worksheets. You file and remit. Yall Come Back does not.",
     related: ["pricing", "payments", "account", "cancellation-policies"],
   },
   {
@@ -232,7 +232,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: "Free self-host website",
     body: "Run Yall Come Back on your domain. Optionally list on the free marketplace. Keep your brand.",
     description:
-      "Host Yall Come Back free under MIT. Optional marketplace via central account or remote syndication API.",
+      "Run the free Yall Come Back website on your domain. Marketplace listing is optional.",
     related: [
       "become-a-host",
       "branded-website",
