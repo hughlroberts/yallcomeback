@@ -9,11 +9,7 @@ import {
 } from "@/lib/host-access";
 import { AdminListingSwitcher } from "@/components/admin-listing-switcher";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
-import { IcalSetupAgent } from "@/components/ical-setup-agent";
 import { viewerCanPublishListings } from "@/lib/email-verified";
-import { ensurePropertyExportConnection } from "@/lib/ical";
-import { getSiteOrigin } from "@/lib/site-url";
-import { canUseIcalSetupAgent } from "@/lib/platform-features";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Calendar · Admin" };
@@ -25,7 +21,7 @@ function toYmd(d: Date) {
 export default async function AdminCalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ property?: string; sync?: string }>;
+  searchParams: Promise<{ property?: string }>;
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/calendar");
@@ -93,9 +89,8 @@ export default async function AdminCalendarPage({
         include: { connection: { select: { name: true } } },
       },
       host: {
-        select: { slug: true, listOnMarketplace: true, hostingMode: true },
+        select: { slug: true, listOnMarketplace: true },
       },
-      icalConnections: { orderBy: { createdAt: "asc" } },
       bookings: {
         where: {
           status: { in: ["CONFIRMED", "PENDING_PAYMENT", "COMPLETED"] },
@@ -118,12 +113,6 @@ export default async function AdminCalendarPage({
     userId: access.session.user.id,
     bypass: access.isPlatform,
   });
-
-  const exportConn = await ensurePropertyExportConnection(property.id);
-  const siteOrigin = await getSiteOrigin();
-  const exportUrl = `${siteOrigin}/api/ical/${property.id}/${exportConn.exportSecret}.ics`;
-  const hasImport = property.icalConnections.some((c) => c.importUrl);
-  const agentEnabled = canUseIcalSetupAgent(property.host);
 
   return (
     <div className="-mx-4 -my-8 flex min-h-[calc(100vh-8rem)] flex-col border-t border-slate-200/80 bg-[var(--background)] sm:-mx-6 lg:flex-row lg:items-start">
@@ -200,23 +189,6 @@ export default async function AdminCalendarPage({
             guestName: b.guestName,
             guests: b.guests,
           }))}
-          icalSetupDefaultOpen={sp.sync === "1" || !hasImport}
-          icalSetupPanel={
-            <IcalSetupAgent
-              propertyId={property.id}
-              exportUrl={exportUrl}
-              agentEnabled={agentEnabled}
-              connections={property.icalConnections.map((c) => ({
-                id: c.id,
-                name: c.name,
-                importUrl: c.importUrl,
-                lastSyncedAt: c.lastSyncedAt
-                  ? c.lastSyncedAt.toLocaleString()
-                  : null,
-                lastSyncError: c.lastSyncError,
-              }))}
-            />
-          }
         />
       </div>
     </div>

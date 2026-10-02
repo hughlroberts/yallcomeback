@@ -983,8 +983,6 @@ export function AdminListingWorkspace({
   initialTab,
   calendarOnly = false,
   emailVerified = true,
-  icalSetupPanel,
-  icalSetupDefaultOpen = false,
 }: {
   property: WorkspaceProperty;
   seasons: Season[];
@@ -1004,14 +1002,11 @@ export function AdminListingWorkspace({
   /** Calendar home: no listing tabs, property switcher lives outside. */
   calendarOnly?: boolean;
   emailVerified?: boolean;
-  icalSetupPanel?: ReactNode;
-  icalSetupDefaultOpen?: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<TabId>(
     calendarOnly ? "calendar" : initialTab || "listing",
   );
-  const [icalOpen, setIcalOpen] = useState(icalSetupDefaultOpen);
   const [cursor, setCursor] = useState(() => {
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth(), 1);
@@ -1244,23 +1239,6 @@ export function AdminListingWorkspace({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {icalSetupPanel ? (
-              <button
-                type="button"
-                aria-expanded={icalOpen}
-                onClick={() => setIcalOpen((open) => !open)}
-                className="inline-flex items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-              >
-                Airbnb / VRBO
-              </button>
-            ) : (
-              <Link
-                href={`/admin/properties/${property.id}?tab=sync`}
-                className="inline-flex items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-              >
-                Airbnb / VRBO
-              </Link>
-            )}
             <Link
               href={`/admin/properties/${property.id}`}
               className="inline-flex items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
@@ -1275,7 +1253,6 @@ export function AdminListingWorkspace({
             </Link>
           </div>
         </div>
-        {icalOpen && icalSetupPanel ? icalSetupPanel : null}
         <div className="flex gap-1 overflow-x-auto border-b border-stone-200 pb-px">
           {(
             [

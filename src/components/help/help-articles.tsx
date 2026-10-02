@@ -977,10 +977,10 @@ function Calendar({ article }: { article: HelpArticle }) {
       <HelpSection title="iCal export and import">
         <HelpUl>
           <li>
-            Open <strong>Admin → Calendar</strong>, pick a stay on the left, then{" "}
-            <strong>Airbnb / VRBO</strong>. Connect every calendar you use —
-            Airbnb, VRBO, and any other .ics feed. A booked night is then
-            booked everywhere.
+            Open <strong>Admin → Calendar</strong>, pick a stay, then{" "}
+            <strong>Edit listing</strong> and open <strong>Sync</strong>. Connect
+            every calendar you use — Airbnb, VRBO, and any other .ics feed. A
+            booked night is then booked everywhere.
           </li>
           <li>
             <strong>Step 1 — Export</strong> — Copy the Yall Come Back calendar
