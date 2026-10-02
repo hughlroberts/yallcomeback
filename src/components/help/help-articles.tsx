@@ -841,7 +841,7 @@ function Listings({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             Open the listing (or the Listings page). Use{" "}
-            <strong>Taking bookings</strong>. It saves as soon as you click.
+            <strong>Taking bookings</strong>. It saves as soon as you pick.
           </li>
           <li>
             <strong>Off</strong> — guests cannot book on your website or on Find

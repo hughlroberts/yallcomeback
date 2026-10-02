@@ -1298,8 +1298,8 @@ export function AdminListingWorkspace({
       ) : (
       <>
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-stone-200 pb-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 flex-1">
+      <div className="space-y-3 border-b border-stone-200 pb-4">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
               {property.title}
@@ -1367,17 +1367,15 @@ export function AdminListingWorkspace({
             </p>
           )}
         </div>
-        <div className="w-full shrink-0 lg:w-80">
+        <div className="flex flex-wrap items-end gap-2">
           <ListingVisibilityForm
             propertyId={property.id}
             published={property.published}
             listOnMarketplace={property.listOnMarketplace}
             hostMarketplaceOn={property.hostMarketplaceOn}
             emailVerified={emailVerified}
+            compact
           />
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
           <form action={duplicateProperty}>
             <input type="hidden" name="propertyId" value={property.id} />
             <button
@@ -1415,6 +1413,7 @@ export function AdminListingWorkspace({
             </Link>
           ) : null}
         </div>
+      </div>
 
       {/* Sub-nav */}
       <div className="flex gap-1 overflow-x-auto border-b border-stone-200 pb-px">

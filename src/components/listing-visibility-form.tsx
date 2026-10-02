@@ -7,6 +7,7 @@ import {
   type ListingVisibility,
   visibilityFromFlags,
 } from "@/lib/listing-visibility";
+import { Label, Select } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 const OPTIONS: {
@@ -82,60 +83,38 @@ export function ListingVisibilityForm({
     });
   }
 
+  const selected = OPTIONS.find((opt) => opt.value === current);
+
   return (
-    <fieldset
-      className={cn(
-        "min-w-0",
-        compact
-          ? "space-y-1"
-          : "rounded-2xl border border-stone-200 bg-white p-4 shadow-sm",
-      )}
-    >
-      <legend
-        className={cn(
-          "font-semibold text-stone-900",
-          compact ? "text-xs uppercase tracking-wide text-stone-500" : "text-sm",
-        )}
+    <div className={cn("min-w-0", compact ? "w-full max-w-xs" : "w-full sm:max-w-sm")}>
+      <Label
+        htmlFor={`visibility-${propertyId}`}
+        className={cn(compact && "text-xs uppercase tracking-wide text-stone-500")}
       >
         Taking bookings
-      </legend>
-      {!compact ? (
-        <p className="mt-1 text-xs text-stone-500">
-          This is the on/off switch. Pick one — it saves as soon as you click.
-        </p>
-      ) : null}
-      <div className={cn("grid gap-1.5", compact ? "mt-1" : "mt-3")}>
+      </Label>
+      <Select
+        id={`visibility-${propertyId}`}
+        value={current}
+        disabled={pending}
+        aria-busy={pending}
+        className={cn(compact ? "h-9 min-h-0" : "mt-0")}
+        onChange={(e) => onPick(e.target.value as ListingVisibility)}
+      >
         {OPTIONS.map((opt) => (
-          <label
+          <option
             key={opt.value}
-            className={cn(
-              "flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2 text-sm",
-              current === opt.value
-                ? "border-bonnet bg-petal/60"
-                : "border-stone-200 bg-white hover:bg-stone-50",
-              pending && "opacity-70",
-            )}
+            value={opt.value}
+            disabled={!emailVerified && opt.value !== "off"}
+            title={opt.hint}
           >
-            <input
-              type="radio"
-              name={`visibility-${propertyId}`}
-              value={opt.value}
-              checked={current === opt.value}
-              disabled={pending || (!emailVerified && opt.value !== "off")}
-              onChange={() => onPick(opt.value)}
-              className="mt-0.5"
-            />
-            <span>
-              <span className="font-medium text-stone-900">{opt.label}</span>
-              {!compact ? (
-                <span className="mt-0.5 block text-xs text-stone-500">
-                  {opt.hint}
-                </span>
-              ) : null}
-            </span>
-          </label>
+            {opt.label}
+          </option>
         ))}
-      </div>
+      </Select>
+      {!compact && selected ? (
+        <p className="mt-1 text-xs text-stone-500">{selected.hint}</p>
+      ) : null}
       {current === "both" && !hostMarketplaceOn ? (
         <p className="mt-2 text-xs text-amber-800">
           Brand marketplace is off, so Find a Place still hides this stay. Turn
@@ -155,6 +134,6 @@ export function ListingVisibilityForm({
       {error ? (
         <p className="mt-2 text-xs font-medium text-bonnet">{error}</p>
       ) : null}
-    </fieldset>
+    </div>
   );
 }
