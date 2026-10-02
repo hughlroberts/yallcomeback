@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   Building2,
+  CalendarDays,
   Globe,
   Heart,
   LogOut,
@@ -233,9 +234,9 @@ export function UserMenu({
             {isHostOrAdmin ? (
               <>
                 <MenuRow
-                  href="/admin"
-                  icon={Building2}
-                  label="Host dashboard"
+                  href="/admin/calendar"
+                  icon={CalendarDays}
+                  label="Calendar"
                   onNavigate={close}
                 />
                 {isPlatformAdmin ? (

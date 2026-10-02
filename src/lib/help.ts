@@ -180,7 +180,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Calendar and availability",
-    body: "Block dates. See Airbnb or VRBO as busy. Use two-way iCal so booked-in-one-place is booked everywhere.",
+    body: "Calendar is the host home. Switch stays on the left. Block dates, set prices, and see Airbnb or VRBO as busy.",
     description:
       "Manage availability, manual blocks, and calendar sync for Yall Come Back listings.",
     related: ["listings", "search-and-book", "pricing"],

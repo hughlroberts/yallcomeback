@@ -945,8 +945,8 @@ function Calendar({ article }: { article: HelpArticle }) {
       <HelpSection title="iCal export and import">
         <HelpUl>
           <li>
-            Open <strong>Admin → Calendar</strong>, then the listing{" "}
-            <strong>Sync</strong> tab. Do both steps so booked-in-one-place is
+            Open <strong>Admin → Calendar</strong>, pick a stay on the left, then{" "}
+            <strong>Airbnb / VRBO</strong>. Do both steps so booked-in-one-place is
             booked everywhere.
           </li>
           <li>

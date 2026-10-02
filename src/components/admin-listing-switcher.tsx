@@ -14,9 +14,11 @@ export type SwitcherListing = {
 export function AdminListingSwitcher({
   listings,
   activeId,
+  hrefFor = (id) => `/admin/calendar?property=${id}`,
 }: {
   listings: SwitcherListing[];
   activeId: string;
+  hrefFor?: (id: string) => string;
 }) {
   return (
     <aside className="w-full shrink-0 sm:w-56">
@@ -30,7 +32,7 @@ export function AdminListingSwitcher({
           return (
             <Link
               key={p.id}
-              href={`/admin/properties/${p.id}?tab=calendar`}
+              href={hrefFor(p.id)}
               className={cn(
                 "flex min-w-[11rem] items-center gap-2.5 rounded-xl border px-2 py-2 text-left sm:min-w-0",
                 active

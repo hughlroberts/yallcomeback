@@ -86,7 +86,11 @@ export default async function AdminPropertyDetailPage({
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       seasons: { orderBy: { startDate: "asc" } },
-      calendarBlocks: { orderBy: { startDate: "desc" }, take: 50 },
+      calendarBlocks: {
+        orderBy: { startDate: "desc" },
+        take: 200,
+        include: { connection: { select: { name: true } } },
+      },
       icalConnections: { orderBy: { createdAt: "asc" } },
       location: true,
       host: true,
@@ -123,7 +127,7 @@ export default async function AdminPropertyDetailPage({
     sp.tab === "calendar" ||
     sp.tab === "insights"
       ? sp.tab
-      : undefined;
+      : "listing";
 
   const locations = await prisma.location.findMany({
     where: access.isPlatform
@@ -1129,6 +1133,7 @@ export default async function AdminPropertyDetailPage({
             coverUrl: p.images[0]?.url || null,
           }))}
           activeId={property.id}
+          hrefFor={(id) => `/admin/properties/${id}`}
         />
       ) : null}
       <div className="min-w-0 flex-1">
@@ -1178,6 +1183,8 @@ export default async function AdminPropertyDetailPage({
           occupantName: b.occupantName,
           guestCount: b.guestCount,
           blockType: b.blockType,
+          source: b.source,
+          connectionName: b.connection?.name || null,
         }))}
         bookings={property.bookings.map((b) => ({
           id: b.id,

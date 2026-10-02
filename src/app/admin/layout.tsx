@@ -15,7 +15,7 @@ export default async function AdminLayout({
 }) {
   const session = await auth();
   if (!session?.user) {
-    redirect("/login?callbackUrl=/admin");
+    redirect("/login?callbackUrl=/admin/calendar");
   }
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -110,7 +110,7 @@ export default async function AdminLayout({
               ? activeBrandId
                 ? "Admin · brand scope"
                 : "Admin · pick brand"
-              : "Listings & bookings"
+              : "Calendar"
           }
           links={links}
         />

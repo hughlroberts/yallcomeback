@@ -255,7 +255,7 @@ export default async function ForHostsPage({
               <p className="text-sm text-stone-500">
                 Already hosting?{" "}
                 <Link
-                  href="/login?callbackUrl=/admin"
+                  href="/login?callbackUrl=/admin/calendar"
                   className="font-medium text-bonnet hover:underline"
                 >
                   Sign in to Host admin
@@ -406,7 +406,7 @@ export default async function ForHostsPage({
               <p className="mt-4 text-sm text-stone-500">
                 Already hosting?{" "}
                 <Link
-                  href="/login?callbackUrl=/admin"
+                  href="/login?callbackUrl=/admin/calendar"
                   className="font-medium text-bonnet hover:underline"
                 >
                   Sign in to Host admin

@@ -23,7 +23,7 @@ export default async function LoginPage({
   if (session?.user) {
     const roleHome =
       session.user.role === "ADMIN" || session.user.role === "HOST"
-        ? "/admin"
+        ? "/admin/calendar"
         : "/account/bookings";
     redirect(safeInternalPath(sp.callbackUrl, roleHome));
   }

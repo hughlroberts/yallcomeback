@@ -172,7 +172,7 @@ export default async function ListingSetupPage({
         coverImageUrl={property.images[0]?.url || null}
         previewHref={publicPath}
         editorHref={`/admin/properties/${property.id}`}
-        calendarHref={`/admin/properties/${property.id}?tab=calendar`}
+        calendarHref={`/admin/calendar?property=${property.id}`}
         defaultVisibility={
           property.host.listOnMarketplace ? "both" : "website"
         }

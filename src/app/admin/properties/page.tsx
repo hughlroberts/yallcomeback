@@ -148,7 +148,7 @@ export default async function AdminPropertiesPage() {
               </div>
               <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">
                 <Link
-                  href={`/admin/properties/${p.id}?tab=calendar`}
+                  href={`/admin/calendar?property=${p.id}`}
                   className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
                 >
                   Calendar

@@ -57,6 +57,8 @@ type Block = {
   occupantName?: string | null;
   guestCount?: number | null;
   blockType?: string | null;
+  source?: string | null;
+  connectionName?: string | null;
 };
 type Booking = {
   id: string;
@@ -73,6 +75,7 @@ type StayBar = {
   end: string;
   label: string;
   title: string;
+  kind: "booking" | "ical" | "block";
 };
 
 function firstName(name: string) {
@@ -91,7 +94,14 @@ function stayPeopleLabel(
   return first;
 }
 
-function blockFallback(blockType: string | null | undefined) {
+function blockFallback(
+  blockType: string | null | undefined,
+  source?: string | null,
+  connectionName?: string | null,
+) {
+  if (source === "ICAL_IMPORT") {
+    return connectionName?.trim() || "Busy on another site";
+  }
   if (blockType === "OWNER") return "Owner";
   if (blockType === "MAINTENANCE") return "Maintenance";
   if (blockType === "FRIENDS") return "Friends";
@@ -687,7 +697,12 @@ function CalendarMonth({
                   key={bar.id}
                   title={bar.title}
                   className={cn(
-                    "pointer-events-none absolute z-10 flex items-center overflow-hidden bg-stone-500 px-1.5 font-semibold text-white shadow-sm",
+                    "pointer-events-none absolute z-10 flex items-center overflow-hidden px-1.5 font-semibold text-white shadow-sm",
+                    bar.kind === "ical"
+                      ? "bg-sky-600"
+                      : bar.kind === "booking"
+                        ? "bg-bonnet"
+                        : "bg-stone-500",
                     density === "quarter"
                       ? "bottom-1 h-5 text-[10px]"
                       : "bottom-2 h-7 px-2 text-[11px] sm:h-8 sm:text-xs",
@@ -743,24 +758,30 @@ export function AdminListingWorkspace({
   messagesPanel,
   insightsPanel,
   initialTab,
+  calendarOnly = false,
 }: {
   property: WorkspaceProperty;
   seasons: Season[];
   blocks: Block[];
   bookings: Booking[];
-  listingPanel: ReactNode;
-  amenitiesPanel: ReactNode;
-  roomsPanel: ReactNode;
-  photosPanel: ReactNode;
-  peaksPanel: ReactNode;
-  blocksPanel: ReactNode;
-  syncPanel: ReactNode;
+  listingPanel?: ReactNode;
+  amenitiesPanel?: ReactNode;
+  roomsPanel?: ReactNode;
+  photosPanel?: ReactNode;
+  peaksPanel?: ReactNode;
+  blocksPanel?: ReactNode;
+  syncPanel?: ReactNode;
   cancellationPanel?: ReactNode;
   messagesPanel?: ReactNode;
   insightsPanel?: ReactNode;
   initialTab?: TabId;
+  /** Calendar home: no listing tabs, property switcher lives outside. */
+  calendarOnly?: boolean;
 }) {
-  const [tab, setTab] = useState<TabId>(initialTab || "calendar");
+  const router = useRouter();
+  const [tab, setTab] = useState<TabId>(
+    calendarOnly ? "calendar" : initialTab || "listing",
+  );
   const [cursor, setCursor] = useState(() => {
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth(), 1);
@@ -795,10 +816,12 @@ export function AdminListingWorkspace({
 
   const stays: StayBar[] = useMemo(() => {
     const fromBlocks: StayBar[] = blocks.map((b) => {
+      const kind: StayBar["kind"] =
+        b.source === "ICAL_IMPORT" ? "ical" : "block";
       const label = stayPeopleLabel(
         b.occupantName,
         b.guestCount,
-        blockFallback(b.blockType),
+        blockFallback(b.blockType, b.source, b.connectionName),
       );
       const span = formatStaySpan(b.startDate, b.endDate);
       return {
@@ -807,6 +830,7 @@ export function AdminListingWorkspace({
         end: b.endDate,
         label,
         title: `${b.occupantName?.trim() || label} · ${span}`,
+        kind,
       };
     });
     const fromBookings: StayBar[] = bookings
@@ -820,6 +844,7 @@ export function AdminListingWorkspace({
           end: b.checkOut,
           label,
           title: `${b.guestName?.trim() || label} · ${span}`,
+          kind: "booking",
         };
       });
     return [...fromBlocks, ...fromBookings];
@@ -964,6 +989,43 @@ export function AdminListingWorkspace({
 
   return (
     <div className="space-y-4">
+      {calendarOnly ? (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+                {property.title}
+              </h1>
+              <span
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                  visibilityBadgeClass(visibility),
+                )}
+              >
+                {visibilityLabel(visibility)}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-stone-500">
+              Prices, availability, and busy nights from other sites.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/admin/properties/${property.id}?tab=sync`}
+              className="inline-flex items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+            >
+              Airbnb / VRBO
+            </Link>
+            <Link
+              href={`/admin/properties/${property.id}`}
+              className="inline-flex items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+            >
+              Edit listing
+            </Link>
+          </div>
+        </div>
+      ) : (
+      <>
       {/* Header */}
       <div className="flex flex-col gap-3 border-b border-stone-200 pb-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
@@ -1100,6 +1162,8 @@ export function AdminListingWorkspace({
           </button>
         ))}
       </div>
+      </>
+      )}
 
       {tab === "calendar" ? (
         <div
@@ -1107,14 +1171,16 @@ export function AdminListingWorkspace({
             "grid gap-4",
             wideCalendar
               ? "grid-cols-1"
-              : "lg:grid-cols-[88px_minmax(0,1fr)_300px] xl:grid-cols-[96px_minmax(0,1fr)_320px]",
+              : calendarOnly
+                ? "lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]"
+                : "lg:grid-cols-[88px_minmax(0,1fr)_300px] xl:grid-cols-[96px_minmax(0,1fr)_320px]",
           )}
         >
           {/* Left photo strip */}
           <aside
             className={cn(
               "hidden flex-col gap-2 lg:flex",
-              wideCalendar && "!hidden",
+              (wideCalendar || calendarOnly) && "!hidden",
             )}
           >
             {cover ? (
@@ -1188,7 +1254,13 @@ export function AdminListingWorkspace({
                   <span className="size-2.5 rounded-full bg-emerald-500" /> Available
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-full bg-stone-500" /> Stay / block
+                  <span className="size-2.5 rounded-full bg-bonnet" /> Stay
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-full bg-sky-600" /> Busy elsewhere
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-full bg-stone-500" /> Blocked
                 </span>
                 <div className="inline-flex rounded-full border border-stone-200 bg-stone-50 p-0.5">
                   {([1, 3, 12] as const).map((n) => (
@@ -1333,6 +1405,10 @@ export function AdminListingWorkspace({
             onClose={closeBlockSheet}
             onOpenFullBlocks={() => {
               closeBlockSheet();
+              if (calendarOnly) {
+                router.push(`/admin/properties/${property.id}?tab=blocks`);
+                return;
+              }
               setTab("blocks");
             }}
           />
@@ -1342,7 +1418,13 @@ export function AdminListingWorkspace({
               key={pricingKey}
               property={property}
               seasons={seasons}
-              onOpenPeaks={() => setTab("peaks")}
+              onOpenPeaks={() => {
+                if (calendarOnly) {
+                  router.push(`/admin/properties/${property.id}?tab=peaks`);
+                  return;
+                }
+                setTab("peaks");
+              }}
             />
           )}
         </div>

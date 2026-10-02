@@ -66,7 +66,7 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/login?callbackUrl=/admin" className="hover:text-honey">
+                <Link href="/login?callbackUrl=/admin/calendar" className="hover:text-honey">
                   Host sign in
                 </Link>
               </li>

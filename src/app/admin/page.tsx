@@ -191,12 +191,6 @@ export default async function AdminDashboard() {
       />
 
       <div className="mb-6 flex flex-wrap gap-2">
-        <Link
-          href="/admin/calendar"
-          className="rounded-full bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
-        >
-          Open calendar
-        </Link>
         {canManageBrand(accessInfo) ? (
           <Link
             href="/admin/brand"
@@ -251,6 +245,11 @@ export default async function AdminDashboard() {
           value={upcomingBlocks.length}
         />
       </div>
+
+      <p className="mt-6 text-sm text-slate-500">
+        Calendar is the home for availability. This page is bookings plus nights
+        already busy on Airbnb, VRBO, or another calendar you connected.
+      </p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div>
@@ -321,14 +320,20 @@ export default async function AdminDashboard() {
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900">
-              Upcoming stays / busy from other sites
+              Upcoming stays and busy on other sites
             </h2>
+            <Link
+              href="/admin/calendar"
+              className="text-sm font-medium text-bonnet hover:text-bonnet"
+            >
+              Open calendar →
+            </Link>
           </div>
           <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
             {upcomingBlocks.map((b) => {
               const href = b.bookingId
                 ? `/admin/bookings/${b.bookingId}`
-                : `/admin/properties/${b.propertyId}?tab=calendar`;
+                : `/admin/calendar?property=${b.propertyId}`;
               return (
                 <li key={b.id}>
                   <Link
@@ -375,8 +380,8 @@ export default async function AdminDashboard() {
             })}
             {upcomingBlocks.length === 0 && (
               <li className="px-4 py-8 text-center text-sm text-slate-500">
-                Calendar is clear. Import Airbnb or VRBO on Calendar → Sync so
-                those stays show as busy here.
+                Calendar is clear. On Calendar, connect Airbnb or VRBO so those
+                stays show as busy here.
               </li>
             )}
           </ul>
