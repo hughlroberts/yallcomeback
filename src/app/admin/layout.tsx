@@ -9,6 +9,14 @@ import { isHostingPaused } from "@/lib/hosting";
 import { hasEmailTransport } from "@/lib/messaging";
 import { needsEmailVerifyToPublish } from "@/lib/email-verified";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
+import { DashboardNestNav } from "@/components/dashboard-nest-nav";
+import {
+  canManageBrand,
+  canManageTeam,
+  canViewEarnings,
+  resolveHostAccessInfo,
+} from "@/lib/host-access";
+import { DASHBOARD_NEST_PREFIXES } from "@/lib/dashboard-nest";
 import Link from "next/link";
 
 export default async function AdminLayout({
@@ -81,12 +89,23 @@ export default async function AdminLayout({
     }
   }
 
+  const accessInfo = resolveHostAccessInfo({
+    isPlatform,
+    hostId: access?.hostId ?? null,
+    hostAccess: access?.hostAccess ?? null,
+  });
+
   const links = [
     { href: "/admin/calendar", label: "Calendar" },
     { href: "/admin/properties", label: "Listings" },
     { href: "/admin/messages", label: "Messages" },
     { href: "/admin/bookings", label: "Bookings" },
-    { href: "/admin", label: "Dashboard", exact: true },
+    {
+      href: "/admin",
+      label: "Dashboard",
+      exact: true,
+      matchPrefixes: [...DASHBOARD_NEST_PREFIXES],
+    },
   ];
 
   const h = await headers();
@@ -153,6 +172,11 @@ export default async function AdminLayout({
             .
           </p>
         ) : null}
+        <DashboardNestNav
+          canBrand={canManageBrand(accessInfo)}
+          canEarnings={canViewEarnings(accessInfo)}
+          canTeam={canManageTeam(accessInfo)}
+        />
         {children}
       </div>
     </div>

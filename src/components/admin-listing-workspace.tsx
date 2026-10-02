@@ -20,9 +20,17 @@ import {
 import { Button, Card, Input, Label } from "@/components/ui";
 import { AdminBlockSheet } from "@/components/admin-block-sheet";
 import {
+  addSeason,
+  applyPeakHolidays,
+  deleteSeason,
   duplicateProperty,
   updatePropertyPricing,
+  updateSeason,
 } from "@/app/actions/properties";
+import {
+  DEFAULT_PEAK_MIN_NIGHTS,
+  upcomingPeakHolidays,
+} from "@/lib/peak-holidays";
 import { rateWithWeekend } from "@/lib/listing-discounts";
 import {
   visibilityBadgeClass,
@@ -148,11 +156,9 @@ const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 function PricingSidebar({
   property,
   seasons,
-  onOpenPeaks,
 }: {
   property: WorkspaceProperty;
   seasons: Season[];
-  onOpenPeaks: () => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -382,59 +388,278 @@ function PricingSidebar({
         </div>
       </Card>
 
-      {seasons.length > 0 ? (
-        <Card>
-          <h3 className="text-sm font-semibold text-stone-900">
-            Seasonal overrides
-          </h3>
-          <div className="mt-3 space-y-2">
-            {seasons.slice(0, 6).map((s) => (
-              <div
-                key={s.id}
-                className="flex items-start justify-between gap-2 rounded-lg border border-stone-100 px-2.5 py-2 text-xs"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-stone-900">
-                    {s.name}
-                    {s.holidayKey ? (
-                      <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-amber-900">
-                        Peak
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="text-stone-500">
-                    {parseYmd(s.startDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                    {" – "}
-                    {parseYmd(s.endDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="font-semibold tabular-nums text-stone-900">
-                    {formatMoney(s.nightlyRate)}
-                  </p>
-                  <p className="text-stone-500">{s.minNights} nt min</p>
-                </div>
-              </div>
-            ))}
-            {seasons.length > 6 ? (
-              <button
-                type="button"
-                onClick={onOpenPeaks}
-                className="w-full text-center text-xs font-medium text-bonnet hover:underline"
-              >
-                View all ({seasons.length})
-              </button>
-            ) : null}
-          </div>
-        </Card>
-      ) : null}
+      <SeasonOverridesCard
+        propertyId={property.id}
+        baseNightlyRate={property.baseNightlyRate}
+        defaultMinNights={property.defaultMinNights}
+        seasons={seasons}
+      />
     </aside>
+  );
+}
+
+function SeasonOverridesCard({
+  propertyId,
+  baseNightlyRate,
+  defaultMinNights,
+  seasons,
+}: {
+  propertyId: string;
+  baseNightlyRate: number;
+  defaultMinNights: number;
+  seasons: Season[];
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [rate, setRate] = useState(String(baseNightlyRate));
+  const [minNights, setMinNights] = useState(
+    String(Math.max(defaultMinNights, 2)),
+  );
+
+  const haveKeys = new Set(
+    seasons.map((s) => s.holidayKey).filter((k): k is string => Boolean(k)),
+  );
+  const missingPeaks = upcomingPeakHolidays().filter((h) => !haveKeys.has(h.key));
+
+  function run(label: string, work: () => Promise<void>) {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await work();
+        router.refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : label);
+      }
+    });
+  }
+
+  function saveRow(season: Season, nightlyRate: string, min: string) {
+    const form = new FormData();
+    form.set("id", season.id);
+    form.set("propertyId", propertyId);
+    form.set("nightlyRate", nightlyRate);
+    form.set("minNights", min);
+    run("Could not save override", () => updateSeason(form));
+  }
+
+  function removeRow(season: Season) {
+    const form = new FormData();
+    form.set("id", season.id);
+    form.set("propertyId", propertyId);
+    run("Could not remove override", () => deleteSeason(form));
+  }
+
+  function addRange() {
+    const form = new FormData();
+    form.set("propertyId", propertyId);
+    form.set("name", name.trim() || "Season");
+    form.set("startDate", startDate);
+    form.set("endDate", endDate);
+    form.set("nightlyRate", rate);
+    form.set("minNights", minNights);
+    run("Could not add range", async () => {
+      await addSeason(form);
+      setName("");
+      setStartDate("");
+      setEndDate("");
+    });
+  }
+
+  function addPeaks() {
+    const form = new FormData();
+    form.set("propertyId", propertyId);
+    form.set("minNights", String(DEFAULT_PEAK_MIN_NIGHTS));
+    for (const h of missingPeaks) form.append("holidayKey", h.key);
+    run("Could not add peak holidays", () => applyPeakHolidays(form));
+  }
+
+  return (
+    <Card className="!p-0 overflow-hidden">
+      <div className="border-b border-stone-100 bg-stone-50/80 px-5 py-3">
+        <h3 className="text-base font-semibold text-stone-900">
+          Seasonal overrides
+        </h3>
+        <p className="text-xs text-stone-500">
+          Peak and custom ranges for this listing. Edit here — you stay on
+          Calendar.
+        </p>
+      </div>
+      <div className="space-y-3 px-5 py-4">
+        {seasons.length === 0 ? (
+          <p className="text-xs text-stone-500">
+            No date ranges yet. Add a custom range or upcoming US peak holidays.
+          </p>
+        ) : null}
+        {seasons.map((s) => (
+          <SeasonOverrideRow
+            key={`${s.id}-${s.nightlyRate}-${s.minNights}`}
+            season={s}
+            disabled={pending}
+            onSave={saveRow}
+            onRemove={removeRow}
+          />
+        ))}
+
+        {missingPeaks.length > 0 ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={addPeaks}
+            className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left text-xs font-medium text-amber-950 hover:bg-amber-100 disabled:opacity-60"
+          >
+            Add {missingPeaks.length} upcoming peak holiday
+            {missingPeaks.length === 1 ? "" : "s"}
+          </button>
+        ) : null}
+
+        <div className="space-y-2 border-t border-stone-100 pt-3">
+          <p className="text-xs font-medium text-stone-800">Add a date range</p>
+          <Input
+            placeholder="Name (Labor Day)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-9 text-sm"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="h-9 text-sm"
+              aria-label="Start date"
+            />
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="h-9 text-sm"
+              aria-label="End date"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
+                $
+              </span>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+                className="h-9 pl-7 text-sm"
+                aria-label="Nightly rate"
+              />
+            </div>
+            <Input
+              type="number"
+              min={0}
+              max={30}
+              value={minNights}
+              onChange={(e) => setMinNights(e.target.value)}
+              className="h-9 text-sm"
+              aria-label="Minimum nights"
+            />
+          </div>
+          <Button
+            type="button"
+            className="w-full"
+            disabled={pending || !startDate || !endDate}
+            onClick={addRange}
+          >
+            {pending ? "Saving…" : "Add range"}
+          </Button>
+        </div>
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      </div>
+    </Card>
+  );
+}
+
+function SeasonOverrideRow({
+  season,
+  disabled,
+  onSave,
+  onRemove,
+}: {
+  season: Season;
+  disabled: boolean;
+  onSave: (season: Season, rate: string, min: string) => void;
+  onRemove: (season: Season) => void;
+}) {
+  const [rate, setRate] = useState(String(season.nightlyRate));
+  const [min, setMin] = useState(String(season.minNights));
+  return (
+    <div className="rounded-lg border border-stone-100 px-2.5 py-2 text-xs">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-medium text-stone-900">
+            {season.name}
+            {season.holidayKey ? (
+              <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-amber-900">
+                Peak
+              </span>
+            ) : null}
+          </p>
+          <p className="text-stone-500">
+            {parseYmd(season.startDate).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+            {" – "}
+            {parseYmd(season.endDate).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onRemove(season)}
+          className="shrink-0 text-[11px] font-medium text-red-600 hover:underline disabled:opacity-60"
+        >
+          Remove
+        </button>
+      </div>
+      <div className="mt-2 grid grid-cols-[1fr_4.25rem_auto] items-center gap-1.5">
+        <div className="relative">
+          <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-stone-400">
+            $
+          </span>
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+            className="h-8 pl-5 text-xs"
+            aria-label={`${season.name} nightly rate`}
+          />
+        </div>
+        <Input
+          type="number"
+          min={0}
+          max={30}
+          value={min}
+          onChange={(e) => setMin(e.target.value)}
+          className="h-8 text-xs"
+          aria-label={`${season.name} min nights`}
+        />
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onSave(season, rate, min)}
+          className="text-[11px] font-medium text-bonnet hover:underline disabled:opacity-60"
+        >
+          Save
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1422,13 +1647,6 @@ export function AdminListingWorkspace({
               key={pricingKey}
               property={property}
               seasons={seasons}
-              onOpenPeaks={() => {
-                if (calendarOnly) {
-                  router.push(`/admin/properties/${property.id}?tab=peaks`);
-                  return;
-                }
-                setTab("peaks");
-              }}
             />
           )}
         </div>

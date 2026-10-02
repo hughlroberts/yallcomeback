@@ -853,6 +853,7 @@ export async function updatePropertyPricing(formData: FormData) {
 
   revalidatePath("/admin/properties");
   revalidatePath(`/admin/properties/${id}`);
+  revalidatePath("/admin/calendar");
   revalidatePath("/marketplace");
   revalidatePath(`/h/${property.host.slug}`);
   revalidatePath(`/h/${property.host.slug}/properties/${property.slug}`);
@@ -1017,6 +1018,7 @@ export async function addSeason(formData: FormData) {
     },
   });
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/calendar");
 }
 
 /**
@@ -1073,6 +1075,7 @@ export async function applyPeakHolidays(formData: FormData) {
   }
 
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/calendar");
 }
 
 /** Upgrade one peak / season min nights (0 = default only; 2 → 3, etc.). */
@@ -1097,6 +1100,44 @@ export async function updateSeasonMinNights(formData: FormData) {
     data: { minNights },
   });
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/calendar");
+}
+
+/** Nightly rate and min nights for one seasonal override. */
+export async function updateSeason(formData: FormData) {
+  const access = await ensureHostAccess();
+  const id = String(formData.get("id") || "");
+  const propertyId = String(formData.get("propertyId") || "");
+  await assertPropertyAccess(propertyId, access);
+
+  const season = await prisma.seasonalPrice.findFirst({
+    where: { id, propertyId },
+  });
+  if (!season) throw new Error("Season not found");
+
+  const rateRaw = formData.get("nightlyRate");
+  const nightlyRate =
+    rateRaw === null || rateRaw === ""
+      ? season.nightlyRate
+      : Number(rateRaw);
+  if (!Number.isFinite(nightlyRate) || nightlyRate < 0) {
+    throw new Error("Invalid nightly rate");
+  }
+
+  const rawMin = Number(formData.get("minNights"));
+  const minNights = Number.isFinite(rawMin)
+    ? Math.max(0, Math.min(30, Math.floor(rawMin)))
+    : season.minNights;
+
+  await prisma.seasonalPrice.update({
+    where: { id },
+    data: {
+      nightlyRate: Math.round(nightlyRate * 100) / 100,
+      minNights,
+    },
+  });
+  revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/calendar");
 }
 
 /** Set min nights on all peak holidays for this property (0 = default only). */
@@ -1115,6 +1156,7 @@ export async function upgradeAllPeakMinNights(formData: FormData) {
     data: { minNights },
   });
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/calendar");
 }
 
 export async function deleteSeason(formData: FormData) {
@@ -1129,6 +1171,7 @@ export async function deleteSeason(formData: FormData) {
   if (!season) throw new Error("Season not found");
   await prisma.seasonalPrice.delete({ where: { id: season.id } });
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/calendar");
 }
 
 export async function addCalendarBlock(formData: FormData) {

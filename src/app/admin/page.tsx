@@ -8,12 +8,6 @@ import {
   bookingScopeWhere,
   propertyScopeWhere,
 } from "@/lib/scope";
-import {
-  canManageBrand,
-  canManageTeam,
-  canViewEarnings,
-  resolveHostAccessInfo,
-} from "@/lib/host-access";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -119,11 +113,6 @@ export default async function AdminDashboard() {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin");
 
-  const accessInfo = resolveHostAccessInfo({
-    isPlatform: access.isPlatform,
-    hostId: access.hostId,
-    hostAccess: access.hostAccess,
-  });
   const propWhere = propertyScopeWhere(access);
   const bookWhere = bookingScopeWhere(access);
 
@@ -189,47 +178,6 @@ export default async function AdminDashboard() {
           ) : undefined
         }
       />
-
-      <div className="mb-6 flex flex-wrap gap-2">
-        {canManageBrand(accessInfo) ? (
-          <Link
-            href="/admin/brand"
-            className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-          >
-            Brand & website
-          </Link>
-        ) : null}
-        {canManageBrand(accessInfo) ? (
-          <Link
-            href="/admin/payments"
-            className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-          >
-            Payments
-          </Link>
-        ) : null}
-        {canViewEarnings(accessInfo) ? (
-          <Link
-            href="/admin/earnings"
-            className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-          >
-            Earnings
-          </Link>
-        ) : null}
-        <Link
-          href="/admin/guest-messages"
-          className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-        >
-          Message templates
-        </Link>
-        {canManageTeam(accessInfo) ? (
-          <Link
-            href="/admin/team"
-            className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-          >
-            Team
-          </Link>
-        ) : null}
-      </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <KpiCard label="Properties" value={propertyCount} />

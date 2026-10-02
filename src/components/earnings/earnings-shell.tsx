@@ -49,7 +49,7 @@ export function EarningsShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="-mx-4 -my-8 min-h-[calc(100vh-8rem)] border-t border-slate-200/80 bg-[var(--background)] sm:-mx-6">
+    <div className="-mx-4 min-h-[calc(100vh-12rem)] border-t border-slate-200/80 bg-[var(--background)] sm:-mx-6">
       <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1400px] flex-col lg:flex-row">
         {/* Sidebar */}
         <aside className="w-full shrink-0 border-b border-slate-200/80 bg-[var(--background)] lg:w-[240px] lg:border-b-0 lg:border-r lg:border-slate-200/80">

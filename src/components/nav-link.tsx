@@ -43,11 +43,11 @@ function pathIsActive(
   if (excludePrefixes?.some((p) => path === p || path.startsWith(p + "/"))) {
     return false;
   }
-  if (exact) {
-    return path === href;
-  }
   if (matchPrefixes?.some((p) => path === p || path.startsWith(p + "/"))) {
     return true;
+  }
+  if (exact) {
+    return path === href;
   }
   if (path === href) return true;
   if (href !== "/" && path.startsWith(href + "/")) return true;
