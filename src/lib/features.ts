@@ -155,6 +155,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "Guest-safe API: no private notes exposed publicly",
       "iCal export URL per listing (Airbnb/VRBO import)",
       "iCal import sources + sync-now + cron endpoint",
+      "Calendar Airbnb / VRBO setup (copy YCB URL, paste their .ics feed)",
     ],
   },
   {

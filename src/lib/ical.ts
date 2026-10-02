@@ -2,6 +2,27 @@ import { PRODUCT_DOMAIN } from "@/lib/features";
 import { prisma } from "./db";
 import { startOfDay } from "./utils";
 
+/** Listing export feed (null importUrl) so Airbnb/VRBO can pull YCB bookings. */
+export async function ensurePropertyExportConnection(propertyId: string) {
+  const existing = await prisma.icalConnection.findFirst({
+    where: { propertyId, importUrl: null },
+    orderBy: { createdAt: "asc" },
+  });
+  if (existing) return existing;
+  const any = await prisma.icalConnection.findFirst({
+    where: { propertyId },
+    orderBy: { createdAt: "asc" },
+  });
+  if (any) return any;
+  return prisma.icalConnection.create({
+    data: {
+      propertyId,
+      name: "Export feed",
+      enabled: true,
+    },
+  });
+}
+
 function formatIcalDate(date: Date): string {
   const d = startOfDay(date);
   const y = d.getUTCFullYear();

@@ -68,6 +68,22 @@ export function canUseListingImportAgent(host: {
 }
 
 /**
+ * Calendar iCal setup agent (extract ICS URLs from messy paste via Grok).
+ * Core two-way iCal stays MIT; LLM extract is paid platform hosting.
+ */
+export function isIcalSetupAgentEnabled(): boolean {
+  return envFlag("ICAL_SETUP_AGENT_ENABLED", isPlatformProductMode);
+}
+
+export function canUseIcalSetupAgent(host: {
+  hostingMode: string;
+} | null | undefined): boolean {
+  if (!isIcalSetupAgentEnabled()) return false;
+  if (!host) return false;
+  return host.hostingMode === "PLATFORM";
+}
+
+/**
  * Feature exists on this deploy (platform product). Does not mean a given host
  * is allowed or paid — use canAccessPricingIntelligence / canRunPricingIntelligence.
  */
@@ -160,6 +176,7 @@ export function pricingIntelligenceLlmConfigured(): boolean {
 export const PLATFORM_ONLY_FEATURE_LABELS = [
   "Public agent API (llms.txt, agents.md, /api/v1) — paid hosted product",
   "Listing import from Airbnb/VRBO — paid platform hosting",
+  "iCal setup agent (extract ICS URLs from pasted host settings)",
   "Market pricing intelligence add-on ($35/mo — not in hosting fee)",
   "Per-host beta toggle (ops rollout)",
   "OTA peer comps (capacity matching)",

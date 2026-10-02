@@ -12,14 +12,11 @@ import {
   deleteCalendarBlock,
   sendCalendarBlockInvoice,
   markCalendarBlockInvoicePaid,
-  addIcalImport,
-  deleteIcalConnection,
-  syncIcalNow,
   uploadPropertyImage,
 } from "@/app/actions/properties";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
 import { AdminListingSwitcher } from "@/components/admin-listing-switcher";
-import { CopyTextButton } from "@/components/copy-text-button";
+import { IcalSetupAgent } from "@/components/ical-setup-agent";
 import { AdminListingInsights } from "@/components/admin-listing-insights";
 import { AdminAmenitiesEditor } from "@/components/admin-amenities-editor";
 import { AdminSleepingEditor } from "@/components/admin-sleeping-editor";
@@ -38,6 +35,8 @@ import {
 } from "@/lib/listing-insights";
 import { isStripeConfigured } from "@/lib/stripe";
 import { getSiteOrigin } from "@/lib/site-url";
+import { ensurePropertyExportConnection } from "@/lib/ical";
+import { canUseIcalSetupAgent } from "@/lib/platform-features";
 import { viewerCanPublishListings } from "@/lib/email-verified";
 import { paymentMethodLabel, WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
 import { ListingPaymentMethodFields } from "@/components/listing-payment-method-fields";
@@ -150,9 +149,7 @@ export default async function AdminPropertyDetailPage({
     if (parsed.length > 0) return parsed;
     return seedRoomsFromCounts(property.bedrooms, property.beds);
   })();
-  const exportConn =
-    property.icalConnections.find((c) => !c.importUrl) ||
-    property.icalConnections[0];
+  const exportConn = await ensurePropertyExportConnection(property.id);
 
   const peaks = upcomingPeakHolidays();
   const appliedKeys = new Set(
@@ -1005,108 +1002,21 @@ export default async function AdminPropertyDetailPage({
     </Card>
   );
 
-  const exportUrl = exportConn
-    ? `${siteOrigin}/api/ical/${property.id}/${exportConn.exportSecret}.ics`
-    : null;
+  const exportUrl = `${siteOrigin}/api/ical/${property.id}/${exportConn.exportSecret}.ics`;
 
   const syncPanel = (
-    <Card>
-      <h2 className="text-lg font-semibold">Booked in one place = booked everywhere</h2>
-      <p className="mt-1 text-sm text-stone-500">
-        Two-way iCal for this listing. Airbnb or VRBO bookings show as busy here,
-        and Yall Come Back bookings show as busy there. Do both steps.
-      </p>
-
-      <ol className="mt-4 space-y-4">
-        <li className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-          <p className="text-sm font-semibold text-stone-900">
-            1. Push Yall Come Back into Airbnb / VRBO
-          </p>
-          <p className="mt-1 text-sm text-stone-500">
-            Copy this URL. In Airbnb or VRBO open Calendar → Availability → Import
-            calendar (wording varies) and paste it. Then those sites block nights
-            that are booked here.
-          </p>
-          {exportUrl ? (
-            <div className="mt-3 flex flex-wrap items-start gap-2">
-              <code className="min-w-0 flex-1 break-all rounded-lg bg-white px-3 py-2 text-xs text-stone-800 ring-1 ring-stone-200">
-                {exportUrl}
-              </code>
-              <CopyTextButton text={exportUrl} label="Copy URL" />
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-amber-800">
-              No export feed yet. Save this listing, then reopen Sync.
-            </p>
-          )}
-        </li>
-        <li className="rounded-xl border border-stone-200 bg-white p-4">
-          <p className="text-sm font-semibold text-stone-900">
-            2. Pull Airbnb / VRBO into Yall Come Back
-          </p>
-          <p className="mt-1 text-sm text-stone-500">
-            In Airbnb or VRBO, export / copy the listing calendar ICS URL. Paste
-            it below. Then those bookings show as busy on this calendar and block
-            Yall Come Back guests.
-          </p>
-          <form action={addIcalImport} className="mt-3 grid gap-3 sm:grid-cols-3">
-            <input type="hidden" name="propertyId" value={property.id} />
-            <div>
-              <Label>Source name</Label>
-              <Input name="name" placeholder="Airbnb" required />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Their calendar URL (.ics)</Label>
-              <Input
-                name="importUrl"
-                placeholder="https://www.airbnb.com/calendar/ical/..."
-                required
-              />
-            </div>
-            <div>
-              <Button type="submit">Connect calendar</Button>
-            </div>
-          </form>
-        </li>
-      </ol>
-
-      <div className="mt-4 space-y-2">
-        {property.icalConnections
-          .filter((c) => c.importUrl)
-          .map((c) => (
-            <div
-              key={c.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-stone-100 p-3 text-sm"
-            >
-              <div>
-                <p className="font-medium">{c.name}</p>
-                <p className="break-all text-stone-500">{c.importUrl}</p>
-                <p className="mt-1 text-xs text-stone-400">
-                  Last sync:{" "}
-                  {c.lastSyncedAt ? c.lastSyncedAt.toLocaleString() : "never"}
-                  {c.lastSyncError ? ` · Error: ${c.lastSyncError}` : ""}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <form action={syncIcalNow}>
-                  <input type="hidden" name="id" value={c.id} />
-                  <input type="hidden" name="propertyId" value={property.id} />
-                  <Button type="submit" variant="ghost">
-                    Sync now
-                  </Button>
-                </form>
-                <form action={deleteIcalConnection}>
-                  <input type="hidden" name="id" value={c.id} />
-                  <input type="hidden" name="propertyId" value={property.id} />
-                  <Button type="submit" variant="danger">
-                    Remove
-                  </Button>
-                </form>
-              </div>
-            </div>
-          ))}
-      </div>
-    </Card>
+    <IcalSetupAgent
+      propertyId={property.id}
+      exportUrl={exportUrl}
+      agentEnabled={canUseIcalSetupAgent(property.host)}
+      connections={property.icalConnections.map((c) => ({
+        id: c.id,
+        name: c.name,
+        importUrl: c.importUrl,
+        lastSyncedAt: c.lastSyncedAt ? c.lastSyncedAt.toLocaleString() : null,
+        lastSyncError: c.lastSyncError,
+      }))}
+    />
   );
 
   const hostListings = await listHostInsightsOptions(property.hostId);

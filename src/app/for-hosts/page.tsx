@@ -45,7 +45,7 @@ const FEATURES = [
   },
   {
     title: "Calendar without the clipboard",
-    body: "Blocked dates, seasons, and iCal so the dock cabin is not double-booked.",
+    body: "Blocked dates, seasons, and two-way iCal — booked on Airbnb or VRBO is booked here too.",
     image: "/seed/eagles-nest/01.jpg",
   },
   {

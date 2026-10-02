@@ -1337,7 +1337,7 @@ export async function addIcalImport(formData: FormData) {
   const importUrl = importUrlRaw
     ? (await assertSafeOutboundUrl(importUrlRaw)).toString()
     : null;
-  await prisma.icalConnection.create({
+  const created = await prisma.icalConnection.create({
     data: {
       propertyId,
       name: String(formData.get("name") || "Airbnb").trim(),
@@ -1345,6 +1345,10 @@ export async function addIcalImport(formData: FormData) {
       enabled: true,
     },
   });
+  if (created.importUrl) {
+    const { syncIcalConnection } = await import("@/lib/ical");
+    await syncIcalConnection(created.id);
+  }
   revalidatePath("/admin");
   revalidatePath("/admin/calendar");
   revalidatePath(`/admin/properties/${propertyId}`);
@@ -1361,6 +1365,7 @@ export async function deleteIcalConnection(formData: FormData) {
   });
   if (!connection) throw new Error("Calendar connection not found");
   await prisma.icalConnection.delete({ where: { id: connection.id } });
+  revalidatePath("/admin/calendar");
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 
@@ -1376,6 +1381,7 @@ export async function syncIcalNow(formData: FormData) {
   if (!connection) throw new Error("Calendar connection not found");
   const { syncIcalConnection } = await import("@/lib/ical");
   await syncIcalConnection(connection.id);
+  revalidatePath("/admin/calendar");
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 

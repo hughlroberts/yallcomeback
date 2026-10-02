@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  canUseIcalSetupAgent,
   canUseListingImportAgent,
   isAgentApiEnabled,
+  isIcalSetupAgentEnabled,
   isListingImportAgentEnabled,
   isPlatformProductMode,
 } from "@/lib/platform-features";
@@ -11,6 +13,7 @@ const KEYS = [
   "PLATFORM_PRODUCT_MODE",
   "AGENT_API_ENABLED",
   "LISTING_IMPORT_AGENT_ENABLED",
+  "ICAL_SETUP_AGENT_ENABLED",
 ] as const;
 
 afterEach(() => {
@@ -22,15 +25,20 @@ describe("platform agent gates", () => {
     expect(isPlatformProductMode()).toBe(false);
     expect(isAgentApiEnabled()).toBe(false);
     expect(isListingImportAgentEnabled()).toBe(false);
+    expect(isIcalSetupAgentEnabled()).toBe(false);
     expect(canUseListingImportAgent({ hostingMode: "PLATFORM" })).toBe(false);
+    expect(canUseIcalSetupAgent({ hostingMode: "PLATFORM" })).toBe(false);
   });
 
   it("turns on with PLATFORM_PRODUCT_MODE for the hosted product", () => {
     process.env.PLATFORM_PRODUCT_MODE = "true";
     expect(isAgentApiEnabled()).toBe(true);
     expect(isListingImportAgentEnabled()).toBe(true);
+    expect(isIcalSetupAgentEnabled()).toBe(true);
     expect(canUseListingImportAgent({ hostingMode: "PLATFORM" })).toBe(true);
+    expect(canUseIcalSetupAgent({ hostingMode: "PLATFORM" })).toBe(true);
     expect(canUseListingImportAgent({ hostingMode: "SELF" })).toBe(false);
+    expect(canUseIcalSetupAgent({ hostingMode: "SELF" })).toBe(false);
   });
 
   it("YCB_OPEN_SOURCE_BUILD forces agent features off", () => {
@@ -38,5 +46,6 @@ describe("platform agent gates", () => {
     process.env.YCB_OPEN_SOURCE_BUILD = "true";
     expect(isAgentApiEnabled()).toBe(false);
     expect(isListingImportAgentEnabled()).toBe(false);
+    expect(isIcalSetupAgentEnabled()).toBe(false);
   });
 });

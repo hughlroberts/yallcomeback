@@ -962,8 +962,8 @@ function Calendar({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             Open <strong>Admin → Calendar</strong>, pick a stay on the left, then{" "}
-            <strong>Airbnb / VRBO</strong>. Do both steps so booked-in-one-place is
-            booked everywhere.
+            <strong>Airbnb / VRBO</strong>. The setup agent walks both directions
+            so booked-in-one-place is booked everywhere.
           </li>
           <li>
             <strong>Step 1 — Export</strong> — Copy the Yall Come Back calendar
@@ -971,12 +971,14 @@ function Calendar({ article }: { article: HelpArticle }) {
             sites then show Yall Come Back bookings as busy.
           </li>
           <li>
-            <strong>Step 2 — Import</strong> — Copy the Airbnb or VRBO ICS URL
-            and paste it on Sync. Those bookings then show as busy here.
+            <strong>Step 2 — Import</strong> — In Airbnb or VRBO host settings,
+            copy Export calendar / the .ics link (not the public listing page).
+            Paste the link — or the page text that contains it — into the agent.
+            We find the feed, connect it, and pull busy nights here.
           </li>
           <li>
-            Use Sync now after you add a source. Keep nights aligned on every
-            channel.
+            We cannot log into Airbnb or VRBO for you. Calendar links live in
+            those host settings. Use Sync now anytime after you connect.
           </li>
         </HelpUl>
       </HelpSection>
