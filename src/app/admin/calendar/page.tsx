@@ -111,8 +111,9 @@ export default async function AdminCalendarPage({
 
   return (
     <div className="-mx-4 -my-8 flex min-h-[calc(100vh-8rem)] flex-col border-t border-slate-200/80 bg-[var(--background)] sm:-mx-6 lg:flex-row">
-      <div className="shrink-0 border-b border-slate-200/80 px-4 py-5 sm:px-6 lg:w-60 lg:border-b-0 lg:border-r lg:py-8">
+      <div className="shrink-0 border-b border-slate-200/80 px-4 py-3 sm:px-5 lg:w-56 lg:border-b-0 lg:border-r lg:px-3 lg:py-5">
         <AdminListingSwitcher
+          stackFrom="lg"
           listings={listings.map((p) => ({
             id: p.id,
             title: p.title,
