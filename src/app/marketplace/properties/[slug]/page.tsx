@@ -386,7 +386,7 @@ export default async function MarketplacePropertyPage({
 
         {/* Full-width bottom stack: map → meet host → things to know */}
         <ListingLocationMap
-          className="mt-16 border-t border-stone-200 pt-12"
+          className="mt-10 border-t border-stone-200 pt-8"
           latitude={property.latitude}
           longitude={property.longitude}
           showPreciseLocation={property.showPreciseLocation}
