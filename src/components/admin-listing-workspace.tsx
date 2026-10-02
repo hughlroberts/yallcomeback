@@ -1267,9 +1267,56 @@ export function AdminListingWorkspace({
             >
               Edit listing
             </Link>
+            <Link
+              href={`/admin/magnets/${property.id}`}
+              className="inline-flex items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+            >
+              Fridge magnet
+            </Link>
           </div>
         </div>
         {icalOpen && icalSetupPanel ? icalSetupPanel : null}
+        <div className="flex gap-1 overflow-x-auto border-b border-stone-200 pb-px">
+          {(
+            [
+              { id: "calendar", label: "Calendar" },
+              { id: "insights", label: "Insights" },
+              { id: "listing", label: "Listing" },
+              { id: "amenities", label: "Amenities" },
+              { id: "rooms", label: "Rooms & beds" },
+              { id: "photos", label: "Photos" },
+              { id: "peaks", label: "Peak dates" },
+              { id: "blocks", label: "Blocks" },
+              { id: "sync", label: "Sync" },
+              { id: "cancellation", label: "Cancellation" },
+              { id: "messages", label: "Messages" },
+            ] as const
+          ).map((t) =>
+            t.id === "calendar" ? (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab("calendar")}
+                className={cn(
+                  "shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
+                  tab === "calendar"
+                    ? "border-bonnet text-bonnet"
+                    : "border-transparent text-stone-500 hover:text-stone-800",
+                )}
+              >
+                {t.label}
+              </button>
+            ) : (
+              <Link
+                key={t.id}
+                href={`/admin/properties/${property.id}?tab=${t.id}`}
+                className="shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-stone-500 hover:text-stone-800"
+              >
+                {t.label}
+              </Link>
+            ),
+          )}
+        </div>
         </>
       ) : (
       <>
@@ -1419,16 +1466,14 @@ export function AdminListingWorkspace({
             "grid gap-4",
             wideCalendar
               ? "grid-cols-1"
-              : calendarOnly
-                ? "lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]"
-                : "lg:grid-cols-[88px_minmax(0,1fr)_300px] xl:grid-cols-[96px_minmax(0,1fr)_320px]",
+              : "lg:grid-cols-[88px_minmax(0,1fr)_300px] xl:grid-cols-[96px_minmax(0,1fr)_320px]",
           )}
         >
           {/* Left photo strip */}
           <aside
             className={cn(
               "hidden flex-col gap-2 lg:flex",
-              (wideCalendar || calendarOnly) && "!hidden",
+              wideCalendar && "!hidden",
             )}
           >
             {cover ? (

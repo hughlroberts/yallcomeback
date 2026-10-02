@@ -15,7 +15,6 @@ import {
   uploadPropertyImage,
 } from "@/app/actions/properties";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
-import { AdminListingSwitcher } from "@/components/admin-listing-switcher";
 import { IcalSetupAgent } from "@/components/ical-setup-agent";
 import { AdminListingInsights } from "@/components/admin-listing-insights";
 import { AdminAmenitiesEditor } from "@/components/admin-amenities-editor";
@@ -1022,38 +1021,8 @@ export default async function AdminPropertyDetailPage({
   const hostListings = await listHostInsightsOptions(property.hostId);
   const insightsInitial = await getListingInsights([property.id], 30);
 
-  const siblings = await prisma.property.findMany({
-    where: { hostId: property.hostId },
-    select: {
-      id: true,
-      title: true,
-      published: true,
-      listOnMarketplace: true,
-      images: {
-        take: 1,
-        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
-        select: { url: true },
-      },
-    },
-    orderBy: { title: "asc" },
-  });
-
   return (
-    <div className="flex w-full max-w-[1400px] flex-col gap-6 sm:flex-row sm:items-start">
-      {siblings.length > 1 ? (
-        <AdminListingSwitcher
-          listings={siblings.map((p) => ({
-            id: p.id,
-            title: p.title,
-            published: p.published,
-            listOnMarketplace: p.listOnMarketplace,
-            coverUrl: p.images[0]?.url || null,
-          }))}
-          activeId={property.id}
-          hrefFor={(id) => `/admin/properties/${id}`}
-        />
-      ) : null}
-      <div className="min-w-0 flex-1">
+    <div className="min-w-0">
       <AdminListingWorkspace
         emailVerified={emailVerified}
         property={{
@@ -1171,7 +1140,6 @@ export default async function AdminPropertyDetailPage({
           />
         }
       />
-      </div>
     </div>
   );
 }

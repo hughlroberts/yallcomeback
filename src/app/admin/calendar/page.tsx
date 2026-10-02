@@ -126,8 +126,8 @@ export default async function AdminCalendarPage({
   const agentEnabled = canUseIcalSetupAgent(property.host);
 
   return (
-    <div className="-mx-4 -my-8 flex min-h-[calc(100vh-8rem)] flex-col border-t border-slate-200/80 bg-[var(--background)] sm:-mx-6 lg:flex-row">
-      <div className="shrink-0 border-b border-slate-200/80 px-4 py-3 sm:px-5 lg:w-56 lg:border-b-0 lg:border-r lg:px-3 lg:py-5">
+    <div className="-mx-4 -my-8 flex min-h-[calc(100vh-8rem)] flex-col border-t border-slate-200/80 bg-[var(--background)] sm:-mx-6 lg:flex-row lg:items-start">
+      <div className="shrink-0 border-b border-slate-200/80 px-4 py-3 sm:px-5 lg:sticky lg:top-3 lg:z-10 lg:w-64 lg:self-start lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-3 lg:py-5">
         <AdminListingSwitcher
           stackFrom="lg"
           listings={listings.map((p) => ({

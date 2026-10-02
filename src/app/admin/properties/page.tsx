@@ -112,8 +112,7 @@ export default async function AdminPropertiesPage() {
               ? `/admin/properties/${p.id}/setup?step=2`
               : `/admin/properties/${p.id}`;
           const calendarHref = `/admin/calendar?property=${p.id}`;
-          const primaryHref =
-            p.title === "Untitled listing" ? editHref : calendarHref;
+          const primaryHref = editHref;
           const vis = visibilityFromFlags(p.published, p.listOnMarketplace);
 
           return (

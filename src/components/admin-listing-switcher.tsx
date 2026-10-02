@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { shortStayTitle } from "@/lib/stay-title";
+import {
+  visibilityFromFlags,
+  visibilityLabel,
+} from "@/lib/listing-visibility";
 import { cn } from "@/lib/utils";
 
 export type SwitcherListing = {
@@ -26,7 +30,7 @@ export function AdminListingSwitcher({
   const atLg = stackFrom === "lg";
 
   return (
-    <aside className={cn("w-full shrink-0", atLg ? "lg:w-52" : "sm:w-52")}>
+    <aside className={cn("w-full shrink-0", atLg ? "lg:w-60" : "sm:w-60")}>
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-stone-500">
         Your stays
       </p>
@@ -40,7 +44,8 @@ export function AdminListingSwitcher({
       >
         {listings.map((p) => {
           const active = p.id === activeId;
-          const on = p.published;
+          const vis = visibilityFromFlags(p.published, p.listOnMarketplace);
+          const on = vis !== "off";
           return (
             <Link
               key={p.id}
@@ -97,19 +102,19 @@ export function AdminListingSwitcher({
                 </span>
                 <span
                   className={cn(
-                    "mt-0.5 hidden items-center gap-1 text-[11px]",
-                    atLg ? "lg:inline-flex" : "sm:inline-flex",
+                    "mt-0.5 hidden items-start gap-1 text-[11px] leading-tight",
+                    atLg ? "lg:flex" : "sm:flex",
                     on ? "text-emerald-800" : "text-stone-500",
                   )}
                 >
                   <span
                     className={cn(
-                      "size-1.5 shrink-0 rounded-full",
+                      "mt-1 size-1.5 shrink-0 rounded-full",
                       on ? "bg-emerald-500" : "bg-stone-400",
                     )}
                     aria-hidden
                   />
-                  {on ? "On" : "Off"}
+                  <span>{visibilityLabel(vis)}</span>
                 </span>
               </span>
             </Link>

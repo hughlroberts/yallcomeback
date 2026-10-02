@@ -684,11 +684,15 @@ function Account({ article }: { article: HelpArticle }) {
           <Link href="/admin/calendar" className="font-semibold text-bonnet">
             Calendar
           </Link>{" "}
-          for availability, then{" "}
+          for availability,{" "}
+          <Link href="/admin/properties" className="font-semibold text-bonnet">
+            Listings
+          </Link>{" "}
+          to turn stays on or off and print fridge magnets, then{" "}
           <Link href="/admin/brand" className="font-semibold text-bonnet">
             Brand &amp; website
           </Link>
-          , bookings, messages, fridge magnets, tax, and earnings. Platform
+          , bookings, messages, tax, and earnings. Platform
           admins approve hosts and manage hosting plans with broader access.
         </HelpP>
       </HelpSection>
