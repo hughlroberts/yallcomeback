@@ -176,7 +176,10 @@ Cron fail-closed (prior P0-1) still holds in production.
 - Resume or cancel a paused Stripe hosting subscription when Ops moves $0 → paid.
 - Agent API contact-field policy.
 - LIMITED co-host vs brand money settings.
-- Push `.github/workflows/cron-hosting-payments.yml` (token lacks `workflow` scope).
+
+## Closed by decision
+
+- Hosting-payments GitHub Action: leave untracked; local `.github/workflows/cron-hosting-payments.yml` deleted. In-process Railway cron is primary. Tracked `cron.yml` already pings iCal + messages. Do not add a second GHA cron. Fold a daily hosting-payments ping into `cron.yml` only if Ops health later shows a missed day.
 
 ---
 

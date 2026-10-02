@@ -15,7 +15,7 @@ Review P1-5 (resume Stripe after complimentary), P1-7 (booking exclusion). Remai
 | /api/cron/* | unauth 401 | pass | fail closed |
 
 ## FINDINGS
-See QA_REPORT.md. Required P0/P1 from this loop are fixed. P1-6 closed by decision. P1-5, P1-7, and remaining P2/P3 flagged for review.
+See QA_REPORT.md. Required P0/P1 from this loop are fixed. P1-6 and the extra hosting-payments GHA cron closed by decision. P1-5, P1-7, and remaining P2/P3 flagged for review.
 
 ## COMMANDS
 typecheck: PASS
