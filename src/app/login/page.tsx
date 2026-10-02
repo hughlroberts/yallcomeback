@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { Button, Input, Label, Card } from "@/components/ui";
+import { homeAfterLogin } from "@/lib/login-home";
 import { safeInternalPath } from "@/lib/safe-redirect";
 import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 
@@ -21,11 +23,7 @@ export default async function LoginPage({
     "/",
   );
   if (session?.user) {
-    const roleHome =
-      session.user.role === "ADMIN" || session.user.role === "HOST"
-        ? "/admin/calendar"
-        : "/account/bookings";
-    redirect(safeInternalPath(sp.callbackUrl, roleHome));
+    redirect(homeAfterLogin(session.user.role, sp.callbackUrl));
   }
 
   async function loginAction(formData: FormData) {
@@ -44,11 +42,16 @@ export default async function LoginPage({
         `/login?error=rate&callbackUrl=${encodeURIComponent(next)}`,
       );
     }
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { role: true },
+    });
+    const dest = homeAfterLogin(user?.role, next);
     try {
       await signIn("credentials", {
         email,
         password,
-        redirectTo: next,
+        redirectTo: dest,
       });
     } catch (e) {
       // Auth.js throws NEXT_REDIRECT on success

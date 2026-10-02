@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth, signIn } from "@/lib/auth";
 import { Button, Input, Label, Card } from "@/components/ui";
+import { homeAfterLogin } from "@/lib/login-home";
 import { hashPassword } from "@/lib/password";
 import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 
@@ -13,7 +14,7 @@ export default async function RegisterPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const session = await auth();
-  if (session?.user) redirect("/account/bookings");
+  if (session?.user) redirect(homeAfterLogin(session.user.role));
   const sp = await searchParams;
 
   async function registerAction(formData: FormData) {
@@ -49,7 +50,7 @@ export default async function RegisterPage({
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/account/bookings",
+      redirectTo: homeAfterLogin("GUEST"),
     });
   }
 
