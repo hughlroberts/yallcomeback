@@ -214,20 +214,12 @@ export default async function AdminDashboard() {
           </Link>
         ) : null}
         {canViewEarnings(accessInfo) ? (
-          <>
-            <Link
-              href="/admin/earnings"
-              className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-            >
-              Earnings
-            </Link>
-            <Link
-              href="/admin/taxes"
-              className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-            >
-              Taxes
-            </Link>
-          </>
+          <Link
+            href="/admin/earnings"
+            className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+          >
+            Earnings
+          </Link>
         ) : null}
         <Link
           href="/admin/guest-messages"

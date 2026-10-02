@@ -352,7 +352,10 @@ function PricingSidebar({
                 Pet fee if pets (
                 {petFeeUnit === "PER_PET" ? "per pet" : "per stay"})
               </li>
-              <li>Host-wide tax rates (Admin → Taxes), not per listing</li>
+              <li>
+                Host-wide tax rates (Admin → Earnings → Tax records), not per
+                listing
+              </li>
             </ul>
           </div>
 

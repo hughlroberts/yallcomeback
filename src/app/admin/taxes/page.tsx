@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button, Card, Input, Label, Select } from "@/components/ui";
+import { EarningsShell } from "@/components/earnings/earnings-shell";
 import { saveTaxProfile } from "@/app/actions/tax";
+import {
+  canViewEarnings,
+  resolveHostAccessInfo,
+} from "@/lib/host-access";
 import {
   availableTaxYears,
   getTaxYearSummary,
@@ -12,7 +17,7 @@ import {
 import { formatMoney } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Taxes · Admin" };
+export const metadata = { title: "Earnings · Tax records" };
 
 const ENTITY_OPTIONS = [
   { value: "", label: "Not set" },
@@ -31,14 +36,24 @@ export default async function AdminTaxesPage({
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/taxes");
+  const info = resolveHostAccessInfo({
+    isPlatform: access.isPlatform,
+    hostId: access.hostId,
+    hostAccess: access.hostAccess,
+  });
+  if (!canViewEarnings(info)) {
+    redirect("/admin?error=limited");
+  }
   if (!access.hostId) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-semibold">Taxes</h1>
-        <p className="mt-2 text-sm text-stone-600">
+      <EarningsShell active="taxes">
+        <h2 className="text-[28px] font-semibold tracking-tight text-stone-900">
+          Tax records
+        </h2>
+        <p className="mt-2 text-sm text-stone-500">
           Pick a host brand first, then export tax worksheets for that brand.
         </p>
-      </div>
+      </EarningsShell>
     );
   }
 
@@ -78,10 +93,13 @@ export default async function AdminTaxesPage({
   ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <EarningsShell active="taxes">
+      <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-stone-900">Tax records</h1>
-        <p className="mt-1 text-sm text-stone-600">
+        <h2 className="text-[28px] font-semibold tracking-tight text-stone-900">
+          Tax records
+        </h2>
+        <p className="mt-2 text-sm text-stone-500">
           Bulk worksheets for {host.name}. Yall Come Back does not file federal
           or state tax for you. Download CSVs for your CPA or your own filing.
         </p>
@@ -244,6 +262,7 @@ export default async function AdminTaxesPage({
         </Link>
         .
       </p>
-    </div>
+      </div>
+    </EarningsShell>
   );
 }

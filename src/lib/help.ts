@@ -200,7 +200,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Taxes for hosts",
-    body: "Taxes are host-level only. You file and pay. Download year CSVs from Admin → Taxes.",
+    body: "Taxes are host-level only. You file and pay. Download year CSVs from Admin → Earnings → Tax records.",
     description:
       "How host-level taxes work on Yall Come Back. Export stay, occupancy, and income worksheets. You file and remit. The platform does not.",
     related: ["pricing", "payments", "account", "cancellation-policies"],

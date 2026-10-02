@@ -661,8 +661,8 @@ function Account({ article }: { article: HelpArticle }) {
             deposits, hosting invoices for hosts, and bookings.
           </li>
           <li>
-            <strong>Taxes</strong> — Hosts set tax lines in Admin. Guests see
-            tax amounts on quotes when hosts collect them.
+            <strong>Taxes</strong> — Hosts set tax lines in Admin → Earnings.
+            Guests see tax amounts on quotes when hosts collect them.
           </li>
           <li>
             <strong>Language and currency</strong> — Marketplace defaults are
@@ -1063,7 +1063,7 @@ function Taxes({ article }: { article: HelpArticle }) {
       extraRelated={[
         {
           href: "/admin/taxes",
-          title: "Admin → Taxes",
+          title: "Admin → Earnings → Tax records",
           description: "Year summaries and CSV exports for federal and state records.",
         },
         {
@@ -1165,7 +1165,7 @@ function Taxes({ article }: { article: HelpArticle }) {
           <li>
             Hosts: open{" "}
             <Link href="/admin/taxes" className="font-semibold text-bonnet">
-              Admin → Taxes
+              Admin → Earnings → Tax records
             </Link>{" "}
             to download year CSVs for stays, occupancy tax, and income received.
           </li>
@@ -1189,9 +1189,10 @@ function Taxes({ article }: { article: HelpArticle }) {
 
       <HelpSection title="Tax records and exports">
         <HelpP>
-          Admin → Taxes gives bulk CSV files for one calendar year. Yall Come
-          Back does not send Form 1099 or a state occupancy return. You (or
-          your tax professional) use the files with your own books.
+          Admin → Earnings → Tax records gives bulk CSV files for one calendar
+          year. Yall Come Back does not send Form 1099 or a state occupancy
+          return. You (or your tax professional) use the files with your own
+          books.
         </HelpP>
         <HelpUl>
           <li>

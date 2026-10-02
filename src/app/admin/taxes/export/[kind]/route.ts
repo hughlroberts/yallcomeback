@@ -12,6 +12,10 @@ import {
   summaryCsv,
 } from "@/lib/tax-records";
 import { prisma } from "@/lib/db";
+import {
+  canViewEarnings,
+  resolveHostAccessInfo,
+} from "@/lib/host-access";
 
 function yearFrom(req: NextRequest): number {
   const y = Number(req.nextUrl.searchParams.get("year"));
@@ -30,6 +34,14 @@ export async function GET(
   }
   if (!access.hostId) {
     return NextResponse.json({ error: "Pick a host brand first." }, { status: 400 });
+  }
+  const info = resolveHostAccessInfo({
+    isPlatform: access.isPlatform,
+    hostId: access.hostId,
+    hostAccess: access.hostAccess,
+  });
+  if (!canViewEarnings(info)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { kind } = await ctx.params;

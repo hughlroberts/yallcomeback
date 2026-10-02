@@ -3,7 +3,7 @@ import {
   BarChart3,
   CalendarDays,
   FileText,
-  Settings,
+  Receipt,
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,11 @@ const NAV = [
     label: "Reports",
     icon: FileText,
   },
+  {
+    href: "/admin/taxes",
+    label: "Tax records",
+    icon: Receipt,
+  },
 ] as const;
 
 export type EarningsNavId = (typeof NAV)[number]["href"];
@@ -40,7 +45,7 @@ export function EarningsShell({
   active,
   children,
 }: {
-  active: "performance" | "upcoming" | "paid" | "reports";
+  active: "performance" | "upcoming" | "paid" | "reports" | "taxes";
   children: React.ReactNode;
 }) {
   return (
@@ -81,19 +86,6 @@ export function EarningsShell({
               );
             })}
           </nav>
-
-          <div className="mx-3 hidden border-t border-slate-200/80 pt-3 lg:block">
-            <Link
-              href="/admin/taxes"
-              className="flex items-center gap-3 rounded-full px-3 py-2.5 text-[15px] font-medium text-slate-600 hover:bg-white/80 hover:text-slate-900"
-            >
-              <Settings
-                className="size-[18px] text-slate-500"
-                strokeWidth={1.75}
-              />
-              Tax records
-            </Link>
-          </div>
         </aside>
 
         {/* Main */}
