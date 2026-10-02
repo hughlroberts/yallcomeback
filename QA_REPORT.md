@@ -83,12 +83,17 @@ Cron fail-closed (prior P0-1) still holds in production.
 
 ---
 
+### P1 — Closed by decision
+
+#### P1-6 — JWT `role` / `hostId` refresh
+- **Where:** `src/lib/auth.ts` (`ROLE_REFRESH_MS = 5_000` on the Node jwt callback). Edge `auth.config.ts` has no DB.
+- **Decision (2026-10-02):** Done. Do not change the interval. Do not force re-login after Ops role changes. `/ops`, `requirePlatformAdmin`, `requireHostAdmin`, and the admin layout already DB-gate. Leftover cookie lag on a few message helpers is not a hole.
+
 ### P1 — Needs review (not shipped)
 
 | ID | Summary | Why it needs a call |
 |----|---------|---------------------|
 | **P1-5** | Leaving complimentary does not resume Stripe (`pause_collection: void` stays). Ops $0 → paid and the host “subscribe” button open Billing Portal instead of Checkout. | Resume vs cancel+new Checkout vs leave paused until they add a card. Do not invent extra Stripe resume/cancel behavior without you. |
-| **P1-6** | JWT `role` / `hostId` still only set at login. | Re-fetch on interval vs force re-login after Ops role changes. Historical; still true. |
 | **P1-7** | Booking double-submit race reduced (`$transaction` + re-check) but no DB exclusion constraint. | Full isolation needs a schema/constraint decision. |
 
 ---
@@ -157,7 +162,7 @@ Cron fail-closed (prior P0-1) still holds in production.
 | P1-3 HOST → Ops pricing | P1 | **fixed** |
 | P1-4 signup planId | P1 | **fixed** |
 | P1-5 resume Stripe after complimentary | P1 | **needs review** |
-| P1-6 JWT role refresh | P1 | **needs review** |
+| P1-6 JWT role refresh | P1 | **done** |
 | P1-7 booking exclusion constraint | P1 | **needs review** |
 | P2-1…P2-11 | P2 | **needs review** (wizard/copy/help/comps auth **fixed**) |
 | P3-1…P3-3 | P3 | **needs review** |
