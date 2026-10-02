@@ -30,12 +30,7 @@ export function AdminBrandSwitcher({
           <span className="font-semibold">Managing website</span>
           <span className="mx-1.5 text-amber-700/70">·</span>
           {active ? (
-            <>
-              <strong className="font-semibold">{active.name}</strong>
-              <span className="ml-1 text-xs text-amber-800/80">
-                ({active.slug})
-              </span>
-            </>
+            <strong className="font-semibold">{active.name}</strong>
           ) : (
             <span className="font-medium text-amber-900">
               Select a brand below — listings stay empty until you do (so brands
