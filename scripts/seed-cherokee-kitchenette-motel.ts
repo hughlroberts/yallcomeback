@@ -33,7 +33,12 @@ const SHARED = {
   longTermCancellationPolicy: "FIRM",
 };
 
-function imageRows(propertyId: string, folder: string, alts: string[]) {
+function imageRows(
+  propertyId: string,
+  folder: string,
+  alts: string[],
+  coverFile?: string,
+) {
   const dir = path.join(process.cwd(), "public", "seed", folder);
   const files = readdirSync(dir)
     .filter((f) => /\.jpe?g$/i.test(f))
@@ -43,6 +48,7 @@ function imageRows(propertyId: string, folder: string, alts: string[]) {
     url: `/seed/${folder}/${file}`,
     alt: alts[i] || `${folder} photo ${i + 1}`,
     sortOrder: i,
+    isCover: coverFile ? file === coverFile : i === 0,
   }));
 }
 
@@ -64,6 +70,7 @@ async function upsertListing(opts: {
   houseRules: string;
   imageFolder: string;
   imageAlts: string[];
+  imageCoverFile?: string;
   winterRate?: number;
 }) {
   const existing = await prisma.property.findFirst({
@@ -96,7 +103,12 @@ async function upsertListing(opts: {
     : await prisma.property.create({ data });
 
   await prisma.propertyImage.deleteMany({ where: { propertyId: property.id } });
-  const imgs = imageRows(property.id, opts.imageFolder, opts.imageAlts);
+  const imgs = imageRows(
+    property.id,
+    opts.imageFolder,
+    opts.imageAlts,
+    opts.imageCoverFile,
+  );
   if (imgs.length) {
     await prisma.propertyImage.createMany({ data: imgs });
   }
@@ -201,20 +213,13 @@ Hosted by Cherokee Landing — family-owned resort on Cedar Creek Lake.`;
     "Check-in after 3:00 PM\nMax 4 guests\n$10 per night each additional guest beyond 2\nPets allowed with fee\nNo parties\nQuiet hours after 10pm\nAsk about adjoining kitchenette for extra space";
 
   const kitchenetteAlts = [
-    "Queen bedroom",
-    "Second bed / sleeping area",
-    "Kitchenette",
-    "Dining area",
-    "Bedroom with lake-resort furnishings",
-    "Kitchenette unit exterior",
-    "Bathroom",
-    "Patio picnic table",
-    "Covered patio",
-    "Patio seating",
-    "Outdoor chairs",
-    "Patio umbrella",
-    "Green patio table",
-    "Outdoor lounge",
+    "Daybed in the blue bedroom",
+    "Kitchenette fridge and bathroom",
+    "Living area looking into the bedroom",
+    "Queen bedroom with cabin quilt",
+    "Dining table and living area",
+    "Kitchenette rooms from the lawn",
+    "Boardwalk along the kitchenette rooms toward the lake",
   ];
 
   const motelAlts = [
@@ -246,6 +251,7 @@ Hosted by Cherokee Landing — family-owned resort on Cedar Creek Lake.`;
         houseRules: kitchenetteRules,
         imageFolder: "kitchenette",
         imageAlts: kitchenetteAlts,
+        imageCoverFile: "02.jpg",
         winterRate: 90,
       }),
     );
