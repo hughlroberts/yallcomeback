@@ -565,11 +565,16 @@ Hosted by Hugh & Charlotte Roberts - family-owned resort on Cedar Creek Lake.`,
 
   await prisma.propertyImage.createMany({
     data: imgs(lowerEagles.id, [
-      { path: "/seed/lower-eagles/01.jpg", alt: "Lower Eagles Nest exterior" },
-      { path: "/seed/lower-eagles/02.jpg", alt: "Bedroom with queen bed" },
-      { path: "/seed/lower-eagles/03.jpg", alt: "Second bedroom" },
-      { path: "/seed/lower-eagles/04.jpg", alt: "Open kitchen and living" },
-      { path: "/seed/lower-eagles/05.jpg", alt: "Covered patio by the lake" },
+      { path: "/seed/lower-eagles/01.jpg", alt: "Covered patio looking toward the lake" },
+      { path: "/seed/lower-eagles/02.jpg", alt: "Lake, dock, and grill from the patio" },
+      { path: "/seed/lower-eagles/03.jpg", alt: "Front door and patio seating" },
+      { path: "/seed/lower-eagles/04.jpg", alt: "Kitchen and dining" },
+      { path: "/seed/lower-eagles/05.jpg", alt: "Kitchen" },
+      { path: "/seed/lower-eagles/06.jpg", alt: "Living room" },
+      { path: "/seed/lower-eagles/07.jpg", alt: "Bathroom with tub" },
+      { path: "/seed/lower-eagles/08.jpg", alt: "Bathroom vanity" },
+      { path: "/seed/lower-eagles/09.jpg", alt: "Bedroom" },
+      { path: "/seed/lower-eagles/10.jpg", alt: "Second bedroom" },
     ]),
   });
 
