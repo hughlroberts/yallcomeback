@@ -64,7 +64,10 @@ async function main() {
     const results = [];
     for (const property of properties) {
       await prisma.propertyImage.deleteMany({
-        where: { propertyId: property.id },
+        where: {
+          propertyId: property.id,
+          NOT: { url: { startsWith: "/seed/cherokee-shared/" } },
+        },
       });
       await prisma.propertyImage.createMany({
         data: PHOTOS.map((p, i) => ({
@@ -75,6 +78,19 @@ async function main() {
           isCover: p.isCover,
         })),
       });
+      const shared = await prisma.propertyImage.findMany({
+        where: {
+          propertyId: property.id,
+          url: { startsWith: "/seed/cherokee-shared/" },
+        },
+        orderBy: { sortOrder: "asc" },
+      });
+      for (let i = 0; i < shared.length; i++) {
+        await prisma.propertyImage.update({
+          where: { id: shared[i].id },
+          data: { sortOrder: PHOTOS.length + i, isCover: false },
+        });
+      }
       const images = await prisma.propertyImage.findMany({
         where: { propertyId: property.id },
         select: { url: true, isCover: true, sortOrder: true },

@@ -660,11 +660,14 @@ Hosted by Hugh & Charlotte Roberts.`,
 
   await prisma.propertyImage.createMany({
     data: imgs(backEagles.id, [
-      { path: "/seed/back-eagles/01.jpg", alt: "Back Eagles Nest living area" },
-      { path: "/seed/back-eagles/02.jpg", alt: "Bedroom with queen bed" },
-      { path: "/seed/back-eagles/03.jpg", alt: "Kitchenette and dining" },
-      { path: "/seed/back-eagles/04.jpg", alt: "Private patio seating" },
-      { path: "/seed/back-eagles/05.jpg", alt: "Outdoor space with grill" },
+      { path: "/seed/back-eagles/01.jpg", alt: "Cabin exterior and covered porch" },
+      { path: "/seed/back-eagles/02.jpg", alt: "Lake and dock from the porch" },
+      { path: "/seed/back-eagles/03.jpg", alt: "Kitchenette and living area from the door" },
+      { path: "/seed/back-eagles/04.jpg", alt: "Living area with sofa and lighthouse shelf" },
+      { path: "/seed/back-eagles/05.jpg", alt: "Living area looking toward the front door" },
+      { path: "/seed/back-eagles/06.jpg", alt: "Bathroom with shower" },
+      { path: "/seed/back-eagles/07.jpg", alt: "Bedroom with queen bed" },
+      { path: "/seed/back-eagles/08.jpg", alt: "Kitchenette looking into the bathroom" },
     ]),
   });
 

@@ -285,6 +285,12 @@ Questions? Message us from your listing or booking.`,
       images: [
         "/seed/back-eagles/01.jpg",
         "/seed/back-eagles/02.jpg",
+        "/seed/back-eagles/03.jpg",
+        "/seed/back-eagles/04.jpg",
+        "/seed/back-eagles/05.jpg",
+        "/seed/back-eagles/06.jpg",
+        "/seed/back-eagles/07.jpg",
+        "/seed/back-eagles/08.jpg",
       ],
     }),
   ]);
