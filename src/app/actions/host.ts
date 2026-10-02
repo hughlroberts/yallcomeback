@@ -20,6 +20,13 @@ import {
 } from "@/lib/hosting";
 import { parseSitePublishState } from "@/lib/host-site";
 import { normalizeCustomDomain } from "@/lib/custom-domains";
+import {
+  FIRST_LISTING_PATH,
+  destAfterHostAuth,
+  hostRecordName,
+  signupNeedsBrandFields,
+  uniqueHostSlug,
+} from "@/lib/host-signup";
 
 function parseSitePresence(raw: string): HostSitePresence {
   if (raw === "CUSTOM" || raw === "BOTH" || raw === "STAYLOCAL") return raw;
@@ -44,13 +51,6 @@ export async function registerHost(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
-  const displayName = String(formData.get("displayName") || "").trim();
-  const slugRaw = String(formData.get("slug") || displayName);
-  const tagline = String(formData.get("tagline") || "").trim() || null;
-  const websiteUrl = normalizeWebsiteUrl(
-    String(formData.get("websiteUrl") || ""),
-  );
-  const slug = slugify(slugRaw);
 
   const ip = await incomingIp();
   if (!rateLimitAllow(`host-register:ip:${ip}`, 5, 60 * 60 * 1000)) {
@@ -61,7 +61,7 @@ export async function registerHost(formData: FormData) {
       error: "You must agree to the Terms of Service and Privacy Policy.",
     };
   }
-  if (!name || !email || !password || !displayName || !slug) {
+  if (!name || !email || !password) {
     return { error: "Please fill in all required fields." };
   }
   if (password.length < 8) {
@@ -76,11 +76,6 @@ export async function registerHost(formData: FormData) {
           ? "You already have an account. Sign in, then choose Start hosting."
           : "An account with that email already exists. Sign in to open Host admin.",
     };
-  }
-
-  const existingHost = await prisma.host.findUnique({ where: { slug } });
-  if (existingHost) {
-    return { error: "That URL name is already taken. Try another." };
   }
 
   const passwordHash = await hashPassword(password);
@@ -98,6 +93,32 @@ export async function registerHost(formData: FormData) {
   );
   const sitePresence = opted.sitePresence;
   const listOnMarketplace = opted.listOnMarketplace;
+  const needsBrand = signupNeedsBrandFields({ hostingMode, sitePresence });
+  const displayName = hostRecordName({
+    personalName: name,
+    brandName: String(formData.get("displayName") || ""),
+    needsBrand,
+  });
+  if (!displayName) {
+    return {
+      error: needsBrand
+        ? "Add a brand or business name for your website."
+        : "Please fill in all required fields.",
+    };
+  }
+  const tagline = needsBrand
+    ? String(formData.get("tagline") || "").trim() || null
+    : null;
+  const websiteUrl = needsBrand
+    ? normalizeWebsiteUrl(String(formData.get("websiteUrl") || ""))
+    : null;
+  const slugRaw = needsBrand
+    ? String(formData.get("slug") || displayName).trim()
+    : displayName;
+  if (needsBrand && !slugify(slugRaw)) {
+    return { error: "Add a URL name for your website." };
+  }
+  const slug = await uniqueHostSlug(slugRaw);
 
   if (
     (sitePresence === "CUSTOM" || sitePresence === "BOTH" || hostingMode === "SELF") &&
@@ -123,7 +144,6 @@ export async function registerHost(formData: FormData) {
   }
 
   const wantsSetup = formData.get("setupService") === "1";
-  const collectGuestCards = formData.get("collectGuestCards") === "1";
 
   let userId = "";
   await prisma.$transaction(async (tx) => {
@@ -183,17 +203,10 @@ export async function registerHost(formData: FormData) {
     console.error("[auth] host signup email failed", err);
   }
 
-  const dest =
-    hostingMode === "SELF"
-      ? "/admin/calendar?welcome=1"
-      : collectGuestCards
-        ? "/account/settings/subscription?welcome=1&collectCards=1"
-        : "/account/settings/subscription?welcome=1";
-
   await signIn("credentials", {
     email,
     password,
-    redirectTo: dest,
+    redirectTo: FIRST_LISTING_PATH,
   });
   return {
     error:
@@ -218,26 +231,16 @@ export async function startHosting(formData: FormData) {
   if (!user) redirect("/login?callbackUrl=/for-hosts");
   if (user.role === "ADMIN") redirect("/ops/hosting");
   if (user.role === "HOST" && user.hostId) {
-    redirect("/account/settings/subscription?welcome=1");
+    redirect(
+      await destAfterHostAuth({
+        role: user.role,
+        hostId: user.hostId,
+      }),
+    );
   }
 
   if (formData.get("acceptTerms") !== "on") {
     return { error: "You must agree to the Terms of Service and Privacy Policy." };
-  }
-
-  const displayName = String(formData.get("displayName") || "").trim();
-  const slugRaw = String(formData.get("slug") || displayName);
-  const slug = slugify(slugRaw);
-  const tagline = String(formData.get("tagline") || "").trim() || null;
-  const websiteUrl = normalizeWebsiteUrl(
-    String(formData.get("websiteUrl") || ""),
-  );
-  if (!displayName || !slug) {
-    return { error: "Add a host / brand name and URL name." };
-  }
-  const existingHost = await prisma.host.findUnique({ where: { slug } });
-  if (existingHost) {
-    return { error: "That URL name is already taken. Try another." };
   }
 
   const hostingModeRaw = String(formData.get("hostingMode") || "PLATFORM");
@@ -252,6 +255,32 @@ export async function startHosting(formData: FormData) {
   );
   const sitePresence = opted.sitePresence;
   const listOnMarketplace = opted.listOnMarketplace;
+  const needsBrand = signupNeedsBrandFields({ hostingMode, sitePresence });
+  const displayName = hostRecordName({
+    personalName: user.name || user.email.split("@")[0] || "",
+    brandName: String(formData.get("displayName") || ""),
+    needsBrand,
+  });
+  if (!displayName) {
+    return {
+      error: needsBrand
+        ? "Add a brand or business name for your website."
+        : "Add your name on this account first.",
+    };
+  }
+  const tagline = needsBrand
+    ? String(formData.get("tagline") || "").trim() || null
+    : null;
+  const websiteUrl = needsBrand
+    ? normalizeWebsiteUrl(String(formData.get("websiteUrl") || ""))
+    : null;
+  const slugRaw = needsBrand
+    ? String(formData.get("slug") || displayName).trim()
+    : displayName;
+  if (needsBrand && !slugify(slugRaw)) {
+    return { error: "Add a URL name for your website." };
+  }
+  const slug = await uniqueHostSlug(slugRaw);
   const wantsSetup = formData.get("setupService") === "1";
 
   let resolvedPlanId: string | null = null;
@@ -324,14 +353,7 @@ export async function startHosting(formData: FormData) {
     console.error("[auth] start hosting email failed", err);
   }
 
-  const collectGuestCards = formData.get("collectGuestCards") === "1";
-  redirect(
-    hostingMode === "PLATFORM"
-      ? collectGuestCards
-        ? "/account/settings/subscription?welcome=1&collectCards=1"
-        : "/account/settings/subscription?welcome=1"
-      : "/admin/calendar?welcome=1",
-  );
+  redirect(FIRST_LISTING_PATH);
 }
 
 const HOST_PROFILE_PATH = "/admin";

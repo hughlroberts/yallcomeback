@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { HostSignupForm } from "@/components/HostSignupForm";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { destAfterHostAuth } from "@/lib/host-signup";
 import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
@@ -83,7 +84,12 @@ export default async function ForHostsPage({
     (signedInUser.role === "HOST" || signedInUser.role === "ADMIN") &&
     signedInUser.hostId
   ) {
-    redirect("/account/settings/subscription?welcome=1");
+    redirect(
+      await destAfterHostAuth({
+        role: signedInUser.role,
+        hostId: signedInUser.hostId,
+      }),
+    );
   }
 
   // Public catalog only — complimentary ($0) plans are platform-assigned in Ops

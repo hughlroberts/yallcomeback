@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth, signIn } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button, Input, Label, Card } from "@/components/ui";
-import { homeAfterLogin } from "@/lib/login-home";
+import { destAfterHostAuth, FIRST_LISTING_PATH } from "@/lib/host-signup";
 import { safeInternalPath } from "@/lib/safe-redirect";
 import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 
@@ -17,13 +17,17 @@ export default async function LoginPage({
   const sp = await searchParams;
   const callbackUrl = safeInternalPath(
     sp.callbackUrl ||
-      (sp.registered === "host"
-        ? "/account/settings/subscription?welcome=1"
-        : undefined),
+      (sp.registered === "host" ? FIRST_LISTING_PATH : undefined),
     "/",
   );
   if (session?.user) {
-    redirect(homeAfterLogin(session.user.role, sp.callbackUrl));
+    redirect(
+      await destAfterHostAuth({
+        role: session.user.role,
+        hostId: session.user.hostId,
+        callback: sp.callbackUrl || callbackUrl,
+      }),
+    );
   }
 
   async function loginAction(formData: FormData) {
@@ -44,9 +48,13 @@ export default async function LoginPage({
     }
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { role: true },
+      select: { role: true, hostId: true },
     });
-    const dest = homeAfterLogin(user?.role, next);
+    const dest = await destAfterHostAuth({
+      role: user?.role,
+      hostId: user?.hostId,
+      callback: next,
+    });
     try {
       await signIn("credentials", {
         email,
@@ -79,8 +87,7 @@ export default async function LoginPage({
 
         {sp.registered === "host" ? (
           <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900">
-            Host account created. Sign in, then add a card under Payments to go
-            live.
+            Host account created. Sign in, then add your first listing.
           </p>
         ) : null}
         {sp.error === "rate" ? (

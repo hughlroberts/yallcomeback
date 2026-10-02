@@ -15,7 +15,7 @@ export const metadata = { title: "Create listing" };
 export default async function NewListingWizardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ importUrl?: string }>;
+  searchParams: Promise<{ importUrl?: string; welcome?: string }>;
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/properties/new");
@@ -81,6 +81,14 @@ export default async function NewListingWizardPage({
             ? "Import from Airbnb/VRBO in one step, or start a blank wizard."
             : "Start a blank wizard."}
         </p>
+        {sp.welcome === "1" ? (
+          <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+            Welcome — this is the first stay. Import one you already have, or
+            start from scratch. Confirm your email before you publish. Add a
+            hosting card under Account → Subscription when guests should be
+            able to book.
+          </p>
+        ) : null}
       </div>
 
       {showImport ? (

@@ -38,9 +38,6 @@ export function HostSignupForm({
   const [path, setPath] = useState<Path>(initialPath);
   const [paidPlan, setPaidPlan] = useState<PaidPlan>(initialPlan);
   const [listOnMarketplace, setListOnMarketplace] = useState(true);
-  const [collectGuestCards, setCollectGuestCards] = useState<
-    "yes" | "skip" | ""
-  >("");
 
   const marketplacePlanId =
     plans.find((p) => p.slug === "marketplace")?.id ||
@@ -58,6 +55,8 @@ export function HostSignupForm({
     paidPlan === "marketplace"
       ? marketplacePlanId || brandedPlanId
       : brandedPlanId;
+
+  const showBrandFields = path === "self" || paidPlan === "website";
 
   async function onSubmit(formData: FormData) {
     setPending(true);
@@ -78,16 +77,6 @@ export function HostSignupForm({
       formData.set("listOnMarketplace", "1");
     } else {
       formData.delete("listOnMarketplace");
-    }
-    if (!collectGuestCards) {
-      setError("Choose whether to collect guest cards now.");
-      setPending(false);
-      return;
-    }
-    if (collectGuestCards === "yes") {
-      formData.set("collectGuestCards", "1");
-    } else {
-      formData.delete("collectGuestCards");
     }
     if (existingAccount) {
       const result = await startHosting(formData);
@@ -117,8 +106,8 @@ export function HostSignupForm({
         {path === "self"
           ? "Deploy on your domain at no monthly platform fee. Marketplace listing is optional — you choose."
           : existingAccount
-            ? `Continue as ${existingAccount.email}. Add a card after this to go live.`
-            : "Put your stays and calendar here. Add a card to subscribe. Listings go live when hosting is paid."}
+            ? `Continue as ${existingAccount.email}. Next you will add your first listing.`
+            : "Create your account, then add your first listing. Confirm your email before you publish."}
       </p>
 
       <div className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
@@ -142,41 +131,6 @@ export function HostSignupForm({
             />
           </>
         )}
-        <Field
-          label="Host / brand name"
-          name="displayName"
-          required
-          placeholder="Lakeside Cabins"
-        />
-        <Field
-          label="URL name"
-          name="slug"
-          required
-          placeholder="lakeside-cabins"
-          hint="Letters, numbers, and hyphens. Used in /h/your-name."
-        />
-        <Field
-          label="Tagline"
-          name="tagline"
-          placeholder="Quiet cabins on the water"
-        />
-        <Field
-          label={
-            path === "self"
-              ? "Your website URL (where you'll deploy)"
-              : "Your website URL (if you have one)"
-          }
-          name="websiteUrl"
-          type="url"
-          placeholder="https://www.example.com"
-          hint={
-            path === "self"
-              ? "Your site URL after you point DNS at your deploy"
-              : paidPlan === "website"
-                ? "Optional now — add your domain later in Brand & website"
-                : "Optional. Marketplace-only hosts do not need a custom domain."
-          }
-        />
 
         {path === "paid" ? (
           <>
@@ -193,12 +147,12 @@ export function HostSignupForm({
                   {
                     id: "marketplace" as const,
                     label: "Marketplace only · $5/listing/mo",
-                    hint: "Find a Place listing URLs. No branded site, logo, or About page.",
+                    hint: "Your stay on Find a Place. Use your name — no brand website to set up.",
                   },
                   {
                     id: "website" as const,
                     label: "Branded website · $25/mo",
-                    hint: "Your site and domain. $25 covers every listing. Marketplace included — uncheck below to opt out of Find a Place.",
+                    hint: "Your own site and domain. $25 covers every listing. We will ask for a brand name next.",
                   },
                 ] as const
               ).map((opt) => (
@@ -227,6 +181,13 @@ export function HostSignupForm({
                 </label>
               ))}
             </fieldset>
+            {paidPlan === "marketplace" ? (
+              <p className="rounded-xl bg-stone-50 px-3 py-2 text-xs text-stone-600">
+                Listing title, photos, and address come next — after this
+                account is created. Hosting is billed when the listing is
+                published.
+              </p>
+            ) : null}
           </>
         ) : (
           <div className="space-y-3">
@@ -251,6 +212,46 @@ export function HostSignupForm({
           </div>
         )}
 
+        {showBrandFields ? (
+          <>
+            <Field
+              label="Brand / business name"
+              name="displayName"
+              required
+              placeholder="Lakeside Cabins"
+              hint="On your website. Use your own name if you host as yourself."
+            />
+            <Field
+              label="URL name"
+              name="slug"
+              required
+              placeholder="lakeside-cabins"
+              hint="Letters, numbers, and hyphens. Used in /h/your-name."
+            />
+            <Field
+              label="Tagline"
+              name="tagline"
+              placeholder="Quiet cabins on the water"
+              hint="Optional. Shown on your website, not on each listing."
+            />
+            <Field
+              label={
+                path === "self"
+                  ? "Your website URL (where you'll deploy)"
+                  : "Your website URL (if you have one)"
+              }
+              name="websiteUrl"
+              type="url"
+              placeholder="https://www.example.com"
+              hint={
+                path === "self"
+                  ? "Your site URL after you point DNS at your deploy"
+                  : "Optional now — add your domain later in Brand & website"
+              }
+            />
+          </>
+        ) : null}
+
         {path === "paid" && paidPlan === "marketplace" ? null : (
           <label className="flex items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-700">
             <input
@@ -271,38 +272,6 @@ export function HostSignupForm({
             </span>
           </label>
         )}
-
-        <fieldset className="space-y-1.5">
-          <legend className="text-sm font-medium text-stone-800">
-            Collect guest cards?
-          </legend>
-          <label className="flex cursor-pointer items-start gap-2 text-sm">
-            <input
-              type="radio"
-              name="collectGuestCards"
-              value="yes"
-              required
-              checked={collectGuestCards === "yes"}
-              onChange={() => setCollectGuestCards("yes")}
-              className="mt-1"
-            />
-            <span className="font-medium text-stone-900">
-              Yes, remind me after I subscribe
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-2 text-sm">
-            <input
-              type="radio"
-              name="collectGuestCards"
-              value="skip"
-              required
-              checked={collectGuestCards === "skip"}
-              onChange={() => setCollectGuestCards("skip")}
-              className="mt-1"
-            />
-            <span className="font-medium text-stone-900">Skip for now</span>
-          </label>
-        </fieldset>
 
         <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-honey/50 bg-honey/10 px-3 py-2.5 text-sm text-stone-800">
           <input
@@ -357,8 +326,8 @@ export function HostSignupForm({
           : path === "self"
             ? "Start free self-host"
             : existingAccount
-              ? "Start hosting on this account"
-              : "Create host account"}
+              ? "Start hosting and add a listing"
+              : "Create account and add a listing"}
       </button>
 
       <p className="mt-5 border-t border-stone-100 pt-4 text-center text-xs text-stone-500">
