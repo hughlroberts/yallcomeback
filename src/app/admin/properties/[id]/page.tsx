@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import {
   updateProperty,
@@ -113,7 +113,7 @@ export default async function AdminPropertyDetailPage({
       },
     },
   });
-  if (!property) notFound();
+  if (!property) redirect("/admin/properties");
 
   const hostListingCount = await prisma.property.count({
     where: { hostId: property.hostId },

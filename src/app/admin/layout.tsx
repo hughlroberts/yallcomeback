@@ -17,6 +17,7 @@ import {
   resolveHostAccessInfo,
 } from "@/lib/host-access";
 import { DASHBOARD_NEST_PREFIXES } from "@/lib/dashboard-nest";
+import { adminBrandSwitchPath } from "@/lib/admin-brand-path";
 import Link from "next/link";
 
 export default async function AdminLayout({
@@ -114,7 +115,9 @@ export default async function AdminLayout({
     h.get("x-invoke-path") ||
     h.get("next-url") ||
     "/admin";
-  const returnTo = path.startsWith("/admin") ? path.split("?")[0]! : "/admin";
+  const returnTo = adminBrandSwitchPath(
+    path.startsWith("/admin") ? path.split("?")[0]! : "/admin/calendar",
+  );
 
   return (
     <div className="flex min-h-[calc(100vh-3.75rem)] flex-col bg-[var(--background)]">

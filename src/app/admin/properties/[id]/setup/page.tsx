@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { assertPropertyAccess, ensureHostAccess } from "@/lib/scope";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
@@ -39,7 +39,11 @@ export default async function ListingSetupPage({
   const { id } = await params;
   const sp = await searchParams;
   const access = await ensureHostAccess();
-  await assertPropertyAccess(id, access);
+  try {
+    await assertPropertyAccess(id, access);
+  } catch {
+    redirect("/admin/properties");
+  }
 
   const property = await prisma.property.findUnique({
     where: { id },
@@ -51,7 +55,7 @@ export default async function ListingSetupPage({
       },
     },
   });
-  if (!property) notFound();
+  if (!property) redirect("/admin/properties");
 
   const stepRaw = sp.step || "2";
   const step = stepRaw === "done" ? "done" : Number(stepRaw);

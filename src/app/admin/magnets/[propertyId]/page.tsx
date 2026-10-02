@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
@@ -51,7 +51,7 @@ export default async function AdminMagnetPrintPage({
   try {
     await assertPropertyAccess(propertyId, access);
   } catch {
-    notFound();
+    redirect("/admin/properties");
   }
 
   const property = await prisma.property.findUnique({
@@ -67,7 +67,7 @@ export default async function AdminMagnetPrintPage({
       },
     },
   });
-  if (!property) notFound();
+  if (!property) redirect("/admin/properties");
 
   const hasHostWebsite = Boolean(property.host.websiteUrl?.trim());
   // Default: host site when they have one (they own the guest); else YCB marketplace

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ADMIN_BRAND_COOKIE } from "@/lib/admin-brand-cookie";
+import { adminBrandSwitchPath } from "@/lib/admin-brand-path";
 
 /**
  * Platform admin: scope /admin to one host brand (Cherokee vs Hugh, etc.).
@@ -16,11 +17,8 @@ export async function setAdminBrandContext(formData: FormData) {
   if (!session) redirect("/login?callbackUrl=/admin");
 
   const hostId = String(formData.get("hostId") || "").trim();
-  const returnTo = String(formData.get("returnTo") || "/admin").trim();
-  const safeReturn =
-    returnTo.startsWith("/admin") || returnTo.startsWith("/ops")
-      ? returnTo
-      : "/admin";
+  const returnTo = String(formData.get("returnTo") || "/admin/calendar").trim();
+  const safeReturn = adminBrandSwitchPath(returnTo);
 
   const jar = await cookies();
 
