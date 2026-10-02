@@ -144,7 +144,7 @@ export default async function AdminPropertiesPage() {
                   bookings
                 </p>
               </Link>
-              <div className="w-full max-w-sm shrink-0 sm:w-64">
+              <div className="flex w-full min-w-0 flex-wrap items-end gap-2 sm:w-auto">
                 <ListingVisibilityForm
                   propertyId={p.id}
                   published={p.published}
@@ -153,8 +153,6 @@ export default async function AdminPropertiesPage() {
                   compact
                   emailVerified={emailVerified}
                 />
-              </div>
-              <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">
                 {p.title === "Untitled listing" ? null : (
                   <Link
                     href={calendarHref}

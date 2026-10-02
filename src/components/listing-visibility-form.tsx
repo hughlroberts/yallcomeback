@@ -86,7 +86,7 @@ export function ListingVisibilityForm({
   const selected = OPTIONS.find((opt) => opt.value === current);
 
   return (
-    <div className={cn("min-w-0", compact ? "w-full max-w-xs" : "w-full sm:max-w-sm")}>
+    <div className={cn("min-w-0", compact ? "w-auto min-w-[13.5rem] max-w-xs" : "w-full sm:max-w-sm")}>
       <Label
         htmlFor={`visibility-${propertyId}`}
         className={cn(compact && "text-xs uppercase tracking-wide text-stone-500")}
