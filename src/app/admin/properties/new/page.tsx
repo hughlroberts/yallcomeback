@@ -4,6 +4,10 @@ import { ListingImportAgent } from "@/components/listing-import-agent";
 import { ListingWizardTypeStep } from "@/components/listing-wizard-type-step";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  canUseListingImportAgent,
+  isListingImportAgentEnabled,
+} from "@/lib/platform-features";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Create listing" };
@@ -27,18 +31,20 @@ export default async function NewListingWizardPage({
   if (!canCreateListings(info)) {
     redirect("/admin/properties?error=limited");
   }
-  if (access.hostId && !access.isPlatform) {
+  const currentHost = access.hostId
+    ? await prisma.host.findUnique({
+        where: { id: access.hostId },
+        select: {
+          active: true,
+          hostingMode: true,
+          approvalStatus: true,
+          subscriptionStatus: true,
+        },
+      })
+    : null;
+  if (access.hostId && !access.isPlatform && currentHost) {
     const { canHostAddFutureWork } = await import("@/lib/hosting");
-    const host = await prisma.host.findUnique({
-      where: { id: access.hostId },
-      select: {
-        active: true,
-        hostingMode: true,
-        approvalStatus: true,
-        subscriptionStatus: true,
-      },
-    });
-    if (host && !canHostAddFutureWork(host)) {
+    if (!canHostAddFutureWork(currentHost)) {
       redirect("/admin/properties?error=paused");
     }
   }
@@ -49,10 +55,14 @@ export default async function NewListingWizardPage({
     ? await prisma.host.findMany({
         where: { active: true },
         orderBy: { name: "asc" },
-        select: { id: true, name: true },
+        select: { id: true, name: true, hostingMode: true },
       })
     : [];
 
+  const showImport =
+    isListingImportAgentEnabled() &&
+    (access.isPlatform || canUseListingImportAgent(currentHost));
+  const importHosts = hosts.filter((h) => h.hostingMode === "PLATFORM");
   const defaultImportUrl = sp.importUrl?.trim() || "";
 
   return (
@@ -67,26 +77,32 @@ export default async function NewListingWizardPage({
           Create a listing
         </h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Import from Airbnb/VRBO in one step, or start a blank wizard.
+          {showImport
+            ? "Import from Airbnb/VRBO in one step, or start a blank wizard."
+            : "Start a blank wizard."}
         </p>
       </div>
 
-      <ListingImportAgent
-        hostId={access.hostId || undefined}
-        hosts={hosts}
-        defaultUrl={defaultImportUrl}
-      />
+      {showImport ? (
+        <ListingImportAgent
+          hostId={access.hostId || undefined}
+          hosts={importHosts}
+          defaultUrl={defaultImportUrl}
+        />
+      ) : null}
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden>
-          <div className="w-full border-t border-hairline" />
+      {showImport ? (
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden>
+            <div className="w-full border-t border-hairline" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-[var(--background)] px-3 text-xs font-medium uppercase tracking-wide text-ink-muted">
+              Or start from scratch
+            </span>
+          </div>
         </div>
-        <div className="relative flex justify-center">
-          <span className="bg-[var(--background)] px-3 text-xs font-medium uppercase tracking-wide text-ink-muted">
-            Or start from scratch
-          </span>
-        </div>
-      </div>
+      ) : null}
 
       <div className="overflow-hidden rounded-2xl border border-hairline bg-white">
         <ListingWizardTypeStep

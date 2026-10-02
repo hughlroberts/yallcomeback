@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import { agentSearch } from "@/lib/agent/search";
 
@@ -9,6 +10,8 @@ export const dynamic = "force-dynamic";
  * GET /api/v1/search?location=Cedar+Creek&checkIn=2026-08-15&checkOut=2026-08-18&flexible=true&flexibilityDays=3
  */
 export async function GET(req: NextRequest) {
+  const disabled = agentApiDisabledResponse();
+  if (disabled) return disabled;
   const sp = req.nextUrl.searchParams;
   const origin = publicOrigin(req);
 
@@ -116,6 +119,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function OPTIONS() {
+  const disabled = agentApiDisabledResponse();
+  if (disabled) return disabled;
   return new NextResponse(null, {
     status: 204,
     headers: {

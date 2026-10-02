@@ -10,6 +10,10 @@ import {
 import { fetchListingFromUrl } from "@/lib/listing-import/fetch";
 import { downloadListingImages } from "@/lib/listing-import/images";
 import type { ImportedListingDraft } from "@/lib/listing-import/types";
+import {
+  canUseListingImportAgent,
+  isListingImportAgentEnabled,
+} from "@/lib/platform-features";
 
 export type ListingImportPreview = ImportedListingDraft & {
   previewOk: true;
@@ -20,7 +24,25 @@ export async function previewListingImport(formData: FormData): Promise<
   | { previewOk: false; error: string }
 > {
   try {
-    await ensureHostAccess();
+    const access = await ensureHostAccess();
+    if (!isListingImportAgentEnabled()) {
+      return {
+        previewOk: false,
+        error: "Listing import is included with paid platform hosting.",
+      };
+    }
+    if (access.hostId) {
+      const host = await prisma.host.findUnique({
+        where: { id: access.hostId },
+        select: { hostingMode: true },
+      });
+      if (!canUseListingImportAgent(host)) {
+        return {
+          previewOk: false,
+          error: "Listing import is included with paid platform hosting.",
+        };
+      }
+    }
     const url = String(formData.get("url") || "").trim();
     if (!url) return { previewOk: false, error: "Paste an Airbnb or VRBO URL." };
     const draft = await fetchListingFromUrl(url);
@@ -49,11 +71,17 @@ export async function importListingFromUrl(
     const hostId = await resolveHostIdForCreate(access, formData);
     const { assertHostAllowsFutureWork } = await import("@/lib/hosting");
     await assertHostAllowsFutureWork(hostId, { bypass: access.isPlatform });
+    const host = await prisma.host.findUniqueOrThrow({ where: { id: hostId } });
+    if (!canUseListingImportAgent(host)) {
+      return {
+        ok: false,
+        error: "Listing import is included with paid platform hosting.",
+      };
+    }
     const url = String(formData.get("url") || "").trim();
     if (!url) return { ok: false, error: "URL required" };
 
     const draft = await fetchListingFromUrl(url);
-    const host = await prisma.host.findUniqueOrThrow({ where: { id: hostId } });
 
     let slug = slugify(draft.title);
     if (!slug) slug = `listing-${Date.now().toString(36)}`;

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 
 export const dynamic = "force-dynamic";
 
-/** Human + agent readable markdown guide. */
+/** Human + agent readable markdown guide. Hosted Yall Come Back only. */
 export async function GET(req: NextRequest) {
+  const disabled = agentApiDisabledResponse();
+  if (disabled) return disabled;
   const origin = publicOrigin(req);
   const md = `# Agent guide — Yall Come Back
 

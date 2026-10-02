@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { PRODUCT_ORIGIN } from "@/lib/features";
 import { marketplacePropertyWhere } from "@/lib/host";
+import { isAgentApiEnabled } from "@/lib/platform-features";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +20,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/terms`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/contact`, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${base}/llms.txt`, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${base}/agents.md`, changeFrequency: "weekly", priority: 0.8 },
-    {
-      url: `${base}/api/v1/openapi.json`,
-      changeFrequency: "weekly",
-      priority: 0.75,
-    },
+    ...(isAgentApiEnabled()
+      ? ([
+          {
+            url: `${base}/llms.txt`,
+            changeFrequency: "weekly",
+            priority: 0.8,
+          },
+          {
+            url: `${base}/agents.md`,
+            changeFrequency: "weekly",
+            priority: 0.8,
+          },
+          {
+            url: `${base}/api/v1/openapi.json`,
+            changeFrequency: "weekly",
+            priority: 0.75,
+          },
+        ] as MetadataRoute.Sitemap)
+      : []),
   ];
 
   let listings: MetadataRoute.Sitemap = [];

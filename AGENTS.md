@@ -58,11 +58,16 @@ Full project guidance: [`docs/help-writing-ste.md`](docs/help-writing-ste.md).
 - Do not leave non-STE help copy for “later cleanup.”
 - If you copy wording from UI marketing pages into help, convert it to STE first.
 
-## Agent-native API (continuous)
+## Hosted / paid only — not MIT self-host
 
-The platform must stay **agent-ready**. External AIs discover stays via public JSON, not HTML scraping.
+AI agents, the public agent API, listing import from OTAs, and pricing-intelligence agents are **paid Yall Come Back platform** features.
 
-### Public surface (keep in sync)
+- Do **not** list them in `FEATURE_GROUPS` or on `/open-source` / `/self-host`.
+- They stay off unless `PLATFORM_PRODUCT_MODE=true` (Railway). `YCB_OPEN_SOURCE_BUILD=true` forces them off.
+- Self-host copies 404 `/llms.txt`, `/agents.md`, `/api/v1/*`, and `/.well-known/ai-plugin.json`.
+- Listing import is for `hostingMode=PLATFORM` on the hosted product only.
+
+When the hosted product is on (`isAgentApiEnabled()`):
 
 | Resource | Path |
 | --- | --- |
@@ -74,13 +79,4 @@ The platform must stay **agent-ready**. External AIs discover stays via public J
 | Availability | `/api/v1/listings/{slug}/availability` |
 | Plugin hint | `/.well-known/ai-plugin.json` |
 
-Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`.
-
-### Rules when you change product code
-
-1. If you add a marketplace search filter or listing field for humans, expose it on the agent API the same change (or immediately after).
-2. Update `/llms.txt`, `/agents.md`, and OpenAPI in the same PR/commit when behavior changes.
-3. Prefer additive, non-breaking query params and JSON fields.
-4. Keep v1 read endpoints public (CORS `*`, no auth) unless there is a strong reason.
-5. Flexible dates (`flexible`, `flexibilityDays` / `dateFlex`) are first-class — match homepage search semantics.
-6. After shipping search/listing/availability changes, smoke-test as an agent: fetch llms.txt → search with ± flex → open listing API → check deep links.
+Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`. Keep those files in sync with marketplace search when you change hosted search/listing fields. Do not advertise this surface in the open-source product.

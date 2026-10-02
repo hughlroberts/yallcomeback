@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Machine-readable agent instructions (llms.txt convention).
+ * Hosted Yall Come Back only — 404 on MIT self-host.
  * https://llmstxt.org/
  */
 export async function GET(req: NextRequest) {
+  const disabled = agentApiDisabledResponse();
+  if (disabled) return disabled;
   const origin = publicOrigin(req);
   const body = `# Yall Come Back
 

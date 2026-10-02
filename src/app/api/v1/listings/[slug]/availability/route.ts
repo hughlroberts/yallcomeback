@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { marketplacePropertyWhere } from "@/lib/host";
+import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import { findAvailableWindows } from "@/lib/agent/availability";
 import { addDaysYmd, formatYmd, isYmd } from "@/lib/search-dates";
@@ -15,6 +16,8 @@ export async function GET(
   req: NextRequest,
   ctx: { params: Promise<{ slug: string }> },
 ) {
+  const disabled = agentApiDisabledResponse();
+  if (disabled) return disabled;
   const { slug } = await ctx.params;
   const sp = req.nextUrl.searchParams;
   const origin = publicOrigin(req);
@@ -105,6 +108,8 @@ export async function GET(
 }
 
 export async function OPTIONS() {
+  const disabled = agentApiDisabledResponse();
+  if (disabled) return disabled;
   return new NextResponse(null, {
     status: 204,
     headers: {

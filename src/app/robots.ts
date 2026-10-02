@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { PRODUCT_ORIGIN } from "@/lib/features";
+import { isAgentApiEnabled } from "@/lib/platform-features";
 
 /** Runtime env — do not prerender with build-time fallback host. */
 export const dynamic = "force-dynamic";
@@ -22,7 +23,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/api/v1/", "/llms.txt", "/agents.md", "/marketplace"],
+        allow: isAgentApiEnabled()
+          ? ["/", "/api/v1/", "/llms.txt", "/agents.md", "/marketplace"]
+          : ["/", "/marketplace"],
         disallow: [
           "/admin",
           "/ops",

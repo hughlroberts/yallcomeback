@@ -30,6 +30,43 @@ export function isPlatformProductMode(): boolean {
   return raw === "true" || raw === "1";
 }
 
+function envFlag(
+  name: string,
+  whenUnset: () => boolean,
+): boolean {
+  if (process.env.YCB_OPEN_SOURCE_BUILD?.trim().toLowerCase() === "true") {
+    return false;
+  }
+  const raw = process.env[name]?.trim().toLowerCase();
+  if (raw === "false" || raw === "0") return false;
+  if (raw === "true" || raw === "1") return true;
+  return whenUnset();
+}
+
+/**
+ * Public agent API (/llms.txt, /agents.md, /api/v1, ai-plugin).
+ * Paid hosted Yall Come Back only — off on MIT self-host copies.
+ */
+export function isAgentApiEnabled(): boolean {
+  return envFlag("AGENT_API_ENABLED", isPlatformProductMode);
+}
+
+/**
+ * Airbnb/VRBO listing import UI + actions.
+ * Paid platform hosting only — off on self-host copies and SELF hosts.
+ */
+export function isListingImportAgentEnabled(): boolean {
+  return envFlag("LISTING_IMPORT_AGENT_ENABLED", isPlatformProductMode);
+}
+
+export function canUseListingImportAgent(host: {
+  hostingMode: string;
+} | null | undefined): boolean {
+  if (!isListingImportAgentEnabled()) return false;
+  if (!host) return false;
+  return host.hostingMode === "PLATFORM";
+}
+
 /**
  * Feature exists on this deploy (platform product). Does not mean a given host
  * is allowed or paid — use canAccessPricingIntelligence / canRunPricingIntelligence.
@@ -121,6 +158,8 @@ export function pricingIntelligenceLlmConfigured(): boolean {
 
 /** Internal only — not listed on /open-source FEATURE_GROUPS. */
 export const PLATFORM_ONLY_FEATURE_LABELS = [
+  "Public agent API (llms.txt, agents.md, /api/v1) — paid hosted product",
+  "Listing import from Airbnb/VRBO — paid platform hosting",
   "Market pricing intelligence add-on ($35/mo — not in hosting fee)",
   "Per-host beta toggle (ops rollout)",
   "OTA peer comps (capacity matching)",

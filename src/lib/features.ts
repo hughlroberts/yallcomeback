@@ -3,8 +3,9 @@
  * Rendered on /open-source (and mirrored in README) so self-hosters always see
  * what the free copy includes.
  *
- * Platform-only (hosted YCB) features — e.g. market pricing intelligence —
- * live in `src/lib/platform-features.ts` and must NOT be listed here.
+ * Platform-only (hosted YCB) features — agent API, listing import, market
+ * pricing intelligence — live in `src/lib/platform-features.ts` and must NOT
+ * be listed here.
  */
 export const PRODUCT_NAME = "Yall Come Back";
 /** Public written domain (no www). Canonical origin is PRODUCT_ORIGIN. */
