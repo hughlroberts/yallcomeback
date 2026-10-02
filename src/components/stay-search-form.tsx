@@ -120,8 +120,8 @@ export function StaySearchForm({
       <div
         className={
           isHero
-            ? "rounded-2xl bg-white p-2 shadow-xl ring-1 ring-black/5 sm:rounded-full sm:p-1.5"
-            : "rounded-2xl border border-stone-200 bg-white p-2 shadow-sm sm:rounded-full sm:p-1.5"
+            ? "overflow-hidden rounded-2xl bg-white p-2 shadow-xl ring-1 ring-black/5 sm:rounded-full sm:p-1.5"
+            : "overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 shadow-sm sm:rounded-full sm:p-1.5"
         }
       >
       {hiddenFields
@@ -156,9 +156,9 @@ export function StaySearchForm({
 
         <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
 
-        <div className="flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2 hover:bg-stone-50 sm:flex-[1.2] sm:flex-row sm:items-end sm:rounded-none sm:pr-1 md:w-full md:basis-full lg:w-auto lg:basis-auto">
-          <div className="flex min-w-0 flex-1 gap-2">
-            <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 px-1 py-1">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-[1.2] sm:flex-row sm:items-stretch md:w-full md:basis-full lg:w-auto lg:basis-auto">
+          <div className="flex min-w-0 flex-1">
+            <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
                 Guests
               </span>
@@ -172,7 +172,7 @@ export function StaySearchForm({
                 className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 sm:text-sm"
               />
             </label>
-            <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 px-1 py-1">
+            <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
                 Pets
               </span>
@@ -189,7 +189,7 @@ export function StaySearchForm({
           </div>
           <button
             type="submit"
-            className="min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:mb-0.5 sm:min-h-0 sm:w-auto sm:py-2.5"
+            className="min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:min-h-0 sm:w-auto sm:self-center sm:py-2.5"
           >
             Search
           </button>
