@@ -28,6 +28,7 @@ type SearchFields = {
   checkIn?: string;
   checkOut?: string;
   dateFlex?: string;
+  remember?: string;
 };
 
 function parsePositiveInt(raw: string | undefined): number | undefined {
@@ -82,7 +83,8 @@ export default async function MarketplacePage({
           </h1>
           <p className="mt-3 max-w-2xl text-slate-600">
             Find a stay you already love — or discover one worth coming back to.
-            Search by place, dates, and party size, or leave fields blank.
+            Search by place, dates, and party size, or describe the stay you
+            remember.
           </p>
 
           <StaySearchForm
@@ -92,6 +94,7 @@ export default async function MarketplacePage({
             defaultDateFlex={dateFlex || ""}
             defaultGuests={params.guests ?? ""}
             defaultPets={params.pets ?? ""}
+            defaultRemember={params.remember ?? ""}
             placeSuggestions={placeSuggestions}
           />
         </div>
@@ -105,6 +108,7 @@ export default async function MarketplacePage({
           checkIn={checkIn}
           checkOut={checkOut}
           dateFlex={dateFlex}
+          remember={params.remember?.trim() || undefined}
           rawGuests={params.guests}
           rawPets={params.pets}
         />
@@ -120,6 +124,7 @@ async function StaysPanel({
   checkIn,
   checkOut,
   dateFlex = 0,
+  remember,
   rawGuests,
   rawPets,
 }: {
@@ -129,6 +134,7 @@ async function StaysPanel({
   checkIn?: string;
   checkOut?: string;
   dateFlex?: number;
+  remember?: string;
   rawGuests?: string;
   rawPets?: string;
 }) {
@@ -140,6 +146,7 @@ async function StaysPanel({
       checkIn,
       checkOut,
       dateFlex,
+      remember,
     }),
     marketplaceDiscoveryEnabled(),
   ]);
@@ -158,6 +165,7 @@ async function StaysPanel({
   }
   if (guests) filters.push(`${guests} guest${guests === 1 ? "" : "s"}`);
   if (pets) filters.push(`${pets} pet${pets === 1 ? "" : "s"}`);
+  if (remember) filters.push("from what you remember");
 
   const currentSearch = {
     where,
@@ -165,6 +173,7 @@ async function StaysPanel({
     checkOut,
     guests,
     pets,
+    remember,
   };
   const hasActiveSearch = searchIsMeaningful(currentSearch);
 
@@ -177,6 +186,7 @@ async function StaysPanel({
           checkOut={checkOut}
           guests={guests}
           pets={pets}
+          remember={remember}
           resultCount={listings.length}
         />
       ) : null}
@@ -221,8 +231,8 @@ async function StaysPanel({
       </div>
       {listings.length === 0 ? (
         <p className="mt-16 text-center text-slate-500">
-          No stays match these filters. Try different dates, fewer guests, or
-          leave pets blank if you&apos;re not traveling with animals.
+          No stays match these filters. Try a shorter memory, different dates,
+          or fewer guests.
         </p>
       ) : null}
 

@@ -209,7 +209,9 @@ export function GuestDiscoverySections({
     (currentSearch.checkIn || "") === (lastSearch.checkIn || "") &&
     (currentSearch.checkOut || "") === (lastSearch.checkOut || "") &&
     (currentSearch.guests || 0) === (lastSearch.guests || 0) &&
-    (currentSearch.pets || 0) === (lastSearch.pets || 0);
+    (currentSearch.pets || 0) === (lastSearch.pets || 0) &&
+    (currentSearch.remember?.trim() || "") ===
+      (lastSearch.remember?.trim() || "");
 
   const place = useMemo(
     () => placeFromHistory(lastSearch, views),

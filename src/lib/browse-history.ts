@@ -28,6 +28,7 @@ export type RecentSearch = {
   checkOut?: string;
   guests?: number;
   pets?: number;
+  remember?: string;
   /** How many stays matched when they searched (for banner) */
   resultCount?: number;
   searchedAt: number;
@@ -38,6 +39,7 @@ export function searchIsMeaningful(s: Partial<RecentSearch>): boolean {
     s.where?.trim() ||
       s.checkIn?.trim() ||
       s.checkOut?.trim() ||
+      s.remember?.trim() ||
       (s.guests != null && s.guests > 0) ||
       (s.pets != null && s.pets > 0),
   );
@@ -50,6 +52,7 @@ export function searchDedupeKey(s: RecentSearch): string {
     s.checkOut ?? "",
     s.guests ?? "",
     s.pets ?? "",
+    s.remember?.trim().toLowerCase() ?? "",
   ].join("|");
 }
 
@@ -62,6 +65,7 @@ export function searchToMarketplaceHref(s: RecentSearch): string {
   if (s.checkOut) params.set("checkOut", s.checkOut);
   if (s.guests && s.guests > 0) params.set("guests", String(s.guests));
   if (s.pets && s.pets > 0) params.set("pets", String(s.pets));
+  if (s.remember?.trim()) params.set("remember", s.remember.trim());
   return `/marketplace?${params.toString()}`;
 }
 

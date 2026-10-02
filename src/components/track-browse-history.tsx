@@ -14,6 +14,7 @@ export function TrackRecentSearch({
   checkOut,
   guests,
   pets,
+  remember,
   resultCount,
 }: Omit<RecentSearch, "searchedAt"> & { resultCount?: number }) {
   useEffect(() => {
@@ -23,9 +24,10 @@ export function TrackRecentSearch({
       checkOut,
       guests,
       pets,
+      remember,
       resultCount,
     });
-  }, [where, checkIn, checkOut, guests, pets, resultCount]);
+  }, [where, checkIn, checkOut, guests, pets, remember, resultCount]);
 
   return null;
 }

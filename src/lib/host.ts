@@ -7,6 +7,11 @@ import {
   haversineMiles,
   placeMatchScore,
 } from "./geo";
+import {
+  parseRememberSearch,
+  rememberHaystack,
+  rememberScore,
+} from "./remember-search";
 
 export type PropertyWithHost = Property & {
   host: Pick<Host, "id" | "name" | "slug" | "listOnMarketplace" | "active">;
@@ -146,6 +151,8 @@ export type MarketplaceSearchOpts = {
    * [checkIn − flex, checkIn + flex] is free of calendar blocks.
    */
   dateFlex?: number;
+  /** Guest memory of a stay they already loved (free text). */
+  remember?: string;
 };
 
 function parseYmd(raw: string | undefined): Date | null {
@@ -160,14 +167,15 @@ function parseYmd(raw: string | undefined): Date | null {
  */
 export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
   const q = opts?.q?.trim();
+  const remembered = parseRememberSearch(opts?.remember);
   const guests =
     opts?.guests != null && !Number.isNaN(opts.guests) && opts.guests > 0
       ? Math.floor(opts.guests)
-      : undefined;
+      : remembered.guests;
   const pets =
     opts?.pets != null && !Number.isNaN(opts.pets) && opts.pets > 0
       ? Math.floor(opts.pets)
-      : undefined;
+      : remembered.pets;
 
   const checkIn = parseYmd(opts?.checkIn);
   const checkOut = parseYmd(opts?.checkOut);
@@ -293,6 +301,17 @@ export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
         return false;
       });
     }
+  }
+
+  if (remembered.tokens.length > 0) {
+    const scored = filtered
+      .map((p) => ({
+        p,
+        score: rememberScore(rememberHaystack(p), remembered.tokens),
+      }))
+      .filter((row) => row.score > 0)
+      .sort((a, b) => b.score - a.score);
+    filtered = scored.map((row) => row.p);
   }
 
   if (opts?.take != null) {

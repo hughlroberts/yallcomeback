@@ -20,6 +20,8 @@ type Props = {
   defaultCheckOut?: string;
   defaultGuests?: string;
   defaultPets?: string;
+  /** Guest memory of a stay they already loved */
+  defaultRemember?: string;
   /** ± days flexibility (0 = exact) */
   defaultDateFlex?: string | number;
   placeSuggestions?: string[];
@@ -49,6 +51,7 @@ export function StaySearchForm({
   defaultCheckOut = "",
   defaultGuests = "",
   defaultPets = "",
+  defaultRemember = "",
   defaultDateFlex = "",
   placeSuggestions = [],
   variant = "page",
@@ -112,12 +115,15 @@ export function StaySearchForm({
       method="get"
       action={action}
       onSubmit={onSubmit}
-      className={
-        isHero
-          ? "w-full max-w-4xl rounded-2xl bg-white p-2 shadow-xl ring-1 ring-black/5 sm:rounded-full sm:p-1.5"
-          : "mt-8 w-full rounded-2xl border border-stone-200 bg-white p-2 shadow-sm sm:rounded-full sm:p-1.5"
-      }
+      className={isHero ? "w-full max-w-4xl" : "mt-8 w-full"}
     >
+      <div
+        className={
+          isHero
+            ? "rounded-2xl bg-white p-2 shadow-xl ring-1 ring-black/5 sm:rounded-full sm:p-1.5"
+            : "rounded-2xl border border-stone-200 bg-white p-2 shadow-sm sm:rounded-full sm:p-1.5"
+        }
+      >
       {hiddenFields
         ? Object.entries(hiddenFields).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
@@ -189,15 +195,42 @@ export function StaySearchForm({
           </button>
         </div>
       </div>
+      </div>
+
+      <label
+        className={
+          isHero
+            ? "mt-2 flex cursor-text flex-col gap-1 rounded-2xl bg-white px-4 py-3 shadow-xl ring-1 ring-black/5"
+            : "mt-2 flex cursor-text flex-col gap-1 rounded-2xl border border-stone-200 bg-white px-4 py-3 shadow-sm"
+        }
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+          I remember this stay
+        </span>
+        <textarea
+          name="remember"
+          rows={2}
+          maxLength={280}
+          defaultValue={defaultRemember}
+          placeholder="Dock cabin, we grilled, about 8 people…"
+          className="w-full resize-none border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 sm:text-sm"
+        />
+      </label>
 
       {dateError ? (
         <p className="mt-2 px-3 text-center text-xs font-medium text-bonnet">
           {dateError}
         </p>
       ) : (
-        <p className="mt-2 px-3 text-center text-xs text-stone-500">
-          Dates optional — use Flexible to browse any stay. With dates, pick
-          check-in then check-out in one calendar; add ± days if you can flex.
+        <p
+          className={
+            isHero
+              ? "mt-2 px-3 text-center text-xs text-stone-300"
+              : "mt-2 px-3 text-center text-xs text-stone-500"
+          }
+        >
+          Dates optional — use Flexible to browse any stay. Describe a stay you
+          already loved, or search by place and party size.
         </p>
       )}
     </form>
