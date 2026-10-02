@@ -720,9 +720,20 @@ export async function publishListing(formData: FormData) {
     throw new Error("Set a nightly price before publishing");
   }
 
+  const { flagsFromVisibility } = await import("@/lib/listing-visibility");
+  const flags = flagsFromVisibility(
+    String(formData.get("visibility") || "website"),
+  );
+  if (!flags.published) {
+    throw new Error("Pick where guests can book before publishing");
+  }
+
   await prisma.property.update({
     where: { id },
-    data: { published: true },
+    data: {
+      published: true,
+      listOnMarketplace: flags.listOnMarketplace,
+    },
   });
 
   revalidatePath("/admin/properties");
@@ -730,6 +741,43 @@ export async function publishListing(formData: FormData) {
   revalidatePath(`/h/${property.host.slug}`);
   revalidatePath("/marketplace");
   redirect(`/admin/properties/${id}/setup?step=done`);
+}
+
+/** Off / website only / website + Find a Place. Does not touch other listing fields. */
+export async function updateListingVisibility(formData: FormData) {
+  const access = await ensureHostAccess();
+  const id = String(formData.get("id") || "");
+  await assertPropertyAccess(id, access);
+
+  const { flagsFromVisibility } = await import("@/lib/listing-visibility");
+  const flags = flagsFromVisibility(String(formData.get("visibility") || "off"));
+
+  const existing = await prisma.property.findUnique({
+    where: { id },
+    include: { host: { select: { id: true, slug: true } } },
+  });
+  if (!existing) throw new Error("Listing not found");
+
+  if (flags.published && !existing.published) {
+    await assertHostAllowsFutureWork(existing.host.id, {
+      bypass: access.isPlatform,
+    });
+  }
+
+  await prisma.property.update({
+    where: { id },
+    data: {
+      published: flags.published,
+      listOnMarketplace: flags.listOnMarketplace,
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/calendar");
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${id}`);
+  revalidatePath(`/h/${existing.host.slug}`);
+  revalidatePath("/marketplace");
 }
 
 /** Quick pricing sidebar on admin listing calendar (no redirect). */
@@ -811,12 +859,6 @@ export async function updateProperty(formData: FormData) {
     include: { host: true },
   });
   if (!existing) throw new Error("Property not found");
-  const wantPublished = formData.get("published") === "on";
-  if (wantPublished && !existing.published) {
-    await assertHostAllowsFutureWork(existing.hostId, {
-      bypass: access.isPlatform,
-    });
-  }
 
   const locationId = String(formData.get("locationId") || "") || null;
   if (locationId) {
@@ -828,9 +870,6 @@ export async function updateProperty(formData: FormData) {
     });
     if (!loc) throw new Error("Invalid location");
   }
-
-  // Marketplace is optional for every host (paid and free self-host)
-  const listOnMarketplace = formData.get("listOnMarketplace") === "on";
 
   const property = await prisma.property.update({
     where: { id },
@@ -881,9 +920,7 @@ export async function updateProperty(formData: FormData) {
       ),
       houseRules: String(formData.get("houseRules") || "") || null,
       disclaimer: String(formData.get("disclaimer") || "") || null,
-      published: formData.get("published") === "on",
       featured: formData.get("featured") === "on",
-      listOnMarketplace,
       locationId,
       ...(canWriteListingDepositMethod(access)
         ? {
@@ -1256,6 +1293,8 @@ export async function addIcalImport(formData: FormData) {
       enabled: true,
     },
   });
+  revalidatePath("/admin");
+  revalidatePath("/admin/calendar");
   revalidatePath(`/admin/properties/${propertyId}`);
 }
 

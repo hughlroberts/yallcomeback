@@ -77,6 +77,7 @@ When the hosted product is on (`isAgentApiEnabled()`):
 | Search | `/api/v1/search` |
 | Listing detail | `/api/v1/listings/{slug}` |
 | Availability | `/api/v1/listings/{slug}/availability` |
+| Pay-first checkout | `POST /api/v1/stays/checkout` |
 | Plugin hint | `/.well-known/ai-plugin.json` |
 
 Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`. Keep those files in sync with marketplace search when you change hosted search/listing fields. Do not advertise this surface in the open-source product.

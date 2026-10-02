@@ -24,6 +24,12 @@ import {
   updatePropertyPricing,
 } from "@/app/actions/properties";
 import { rateWithWeekend } from "@/lib/listing-discounts";
+import {
+  visibilityBadgeClass,
+  visibilityFromFlags,
+  visibilityLabel,
+} from "@/lib/listing-visibility";
+import { ListingVisibilityForm } from "@/components/listing-visibility-form";
 import { cn, formatMoney } from "@/lib/utils";
 
 type Photo = {
@@ -105,6 +111,8 @@ type WorkspaceProperty = {
   slug: string;
   hostSlug: string;
   published: boolean;
+  listOnMarketplace: boolean;
+  hostMarketplaceOn: boolean;
   city: string | null;
   region: string | null;
   bedrooms: number;
@@ -926,6 +934,11 @@ export function AdminListingWorkspace({
     property.defaultMinNights,
   ].join(":");
 
+  const visibility = visibilityFromFlags(
+    property.published,
+    property.listOnMarketplace,
+  );
+
   const tabs: { id: TabId; label: string }[] = [
     { id: "calendar", label: "Calendar" },
     ...(insightsPanel
@@ -949,8 +962,8 @@ export function AdminListingWorkspace({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-stone-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+      <div className="flex flex-col gap-3 border-b border-stone-200 pb-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
               {property.title}
@@ -958,12 +971,10 @@ export function AdminListingWorkspace({
             <span
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                property.published
-                  ? "bg-emerald-100 text-emerald-800"
-                  : "bg-stone-100 text-stone-600",
+                visibilityBadgeClass(visibility),
               )}
             >
-              {property.published ? "Published" : "Draft"}
+              {visibilityLabel(visibility)}
             </span>
           </div>
           <p className="mt-1 text-sm text-stone-500">
@@ -985,18 +996,51 @@ export function AdminListingWorkspace({
               {property.maxGuests} guests
             </span>
           </p>
-          <p className="mt-1 text-xs text-stone-400">
-            Public listing:{" "}
-            <Link
-              href={`/marketplace/properties/${property.slug}?host=${property.hostSlug}`}
-              className="text-bonnet hover:underline"
-              target="_blank"
-            >
-              /marketplace/properties/{property.slug}
-            </Link>
-          </p>
+          {visibility === "off" ? (
+            <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+              This stay is off. Guests cannot book it on your website or on Find
+              a Place. Use <strong>Taking bookings</strong> to turn it on.
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-stone-400">
+              {visibility === "website" || visibility === "both" ? (
+                <>
+                  Website:{" "}
+                  <Link
+                    href={`/h/${property.hostSlug}/properties/${property.slug}`}
+                    className="text-bonnet hover:underline"
+                    target="_blank"
+                  >
+                    /h/{property.hostSlug}/properties/{property.slug}
+                  </Link>
+                </>
+              ) : null}
+              {visibility === "both" ? (
+                <>
+                  <span className="mx-1.5 text-stone-300">·</span>
+                  Find a Place:{" "}
+                  <Link
+                    href={`/marketplace/properties/${property.slug}?host=${property.hostSlug}`}
+                    className="text-bonnet hover:underline"
+                    target="_blank"
+                  >
+                    /marketplace/properties/{property.slug}
+                  </Link>
+                </>
+              ) : null}
+            </p>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="w-full shrink-0 lg:w-80">
+          <ListingVisibilityForm
+            propertyId={property.id}
+            published={property.published}
+            listOnMarketplace={property.listOnMarketplace}
+            hostMarketplaceOn={property.hostMarketplaceOn}
+          />
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
           <form action={duplicateProperty}>
             <input type="hidden" name="propertyId" value={property.id} />
             <button
@@ -1020,15 +1064,20 @@ export function AdminListingWorkspace({
           >
             Fridge magnet
           </Link>
-          <Link
-            href={`/marketplace/properties/${property.slug}?host=${property.hostSlug}`}
-            target="_blank"
-            className="inline-flex items-center justify-center rounded-lg bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
-          >
-            View listing
-          </Link>
+          {visibility !== "off" ? (
+            <Link
+              href={
+                visibility === "both"
+                  ? `/marketplace/properties/${property.slug}?host=${property.hostSlug}`
+                  : `/h/${property.hostSlug}/properties/${property.slug}`
+              }
+              target="_blank"
+              className="inline-flex items-center justify-center rounded-lg bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+            >
+              View listing
+            </Link>
+          ) : null}
         </div>
-      </div>
 
       {/* Sub-nav */}
       <div className="flex gap-1 overflow-x-auto border-b border-stone-200 pb-px">

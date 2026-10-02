@@ -164,9 +164,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Create and manage listings",
-    body: "Add photos, amenities, house rules, publish status, marketplace options, and fridge magnets.",
+    body: "Add photos, amenities, and house rules. Turn bookings on for your website, Find a Place, or both.",
     description:
-      "How hosts set up listings on Yall Come Back for their website and the marketplace.",
+      "How hosts set up listings and turn bookings on for their website and the marketplace.",
     related: [
       "branded-website",
       "calendar",
@@ -180,7 +180,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Calendar and availability",
-    body: "Block dates. Manage booking holds. Use public calendars and iCal sync.",
+    body: "Block dates. See Airbnb or VRBO as busy. Use two-way iCal so booked-in-one-place is booked everywhere.",
     description:
       "Manage availability, manual blocks, and calendar sync for Yall Come Back listings.",
     related: ["listings", "search-and-book", "pricing"],

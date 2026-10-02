@@ -5,12 +5,6 @@ import { AdminBrandSwitcher } from "@/components/admin-brand-switcher";
 import { auth, requireHostAdmin } from "@/lib/auth";
 import { getAdminBrandHostId } from "@/lib/admin-brand-context";
 import { prisma } from "@/lib/db";
-import {
-  canManageBrand,
-  canManageTeam,
-  canViewEarnings,
-  resolveHostAccessInfo,
-} from "@/lib/host-access";
 import { isHostingPaused } from "@/lib/hosting";
 import Link from "next/link";
 
@@ -34,11 +28,6 @@ export default async function AdminLayout({
 
   const isPlatform = role === "ADMIN";
   const access = await requireHostAdmin();
-  const accessInfo = resolveHostAccessInfo({
-    isPlatform,
-    hostId: access?.hostId ?? null,
-    hostAccess: access?.hostAccess ?? session.user.hostAccess ?? null,
-  });
 
   let billingHost: {
     hostingMode: "PLATFORM" | "SELF";
@@ -90,26 +79,11 @@ export default async function AdminLayout({
   }
 
   const links = [
-    { href: "/admin", label: "Dashboard", exact: true },
-    { href: "/admin/properties", label: "Properties" },
-    ...(canManageBrand(accessInfo)
-      ? [{ href: "/admin/brand", label: "Brand & website" }]
-      : []),
-    { href: "/admin/bookings", label: "Bookings" },
-    ...(canManageBrand(accessInfo)
-      ? [{ href: "/admin/payments", label: "Payments" }]
-      : []),
-    ...(canViewEarnings(accessInfo)
-      ? [
-          { href: "/admin/earnings", label: "Earnings" },
-          { href: "/admin/taxes", label: "Taxes" },
-        ]
-      : []),
+    { href: "/admin/calendar", label: "Calendar" },
+    { href: "/admin/properties", label: "Listings" },
     { href: "/admin/messages", label: "Messages" },
-    { href: "/admin/guest-messages", label: "Message templates" },
-    ...(canManageTeam(accessInfo)
-      ? [{ href: "/admin/team", label: "Team" }]
-      : []),
+    { href: "/admin/bookings", label: "Bookings" },
+    { href: "/admin", label: "Dashboard", exact: true },
   ];
 
   const h = await headers();

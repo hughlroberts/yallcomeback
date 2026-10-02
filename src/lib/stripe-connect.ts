@@ -296,6 +296,8 @@ export async function createDirectChargeCheckout(opts: {
   cancelPath: string;
   metadata?: Record<string, string>;
   customerEmail?: string | null;
+  /** Unix seconds. Stripe requires 30 minutes–24 hours from now. */
+  expiresAt?: number;
 }) {
   const stripeClient = requireStripeClient();
   const fee = applicationFeeCents();
@@ -304,6 +306,7 @@ export async function createDirectChargeCheckout(opts: {
     {
       mode: "payment",
       customer_email: opts.customerEmail || undefined,
+      ...(opts.expiresAt ? { expires_at: opts.expiresAt } : {}),
       line_items: [
         {
           price_data: {

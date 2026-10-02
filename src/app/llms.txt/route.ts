@@ -24,6 +24,7 @@ This site is agent-friendly. Prefer the JSON API below over scraping HTML.
 - OpenAPI 3.1: ${origin}/api/v1/openapi.json
 - Search: ${origin}/api/v1/search
 - Listing detail: ${origin}/api/v1/listings/{slug}
+- Pay-first checkout: POST ${origin}/api/v1/stays/checkout
 - Human marketplace: ${origin}/marketplace
 - Human docs page: ${origin}/agents.md
 - Terms of Service: ${origin}/terms
@@ -61,6 +62,26 @@ Returns description, amenities, house rules, photos, host name, nextWindows, and
 GET ${origin}/api/v1/listings/{slug}/availability?nights=3&from=2026-08-01&days=90
 
 Returns availableWindows plus blockedRanges for agents that need calendar reasoning.
+
+## Pay-first checkout (card only)
+
+POST ${origin}/api/v1/stays/checkout
+Content-Type: application/json
+
+{
+  "slug": "listing-slug",
+  "checkIn": "2026-08-15",
+  "checkOut": "2026-08-18",
+  "guests": 4,
+  "guestName": "Guest Name",
+  "guestEmail": "guest@example.com",
+  "acceptTerms": true
+}
+
+- Returns checkoutUrl. Send the human there to pay with a card.
+- Calendar is not written until Stripe confirms the deposit is paid.
+- Checkout expires in 30 minutes. Abandoned sessions never hold nights.
+- Never send paid: true. Agents cannot mark a stay paid.
 
 ## Deep links for humans
 

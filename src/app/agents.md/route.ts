@@ -47,6 +47,23 @@ GET ${origin}/api/v1/listings/{slug}?checkIn=2026-08-15&checkOut=2026-08-18
 
 Use \`listing.url\` and \`listing.bookUrl\` to send humans into the product.
 
+### Pay-first checkout
+
+\`\`\`
+POST ${origin}/api/v1/stays/checkout
+{
+  "slug": "listing-slug",
+  "checkIn": "2026-08-15",
+  "checkOut": "2026-08-18",
+  "guests": 4,
+  "guestName": "Guest Name",
+  "guestEmail": "guest@example.com",
+  "acceptTerms": true
+}
+\`\`\`
+
+Returns \`checkoutUrl\`. Calendar is written only after the card is paid. Do not send \`paid: true\`. Sessions expire in 30 minutes.
+
 ## Rate limits / etiquette
 
 - Public read API — no API key for v1 search/detail

@@ -806,10 +806,10 @@ function Listings({ article }: { article: HelpArticle }) {
       <HelpLead>
         Manage listings in{" "}
         <strong className="font-semibold text-stone-800">
-          Admin → Properties
+          Admin → Listings
         </strong>
-        . Guests see the same inventory on your host website and on the
-        marketplace when enabled.
+        . Each stay has one <strong>Taking bookings</strong> switch: Off, your
+        website only, or website + Find a Place.
       </HelpLead>
 
       <HelpSection title="Create a property">
@@ -828,20 +828,27 @@ function Listings({ article }: { article: HelpArticle }) {
         </HelpUl>
       </HelpSection>
 
-      <HelpSection title="Publish and marketplace">
+      <HelpSection title="Turn a listing on or off">
         <HelpUl>
           <li>
-            <strong>Publish / unpublish</strong> controls whether the listing is
-            live for booking.
+            Open the listing (or the Listings page). Use{" "}
+            <strong>Taking bookings</strong>. It saves as soon as you click.
           </li>
           <li>
-            <strong>Featured</strong> can highlight a stay on your host home
-            page when the UI supports it.
+            <strong>Off</strong> — guests cannot book on your website or on Find
+            a Place. Calendar and past stays stay in Admin.
           </li>
           <li>
-            Per-property marketplace visibility lets platform hosts include or
-            exclude a stay from shared discovery. Self-hosts stay on the free
-            marketplace by design.
+            <strong>On — your website only</strong> — guests book on your host
+            site. The stay is hidden from Find a Place.
+          </li>
+          <li>
+            <strong>On — website + Find a Place</strong> — guests can book on
+            your site and on the Yall Come Back marketplace.
+          </li>
+          <li>
+            A listing is not on until you pick one of the On options. Saving
+            title, photos, or rates does not turn bookings on.
           </li>
         </HelpUl>
       </HelpSection>
@@ -904,8 +911,9 @@ function Calendar({ article }: { article: HelpArticle }) {
   return (
     <HelpArticleLayout article={article}>
       <HelpLead>
-        One calendar drives availability for your host website, the marketplace,
-        and external channels you sync with iCal.
+        Open <strong>Admin → Calendar</strong>. One calendar drives availability
+        for your host website, Find a Place, and Airbnb or VRBO when you sync
+        iCal.
       </HelpLead>
 
       <HelpSection title="Public calendar">
@@ -937,16 +945,22 @@ function Calendar({ article }: { article: HelpArticle }) {
       <HelpSection title="iCal export and import">
         <HelpUl>
           <li>
-            <strong>Export</strong> — Copy the listing iCal URL into Airbnb,
-            VRBO, or other tools that import calendars.
+            Open <strong>Admin → Calendar</strong>, then the listing{" "}
+            <strong>Sync</strong> tab. Do both steps so booked-in-one-place is
+            booked everywhere.
           </li>
           <li>
-            <strong>Import</strong> — Add external iCal sources and sync (manual
-            sync now or scheduled cron). Those blocks then show on Yall Come Back.
+            <strong>Step 1 — Export</strong> — Copy the Yall Come Back calendar
+            URL and paste it into Airbnb or VRBO as an import calendar. Those
+            sites then show Yall Come Back bookings as busy.
           </li>
           <li>
-            Always verify both directions after you change another channel. Keep
-            nights aligned.
+            <strong>Step 2 — Import</strong> — Copy the Airbnb or VRBO ICS URL
+            and paste it on Sync. Those bookings then show as busy here.
+          </li>
+          <li>
+            Use Sync now after you add a source. Keep nights aligned on every
+            channel.
           </li>
         </HelpUl>
       </HelpSection>

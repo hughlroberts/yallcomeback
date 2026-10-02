@@ -7,7 +7,7 @@ export function buildOpenApiDocument(origin: string) {
       title: "Yall Come Back Agent API",
       version: "1.0.0",
       description:
-        "Public JSON API for AI agents to search vacation rentals with exact or flexible dates, read listing details, and deep-link guests into booking. No auth required for read endpoints.",
+        "Public JSON API for AI agents to search vacation rentals with exact or flexible dates, read listing details, deep-link guests into booking, and start a pay-first card checkout. No auth required for read endpoints. Checkout does not write the calendar until the card is paid.",
       contact: {
         name: "Yall Come Back",
         url: origin,
@@ -197,6 +197,51 @@ export function buildOpenApiDocument(origin: string) {
           responses: {
             "200": { description: "Availability payload" },
             "404": { description: "Not found" },
+          },
+        },
+      },
+      "/api/v1/stays/checkout": {
+        post: {
+          operationId: "createStayCheckout",
+          summary: "Pay-first card checkout for a marketplace stay",
+          description:
+            "Creates a Stripe Checkout URL. Calendar is written only after the card is paid. Sessions expire in 30 minutes. Agents must not send paid:true.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: [
+                    "slug",
+                    "checkIn",
+                    "checkOut",
+                    "guestName",
+                    "guestEmail",
+                    "acceptTerms",
+                  ],
+                  properties: {
+                    slug: { type: "string" },
+                    checkIn: { type: "string", format: "date" },
+                    checkOut: { type: "string", format: "date" },
+                    guests: { type: "integer", minimum: 1 },
+                    pets: { type: "integer", minimum: 0 },
+                    guestName: { type: "string" },
+                    guestEmail: { type: "string", format: "email" },
+                    guestPhone: { type: "string" },
+                    acceptTerms: { type: "boolean" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Checkout URL (calendar not held until paid)",
+            },
+            "400": { description: "Invalid request" },
+            "404": { description: "Listing not on marketplace" },
+            "409": { description: "Dates unavailable or host not taking stays" },
           },
         },
       },

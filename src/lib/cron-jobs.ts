@@ -51,6 +51,17 @@ export async function runAllCronJobs(): Promise<{
 }> {
   const ical = await runIcalSync();
   const messages = await runBookingMessages();
+  try {
+    const { expireAbandonedAgentCheckouts } = await import(
+      "@/lib/agent/checkout"
+    );
+    const expired = await expireAbandonedAgentCheckouts();
+    if (expired.cancelled > 0) {
+      console.log(`[cron] expired ${expired.cancelled} unpaid agent checkouts`);
+    }
+  } catch (e) {
+    console.error("[cron:agent-checkout-expiry]", e);
+  }
   let hostingPayments: import("@/lib/hosting-payment-check").HostingPaymentCheckResult =
     {
       skipped: true,

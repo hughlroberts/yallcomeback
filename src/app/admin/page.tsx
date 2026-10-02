@@ -8,6 +8,12 @@ import {
   bookingScopeWhere,
   propertyScopeWhere,
 } from "@/lib/scope";
+import {
+  canManageBrand,
+  canManageTeam,
+  canViewEarnings,
+  resolveHostAccessInfo,
+} from "@/lib/host-access";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -81,9 +87,23 @@ function blockSourceClass(source: string): string {
       return "bg-petal text-bonnet ring-1 ring-inset ring-petal";
     case "MANUAL":
       return "bg-violet-50 text-violet-800 ring-1 ring-inset ring-violet-100";
+    case "ICAL_IMPORT":
+      return "bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-100";
     default:
       return "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200";
   }
+}
+
+function blockSourceLabel(
+  source: string,
+  connectionName?: string | null,
+): string {
+  if (source === "ICAL_IMPORT") {
+    return connectionName?.trim()
+      ? `Busy · ${connectionName.trim()}`
+      : "Busy on another site";
+  }
+  return source;
 }
 
 function blockAccentClass(source: string, blockType: string | null): string {
@@ -91,6 +111,7 @@ function blockAccentClass(source: string, blockType: string | null): string {
   if (type.includes("MAINTENANCE")) return "border-l-orange-500";
   if (source === "BOOKING") return "border-l-blue-500";
   if (source === "MANUAL") return "border-l-violet-400";
+  if (source === "ICAL_IMPORT") return "border-l-sky-500";
   return "border-l-slate-300";
 }
 
@@ -98,6 +119,11 @@ export default async function AdminDashboard() {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin");
 
+  const accessInfo = resolveHostAccessInfo({
+    isPlatform: access.isPlatform,
+    hostId: access.hostId,
+    hostAccess: access.hostAccess,
+  });
   const propWhere = propertyScopeWhere(access);
   const bookWhere = bookingScopeWhere(access);
 
@@ -110,12 +136,14 @@ export default async function AdminDashboard() {
       prisma.calendarBlock.findMany({
         where: {
           startDate: { gte: new Date() },
-          source: { in: ["MANUAL", "BOOKING"] },
           ...(access.isPlatform
             ? {}
             : { property: { hostId: access.hostId! } }),
         },
-        include: { property: true },
+        include: {
+          property: true,
+          connection: { select: { name: true } },
+        },
         orderBy: { startDate: "asc" },
         take: 8,
       }),
@@ -161,6 +189,61 @@ export default async function AdminDashboard() {
           ) : undefined
         }
       />
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        <Link
+          href="/admin/calendar"
+          className="rounded-full bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+        >
+          Open calendar
+        </Link>
+        {canManageBrand(accessInfo) ? (
+          <Link
+            href="/admin/brand"
+            className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+          >
+            Brand & website
+          </Link>
+        ) : null}
+        {canManageBrand(accessInfo) ? (
+          <Link
+            href="/admin/payments"
+            className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+          >
+            Payments
+          </Link>
+        ) : null}
+        {canViewEarnings(accessInfo) ? (
+          <>
+            <Link
+              href="/admin/earnings"
+              className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+            >
+              Earnings
+            </Link>
+            <Link
+              href="/admin/taxes"
+              className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+            >
+              Taxes
+            </Link>
+          </>
+        ) : null}
+        <Link
+          href="/admin/guest-messages"
+          className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+        >
+          Message templates
+        </Link>
+        {canManageTeam(accessInfo) ? (
+          <Link
+            href="/admin/team"
+            className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+          >
+            Team
+          </Link>
+        ) : null}
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <KpiCard label="Properties" value={propertyCount} />
@@ -246,14 +329,14 @@ export default async function AdminDashboard() {
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900">
-              Upcoming stays / blocks
+              Upcoming stays / busy from other sites
             </h2>
           </div>
           <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
             {upcomingBlocks.map((b) => {
               const href = b.bookingId
                 ? `/admin/bookings/${b.bookingId}`
-                : `/admin/properties/${b.propertyId}?tab=blocks`;
+                : `/admin/properties/${b.propertyId}?tab=calendar`;
               return (
                 <li key={b.id}>
                   <Link
@@ -265,12 +348,16 @@ export default async function AdminDashboard() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <p className="truncate font-medium text-slate-900">
-                            {b.occupantName || b.blockType || b.source}
+                            {b.occupantName ||
+                              b.blockType ||
+                              blockSourceLabel(b.source, b.connection?.name)}
                           </p>
                           <span
                             className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${blockSourceClass(b.source)}`}
                           >
-                            {b.source}
+                            {b.source === "ICAL_IMPORT"
+                              ? b.connection?.name || "Other site"
+                              : b.source}
                           </span>
                         </div>
                         <p className="mt-0.5 text-sm text-slate-500">
@@ -296,7 +383,8 @@ export default async function AdminDashboard() {
             })}
             {upcomingBlocks.length === 0 && (
               <li className="px-4 py-8 text-center text-sm text-slate-500">
-                Calendar is clear.
+                Calendar is clear. Import Airbnb or VRBO on Calendar → Sync so
+                those stays show as busy here.
               </li>
             )}
           </ul>

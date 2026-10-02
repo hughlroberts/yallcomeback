@@ -111,17 +111,63 @@ export async function POST(req: Request) {
         include: { payments: true },
       });
       if (booking && booking.status === "PENDING_PAYMENT") {
-        const pending = booking.payments.find((p) => p.status === "PENDING");
-        if (pending) {
-          await prisma.payment.update({
-            where: { id: pending.id },
-            data: { status: "PAID", paidAt: new Date() },
+        const existingBlock = await prisma.calendarBlock.findFirst({
+          where: { bookingId: booking.id },
+          select: { id: true },
+        });
+        let calendarOk = Boolean(existingBlock);
+        if (!existingBlock) {
+          const { isRangeAvailable, lockPropertyBookings } = await import(
+            "@/lib/availability"
+          );
+          try {
+            await prisma.$transaction(async (tx) => {
+              await lockPropertyBookings(tx, booking.propertyId);
+              const free = await isRangeAvailable(
+                booking.propertyId,
+                booking.checkIn,
+                booking.checkOut,
+                booking.id,
+                tx,
+              );
+              if (!free) {
+                throw new Error("Dates taken after checkout");
+              }
+              await tx.calendarBlock.create({
+                data: {
+                  propertyId: booking.propertyId,
+                  bookingId: booking.id,
+                  source: "BOOKING",
+                  startDate: booking.checkIn,
+                  endDate: booking.checkOut,
+                  occupantName: booking.guestName,
+                  paymentMethod: "STRIPE",
+                  notes: `Booking ${booking.id} (CONFIRMED)`,
+                },
+              });
+            });
+            calendarOk = true;
+          } catch (e) {
+            console.error(
+              "[stripe] booking calendar block failed",
+              booking.id,
+              e,
+            );
+          }
+        }
+        if (calendarOk) {
+          const pending = booking.payments.find((p) => p.status === "PENDING");
+          if (pending) {
+            await prisma.payment.update({
+              where: { id: pending.id },
+              data: { status: "PAID", paidAt: new Date() },
+            });
+          }
+          await prisma.booking.update({
+            where: { id: booking.id },
+            data: { status: "CONFIRMED" },
           });
         }
-        await prisma.booking.update({
-          where: { id: booking.id },
-          data: { status: "CONFIRMED" },
-        });
       }
     }
     if (session.metadata?.kind === "hosting_subscription") {
@@ -137,6 +183,32 @@ export async function POST(req: Request) {
         await ensureCustomerDefaultCard(customerId, subscriptionId).catch(
           () => null,
         );
+      }
+    }
+  }
+
+  if (event.type === "checkout.session.expired") {
+    const expired = event.data.object as {
+      metadata?: { kind?: string; bookingId?: string; source?: string };
+    };
+    if (
+      expired.metadata?.kind === "booking_deposit" &&
+      expired.metadata.bookingId
+    ) {
+      const booking = await prisma.booking.findUnique({
+        where: { id: expired.metadata.bookingId },
+        select: { id: true, status: true, sourceChannel: true },
+      });
+      if (booking && booking.status === "PENDING_PAYMENT") {
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { status: "CANCELLED" },
+        });
+        if (booking.sourceChannel !== "agent") {
+          await prisma.calendarBlock.deleteMany({
+            where: { bookingId: booking.id },
+          });
+        }
       }
     }
   }

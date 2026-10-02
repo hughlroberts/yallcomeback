@@ -43,7 +43,7 @@ export default async function ListingSetupPage({
   const property = await prisma.property.findUnique({
     where: { id },
     include: {
-      host: { select: { name: true, slug: true } },
+      host: { select: { name: true, slug: true, listOnMarketplace: true } },
       images: {
         orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
         take: 1,
@@ -172,7 +172,10 @@ export default async function ListingSetupPage({
         coverImageUrl={property.images[0]?.url || null}
         previewHref={publicPath}
         editorHref={`/admin/properties/${property.id}`}
-        calendarHref={`/admin/properties/${property.id}#calendar`}
+        calendarHref={`/admin/properties/${property.id}?tab=calendar`}
+        defaultVisibility={
+          property.host.listOnMarketplace ? "both" : "website"
+        }
       />
     );
   }

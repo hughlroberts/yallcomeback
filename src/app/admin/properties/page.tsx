@@ -10,9 +10,16 @@ import {
   canCreateListings,
   resolveHostAccessInfo,
 } from "@/lib/host-access";
+import { ListingVisibilityForm } from "@/components/listing-visibility-form";
+import {
+  visibilityBadgeClass,
+  visibilityFromFlags,
+  visibilityLabel,
+} from "@/lib/listing-visibility";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Properties · Admin" };
+export const metadata = { title: "Listings · Admin" };
 
 export default async function AdminPropertiesPage() {
   const access = await requireHostAdmin();
@@ -44,7 +51,7 @@ export default async function AdminPropertiesPage() {
     where: propertyScopeWhere(access),
     include: {
       images: { take: 1, orderBy: { sortOrder: "asc" } },
-      host: { select: { name: true, slug: true } },
+      host: { select: { name: true, slug: true, listOnMarketplace: true } },
       _count: { select: { bookings: true, calendarBlocks: true } },
     },
     orderBy: { updatedAt: "desc" },
@@ -55,11 +62,11 @@ export default async function AdminPropertiesPage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
-            Properties
+            Listings
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             {showCreate
-              ? "Create listings step by step, then edit anytime. Duplicate to spin up a similar stay quickly."
+              ? "Turn bookings on or off per stay. Off means guests cannot book on your website or Find a Place."
               : hostingAllowsCreate
                 ? "Update calendars, photos, and details. Creating new listings requires full co-host access."
                 : "Hosting is paused for new listings. You can still edit existing stays. Pay hosting under Subscription to add more."}
@@ -99,29 +106,24 @@ export default async function AdminPropertiesPage() {
             p.title === "Untitled listing"
               ? `/admin/properties/${p.id}/setup?step=2`
               : `/admin/properties/${p.id}`;
+          const vis = visibilityFromFlags(p.published, p.listOnMarketplace);
 
           return (
             <div
               key={p.id}
-              className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+              className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
             >
               <Link href={editHref} className="min-w-0 flex-1 hover:opacity-90">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-slate-900">{p.title}</span>
-                  {!p.published && (
-                    <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900 ring-1 ring-inset ring-amber-100">
-                      Draft
-                    </span>
-                  )}
-                  {p.listOnMarketplace ? (
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-100">
-                      Marketplace
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200">
-                      Host only
-                    </span>
-                  )}
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                      visibilityBadgeClass(vis),
+                    )}
+                  >
+                    {visibilityLabel(vis)}
+                  </span>
                   {p.featured && (
                     <span className="rounded-full bg-petal px-2.5 py-0.5 text-xs font-semibold text-bonnet ring-1 ring-inset ring-petal">
                       Featured
@@ -135,7 +137,22 @@ export default async function AdminPropertiesPage() {
                   bookings
                 </p>
               </Link>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className="w-full max-w-sm shrink-0 sm:w-64">
+                <ListingVisibilityForm
+                  propertyId={p.id}
+                  published={p.published}
+                  listOnMarketplace={p.listOnMarketplace}
+                  hostMarketplaceOn={p.host.listOnMarketplace}
+                  compact
+                />
+              </div>
+              <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">
+                <Link
+                  href={`/admin/properties/${p.id}?tab=calendar`}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  Calendar
+                </Link>
                 <Link
                   href={`/admin/magnets/${p.id}`}
                   className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"

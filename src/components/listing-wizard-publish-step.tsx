@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { publishListing } from "@/app/actions/properties";
+import type { ListingVisibility } from "@/lib/listing-visibility";
+import { cn } from "@/lib/utils";
 
 type Props = {
   propertyId: string;
@@ -13,6 +15,7 @@ type Props = {
   previewHref: string;
   editorHref: string;
   calendarHref: string;
+  defaultVisibility?: ListingVisibility;
 };
 
 export function ListingWizardPublishStep({
@@ -24,9 +27,13 @@ export function ListingWizardPublishStep({
   previewHref,
   editorHref,
   calendarHref,
+  defaultVisibility = "website",
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [visibility, setVisibility] = useState<ListingVisibility>(
+    defaultVisibility === "off" ? "website" : defaultVisibility,
+  );
 
   const promo =
     discountNewListingPercent > 0
@@ -41,6 +48,7 @@ export function ListingWizardPublishStep({
       try {
         const fd = new FormData();
         fd.set("id", propertyId);
+        fd.set("visibility", visibility);
         await publishListing(fd);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
@@ -67,9 +75,63 @@ export function ListingWizardPublishStep({
           Yay! It&apos;s time to publish.
         </h1>
         <p className="mt-2 max-w-xl text-sm text-stone-500">
-          Here&apos;s what we&apos;ll show to guests. Before you publish, make
-          sure to review the details.
+          Here&apos;s what we&apos;ll show to guests. Choose where they can book,
+          then publish.
         </p>
+
+        <fieldset className="mt-6 max-w-xl space-y-2">
+          <legend className="text-sm font-semibold text-stone-900">
+            Taking bookings
+          </legend>
+          <label
+            className={cn(
+              "flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2 text-sm",
+              visibility === "website"
+                ? "border-bonnet bg-petal/60"
+                : "border-stone-200 bg-white",
+            )}
+          >
+            <input
+              type="radio"
+              name="visibility"
+              checked={visibility === "website"}
+              onChange={() => setVisibility("website")}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="font-medium text-stone-900">
+                On — your website only
+              </span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Bookable on your host site. Hidden from Find a Place.
+              </span>
+            </span>
+          </label>
+          <label
+            className={cn(
+              "flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2 text-sm",
+              visibility === "both"
+                ? "border-bonnet bg-petal/60"
+                : "border-stone-200 bg-white",
+            )}
+          >
+            <input
+              type="radio"
+              name="visibility"
+              checked={visibility === "both"}
+              onChange={() => setVisibility("both")}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="font-medium text-stone-900">
+                On — website + Find a Place
+              </span>
+              <span className="mt-0.5 block text-xs text-stone-500">
+                Bookable on your site and the Yall Come Back marketplace.
+              </span>
+            </span>
+          </label>
+        </fieldset>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:items-start">
           {/* Preview card */}

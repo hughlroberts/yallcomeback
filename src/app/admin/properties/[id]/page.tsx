@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import {
   updateProperty,
@@ -19,6 +18,8 @@ import {
   uploadPropertyImage,
 } from "@/app/actions/properties";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
+import { AdminListingSwitcher } from "@/components/admin-listing-switcher";
+import { CopyTextButton } from "@/components/copy-text-button";
 import { AdminListingInsights } from "@/components/admin-listing-insights";
 import { AdminAmenitiesEditor } from "@/components/admin-amenities-editor";
 import { AdminSleepingEditor } from "@/components/admin-sleeping-editor";
@@ -36,6 +37,7 @@ import {
   listHostInsightsOptions,
 } from "@/lib/listing-insights";
 import { isStripeConfigured } from "@/lib/stripe";
+import { getSiteOrigin } from "@/lib/site-url";
 import { paymentMethodLabel, WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
 import { ListingPaymentMethodFields } from "@/components/listing-payment-method-fields";
 import {
@@ -129,10 +131,7 @@ export default async function AdminPropertyDetailPage({
       : { hostId: access.hostId! },
     orderBy: { name: "asc" },
   });
-  const h = await headers();
-  const reqHost = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
-  const proto = h.get("x-forwarded-proto") || "http";
-  const baseUrl = `${proto}://${reqHost}`;
+  const siteOrigin = await getSiteOrigin();
 
   const amenityIds = selectedAmenityIds(parseAmenities(property.amenities));
   const sleepingRooms = (() => {
@@ -394,25 +393,11 @@ export default async function AdminPropertyDetailPage({
             defaultValue={property.disclaimer || ""}
           />
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="published"
-            defaultChecked={property.published}
-          />
-          Published (visible when listed on marketplace)
-        </label>
-        <label className="flex items-center gap-2 text-sm sm:col-span-2">
-          <input
-            type="checkbox"
-            name="listOnMarketplace"
-            defaultChecked={property.listOnMarketplace}
-          />
-          <span>
-            List on shared Yall Come Back marketplace{" "}
-            <span className="text-stone-500">(optional — your choice)</span>
-          </span>
-        </label>
+        <p className="sm:col-span-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-600">
+          Turn bookings on or off with <strong>Taking bookings</strong> at the
+          top of this page (Off, website only, or website + Find a Place). Saving
+          details here does not change that.
+        </p>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -1009,39 +994,70 @@ export default async function AdminPropertyDetailPage({
     </Card>
   );
 
+  const exportUrl = exportConn
+    ? `${siteOrigin}/api/ical/${property.id}/${exportConn.exportSecret}.ics`
+    : null;
+
   const syncPanel = (
     <Card>
-      <h2 className="text-lg font-semibold">Calendar sync (this listing)</h2>
+      <h2 className="text-lg font-semibold">Booked in one place = booked everywhere</h2>
       <p className="mt-1 text-sm text-stone-500">
-        Two-way iCal per listing. Export this URL into Airbnb/VRBO, and paste
-        their calendar URLs below to import blocked dates.
+        Two-way iCal for this listing. Airbnb or VRBO bookings show as busy here,
+        and Yall Come Back bookings show as busy there. Do both steps.
       </p>
 
-      {exportConn && (
-        <div className="mt-4 rounded-lg bg-stone-100 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-            Export URL (paste into Airbnb / VRBO)
+      <ol className="mt-4 space-y-4">
+        <li className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <p className="text-sm font-semibold text-stone-900">
+            1. Push Yall Come Back into Airbnb / VRBO
           </p>
-          <code className="mt-1 block break-all text-sm text-stone-800">
-            {baseUrl}/api/ical/{property.id}/{exportConn.exportSecret}.ics
-          </code>
-        </div>
-      )}
-
-      <form action={addIcalImport} className="mt-4 grid gap-3 sm:grid-cols-3">
-        <input type="hidden" name="propertyId" value={property.id} />
-        <div>
-          <Label>Source name</Label>
-          <Input name="name" placeholder="Airbnb" required />
-        </div>
-        <div className="sm:col-span-2">
-          <Label>Import ICS URL</Label>
-          <Input name="importUrl" placeholder="https://..." required />
-        </div>
-        <div>
-          <Button type="submit">Add import source</Button>
-        </div>
-      </form>
+          <p className="mt-1 text-sm text-stone-500">
+            Copy this URL. In Airbnb or VRBO open Calendar → Availability → Import
+            calendar (wording varies) and paste it. Then those sites block nights
+            that are booked here.
+          </p>
+          {exportUrl ? (
+            <div className="mt-3 flex flex-wrap items-start gap-2">
+              <code className="min-w-0 flex-1 break-all rounded-lg bg-white px-3 py-2 text-xs text-stone-800 ring-1 ring-stone-200">
+                {exportUrl}
+              </code>
+              <CopyTextButton text={exportUrl} label="Copy URL" />
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-amber-800">
+              No export feed yet. Save this listing, then reopen Sync.
+            </p>
+          )}
+        </li>
+        <li className="rounded-xl border border-stone-200 bg-white p-4">
+          <p className="text-sm font-semibold text-stone-900">
+            2. Pull Airbnb / VRBO into Yall Come Back
+          </p>
+          <p className="mt-1 text-sm text-stone-500">
+            In Airbnb or VRBO, export / copy the listing calendar ICS URL. Paste
+            it below. Then those bookings show as busy on this calendar and block
+            Yall Come Back guests.
+          </p>
+          <form action={addIcalImport} className="mt-3 grid gap-3 sm:grid-cols-3">
+            <input type="hidden" name="propertyId" value={property.id} />
+            <div>
+              <Label>Source name</Label>
+              <Input name="name" placeholder="Airbnb" required />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Their calendar URL (.ics)</Label>
+              <Input
+                name="importUrl"
+                placeholder="https://www.airbnb.com/calendar/ical/..."
+                required
+              />
+            </div>
+            <div>
+              <Button type="submit">Connect calendar</Button>
+            </div>
+          </form>
+        </li>
+      </ol>
 
       <div className="mt-4 space-y-2">
         {property.icalConnections
@@ -1085,8 +1101,37 @@ export default async function AdminPropertyDetailPage({
   const hostListings = await listHostInsightsOptions(property.hostId);
   const insightsInitial = await getListingInsights([property.id], 30);
 
+  const siblings = await prisma.property.findMany({
+    where: { hostId: property.hostId },
+    select: {
+      id: true,
+      title: true,
+      published: true,
+      listOnMarketplace: true,
+      images: {
+        take: 1,
+        orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],
+        select: { url: true },
+      },
+    },
+    orderBy: { title: "asc" },
+  });
+
   return (
-    <div className="w-full max-w-[1400px]">
+    <div className="flex w-full max-w-[1400px] flex-col gap-6 sm:flex-row sm:items-start">
+      {siblings.length > 1 ? (
+        <AdminListingSwitcher
+          listings={siblings.map((p) => ({
+            id: p.id,
+            title: p.title,
+            published: p.published,
+            listOnMarketplace: p.listOnMarketplace,
+            coverUrl: p.images[0]?.url || null,
+          }))}
+          activeId={property.id}
+        />
+      ) : null}
+      <div className="min-w-0 flex-1">
       <AdminListingWorkspace
         property={{
           id: property.id,
@@ -1094,6 +1139,8 @@ export default async function AdminPropertyDetailPage({
           slug: property.slug,
           hostSlug: property.host.slug,
           published: property.published,
+          listOnMarketplace: property.listOnMarketplace,
+          hostMarketplaceOn: property.host.listOnMarketplace,
           city: property.city,
           region: property.region,
           bedrooms: property.bedrooms,
@@ -1199,6 +1246,7 @@ export default async function AdminPropertyDetailPage({
           />
         }
       />
+      </div>
     </div>
   );
 }
