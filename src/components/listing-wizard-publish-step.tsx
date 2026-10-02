@@ -16,6 +16,7 @@ type Props = {
   editorHref: string;
   calendarHref: string;
   defaultVisibility?: ListingVisibility;
+  emailVerified?: boolean;
 };
 
 export function ListingWizardPublishStep({
@@ -28,6 +29,7 @@ export function ListingWizardPublishStep({
   editorHref,
   calendarHref,
   defaultVisibility = "website",
+  emailVerified = true,
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -262,6 +264,19 @@ export function ListingWizardPublishStep({
           </div>
         </div>
 
+        {!emailVerified ? (
+          <p className="mt-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            Confirm your email before you publish. Check your inbox, or resend
+            the link from{" "}
+            <Link
+              href="/account/settings/login"
+              className="font-semibold underline"
+            >
+              Login &amp; security
+            </Link>
+            .
+          </p>
+        ) : null}
         {error ? (
           <p className="mt-8 text-sm text-red-600">{error}</p>
         ) : null}
@@ -281,7 +296,7 @@ export function ListingWizardPublishStep({
           <button
             type="button"
             onClick={onPublish}
-            disabled={pending}
+            disabled={pending || !emailVerified}
             className="rounded-lg bg-bonnet px-8 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300"
           >
             {pending ? "Publishing…" : "Publish"}

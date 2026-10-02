@@ -17,6 +17,7 @@ import {
   visibilityLabel,
 } from "@/lib/listing-visibility";
 import { cn } from "@/lib/utils";
+import { viewerCanPublishListings } from "@/lib/email-verified";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Listings · Admin" };
@@ -46,6 +47,10 @@ export default async function AdminPropertiesPage() {
     hostingAllowsCreate = host ? canHostAddFutureWork(host) : false;
   }
   const showCreate = allowCreate && hostingAllowsCreate;
+  const emailVerified = await viewerCanPublishListings({
+    userId: access.session.user.id,
+    bypass: access.isPlatform,
+  });
 
   const properties = await prisma.property.findMany({
     where: propertyScopeWhere(access),
@@ -144,6 +149,7 @@ export default async function AdminPropertiesPage() {
                   listOnMarketplace={p.listOnMarketplace}
                   hostMarketplaceOn={p.host.listOnMarketplace}
                   compact
+                  emailVerified={emailVerified}
                 />
               </div>
               <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">

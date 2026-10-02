@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { changePassword } from "@/app/actions/account";
+import { ResendVerifyButton } from "@/components/resend-verify-button";
 import {
   AccountSettingsShell,
   SavedBanner,
@@ -106,6 +107,14 @@ export default async function LoginSecurityPage({
             <div>
               <p className="font-medium text-stone-900">Email</p>
               <p className="mt-0.5 text-stone-500">{user.email}</p>
+              {user.emailVerifiedAt ? (
+                <p className="mt-1 text-xs text-emerald-800">Confirmed</p>
+              ) : (
+                <p className="mt-1 text-xs text-amber-800">
+                  Not confirmed yet. Hosts must confirm before publishing a
+                  listing. <ResendVerifyButton className="font-medium underline" />
+                </p>
+              )}
             </div>
             <span className="text-stone-400">Sign-in</span>
           </div>

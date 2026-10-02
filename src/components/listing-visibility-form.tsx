@@ -37,6 +37,7 @@ export function ListingVisibilityForm({
   listOnMarketplace,
   compact = false,
   hostMarketplaceOn = true,
+  emailVerified = true,
 }: {
   propertyId: string;
   published: boolean;
@@ -44,6 +45,8 @@ export function ListingVisibilityForm({
   compact?: boolean;
   /** Host-level marketplace opt-in. Both still needs this on. */
   hostMarketplaceOn?: boolean;
+  /** False until the host confirms email — On options stay locked. */
+  emailVerified?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -56,6 +59,12 @@ export function ListingVisibilityForm({
   }, [fromProps]);
 
   function onPick(visibility: ListingVisibility) {
+    if (!emailVerified && visibility !== "off") {
+      setError(
+        "Confirm your email before you turn bookings on. Check your inbox, or resend the link from Login & security.",
+      );
+      return;
+    }
     const previous = current;
     setError(null);
     setCurrent(visibility);
@@ -112,7 +121,7 @@ export function ListingVisibilityForm({
               name={`visibility-${propertyId}`}
               value={opt.value}
               checked={current === opt.value}
-              disabled={pending}
+              disabled={pending || (!emailVerified && opt.value !== "off")}
               onChange={() => onPick(opt.value)}
               className="mt-0.5"
             />
@@ -131,6 +140,16 @@ export function ListingVisibilityForm({
         <p className="mt-2 text-xs text-amber-800">
           Brand marketplace is off, so Find a Place still hides this stay. Turn
           the brand on under Brand &amp; website.
+        </p>
+      ) : null}
+      {!emailVerified ? (
+        <p className="mt-2 text-xs text-amber-800">
+          Confirm your email before you turn bookings on. Check your inbox, or
+          resend from{" "}
+          <a href="/account/settings/login" className="font-semibold underline">
+            Login &amp; security
+          </a>
+          .
         </p>
       ) : null}
       {error ? (

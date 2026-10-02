@@ -759,6 +759,7 @@ export function AdminListingWorkspace({
   insightsPanel,
   initialTab,
   calendarOnly = false,
+  emailVerified = true,
 }: {
   property: WorkspaceProperty;
   seasons: Season[];
@@ -777,6 +778,7 @@ export function AdminListingWorkspace({
   initialTab?: TabId;
   /** Calendar home: no listing tabs, property switcher lives outside. */
   calendarOnly?: boolean;
+  emailVerified?: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<TabId>(
@@ -1102,6 +1104,7 @@ export function AdminListingWorkspace({
             published={property.published}
             listOnMarketplace={property.listOnMarketplace}
             hostMarketplaceOn={property.hostMarketplaceOn}
+            emailVerified={emailVerified}
           />
         </div>
       </div>

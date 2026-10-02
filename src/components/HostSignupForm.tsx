@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { registerHost, startHosting } from "@/app/actions/host";
 import {
   SETUP_SERVICE_FEE_USD,
@@ -34,7 +33,6 @@ export function HostSignupForm({
   /** Signed-in guest converting this account to a host */
   existingAccount?: { name: string | null; email: string } | null;
 }) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [path, setPath] = useState<Path>(initialPath);
@@ -101,21 +99,10 @@ export function HostSignupForm({
       return;
     }
     const result = await registerHost(formData);
-    setPending(false);
-    if (result.error) {
+    if (result && "error" in result && result.error) {
+      setPending(false);
       setError(result.error);
-      return;
     }
-    const afterLogin =
-      path === "self"
-        ? "/admin?welcome=1"
-        : collectGuestCards === "yes"
-          ? "/account/settings/subscription?welcome=1&collectCards=1"
-          : "/account/settings/subscription?welcome=1";
-    router.push(
-      `/login?registered=host&callbackUrl=${encodeURIComponent(afterLogin)}`,
-    );
-    router.refresh();
   }
 
   return (

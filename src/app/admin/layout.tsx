@@ -6,6 +6,9 @@ import { auth, requireHostAdmin } from "@/lib/auth";
 import { getAdminBrandHostId } from "@/lib/admin-brand-context";
 import { prisma } from "@/lib/db";
 import { isHostingPaused } from "@/lib/hosting";
+import { hasEmailTransport } from "@/lib/messaging";
+import { needsEmailVerifyToPublish } from "@/lib/email-verified";
+import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import Link from "next/link";
 
 export default async function AdminLayout({
@@ -19,7 +22,7 @@ export default async function AdminLayout({
   }
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { role: true },
+    select: { role: true, emailVerifiedAt: true },
   });
   const role = dbUser?.role ?? session.user.role;
   if (role !== "ADMIN" && role !== "HOST") {
@@ -128,6 +131,13 @@ export default async function AdminLayout({
             </Link>{" "}
             so new listings and new stays stay available.
           </p>
+        ) : null}
+        {!isPlatform &&
+        needsEmailVerifyToPublish({
+          emailVerifiedAt: dbUser?.emailVerifiedAt,
+          emailTransport: hasEmailTransport(),
+        }) ? (
+          <VerifyEmailBanner />
         ) : null}
         {billingHost && isHostingPaused(billingHost) ? (
           <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-950">

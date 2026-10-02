@@ -5,6 +5,7 @@ import { Button, Input, Label, Card } from "@/components/ui";
 import { homeAfterLogin } from "@/lib/login-home";
 import { hashPassword } from "@/lib/password";
 import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
+import { sendSignupVerificationEmail } from "@/lib/account-email";
 
 export const metadata = { title: "Create account" };
 
@@ -38,7 +39,7 @@ export default async function RegisterPage({
     if (existing) redirect("/register?error=exists");
 
     const passwordHash = await hashPassword(password);
-    await prisma.user.create({
+    const created = await prisma.user.create({
       data: {
         name: name || null,
         email,
@@ -46,6 +47,17 @@ export default async function RegisterPage({
         role: "GUEST",
       },
     });
+
+    try {
+      await sendSignupVerificationEmail({
+        userId: created.id,
+        email,
+        name: name || null,
+        kind: "guest",
+      });
+    } catch (err) {
+      console.error("[auth] guest signup email failed", err);
+    }
 
     await signIn("credentials", {
       email,

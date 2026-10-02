@@ -17,6 +17,11 @@ enum Role {
   GUEST // booker
 }
 
+enum AuthTokenKind {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
 /// Access within a host brand (only meaningful when role = HOST).
 enum HostAccessLevel {
   /// Primary owner: full admin + invite team + brand/billing
@@ -367,6 +372,8 @@ model User {
   preferredName String?
   email        String    @unique
   passwordHash String?
+  /// Set when the user confirms the signup / verify-email link.
+  emailVerifiedAt DateTime?
   /// Personal photo for profile / “meet the host” (not the brand logo)
   avatarUrl    String?
   role         Role      @default(GUEST)
@@ -394,9 +401,25 @@ model User {
   bookings             Booking[]
   sentMessages         Message[]           @relation("MessageSender")
   guestConversations   Conversation[]      @relation("ConversationGuest")
+  authTokens           AuthToken[]
 
   @@index([hostId, role])
   @@index([role])
+}
+
+/// One-time hashed tokens for email verify and password reset. Store sha256 only.
+model AuthToken {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      AuthTokenKind
+  tokenHash String        @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([userId, kind])
+  @@index([expiresAt])
 }
 
 /// Email/SMS suppressions for any address (account or guest-only contact).

@@ -9,6 +9,7 @@ import {
 } from "@/lib/host-access";
 import { AdminListingSwitcher } from "@/components/admin-listing-switcher";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
+import { viewerCanPublishListings } from "@/lib/email-verified";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Calendar · Admin" };
@@ -103,6 +104,11 @@ export default async function AdminCalendarPage({
   });
   if (!property) redirect("/admin/calendar");
 
+  const emailVerified = await viewerCanPublishListings({
+    userId: access.session.user.id,
+    bypass: access.isPlatform,
+  });
+
   return (
     <div className="-mx-4 -my-8 flex min-h-[calc(100vh-8rem)] flex-col border-t border-slate-200/80 bg-[var(--background)] sm:-mx-6 lg:flex-row">
       <div className="shrink-0 border-b border-slate-200/80 px-4 py-5 sm:px-6 lg:w-60 lg:border-b-0 lg:border-r lg:py-8">
@@ -120,6 +126,7 @@ export default async function AdminCalendarPage({
       <div className="min-w-0 flex-1 bg-white px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <AdminListingWorkspace
           calendarOnly
+          emailVerified={emailVerified}
           property={{
             id: property.id,
             title: property.title,

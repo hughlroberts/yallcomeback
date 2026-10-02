@@ -8,6 +8,8 @@ describe("homeAfterLogin", () => {
     expect(homeAfterLogin("ADMIN", "/login")).toBe("/admin/calendar");
     expect(homeAfterLogin("HOST", "/for-hosts")).toBe("/admin/calendar");
     expect(homeAfterLogin("HOST", "/marketplace")).toBe("/admin/calendar");
+    expect(homeAfterLogin("HOST", "/forgot-password")).toBe("/admin/calendar");
+    expect(homeAfterLogin("HOST", "/verify-email")).toBe("/admin/calendar");
   });
 
   it("keeps host deep links into admin, ops, and account", () => {
@@ -22,6 +24,8 @@ describe("homeAfterLogin", () => {
     expect(homeAfterLogin("GUEST", "/")).toBe("/marketplace");
     expect(homeAfterLogin("GUEST")).toBe("/marketplace");
     expect(homeAfterLogin(undefined, "/login")).toBe("/marketplace");
+    expect(homeAfterLogin("GUEST", "/forgot-password")).toBe("/marketplace");
+    expect(homeAfterLogin("GUEST", "/verify-email")).toBe("/marketplace");
   });
 
   it("keeps a guest on the page they were using", () => {

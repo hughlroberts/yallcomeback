@@ -96,11 +96,16 @@ function GettingStarted({ article }: { article: HelpArticle }) {
             <Link href="/register" className="font-semibold text-bonnet">
               Register
             </Link>{" "}
-            to create a guest account. Open{" "}
+            to create a guest account. We send a confirmation email. Open the
+            link to confirm your address. Open{" "}
             <Link href="/login" className="font-semibold text-bonnet">
               Sign in
             </Link>{" "}
-            if you already have an account.
+            if you already have an account. Use{" "}
+            <Link href="/forgot-password" className="font-semibold text-bonnet">
+              Forgot password
+            </Link>{" "}
+            if you cannot sign in.
           </li>
           <li>
             Hosts use{" "}
@@ -646,7 +651,9 @@ function Account({ article }: { article: HelpArticle }) {
             emergency contact.
           </li>
           <li>
-            <strong>Login and security</strong> — Change your password.
+            <strong>Login and security</strong> — Change your password. Confirm
+            your email. If you forget the password, open Sign in and select
+            Forgot password. We send a reset link.
           </li>
           <li>
             <strong>Privacy</strong> — Preferences such as read receipts and
@@ -719,9 +726,13 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             path, or free self-host.
           </li>
           <li>
-            Hosting starts on your account with no wait for approval. For
-            platform hosts, listings go live after the monthly hosting fee is
-            paid.
+            Hosting starts on your account with no wait for approval. We sign
+            you in after you create the account. We send a confirmation email.
+            Confirm the email before you publish a listing.
+          </li>
+          <li>
+            For platform hosts, listings go live after the monthly hosting fee
+            is paid.
           </li>
         </HelpUl>
       </HelpSection>
@@ -849,6 +860,11 @@ function Listings({ article }: { article: HelpArticle }) {
           <li>
             A listing is not on until you pick one of the On options. Saving
             title, photos, or rates does not turn bookings on.
+          </li>
+          <li>
+            You must confirm your email before you turn bookings on. Open the
+            link in the signup email, or resend it from Account → Login and
+            security.
           </li>
         </HelpUl>
       </HelpSection>

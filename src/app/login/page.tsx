@@ -112,6 +112,11 @@ export default async function LoginPage({
               required
               autoComplete="current-password"
             />
+            <p className="mt-2 text-right text-sm">
+              <a href="/forgot-password" className="font-medium text-bonnet">
+                Forgot password?
+              </a>
+            </p>
           </div>
           <Button type="submit" className="w-full">
             Sign in

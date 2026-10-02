@@ -38,6 +38,7 @@ import {
 } from "@/lib/listing-insights";
 import { isStripeConfigured } from "@/lib/stripe";
 import { getSiteOrigin } from "@/lib/site-url";
+import { viewerCanPublishListings } from "@/lib/email-verified";
 import { paymentMethodLabel, WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
 import { ListingPaymentMethodFields } from "@/components/listing-payment-method-fields";
 import {
@@ -78,6 +79,10 @@ export default async function AdminPropertyDetailPage({
       hostAccess: access.hostAccess,
     }),
   );
+  const emailVerified = await viewerCanPublishListings({
+    userId: access.session.user.id,
+    bypass: access.isPlatform,
+  });
 
   const { id } = await params;
   const sp = await searchParams;
@@ -1138,6 +1143,7 @@ export default async function AdminPropertyDetailPage({
       ) : null}
       <div className="min-w-0 flex-1">
       <AdminListingWorkspace
+        emailVerified={emailVerified}
         property={{
           id: property.id,
           title: property.title,

@@ -6,6 +6,9 @@ const GENERIC_LANDING = new Set([
   "/login",
   "/register",
   "/for-hosts",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
 ]);
 
 function pathOnly(path: string): string {

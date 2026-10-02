@@ -162,6 +162,9 @@ export function isPlatformPath(pathname: string): boolean {
     pathname.startsWith("/ops") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/verify-email") ||
     pathname.startsWith("/account") ||
     pathname.startsWith("/messages") ||
     pathname.startsWith("/help") ||

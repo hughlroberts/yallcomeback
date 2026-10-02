@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { assertHostAllowsFutureWork } from "@/lib/hosting";
+import { assertEmailVerifiedForPublish } from "@/lib/email-verified";
 import { parseTimeTo24h, slugify } from "@/lib/utils";
 import {
   assertPropertyAccess,
@@ -708,6 +709,10 @@ export async function publishListing(formData: FormData) {
     await assertHostAllowsFutureWork(property.host.id, {
       bypass: access.isPlatform,
     });
+    await assertEmailVerifiedForPublish({
+      userId: access.session.user.id,
+      bypass: access.isPlatform,
+    });
   }
 
   if (!property.title.trim() || property.title === "Untitled listing") {
@@ -760,6 +765,10 @@ export async function updateListingVisibility(formData: FormData) {
 
   if (flags.published && !existing.published) {
     await assertHostAllowsFutureWork(existing.host.id, {
+      bypass: access.isPlatform,
+    });
+    await assertEmailVerifiedForPublish({
+      userId: access.session.user.id,
       bypass: access.isPlatform,
     });
   }

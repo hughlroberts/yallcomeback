@@ -110,6 +110,7 @@ async function main() {
       name: "Platform Admin",
       passwordHash,
       role: "ADMIN",
+      emailVerifiedAt: new Date(),
     },
   });
 
@@ -154,6 +155,7 @@ Questions? Message us in-app from your listing or booking.`,
       passwordHash: hostPassword,
       role: "HOST",
       hostId: cherokee.id,
+      emailVerifiedAt: new Date(),
     },
   });
 
@@ -181,6 +183,7 @@ Questions? Message us in-app from your listing or booking.`,
       passwordHash: hostPassword,
       role: "HOST",
       hostId: pendingHost.id,
+      emailVerifiedAt: new Date(),
     },
   });
 

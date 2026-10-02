@@ -21,6 +21,7 @@ import {
   isTrustedConnectRequest,
 } from "@/lib/stripe-connect";
 import { publicListingLocation } from "@/lib/agent/listing";
+import { isPlatformPath } from "@/lib/custom-domains";
 
 describe("resolveBookingChannel", () => {
   it("treats Find a Place as marketplace even if a guest posts via=host_site", () => {
@@ -148,6 +149,15 @@ describe("Connect origin", () => {
       host: "localhost:3000",
     });
     expect(connectOriginFromHeaders(headers)).toBe(PRODUCT_ORIGIN);
+  });
+});
+
+describe("isPlatformPath", () => {
+  it("keeps auth reset and verify pages on the platform domain", () => {
+    expect(isPlatformPath("/forgot-password")).toBe(true);
+    expect(isPlatformPath("/reset-password")).toBe(true);
+    expect(isPlatformPath("/verify-email")).toBe(true);
+    expect(isPlatformPath("/login")).toBe(true);
   });
 });
 

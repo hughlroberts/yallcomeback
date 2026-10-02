@@ -123,7 +123,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Guest guide",
     categoryId: "guests",
     title: "Your account and settings",
-    body: "Manage profile, login security, privacy, messages, and trip bookings.",
+    body: "Manage profile, login security, password reset, privacy, messages, and trip bookings.",
     description:
       "Manage your Yall Come Back account: personal data, security, messages, and trips.",
     related: ["search-and-book", "payments", "messaging"],
@@ -133,7 +133,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Become a host",
-    body: "Apply for paid platform hosting or free self-host. Get approval. Go online.",
+    body: "Create a host account. Confirm your email. Then publish a listing.",
     description:
       "How to host on Yall Come Back: platform hosting, self-host, plans, and approval.",
     related: [
@@ -164,7 +164,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Create and manage listings",
-    body: "Add photos, amenities, and house rules. Turn bookings on for your website, Find a Place, or both.",
+    body: "Add photos, amenities, and house rules. Confirm your email. Then turn bookings on for your website, Find a Place, or both.",
     description:
       "How hosts set up listings and turn bookings on for their website and the marketplace.",
     related: [

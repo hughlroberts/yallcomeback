@@ -20,6 +20,7 @@ import { ListingWizardDescriptionStep } from "@/components/listing-wizard-descri
 import { ListingWizardPriceStep } from "@/components/listing-wizard-price-step";
 import { ListingWizardDiscountsStep } from "@/components/listing-wizard-discounts-step";
 import { ListingWizardPublishStep } from "@/components/listing-wizard-publish-step";
+import { viewerCanPublishListings } from "@/lib/email-verified";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Set up listing" };
@@ -163,6 +164,10 @@ export default async function ListingSetupPage({
       property.host.slug,
       `/properties/${property.slug}`,
     );
+    const emailVerified = await viewerCanPublishListings({
+      userId: access.session.user.id,
+      bypass: access.isPlatform,
+    });
     return (
       <ListingWizardPublishStep
         propertyId={property.id}
@@ -176,6 +181,7 @@ export default async function ListingSetupPage({
         defaultVisibility={
           property.host.listOnMarketplace ? "both" : "website"
         }
+        emailVerified={emailVerified}
       />
     );
   }

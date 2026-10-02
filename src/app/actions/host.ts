@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { HostSitePresence } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireHostAdmin } from "@/lib/auth";
+import { requireHostAdmin, signIn } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 import { hashPassword } from "@/lib/password";
 import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
+import { sendSignupVerificationEmail } from "@/lib/account-email";
 import {
   readUploadedImage,
   writePublicUpload,
@@ -122,7 +123,9 @@ export async function registerHost(formData: FormData) {
   }
 
   const wantsSetup = formData.get("setupService") === "1";
+  const collectGuestCards = formData.get("collectGuestCards") === "1";
 
+  let userId = "";
   await prisma.$transaction(async (tx) => {
     const host = await tx.host.create({
       data: {
@@ -150,7 +153,7 @@ export async function registerHost(formData: FormData) {
       },
     });
 
-    await tx.user.create({
+    const created = await tx.user.create({
       data: {
         name,
         email,
@@ -160,6 +163,7 @@ export async function registerHost(formData: FormData) {
         hostAccess: "OWNER",
       },
     });
+    userId = created.id;
   });
 
   revalidatePath("/hosts");
@@ -167,7 +171,34 @@ export async function registerHost(formData: FormData) {
   revalidatePath("/for-hosts");
   revalidatePath("/self-host");
   revalidatePath("/ops/hosting");
-  return { ok: true as const };
+
+  try {
+    await sendSignupVerificationEmail({
+      userId,
+      email,
+      name,
+      kind: "host",
+    });
+  } catch (err) {
+    console.error("[auth] host signup email failed", err);
+  }
+
+  const dest =
+    hostingMode === "SELF"
+      ? "/admin/calendar?welcome=1"
+      : collectGuestCards
+        ? "/account/settings/subscription?welcome=1&collectCards=1"
+        : "/account/settings/subscription?welcome=1";
+
+  await signIn("credentials", {
+    email,
+    password,
+    redirectTo: dest,
+  });
+  return {
+    error:
+      "Could not sign you in automatically. Use Sign in with the same email and password.",
+  };
 }
 
 /**
@@ -277,16 +308,29 @@ export async function startHosting(formData: FormData) {
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/calendar");
   revalidatePath("/admin/payments");
   revalidatePath("/account/settings/subscription");
   revalidatePath("/for-hosts");
+
+  try {
+    await sendSignupVerificationEmail({
+      userId: user.id,
+      email,
+      name: user.name,
+      kind: "host",
+    });
+  } catch (err) {
+    console.error("[auth] start hosting email failed", err);
+  }
+
   const collectGuestCards = formData.get("collectGuestCards") === "1";
   redirect(
     hostingMode === "PLATFORM"
       ? collectGuestCards
         ? "/account/settings/subscription?welcome=1&collectCards=1"
         : "/account/settings/subscription?welcome=1"
-      : "/admin?welcome=1",
+      : "/admin/calendar?welcome=1",
   );
 }
 
