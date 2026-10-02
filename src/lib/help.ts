@@ -180,9 +180,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Calendar and availability",
-    body: "Calendar is the host home. Switch stays on the left. Block dates, set prices, and connect Airbnb or VRBO so a booked night is booked everywhere.",
+    body: "Calendar is the host home. Switch stays on the left. Block dates, set prices, and connect Airbnb, VRBO, and other calendars so a booked night is booked everywhere.",
     description:
-      "Manage availability, blocks, prices, and Airbnb or VRBO calendar sync.",
+      "Manage availability, blocks, prices, and calendar sync for Airbnb, VRBO, and other .ics feeds.",
     related: ["listings", "search-and-book", "pricing"],
   },
   {

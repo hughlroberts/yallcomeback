@@ -978,23 +978,24 @@ function Calendar({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             Open <strong>Admin → Calendar</strong>, pick a stay on the left, then{" "}
-            <strong>Airbnb / VRBO</strong>. The steps walk both directions so a
-            booked night is booked everywhere.
+            <strong>Airbnb / VRBO</strong>. Connect every calendar you use —
+            Airbnb, VRBO, and any other .ics feed. A booked night is then
+            booked everywhere.
           </li>
           <li>
             <strong>Step 1 — Export</strong> — Copy the Yall Come Back calendar
-            URL and paste it into Airbnb or VRBO as an import calendar. Those
+            URL once. Paste it into each site as an import calendar. Those
             sites then show Yall Come Back bookings as busy.
           </li>
           <li>
-            <strong>Step 2 — Import</strong> — In Airbnb or VRBO host settings,
+            <strong>Step 2 — Import</strong> — In each site’s host settings,
             copy Export calendar / the .ics link (not the public listing page).
-            Paste the link — or the page text that contains it. We find the
-            feed, connect it, and pull busy nights here.
+            Connect it here with a name such as Airbnb or VRBO. Repeat for every
+            feed. Busy nights from all of them show on this calendar.
           </li>
           <li>
-            We cannot log into Airbnb or VRBO for you. Calendar links live in
-            those host settings. Use Sync now anytime after you connect.
+            This syncs busy nights, not guest names or messages. We cannot log
+            into those sites for you. Use Sync now anytime after you connect.
           </li>
         </HelpUl>
       </HelpSection>

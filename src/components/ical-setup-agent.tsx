@@ -12,7 +12,7 @@ import {
   syncIcalNow,
 } from "@/app/actions/properties";
 import { CopyTextButton } from "@/components/copy-text-button";
-import { Button, Label, Textarea } from "@/components/ui";
+import { Button, Input, Label, Textarea } from "@/components/ui";
 import { ICAL_SITES, type IcalSiteId } from "@/lib/ical-setup";
 
 export type IcalSetupConnection = {
@@ -31,7 +31,7 @@ type Props = {
   agentEnabled: boolean;
 };
 
-const SITE_IDS: IcalSiteId[] = ["airbnb", "vrbo"];
+const SITE_IDS: IcalSiteId[] = ["airbnb", "vrbo", "other"];
 
 export function IcalSetupAgent({
   propertyId,
@@ -40,8 +40,10 @@ export function IcalSetupAgent({
   agentEnabled,
 }: Props) {
   const router = useRouter();
-  const [sites, setSites] = useState<IcalSiteId[]>(["airbnb", "vrbo"]);
+  const [sites, setSites] = useState<IcalSiteId[]>(["airbnb", "vrbo", "other"]);
   const [paste, setPaste] = useState("");
+  const [sourceName, setSourceName] = useState("");
+  const [importUrl, setImportUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<IcalFeedPreview[] | null>(null);
@@ -85,6 +87,25 @@ export function IcalSetupAgent({
     });
   }
 
+  function finishConnect(res: Awaited<ReturnType<typeof connectIcalFeed>>) {
+    if (!res.ok) {
+      setError(res.error);
+      setStep(null);
+      router.refresh();
+      return;
+    }
+    setPaste("");
+    setImportUrl("");
+    setSourceName("");
+    setCandidates(null);
+    setStep(
+      res.eventCount > 0
+        ? `Connected ${res.name} — ${res.eventCount} busy period${res.eventCount === 1 ? "" : "s"} on this calendar. Add another feed below if you have one.`
+        : `Connected ${res.name}. No busy nights in that feed yet — new bookings will show after the next sync. Add another feed below if you have one.`,
+    );
+    router.refresh();
+  }
+
   function runConnect(candidate: IcalFeedPreview) {
     setError(null);
     setStep(`Connecting ${candidate.sourceName} and pulling busy nights…`);
@@ -93,21 +114,21 @@ export function IcalSetupAgent({
       fd.set("propertyId", propertyId);
       fd.set("importUrl", candidate.url);
       fd.set("name", candidate.sourceName);
-      const res = await connectIcalFeed(fd);
-      if (!res.ok) {
-        setError(res.error);
-        setStep(null);
-        router.refresh();
-        return;
-      }
-      setPaste("");
-      setCandidates(null);
-      setStep(
-        res.eventCount > 0
-          ? `Connected ${res.name} — ${res.eventCount} busy period${res.eventCount === 1 ? "" : "s"} on this calendar.`
-          : `Connected ${res.name}. No busy nights in that feed yet — new bookings will show after the next sync.`,
-      );
-      router.refresh();
+      finishConnect(await connectIcalFeed(fd));
+    });
+  }
+
+  function runConnectFields() {
+    setError(null);
+    setCandidates(null);
+    const name = sourceName.trim() || "Calendar";
+    setStep(`Connecting ${name} and pulling busy nights…`);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("propertyId", propertyId);
+      fd.set("importUrl", importUrl.trim());
+      fd.set("name", name);
+      finishConnect(await connectIcalFeed(fd));
     });
   }
 
@@ -121,16 +142,18 @@ export function IcalSetupAgent({
           Booked in one place = booked everywhere
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-ink-muted">
-          Two-way iCal. A night booked on Airbnb or VRBO shows busy here, and a
-          night booked here shows busy there. We cannot log into those sites
-          for you — calendar links live in host settings. Do both steps.
+          Use this calendar as the hub. Connect Airbnb, VRBO, and any other
+          .ics feed — as many as you have. A night booked on those sites shows
+          busy here. A night booked here shows busy there. This syncs busy
+          nights, not guest details. Those sites refresh on their own schedule.
         </p>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
         {SITE_IDS.map((id) => {
           const on = sites.includes(id);
-          const label = id === "airbnb" ? "Airbnb" : "VRBO";
+          const label =
+            id === "airbnb" ? "Airbnb" : id === "vrbo" ? "VRBO" : "Other";
           return (
             <button
               key={id}
@@ -155,8 +178,8 @@ export function IcalSetupAgent({
             1. Push Yall Come Back into {guides.map((g) => g.label).join(" / ")}
           </p>
           <p className="mt-1 text-sm text-stone-500">
-            Copy this URL, then import it as a calendar on those sites so they
-            block nights booked here.
+            Copy this URL once. Import it on each site (Airbnb, VRBO, and any
+            other calendar) so they block nights booked here.
           </p>
           {exportUrl ? (
             <div className="mt-3 flex flex-wrap items-start gap-2">
@@ -191,9 +214,42 @@ export function IcalSetupAgent({
             2. Pull {guides.map((g) => g.label).join(" / ")} into Yall Come Back
           </p>
           <p className="mt-1 text-sm text-stone-500">
+            Add one feed at a time. Repeat for every calendar you use. Name it
+            so you can tell Airbnb from VRBO from the rest.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="ical-source-name">Source name</Label>
+              <Input
+                id="ical-source-name"
+                value={sourceName}
+                onChange={(e) => setSourceName(e.target.value)}
+                placeholder="Airbnb"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ical-import-url">Their calendar URL (.ics)</Label>
+              <Input
+                id="ical-import-url"
+                value={importUrl}
+                onChange={(e) => setImportUrl(e.target.value)}
+                placeholder="https://www.airbnb.com/calendar/ical/…"
+              />
+            </div>
+          </div>
+          <div className="mt-3">
+            <Button
+              type="button"
+              disabled={pending || !importUrl.trim()}
+              onClick={runConnectFields}
+            >
+              {imports.length > 0 ? "Connect another calendar" : "Connect calendar"}
+            </Button>
+          </div>
+          <p className="mt-4 text-sm text-stone-500">
             {agentEnabled
-              ? "Paste the .ics link, or paste the host-settings page text that contains it. We find the feed, check it, and connect it."
-              : "Paste the Export calendar / .ics URL from host settings."}
+              ? "Or paste the .ics link, or the host-settings page text that contains it. We find the feed and connect it."
+              : "Or paste the Export calendar / .ics URL from host settings."}
           </p>
           <ul className="mt-3 space-y-3">
             {guides.map((g) => (
@@ -275,7 +331,13 @@ export function IcalSetupAgent({
 
       {imports.length > 0 ? (
         <div className="mt-6 border-t border-hairline pt-5">
-          <h3 className="text-sm font-semibold text-ink">Connected calendars</h3>
+          <h3 className="text-sm font-semibold text-ink">
+            Connected calendars ({imports.length})
+          </h3>
+          <p className="mt-1 text-sm text-stone-500">
+            All of these sync into this stay. Use Sync now if a new booking is
+            not showing yet.
+          </p>
           <div className="mt-3 space-y-2">
             {imports.map((c) => (
               <div
