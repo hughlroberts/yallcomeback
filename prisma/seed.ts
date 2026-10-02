@@ -464,12 +464,16 @@ Hosted by Hugh & Charlotte Roberts - active in the community and operating a loc
 
   await prisma.propertyImage.createMany({
     data: imgs(eagles.id, [
-      { path: "/seed/eagles-nest/01.jpg", alt: "Upper Eagles Nest exterior" },
-      { path: "/seed/eagles-nest/02.jpg", alt: "Living area with lake light" },
-      { path: "/seed/eagles-nest/03.jpg", alt: "Bedroom with king bed" },
-      { path: "/seed/eagles-nest/04.jpg", alt: "Kitchen and dining" },
-      { path: "/seed/eagles-nest/05.jpg", alt: "Deck and outdoor space" },
-      { path: "/seed/eagles-nest/06.jpg", alt: "Second bedroom" },
+      { path: "/seed/eagles-nest/01.jpg", alt: "Lake, dock, and boat houses from the porch" },
+      { path: "/seed/eagles-nest/02.jpg", alt: "Covered porch looking toward the lake" },
+      { path: "/seed/eagles-nest/03.jpg", alt: "Covered porch along the cabin" },
+      { path: "/seed/eagles-nest/04.jpg", alt: "Living room, dining, and kitchen" },
+      { path: "/seed/eagles-nest/05.jpg", alt: "Living room" },
+      { path: "/seed/eagles-nest/06.jpg", alt: "Kitchen and dining" },
+      { path: "/seed/eagles-nest/07.jpg", alt: "Bedroom with two beds" },
+      { path: "/seed/eagles-nest/08.jpg", alt: "Bedroom with lake mural" },
+      { path: "/seed/eagles-nest/09.jpg", alt: "Hall to the bath" },
+      { path: "/seed/eagles-nest/10.jpg", alt: "Bathroom with walk-in shower" },
     ]),
   });
 
