@@ -27,37 +27,47 @@ const PHOTOS: { url: string; alt: string; isCover: boolean }[] = [
   },
   {
     url: "/seed/eagles-nest/04.jpg",
-    alt: "Living room, dining, and kitchen",
+    alt: "Porch seating with blue sofa",
     isCover: false,
   },
   {
     url: "/seed/eagles-nest/05.jpg",
-    alt: "Living room",
+    alt: "Living room, dining, and kitchen",
     isCover: false,
   },
   {
     url: "/seed/eagles-nest/06.jpg",
-    alt: "Kitchen and dining",
+    alt: "Living room",
     isCover: false,
   },
   {
     url: "/seed/eagles-nest/07.jpg",
-    alt: "Bedroom with two beds",
+    alt: "Kitchen and dining",
     isCover: false,
   },
   {
     url: "/seed/eagles-nest/08.jpg",
-    alt: "Bedroom with lake mural",
+    alt: "Bedroom with two beds",
     isCover: false,
   },
   {
     url: "/seed/eagles-nest/09.jpg",
-    alt: "Hall to the bath",
+    alt: "Bedroom with lake mural",
     isCover: false,
   },
   {
     url: "/seed/eagles-nest/10.jpg",
+    alt: "Hall to the bath",
+    isCover: false,
+  },
+  {
+    url: "/seed/eagles-nest/11.jpg",
     alt: "Bathroom with walk-in shower",
+    isCover: false,
+  },
+  {
+    url: "/seed/eagles-nest/12.jpg",
+    alt: "Bathroom vanity and shower",
     isCover: false,
   },
 ];

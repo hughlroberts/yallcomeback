@@ -266,6 +266,8 @@ Questions? Message us from your listing or booking.`,
         "/seed/eagles-nest/08.jpg",
         "/seed/eagles-nest/09.jpg",
         "/seed/eagles-nest/10.jpg",
+        "/seed/eagles-nest/11.jpg",
+        "/seed/eagles-nest/12.jpg",
       ],
     }),
     ensureProperty({
