@@ -296,7 +296,7 @@ export default async function ForHostsPage({
                   <li>✓ $5 / published listing / month</li>
                   <li>✓ Listing-first URLs (not a host mini-site)</li>
                   <li>✓ Zero commission · marketplace only</li>
-                  <li>✓ Stripe for automated payments and invoices</li>
+                  <li>✓ Card payments and invoices</li>
                 </ul>
               </div>
 
@@ -325,7 +325,7 @@ export default async function ForHostsPage({
                   <li>✓ $25 / month for the whole website (not per listing)</li>
                   <li>✓ Branded site + DNS on your domain</li>
                   <li>✓ Demo to Live publish before DNS cutover</li>
-                  <li>✓ Stripe for automated payments and invoices</li>
+                  <li>✓ Card payments and invoices</li>
                 </ul>
               </div>
             </div>
