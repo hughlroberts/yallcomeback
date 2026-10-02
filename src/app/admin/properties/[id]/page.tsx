@@ -8,7 +8,7 @@ import {
   applyPeakHolidays,
   updateSeasonMinNights,
   upgradeAllPeakMinNights,
-  addCalendarBlock,
+  addCalendarBlockForm,
   deleteCalendarBlock,
   sendCalendarBlockInvoice,
   markCalendarBlockInvoicePaid,
@@ -748,7 +748,7 @@ export default async function AdminPropertyDetailPage({
           ? "Stripe is on - invoices email a pay link and show in your Stripe Dashboard."
           : "Stripe is off - turn on STRIPE_ENABLED and keys in .env to send invoices."}
       </p>
-      <form action={addCalendarBlock} className="mt-4 grid gap-3 sm:grid-cols-2">
+      <form action={addCalendarBlockForm} className="mt-4 grid gap-3 sm:grid-cols-2">
         <input type="hidden" name="propertyId" value={property.id} />
         <div>
           <Label>Start</Label>
@@ -760,7 +760,7 @@ export default async function AdminPropertyDetailPage({
         </div>
         <div>
           <Label>Type</Label>
-          <Select name="blockType" defaultValue="OFFLINE">
+          <Select name="blockType" defaultValue="OWNER">
             <option value="OWNER">Owner use</option>
             <option value="FRIENDS">Friends & family</option>
             <option value="MAINTENANCE">Maintenance</option>
@@ -807,7 +807,7 @@ export default async function AdminPropertyDetailPage({
               type="radio"
               name="paymentMethod"
               value=""
-              required
+              defaultChecked
               className="mt-1"
             />
             <span>

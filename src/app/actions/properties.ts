@@ -1174,82 +1174,136 @@ export async function deleteSeason(formData: FormData) {
   revalidatePath("/admin/calendar");
 }
 
-export async function addCalendarBlock(formData: FormData) {
-  const access = await ensureHostAccess();
-  const propertyId = String(formData.get("propertyId") || "");
-  await assertPropertyAccess(propertyId, access);
-  const blockType = String(formData.get("blockType") || "OTHER");
-  if (blockType === "OFFLINE" || blockType === "FRIENDS") {
-    const prop = await prisma.property.findUnique({
-      where: { id: propertyId },
-      select: { hostId: true },
-    });
-    if (prop) {
-      await assertHostAllowsFutureWork(prop.hostId, {
-        bypass: access.isPlatform,
+export async function addCalendarBlock(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const access = await ensureHostAccess();
+    const propertyId = String(formData.get("propertyId") || "");
+    await assertPropertyAccess(propertyId, access);
+    const blockType = String(formData.get("blockType") || "OWNER");
+    if (blockType === "OFFLINE" || blockType === "FRIENDS") {
+      const prop = await prisma.property.findUnique({
+        where: { id: propertyId },
+        select: { hostId: true },
       });
+      if (prop) {
+        await assertHostAllowsFutureWork(prop.hostId, {
+          bypass: access.isPlatform,
+        });
+      }
     }
-  }
 
-  const guestEmail = String(formData.get("guestEmail") || "").trim() || null;
-  const guestPhone = String(formData.get("guestPhone") || "").trim() || null;
-  const amountRaw = String(formData.get("invoiceAmount") || "").trim();
-  const invoiceAmount =
-    amountRaw && Number.isFinite(Number(amountRaw))
-      ? Number(amountRaw)
-      : null;
-  const payRaw = String(formData.get("paymentMethod") || "").trim();
-  const paymentMethod: PaymentMethod | null =
-    payRaw === "STRIPE" ||
-    payRaw === "MANUAL" ||
-    payRaw === "BITCOIN" ||
-    payRaw === "IN_PERSON_CARD"
-      ? payRaw
-      : null;
-  if (blockType === "OFFLINE" && !paymentMethod) {
-    throw new Error("Choose how this stay is paid.");
-  }
+    const startRaw = String(formData.get("startDate") || "").trim();
+    const endRaw = String(formData.get("endDate") || "").trim();
+    const startDate = new Date(`${startRaw}T12:00:00`);
+    const endDate = new Date(`${endRaw}T12:00:00`);
+    if (!startRaw || !endRaw || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      return { ok: false, error: "Pick a start date and a checkout date." };
+    }
+    if (endDate <= startDate) {
+      return { ok: false, error: "Checkout must be after the start date." };
+    }
 
-  const block = await prisma.calendarBlock.create({
-    data: {
-      propertyId,
-      source: "MANUAL",
-      startDate: new Date(String(formData.get("startDate")) + "T00:00:00"),
-      endDate: new Date(String(formData.get("endDate")) + "T00:00:00"),
-      blockType: String(formData.get("blockType") || "OTHER") as
-        | "OWNER"
-        | "FRIENDS"
-        | "MAINTENANCE"
-        | "OFFLINE"
-        | "OTHER",
-      occupantName: String(formData.get("occupantName") || "").trim() || null,
-      guestCount: (() => {
-        const raw = String(formData.get("guestCount") || "").trim();
-        const n = Number(raw);
-        return raw && Number.isFinite(n) && n > 0 ? Math.round(n) : null;
-      })(),
-      notes: String(formData.get("notes") || "").trim() || null,
-      guestEmail,
-      guestPhone,
-      invoiceAmount,
-      paymentMethod,
-    },
-  });
+    const guestEmail = String(formData.get("guestEmail") || "").trim() || null;
+    const guestPhone = String(formData.get("guestPhone") || "").trim() || null;
+    const amountRaw = String(formData.get("invoiceAmount") || "").trim();
+    const invoiceAmount =
+      amountRaw && Number.isFinite(Number(amountRaw))
+        ? Number(amountRaw)
+        : null;
+    const payRaw = String(formData.get("paymentMethod") || "").trim();
+    const paymentMethod: PaymentMethod | null =
+      payRaw === "STRIPE" ||
+      payRaw === "MANUAL" ||
+      payRaw === "BITCOIN" ||
+      payRaw === "IN_PERSON_CARD"
+        ? payRaw
+        : null;
+    if (blockType === "OFFLINE" && !paymentMethod) {
+      return {
+        ok: false,
+        error: "For an offline booking, choose how the stay is paid. Owner use and maintenance can stay unpaid.",
+      };
+    }
 
-  // Optional: create + email Stripe invoice immediately
-  const sendInvoice =
-    formData.get("sendInvoice") === "on" || paymentMethod === "STRIPE";
-  if (sendInvoice && guestEmail && invoiceAmount) {
-    const { sendStripeInvoiceForBlock } = await import("@/lib/block-invoice");
-    await sendStripeInvoiceForBlock({
-      blockId: block.id,
-      amount: invoiceAmount,
-      guestEmail,
-      guestName: String(formData.get("occupantName") || "").trim() || null,
+    const block = await prisma.calendarBlock.create({
+      data: {
+        propertyId,
+        source: "MANUAL",
+        startDate,
+        endDate,
+        blockType: (["OWNER", "FRIENDS", "MAINTENANCE", "OFFLINE", "OTHER"].includes(
+          blockType,
+        )
+          ? blockType
+          : "OWNER") as
+          | "OWNER"
+          | "FRIENDS"
+          | "MAINTENANCE"
+          | "OFFLINE"
+          | "OTHER",
+        occupantName: String(formData.get("occupantName") || "").trim() || null,
+        guestCount: (() => {
+          const raw = String(formData.get("guestCount") || "").trim();
+          const n = Number(raw);
+          return raw && Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+        })(),
+        notes: String(formData.get("notes") || "").trim() || null,
+        guestEmail,
+        guestPhone,
+        invoiceAmount,
+        paymentMethod,
+      },
     });
-  }
 
-  revalidatePath(`/admin/properties/${propertyId}`);
+    const sendInvoice = formData.get("sendInvoice") === "on";
+    if (sendInvoice && guestEmail && invoiceAmount) {
+      try {
+        const { sendStripeInvoiceForBlock } = await import("@/lib/block-invoice");
+        await sendStripeInvoiceForBlock({
+          blockId: block.id,
+          amount: invoiceAmount,
+          guestEmail,
+          guestName: String(formData.get("occupantName") || "").trim() || null,
+        });
+      } catch (err) {
+        revalidatePath(`/admin/properties/${propertyId}`);
+        revalidatePath("/admin/calendar");
+        return {
+          ok: false,
+          error:
+            err instanceof Error
+              ? `Dates are blocked, but the invoice did not send: ${err.message}`
+              : "Dates are blocked, but the invoice did not send.",
+        };
+      }
+    }
+
+    revalidatePath(`/admin/properties/${propertyId}`);
+    revalidatePath("/admin/calendar");
+    return { ok: true };
+  } catch (err) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "digest" in err &&
+      typeof (err as { digest?: unknown }).digest === "string" &&
+      String((err as { digest: string }).digest).startsWith("NEXT_")
+    ) {
+      throw err;
+    }
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Could not block those dates.",
+    };
+  }
+}
+
+/** Native form action (Blocks tab) — same save, no return value. */
+export async function addCalendarBlockForm(formData: FormData): Promise<void> {
+  await addCalendarBlock(formData);
 }
 
 export async function sendCalendarBlockInvoice(formData: FormData) {

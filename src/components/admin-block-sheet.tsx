@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { addCalendarBlock } from "@/app/actions/properties";
@@ -50,6 +50,7 @@ export function AdminBlockSheet({
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const nights = nightsBetween(startDate, endDate);
   const suggested = Math.round(baseNightlyRate * Math.max(nights, 1) * 100) / 100;
 
@@ -71,8 +72,13 @@ export function AdminBlockSheet({
   if (!open) return null;
 
   function onSubmit(formData: FormData) {
+    setError(null);
     startTransition(async () => {
-      await addCalendarBlock(formData);
+      const res = await addCalendarBlock(formData);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
       router.refresh();
       onClose();
     });
@@ -152,7 +158,7 @@ export function AdminBlockSheet({
             </div>
             <div className="space-y-1">
               <Label htmlFor="sheet-type">Type</Label>
-              <Select id="sheet-type" name="blockType" defaultValue="OFFLINE">
+              <Select id="sheet-type" name="blockType" defaultValue="OWNER">
                 <option value="OWNER">Owner use</option>
                 <option value="FRIENDS">Friends & family</option>
                 <option value="MAINTENANCE">Maintenance</option>
@@ -209,7 +215,7 @@ export function AdminBlockSheet({
                   type="radio"
                   name="paymentMethod"
                   value=""
-                  required
+                  defaultChecked
                   className="mt-1"
                 />
                 <span>
@@ -273,6 +279,12 @@ export function AdminBlockSheet({
               </span>
             </label>
           </div>
+
+          {error ? (
+            <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              {error}
+            </p>
+          ) : null}
 
           <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-stone-100 pt-4">
             <Button type="submit" disabled={pending}>
