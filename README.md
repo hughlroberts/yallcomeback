@@ -150,7 +150,11 @@ STRIPE_HOSTING_PRICE_ID=price_...
 ```
 
 Webhooks: `POST /api/stripe/webhook` (snapshot) and `POST /api/stripe/thin-webhook` (Connect thin).  
-`STRIPE_LIVE_READY = true` in `src/lib/features.ts`. Status shows under **Ops → Settings**.
+`STRIPE_LIVE_READY = true` in `src/lib/features.ts` is the **hosted** Yall Come Back product. Status shows under **Ops → Settings**.
+
+### Self-host / open source
+
+The hosted site’s Stripe account is for Yall Come Back only. If you run your own copy, create a Stripe account, put those keys in **your** env, then set `STRIPE_ENABLED=true`. Leave `STRIPE_ENABLED=false` until then. Never copy API keys from this website or from Railway.
 
 ## iCal sync & scheduled jobs
 

@@ -7,7 +7,8 @@ import { STRIPE_LIVE_READY } from "@/lib/features";
  * Always construct a Stripe Client (`new Stripe(secret)`) and use that
  * instance for every request. Do not set apiVersion — the SDK pins it.
  *
- * Env (see .env.example — never commit real keys):
+ * Env (see .env.example — never commit real keys).
+ * Self-host: use YOUR Stripe account, not keys from yallcomeback.app.
  *   STRIPE_ENABLED=true
  *   STRIPE_SECRET_KEY=sk_test_...   // placeholder until Dashboard keys exist
  *   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...

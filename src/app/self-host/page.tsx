@@ -5,7 +5,6 @@ import {
   PRODUCT_VERSION,
   REPO_URL,
   SELF_HOST_STEPS,
-  STRIPE_LIVE_READY,
 } from "@/lib/features";
 
 export const metadata = {
@@ -228,9 +227,9 @@ export default function SelfHostPage() {
               keeps you on Yall Come Back&apos;s servers with a simple monthly fee.
             </div>
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950">
-              {STRIPE_LIVE_READY
-                ? "Card payments can be turned on when you are ready for live deposits."
-                : "Card payments can stay off for now - you can still take deposits and mark them paid when money arrives."}
+              Card payments on a copy you run use your own card account, not
+              Yall Come Back&apos;s. Leave cards off until you set that up —
+              you can still take deposits and mark them paid when money arrives.
             </div>
             <p className="text-xs text-stone-500">
               Web developers who want the technical install (code, database,

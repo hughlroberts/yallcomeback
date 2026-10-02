@@ -7,7 +7,6 @@ import {
   PRODUCT_VERSION,
   REPO_URL,
   SELF_HOST_DEV_STEPS,
-  STRIPE_LIVE_READY,
 } from "@/lib/features";
 
 export const metadata = {
@@ -128,22 +127,20 @@ export default function OpenSourcePage() {
                 </a>
               </p>
             )}
-            {!STRIPE_LIVE_READY ? (
-              <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                <strong>Stripe setup placeholder.</strong> Leave{" "}
-                <code className="rounded bg-amber-100/80 px-1">
-                  STRIPE_ENABLED=false
-                </code>{" "}
-                in{" "}
-                <code className="rounded bg-amber-100/80 px-1">.env</code>.
-                Manual deposits and hosting invoices work without Stripe. Keys
-                and{" "}
-                <code className="rounded bg-amber-100/80 px-1">
-                  STRIPE_LIVE_READY
-                </code>{" "}
-                are wired at go-live only.
-              </div>
-            ) : null}
+            <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <strong>Bring your own Stripe.</strong> Card keys on this hosted
+              site belong to Yall Come Back. If you run your own copy, create a
+              Stripe account, put those keys in your{" "}
+              <code className="rounded bg-amber-100/80 px-1">.env</code>, then
+              set{" "}
+              <code className="rounded bg-amber-100/80 px-1">
+                STRIPE_ENABLED=true
+              </code>
+              . Leave it{" "}
+              <code className="rounded bg-amber-100/80 px-1">false</code> until
+              then — manual deposits and invoices still work. Never copy API
+              keys from this website.
+            </div>
           </div>
 
           <ol className="mt-8 space-y-4">

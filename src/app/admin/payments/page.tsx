@@ -92,10 +92,11 @@ export default async function AdminPaymentsPage({
 
       {!stripeOn ? (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
-          Card payments are not enabled yet. An operator must set{" "}
+          Card payments are not enabled yet. Create your own Stripe account,
+          then set{" "}
           <code className="rounded bg-amber-100 px-1">STRIPE_ENABLED=true</code>{" "}
           and <code className="rounded bg-amber-100 px-1">STRIPE_SECRET_KEY</code>{" "}
-          (from{" "}
+          from{" "}
           <a
             className="underline"
             href="https://dashboard.stripe.com/apikeys"
@@ -104,7 +105,7 @@ export default async function AdminPaymentsPage({
           >
             Dashboard → API keys
           </a>
-          ).
+          . Do not copy keys from another Yall Come Back site.
         </Card>
       ) : null}
 

@@ -56,8 +56,10 @@ export const LICENSE = "MIT";
 export const REPO_URL: string | null = null;
 
 /**
- * Ops/docs declaration that Stripe is live. Charges already follow
- * STRIPE_ENABLED + keys on Railway. Stay commission stays 0 unless env is set.
+ * Ops/docs declaration that Stripe is live on the hosted Yall Come Back
+ * product. Charges follow STRIPE_ENABLED + keys in that environment.
+ * Open-source copies must use their own Stripe account — never these keys.
+ * Stay commission stays 0 unless env is set.
  */
 export const STRIPE_LIVE_READY = true;
 
@@ -269,9 +271,7 @@ export const SELF_HOST_DEV_STEPS = [
   },
   {
     title: "Configure env",
-    body: STRIPE_LIVE_READY
-      ? "Copy .env.example → .env. Set AUTH_SECRET, DATABASE_URL, and Stripe keys (STRIPE_ENABLED=true)."
-      : "Copy .env.example → .env. Set AUTH_SECRET and DATABASE_URL. Leave Stripe off (STRIPE_ENABLED=false) until go-live - manual deposits and hosting invoices work without it.",
+    body: "Copy .env.example → .env. Set AUTH_SECRET and DATABASE_URL. Leave Stripe off (STRIPE_ENABLED=false) until you create your own Stripe account and add those keys. Do not copy keys from the hosted Yall Come Back site. Manual deposits and hosting invoices work without Stripe.",
   },
   {
     title: "Run or deploy",
