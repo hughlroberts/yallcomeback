@@ -605,7 +605,6 @@ function CalendarMonth({
               {week.map((date) => {
                 const key = ymd(date);
                 const inMonth = date.getMonth() === month;
-                const isPast = startOfDay(date) < today;
                 const isBlocked = blockedSet.has(key);
                 const isToday = key === ymd(today);
                 const inRange = isInRange(key);
@@ -657,7 +656,6 @@ function CalendarMonth({
                       inMonth && occupied && yearView && "bg-stone-500 text-white",
                       inRange && "bg-bonnet/15",
                       isRangeEdge && "ring-2 ring-inset ring-bonnet",
-                      isPast && inMonth && !yearView && "opacity-55",
                     )}
                   >
                     <span
@@ -801,7 +799,7 @@ export function AdminListingWorkspace({
       ...blocks,
       ...bookings
         .filter((b) =>
-          ["CONFIRMED", "PENDING_PAYMENT"].includes(b.status),
+          ["CONFIRMED", "PENDING_PAYMENT", "COMPLETED"].includes(b.status),
         )
         .map((b) => ({ startDate: b.checkIn, endDate: b.checkOut })),
     ];
@@ -836,7 +834,9 @@ export function AdminListingWorkspace({
       };
     });
     const fromBookings: StayBar[] = bookings
-      .filter((b) => ["CONFIRMED", "PENDING_PAYMENT"].includes(b.status))
+      .filter((b) =>
+        ["CONFIRMED", "PENDING_PAYMENT", "COMPLETED"].includes(b.status),
+      )
       .map((b) => {
         const label = stayPeopleLabel(b.guestName, b.guests, "Guest");
         const span = formatStaySpan(b.checkIn, b.checkOut);
@@ -910,7 +910,8 @@ export function AdminListingWorkspace({
   function onDayClick(key: string) {
     setSelectedDay(key);
 
-    // Range select: 1st click = start, 2nd = checkout end → open sheet
+    // Past and future nights are both selectable so hosts can log
+    // leftover stays and edit history. Range: 1st click = start, 2nd = checkout.
     if (!rangeStart || (rangeStart && rangeEnd)) {
       setRangeStart(key);
       setRangeEnd(null);

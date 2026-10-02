@@ -100,7 +100,9 @@ export default async function AdminPropertyDetailPage({
       location: true,
       host: true,
       bookings: {
-        where: { status: { in: ["CONFIRMED", "PENDING_PAYMENT"] } },
+        where: {
+          status: { in: ["CONFIRMED", "PENDING_PAYMENT", "COMPLETED"] },
+        },
         select: {
           id: true,
           checkIn: true,

@@ -74,7 +74,7 @@ export default async function AdminCalendarPage({
     : listings[0]!.id;
 
   const since = new Date();
-  since.setMonth(since.getMonth() - 6);
+  since.setFullYear(since.getFullYear() - 2);
 
   const property = await prisma.property.findFirst({
     where: { id: activeId, ...propertyScopeWhere(access) },
@@ -89,7 +89,9 @@ export default async function AdminCalendarPage({
       },
       host: { select: { slug: true, listOnMarketplace: true } },
       bookings: {
-        where: { status: { in: ["CONFIRMED", "PENDING_PAYMENT"] } },
+        where: {
+          status: { in: ["CONFIRMED", "PENDING_PAYMENT", "COMPLETED"] },
+        },
         select: {
           id: true,
           checkIn: true,
