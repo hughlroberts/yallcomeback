@@ -37,6 +37,14 @@ export default async function AdminBookingsPage() {
 
   return (
     <div>
+      <p className="mb-3">
+        <Link
+          href="/admin"
+          className="text-sm font-medium text-bonnet hover:underline"
+        >
+          ← Dashboard
+        </Link>
+      </p>
       <PageHeader
         title="Bookings"
         subtitle={`${bookings.length} total · most recent first`}

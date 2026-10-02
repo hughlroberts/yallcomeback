@@ -1548,8 +1548,9 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               yallcomeback.app
             </code>{" "}
-            under Admin (Calendar, Listings, Brand, Bookings, Messages,
-            Earnings). You do not edit a separate website builder.
+            under Admin (Calendar, Listings, Brand, Messages, Dashboard,
+            Earnings). Open Dashboard for bookings. You do not edit a separate
+            website builder.
           </li>
         </HelpUl>
       </HelpSection>

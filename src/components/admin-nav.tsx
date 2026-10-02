@@ -6,6 +6,7 @@ type LinkItem = {
   href: string;
   label: string;
   exact?: boolean;
+  matchPrefixes?: string[];
   excludePrefixes?: string[];
 };
 
@@ -27,6 +28,7 @@ export function AdminNav({
             key={l.href}
             href={l.href}
             exact={l.exact}
+            matchPrefixes={l.matchPrefixes}
             excludePrefixes={l.excludePrefixes}
             variant="solid"
           >

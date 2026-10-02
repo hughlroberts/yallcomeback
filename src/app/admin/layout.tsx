@@ -100,12 +100,11 @@ export default async function AdminLayout({
     { href: "/admin/calendar", label: "Calendar" },
     { href: "/admin/properties", label: "Listings" },
     { href: "/admin/messages", label: "Messages" },
-    { href: "/admin/bookings", label: "Bookings" },
     {
       href: "/admin",
       label: "Dashboard",
       exact: true,
-      matchPrefixes: [...DASHBOARD_NEST_PREFIXES],
+      matchPrefixes: [...DASHBOARD_NEST_PREFIXES, "/admin/bookings"],
     },
   ];
 
