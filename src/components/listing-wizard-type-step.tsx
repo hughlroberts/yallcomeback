@@ -66,7 +66,7 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
             <select
               value={chosenHostId}
               onChange={(e) => setChosenHostId(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-sm"
+              className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-base"
             >
               {hosts.map((h) => (
                 <option key={h.id} value={h.id}>

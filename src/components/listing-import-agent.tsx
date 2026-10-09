@@ -99,7 +99,7 @@ export function ListingImportAgent({
             <Label htmlFor="import-host">Host brand</Label>
             <select
               id="import-host"
-              className="h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-white px-3 text-sm"
+              className="h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-white px-3 text-base"
               value={chosenHostId}
               onChange={(e) => setChosenHostId(e.target.value)}
             >

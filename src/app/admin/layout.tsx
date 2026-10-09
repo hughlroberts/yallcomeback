@@ -119,7 +119,7 @@ export default async function AdminLayout({
   );
 
   return (
-    <div className="flex min-h-[calc(100vh-3.75rem)] flex-col bg-[var(--background)]">
+    <div className="flex min-h-[calc(100vh-3.75rem)] min-w-0 flex-col overflow-x-clip bg-[var(--background)]">
       {isPlatform && brandHosts.length > 0 ? (
         <AdminBrandSwitcher
           hosts={brandHosts}
@@ -139,7 +139,7 @@ export default async function AdminLayout({
           links={links}
         />
       </div>
-      <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6">
+      <div className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 px-4 py-8 sm:px-6">
         {billingHost && billingHost.subscriptionStatus === "PAST_DUE" ? (
           <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
             Hosting payment is past due. You still have a short grace period.

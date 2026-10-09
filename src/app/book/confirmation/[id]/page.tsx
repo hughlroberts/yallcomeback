@@ -33,7 +33,7 @@ export default async function ConfirmationPage({
   const booking = await prisma.booking.findUnique({
     where: { id },
     include: {
-      property: { include: { host: true } },
+      property: { select: { title: true, slug: true, hostId: true, host: { select: { slug: true } } } },
       payments: { orderBy: { createdAt: "desc" }, take: 1 },
     },
   });
@@ -43,9 +43,19 @@ export default async function ConfirmationPage({
   const session = await auth();
   const tokenOk = verifyBookingAccessToken(id, sp.t);
   const email = session?.user?.email?.toLowerCase();
+  const viewer = session?.user?.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { emailVerifiedAt: true },
+      })
+    : null;
   const isGuest =
     Boolean(session?.user?.id && booking.userId === session.user.id) ||
-    Boolean(email && email === booking.guestEmail.toLowerCase());
+    Boolean(
+      email &&
+        email === booking.guestEmail.toLowerCase() &&
+        viewer?.emailVerifiedAt,
+    );
   const isHost =
     session?.user?.role === "ADMIN" ||
     (session?.user?.role === "HOST" &&

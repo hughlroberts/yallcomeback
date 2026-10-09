@@ -25,9 +25,12 @@ type Photo = { id: string; url: string; alt: string | null };
 export function PhotoGallery({
   photos,
   title,
+  coverPriority = true,
 }: {
   photos: Photo[];
   title: string;
+  /** False when the listing hero already loads the cover. */
+  coverPriority?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -66,7 +69,7 @@ export function PhotoGallery({
             fill
             className="object-cover transition group-hover:brightness-95"
             sizes="(max-width: 768px) 100vw, 50vw"
-            priority
+            priority={coverPriority}
           />
           <span className="absolute inset-0 bg-black/0 transition hover:bg-black/10" />
         </button>
@@ -109,7 +112,7 @@ export function PhotoGallery({
       {photos.length > 1 ? (
         <div className="mt-3 flex items-center gap-2 sm:hidden">
           <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
-            {photos.slice(1).map((img, i) => (
+            {photos.slice(1, 9).map((img, i) => (
               <button
                 key={img.id}
                 type="button"
@@ -123,6 +126,7 @@ export function PhotoGallery({
                   fill
                   className="object-cover"
                   sizes="112px"
+                  loading="lazy"
                 />
               </button>
             ))}
@@ -295,7 +299,13 @@ function PhotoLightbox({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mx-auto flex max-w-5xl gap-2 overflow-x-auto pb-1">
-            {photos.map((img, i) => (
+            {photos
+              .map((img, i) => ({ img, i }))
+              .filter(({ i }) => {
+                const start = Math.max(0, Math.min(index - 6, photos.length - 12));
+                return i >= start && i < start + 12;
+              })
+              .map(({ img, i }) => (
               <button
                 key={img.id}
                 type="button"
@@ -315,6 +325,7 @@ function PhotoLightbox({
                   fill
                   className="object-cover"
                   sizes="96px"
+                  loading="lazy"
                 />
               </button>
             ))}

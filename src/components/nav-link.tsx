@@ -76,7 +76,7 @@ export function NavLink({
     <Link
       href={href}
       className={cn(
-        "rounded-full px-3 py-1.5 text-sm font-medium transition",
+        "inline-flex min-h-11 items-center rounded-full px-3 py-1.5 text-sm font-medium transition",
         variant === "solid"
           ? active
             ? NAV_ACTIVE_SOLID

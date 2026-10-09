@@ -324,7 +324,7 @@ function PricingSidebar({
             </Label>
             <select
               id="ws-pet-unit"
-              className="mt-1 h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 outline-none focus:border-bonnet focus:ring-2 focus:ring-petal"
+              className="mt-1 h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-base text-stone-900 outline-none focus:border-bonnet focus:ring-2 focus:ring-petal"
               value={petFeeUnit}
               onChange={(e) =>
                 setPetFeeUnit(
@@ -522,21 +522,21 @@ function SeasonOverridesCard({
             placeholder="Name (Labor Day)"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="h-9 text-sm"
+            className="h-11"
           />
           <div className="grid grid-cols-2 gap-2">
             <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="h-9 text-sm"
+              className="h-11"
               aria-label="Start date"
             />
             <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="h-9 text-sm"
+              className="h-11"
               aria-label="End date"
             />
           </div>
@@ -551,7 +551,7 @@ function SeasonOverridesCard({
                 step="0.01"
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
-                className="h-9 pl-7 text-sm"
+                className="h-11 pl-7"
                 aria-label="Nightly rate"
               />
             </div>
@@ -561,7 +561,7 @@ function SeasonOverridesCard({
               max={30}
               value={minNights}
               onChange={(e) => setMinNights(e.target.value)}
-              className="h-9 text-sm"
+              className="h-11"
               aria-label="Minimum nights"
             />
           </div>

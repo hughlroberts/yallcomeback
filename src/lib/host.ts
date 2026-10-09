@@ -12,6 +12,11 @@ import {
   rememberHaystack,
   rememberScore,
 } from "./remember-search";
+import {
+  MARKETPLACE_CANDIDATE_CAP,
+  MARKETPLACE_PAGE_SIZE,
+  marketplaceTextSearchOr,
+} from "./marketplace-search";
 
 export type PropertyWithHost = Property & {
   host: Pick<Host, "id" | "name" | "slug" | "listOnMarketplace" | "active">;
@@ -135,7 +140,7 @@ export async function getHostForGuestSite(slug: string) {
 
 export type MarketplaceSearchOpts = {
   take?: number;
-  /** Where - city, region, title, host. Empty / omit = anywhere. */
+  /** Where — city, region, title, host. Never street address. Empty = anywhere. */
   q?: string;
   /** Guests (people). Empty / omit = any capacity. */
   guests?: number;
@@ -193,6 +198,15 @@ export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
       ? Math.min(14, Math.floor(dateFlexRaw))
       : 0;
 
+  const pageSize =
+    opts?.take != null && Number.isFinite(opts.take) && opts.take > 0
+      ? Math.min(100, Math.floor(opts.take))
+      : MARKETPLACE_PAGE_SIZE;
+  const needsOverfetch = hasDates || remembered.tokens.length > 0;
+  const candidateLimit = needsOverfetch
+    ? Math.min(MARKETPLACE_CANDIDATE_CAP, Math.max(pageSize * 4, 80))
+    : pageSize;
+
   const listings = await prisma.property.findMany({
     where: {
       ...marketplacePropertyWhere(),
@@ -207,21 +221,7 @@ export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
             },
           }
         : {}),
-      ...(q
-        ? {
-            OR: [
-              { title: { contains: q } },
-              { address: { contains: q } },
-              { city: { contains: q } },
-              { region: { contains: q } },
-              { postalCode: { contains: q } },
-              { country: { contains: q } },
-              { description: { contains: q } },
-              { host: { name: { contains: q } } },
-              { location: { name: { contains: q } } },
-            ],
-          }
-        : {}),
+      ...(q ? { OR: marketplaceTextSearchOr(q) } : {}),
     },
     include: {
       host: {
@@ -236,6 +236,7 @@ export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
       images: { orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }], take: 1 },
     },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    take: candidateLimit,
   });
 
   let filtered = listings;
@@ -314,10 +315,7 @@ export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
     filtered = scored.map((row) => row.p);
   }
 
-  if (opts?.take != null) {
-    return filtered.slice(0, opts.take);
-  }
-  return filtered;
+  return filtered.slice(0, pageSize);
 }
 
 /**

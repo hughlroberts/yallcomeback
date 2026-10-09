@@ -6,6 +6,7 @@ import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
 } from "@/lib/hosting";
+import { MARKETPLACE_LISTING_USD } from "@/lib/hosting-prices";
 import { formatMoney } from "@/lib/utils";
 
 type PlanOption = {
@@ -41,7 +42,7 @@ export function HostSignupForm({
 
   const marketplacePlanId =
     plans.find((p) => p.slug === "marketplace")?.id ||
-    plans.find((p) => p.monthlyPrice === 5)?.id ||
+    plans.find((p) => p.monthlyPrice === MARKETPLACE_LISTING_USD)?.id ||
     plans.find((p) => /marketplace/i.test(p.name))?.id ||
     "";
   const brandedPlanId =
@@ -388,7 +389,7 @@ function Field({
         required={required}
         minLength={minLength}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-base sm:text-sm"
+        className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-base"
       />
       {hint ? (
         <span className="mt-1 block text-xs text-stone-500">{hint}</span>

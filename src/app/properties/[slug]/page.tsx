@@ -20,7 +20,7 @@ export default async function PropertyDetailPage({
       published: true,
       ...(sp.host ? { host: { slug: sp.host } } : {}),
     },
-    include: { host: true },
+    select: { slug: true, host: { select: { slug: true } } },
   });
 
   if (!property) notFound();

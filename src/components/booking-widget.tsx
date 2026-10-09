@@ -269,7 +269,7 @@ export function BookingWidget({
   return (
     <div
       id="reserve"
-      className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5"
+      className="scroll-mt-24 min-w-0 overflow-x-clip rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5"
     >
       <p className="text-xl font-semibold text-stone-900">
         {formatMoney(baseNightlyRate, currencySymbol)}
@@ -335,7 +335,7 @@ export function BookingWidget({
           <select
             value={guests}
             onChange={(e) => setGuests(Number(e.target.value))}
-            className="mt-1 w-full border-0 bg-transparent p-0 text-sm outline-none"
+            className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"
           >
             {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>
@@ -353,7 +353,7 @@ export function BookingWidget({
             <select
               value={Math.min(pets, petCap)}
               onChange={(e) => setPets(Number(e.target.value))}
-              className="mt-1 w-full border-0 bg-transparent p-0 text-sm outline-none"
+              className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"
             >
               {Array.from({ length: petCap + 1 }, (_, n) => n).map((n) => {
                 const feeHint =

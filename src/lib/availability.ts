@@ -22,10 +22,18 @@ export async function getUnavailableRanges(propertyId: string) {
   return blocks;
 }
 
-/** Public-safe ranges - no notes or occupant names */
+/** Public-safe ranges - no notes or occupant names. Next 18 months only. */
 export async function getPublicUnavailableRanges(propertyId: string) {
+  const from = startOfDay(new Date());
+  from.setDate(from.getDate() - 7);
+  const to = startOfDay(new Date());
+  to.setMonth(to.getMonth() + 18);
   const blocks = await prisma.calendarBlock.findMany({
-    where: { propertyId },
+    where: {
+      propertyId,
+      startDate: { lt: to },
+      endDate: { gt: from },
+    },
     select: {
       startDate: true,
       endDate: true,

@@ -115,7 +115,7 @@ export function StaySearchForm({
       method="get"
       action={action}
       onSubmit={onSubmit}
-      className={isHero ? "w-full max-w-4xl" : "mt-8 w-full"}
+      className={isHero ? "w-full min-w-0 max-w-4xl" : "mt-8 w-full min-w-0"}
     >
       <div
         className={
@@ -169,7 +169,7 @@ export function StaySearchForm({
                 max={50}
                 defaultValue={defaultGuests}
                 placeholder="Any"
-                className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 sm:text-sm"
+                className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
               />
             </label>
             <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5">
@@ -183,7 +183,7 @@ export function StaySearchForm({
                 max={10}
                 defaultValue={defaultPets}
                 placeholder="0"
-                className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 sm:text-sm"
+                className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
               />
             </label>
           </div>
@@ -258,7 +258,7 @@ export function StaySearchForm({
               placeholder="Dock cabin, we grilled, about 8 people…"
               autoComplete="off"
               enterKeyHint="search"
-              className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 sm:text-sm"
+              className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
             />
           </label>
           <button

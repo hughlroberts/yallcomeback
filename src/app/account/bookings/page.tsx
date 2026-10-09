@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { formatMoney } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { SleepingArrangementsDisplay } from "@/components/sleeping-arrangements-display";
+import { guestOwnBookingOr } from "@/lib/guest-scope";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "My bookings" };
@@ -12,12 +13,18 @@ export default async function MyBookingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  const viewer = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { emailVerifiedAt: true },
+  });
+
   const bookings = await prisma.booking.findMany({
     where: {
-      OR: [
-        { userId: session.user.id },
-        { guestEmail: session.user.email },
-      ],
+      OR: guestOwnBookingOr({
+        userId: session.user.id,
+        email: session.user.email,
+        emailVerifiedAt: viewer?.emailVerifiedAt,
+      }),
     },
     include: { property: true },
     orderBy: { createdAt: "desc" },

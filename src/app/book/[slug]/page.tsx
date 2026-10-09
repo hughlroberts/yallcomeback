@@ -51,7 +51,21 @@ export default async function BookPage({
     include: {
       seasons: true,
       images: { take: 1, orderBy: { sortOrder: "asc" } },
-      host: true,
+      host: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          stripeAccountId: true,
+          websitePaymentMethod: true,
+          taxLiabilityAcknowledged: true,
+          defaultDisclaimer: true,
+          active: true,
+          hostingMode: true,
+          approvalStatus: true,
+          subscriptionStatus: true,
+        },
+      },
     },
   });
   if (!property) notFound();

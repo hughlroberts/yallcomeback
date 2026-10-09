@@ -68,7 +68,7 @@ export function DashboardNestNav({
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "rounded-full px-3 py-1.5 text-sm font-medium transition",
+              "inline-flex min-h-11 items-center rounded-full px-3 py-1.5 text-sm font-medium transition",
               isActive
                 ? "bg-petal text-bonnet"
                 : "border border-stone-200 bg-white text-stone-700 hover:bg-stone-50",

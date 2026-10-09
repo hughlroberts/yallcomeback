@@ -147,6 +147,7 @@ async function StaysPanel({
       checkOut,
       dateFlex,
       remember,
+      take: 24,
     }),
     marketplaceDiscoveryEnabled(),
   ]);

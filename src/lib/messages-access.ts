@@ -2,10 +2,12 @@ import type { Session } from "next-auth";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { guestOwnConversationOr } from "@/lib/guest-scope";
 
 export type MessagesViewer = {
   userId: string;
   email: string | null;
+  emailVerifiedAt: Date | null;
   role: string;
   hostId: string | null;
   isHost: boolean;
@@ -17,15 +19,23 @@ export async function getMessagesViewer(): Promise<MessagesViewer | null> {
   if (!session?.user?.id) return null;
   const base = viewerFromSession(session);
   if (!base) return null;
+  const row = await prisma.user.findUnique({
+    where: { id: base.userId },
+    select: { emailVerifiedAt: true },
+  });
+  const viewer: MessagesViewer = {
+    ...base,
+    emailVerifiedAt: row?.emailVerifiedAt ?? null,
+  };
   // Platform admin: use brand-scope cookie so Cherokee inbox ≠ Hugh inbox
-  if (base.isPlatform) {
+  if (viewer.isPlatform) {
     const { getAdminBrandHostId } = await import("@/lib/admin-brand-context");
     const brandId = await getAdminBrandHostId();
     if (brandId) {
-      return { ...base, hostId: brandId };
+      return { ...viewer, hostId: brandId };
     }
   }
-  return base;
+  return viewer;
 }
 
 export function viewerFromSession(session: Session): MessagesViewer | null {
@@ -34,6 +44,7 @@ export function viewerFromSession(session: Session): MessagesViewer | null {
   return {
     userId: session.user.id,
     email: session.user.email ?? null,
+    emailVerifiedAt: null,
     role,
     hostId: session.user.hostId ?? null,
     isHost: role === "HOST" || role === "ADMIN",
@@ -45,12 +56,11 @@ export function viewerFromSession(session: Session): MessagesViewer | null {
 export function conversationAccessWhere(
   viewer: MessagesViewer,
 ): Prisma.ConversationWhereInput {
-  const asGuest: Prisma.ConversationWhereInput[] = [
-    { guestUserId: viewer.userId },
-  ];
-  if (viewer.email) {
-    asGuest.push({ guestEmail: viewer.email });
-  }
+  const asGuest: Prisma.ConversationWhereInput[] = guestOwnConversationOr({
+    userId: viewer.userId,
+    email: viewer.email,
+    emailVerifiedAt: viewer.emailVerifiedAt,
+  });
 
   // Platform admin brand cookie (or host account) scopes inbox to that brand
   if (viewer.isPlatform && viewer.hostId) {

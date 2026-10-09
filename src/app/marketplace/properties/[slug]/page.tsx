@@ -53,14 +53,38 @@ export default async function MarketplacePropertyPage({
   const marketplaceWhere = marketplacePropertyWhere();
   const viaHostSite = sp.via === "host_site";
   const include = {
-    images: { orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }] },
+    images: {
+      orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
+      take: 16,
+    },
     seasons: { orderBy: { startDate: "asc" as const } },
     location: true,
     host: {
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        tagline: true,
+        description: true,
+        logoUrl: true,
+        contactEmail: true,
+        contactPhone: true,
+        websiteUrl: true,
+        sitePresence: true,
+        hostingMode: true,
+        createdAt: true,
+        taxLiabilityAcknowledged: true,
+        defaultDisclaimer: true,
         taxLines: {
           where: { active: true },
           orderBy: { sortOrder: "asc" as const },
+          select: {
+            name: true,
+            ratePercent: true,
+            applyToLodging: true,
+            applyToCleaning: true,
+            applyToPetFee: true,
+          },
         },
         _count: {
           select: {
@@ -198,7 +222,7 @@ export default async function MarketplacePropertyPage({
         name={property.title}
         description={property.description || property.tagline}
         url={listingUrl}
-        imageUrls={absImages}
+        imageUrls={absImages.slice(0, 8)}
         city={property.city}
         region={property.region}
         country={property.country}
@@ -290,7 +314,11 @@ export default async function MarketplacePropertyPage({
         </div>
 
         <div>
-          <PhotoGallery photos={property.images} title={property.title} />
+          <PhotoGallery
+            photos={property.images}
+            title={property.title}
+            coverPriority={false}
+          />
         </div>
 
         {/* Tablet+: side-by-side reserve; phone stacks with sticky bottom bar */}

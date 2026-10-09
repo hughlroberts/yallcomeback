@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import {
   availableTaxYears,
   getGuestStayRows,
@@ -13,10 +14,15 @@ export async function GET(req: NextRequest) {
   }
   const y = Number(req.nextUrl.searchParams.get("year"));
   const year = availableTaxYears().includes(y) ? y : new Date().getFullYear();
+  const viewer = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { emailVerifiedAt: true },
+  });
   const rows = await getGuestStayRows(
     session.user.id,
     session.user.email || null,
     year,
+    viewer?.emailVerifiedAt,
   );
   const file = guestStayCsv(year, rows);
   return new NextResponse(file.body, {

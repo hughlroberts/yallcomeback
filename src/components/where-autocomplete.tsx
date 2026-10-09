@@ -232,7 +232,7 @@ export function WhereAutocomplete({
           activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
         }
         className={cn(
-          "w-full min-w-0 border-0 bg-transparent p-0 text-sm text-stone-900 outline-none placeholder:text-stone-400",
+          "w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400",
           className,
         )}
       />

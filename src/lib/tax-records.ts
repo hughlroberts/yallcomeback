@@ -7,6 +7,7 @@ import type { HostAccess } from "@/lib/scope";
 import { bookingScopeWhere } from "@/lib/scope";
 import { prisma } from "@/lib/db";
 import { parseTaxBreakdown } from "@/lib/tax";
+import { guestOwnBookingOr } from "@/lib/guest-scope";
 
 export const TAX_EXPORT_DISCLAIMER =
   "Yall Come Back does not file, withhold, or remit tax. This worksheet is for your records. It is not a tax form. Confirm amounts with your books and a tax professional.";
@@ -481,11 +482,12 @@ export async function getGuestStayRows(
   userId: string,
   email: string | null,
   year: number,
+  emailVerifiedAt?: Date | null,
 ): Promise<GuestStayRow[]> {
   const { start, end } = yearRange(year);
   const bookings = await prisma.booking.findMany({
     where: {
-      OR: [{ userId }, ...(email ? [{ guestEmail: email }] : [])],
+      OR: guestOwnBookingOr({ userId, email, emailVerifiedAt }),
       checkIn: { gte: start, lt: end },
       status: { in: ["CONFIRMED", "COMPLETED", "PENDING_PAYMENT"] },
     },
