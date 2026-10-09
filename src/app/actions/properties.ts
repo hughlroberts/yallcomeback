@@ -199,12 +199,14 @@ export async function duplicateProperty(formData: FormData) {
       listOnMarketplace: source.listOnMarketplace,
       websitePaymentMethod: source.websitePaymentMethod,
       images: {
-        create: source.images.map((img) => ({
-          url: img.url,
-          alt: img.alt,
-          sortOrder: img.sortOrder,
-          isCover: img.isCover,
-        })),
+        create: source.images
+          .filter((img) => img.url.startsWith("/"))
+          .map((img) => ({
+            url: img.url,
+            alt: img.alt,
+            sortOrder: img.sortOrder,
+            isCover: img.isCover,
+          })),
       },
       seasons: {
         create: source.seasons.map((s) => ({

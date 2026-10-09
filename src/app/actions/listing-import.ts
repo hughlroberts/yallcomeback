@@ -8,7 +8,10 @@ import {
   resolveHostIdForCreate,
 } from "@/lib/scope";
 import { fetchListingFromUrl } from "@/lib/listing-import/fetch";
-import { downloadListingImages } from "@/lib/listing-import/images";
+import {
+  downloadListingImages,
+  isOtaCdnImageUrl,
+} from "@/lib/listing-import/images";
 import type { ImportedListingDraft } from "@/lib/listing-import/types";
 import {
   canUseListingImportAgent,
@@ -145,35 +148,21 @@ export async function importListingFromUrl(
       },
     });
 
-    // Photos: try download to /uploads; fall back to remote CDN URLs (needed on
-    // ephemeral hosts when local disk is not durable).
+    // Copy photos onto this host. Never persist Airbnb/VRBO CDN URLs.
     const downloaded = await downloadListingImages(
       property.id,
       draft.imageUrls,
       24,
     );
-    const imageRows =
-      downloaded.length > 0
-        ? downloaded.map((img) => ({
-            propertyId: property.id,
-            url: img.url,
-            alt: draft.title,
-            sortOrder: img.sortOrder,
-            isCover: img.isCover,
-          }))
-        : draft.imageUrls
-            .filter((u) => !u.includes("/user/") && !u.includes("PlatformAssets"))
-            .slice(0, 24)
-            .map((remoteUrl, i) => ({
-              propertyId: property.id,
-              url:
-                remoteUrl.includes("muscache.com") && !remoteUrl.includes("im_w=")
-                  ? `${remoteUrl}${remoteUrl.includes("?") ? "&" : "?"}im_w=1200`
-                  : remoteUrl,
-              alt: draft.title,
-              sortOrder: i,
-              isCover: i === 0,
-            }));
+    const imageRows = downloaded
+      .filter((img) => img.url.startsWith("/") && !isOtaCdnImageUrl(img.url))
+      .map((img) => ({
+        propertyId: property.id,
+        url: img.url,
+        alt: draft.title,
+        sortOrder: img.sortOrder,
+        isCover: img.isCover,
+      }));
 
     if (imageRows.length > 0) {
       await prisma.propertyImage.createMany({ data: imageRows });

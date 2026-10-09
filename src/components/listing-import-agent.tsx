@@ -86,9 +86,9 @@ export function ListingImportAgent({
           <p className="mt-1 max-w-xl text-sm text-ink-muted">
             Paste a public listing URL (e.g.{" "}
             <span className="font-mono text-[12px]">airbnb.com/rooms/…</span>
-            ). We read the page, pull photos and details, and open a draft so
-            you can edit before publishing. Best effort — OTAs change their
-            sites, so always review the draft.
+            ). We read the page, copy photos onto Yall Come Back, pull details,
+            and open a draft so you can edit before publishing. Best effort —
+            OTAs change their sites, so always review the draft.
           </p>
         </div>
       </div>
