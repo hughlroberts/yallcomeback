@@ -68,9 +68,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Getting started",
     categoryId: "getting-started",
     title: "How Yall Come Back works",
-    body: "Hosts own the guest. The marketplace is optional discovery. Bookings go to the host.",
+    body: "Hosts own the guest. Marketplace listing is a paid product. Bookings go to the host.",
     description:
-      "Yall Come Back model: host-branded websites, optional marketplace, and direct booking without a cut of each stay.",
+      "Yall Come Back model: paid branded websites ($25/mo unlimited listings, marketplace included), paid marketplace ($12/listing/mo), and free open-source software. Direct booking without a cut of each stay.",
     related: [
       "getting-started",
       "become-a-host",
@@ -135,7 +135,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: "Become a host",
     body: "Create a host account. Confirm your email. Then publish a listing.",
     description:
-      "How to host on Yall Come Back: platform hosting, self-host, and plans.",
+      "How to host on Yall Come Back: paid marketplace ($12/listing/mo), paid branded website ($25/mo unlimited, marketplace included), or free open-source software.",
     related: [
       "listings",
       "branded-website",
@@ -230,9 +230,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Free self-host website",
-    body: "Run Yall Come Back on your domain. Optionally list on the free marketplace. Keep your brand.",
+    body: "Run Yall Come Back on your domain. The software is free. Marketplace listing on this site is a paid product.",
     description:
-      "Run the free Yall Come Back website on your domain. Marketplace listing is optional.",
+      "Run the free Yall Come Back website on your domain. The hosted marketplace and branded websites are paid.",
     related: [
       "become-a-host",
       "branded-website",

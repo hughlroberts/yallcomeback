@@ -259,7 +259,7 @@ export default async function OpsHostDetailPage({
         <p className="mt-1 text-sm text-ink-muted">
           Use <strong>Complimentary</strong> for your own brand (any number of
           listings, never billed). Paying customers:{" "}
-          <strong>Marketplace only</strong> $5 / published listing, or{" "}
+          <strong>Marketplace only</strong> $12 / published listing, or{" "}
           <strong>Branded website</strong> $25 / month for the whole site
           (marketplace included — listing count does not change the bill).
           Moving someone off a paid plan onto Complimentary asks you to confirm,

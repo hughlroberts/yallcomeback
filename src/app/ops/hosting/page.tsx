@@ -87,7 +87,7 @@ export default async function OpsHostingPage() {
             </strong>{" "}
             (whole site, any listings) or{" "}
             <strong className="font-medium text-stone-700">
-              $5/listing/mo marketplace-only
+              $12/listing/mo marketplace-only
             </strong>
             . Not a cut of each booking.
           </p>

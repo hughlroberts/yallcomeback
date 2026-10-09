@@ -46,7 +46,8 @@ export default function SyndicationApiKeyHelpPage() {
         <p className="text-sm leading-relaxed text-stone-600">
           You only need a key if you run a <strong>separate copy</strong> of
           the open-source software on your own servers, and you still want
-          those listings on the Yall Come Back marketplace.
+          those listings on the hosted Yall Come Back marketplace (a paid
+          product: $12 per listing / month).
         </p>
       </Card>
 

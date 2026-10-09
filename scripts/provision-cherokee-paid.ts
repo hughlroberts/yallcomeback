@@ -6,6 +6,12 @@
  */
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
+import {
+  BRANDED_PLAN_DESCRIPTION,
+  BRANDED_WEBSITE_USD,
+  MARKETPLACE_LISTING_USD,
+  MARKETPLACE_PLAN_DESCRIPTION,
+} from "../src/lib/hosting-prices";
 
 const prisma = new PrismaClient();
 
@@ -15,9 +21,8 @@ async function main() {
     create: {
       name: "Marketplace only",
       slug: "marketplace",
-      description:
-        "$5 per published listing / month. List on Find a Place. No custom brand website. Not a booking commission.",
-      monthlyPrice: 5,
+      description: MARKETPLACE_PLAN_DESCRIPTION,
+      monthlyPrice: MARKETPLACE_LISTING_USD,
       pricingModel: "PER_PROPERTY",
       minProperties: 1,
       currency: "USD",
@@ -27,9 +32,8 @@ async function main() {
     },
     update: {
       name: "Marketplace only",
-      description:
-        "$5 per published listing / month. List on Find a Place. No custom brand website. Not a booking commission.",
-      monthlyPrice: 5,
+      description: MARKETPLACE_PLAN_DESCRIPTION,
+      monthlyPrice: MARKETPLACE_LISTING_USD,
       pricingModel: "PER_PROPERTY",
       isActive: true,
       isDefault: false,
@@ -42,9 +46,8 @@ async function main() {
     create: {
       name: "Branded website",
       slug: "branded",
-      description:
-        "$25 / month for the whole website — any number of listings. Brand site on your domain; marketplace listing included. Not a booking commission.",
-      monthlyPrice: 25,
+      description: BRANDED_PLAN_DESCRIPTION,
+      monthlyPrice: BRANDED_WEBSITE_USD,
       pricingModel: "FLAT",
       minProperties: 1,
       currency: "USD",
@@ -54,9 +57,8 @@ async function main() {
     },
     update: {
       name: "Branded website",
-      description:
-        "$25 / month for the whole website — any number of listings. Brand site on your domain; marketplace listing included. Not a booking commission.",
-      monthlyPrice: 25,
+      description: BRANDED_PLAN_DESCRIPTION,
+      monthlyPrice: BRANDED_WEBSITE_USD,
       pricingModel: "FLAT",
       isActive: true,
       isDefault: true,

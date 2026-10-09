@@ -431,7 +431,7 @@ export async function applyHostingSubscriptionFromStripe(opts: {
 /**
  * Complimentary is $0 forever — until they actually pay. A successful hosting
  * charge moves them onto the matching paid plan (website $25 flat, or
- * marketplace $5/listing) so Ops does not stay out of sync.
+ * marketplace $12/listing) so Ops does not stay out of sync.
  */
 export async function promoteComplimentaryHostIfPaid(hostId: string) {
   const host = await prisma.host.findUnique({

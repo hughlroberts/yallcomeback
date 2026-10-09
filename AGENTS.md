@@ -58,6 +58,18 @@ Full project guidance: [`docs/help-writing-ste.md`](docs/help-writing-ste.md).
 - Do not leave non-STE help copy for “later cleanup.”
 - If you copy wording from UI marketing pages into help, convert it to STE first.
 
+## Hosting prices (required)
+
+Do **not** call the Yall Come Back marketplace “free”. Do **not** tell hosts or guests that marketplace listing or branded websites are free. Open-source MIT software is the **only** free product ($0 platform fee when the host runs it).
+
+| Product | Price |
+| --- | --- |
+| Marketplace listing on yallcomeback.app | **$12 / published listing / month** |
+| Branded website | **$25 / month** unlimited listings, marketplace included |
+| Open source / self-host software | **$0** platform fee |
+
+Canonical numbers: `src/lib/hosting-prices.ts` (`MARKETPLACE_LISTING_USD`, `BRANDED_WEBSITE_USD`). Keep `/llms.txt`, `/agents.md`, help, `/for-hosts`, HostingPlan seed/upsert, and this table in sync.
+
 ## Hosted / paid only — not MIT self-host
 
 AI agents, the public agent API, listing import from OTAs, and pricing-intelligence agents are **paid Yall Come Back platform** features.

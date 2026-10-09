@@ -81,12 +81,13 @@ export default function OpenSourcePage() {
       <div className="border-b border-stone-200 bg-emerald-50">
         <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
           <p className="text-sm text-emerald-950">
-            <strong>Free forever for self-hosting.</strong> You can still publish
-            on the central Yall Come Back marketplace: register as free self-host
-            (or paid), opt into marketplace, then either manage listings on this
-            platform or push from a remote open-source deploy with a syndication
-            API key (Admin → Brand &amp; website). Platform website hosting (our
-            servers, monthly fee) is optional. The software itself is {LICENSE}{" "}
+            <strong>Free forever for self-hosting the software.</strong> The MIT
+            code is the only free product. Publishing on the hosted Yall Come
+            Back marketplace is a paid product ($12 per listing / month). A
+            branded website is $25 / month for unlimited listings, marketplace
+            included. Register, then either manage listings on this platform or
+            push from a remote open-source deploy with a syndication API key
+            (Admin → Brand &amp; website). The software itself is {LICENSE}{" "}
             open source - reuse, modify, and run on your own domain at no cost.
           </p>
         </div>
@@ -208,12 +209,13 @@ npm run build && npm start
         {/* Remote open source → central marketplace */}
         <section id="marketplace" className="mt-16 scroll-mt-24">
           <h2 className="text-3xl font-semibold text-stone-900">
-            List on the Yall Come Back marketplace (optional)
+            List on the hosted Yall Come Back marketplace (paid)
           </h2>
           <p className="mt-2 max-w-3xl text-stone-600">
             Running your own copy does <strong>not</strong> automatically put
-            stays on Find a Place. Marketplace is opt-in. Use one of the two
-            technical paths below.
+            stays on Find a Place. The software is free. Marketplace listing on
+            yallcomeback.app is a paid product ($12 per listing / month). Use
+            one of the two technical paths below.
           </p>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -225,8 +227,10 @@ npm run build && npm start
                 Free self-host on this platform
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                Listings live in the central database. You still pay $0 / month.
-                Point your domain at Yall Come Back if you want a vanity URL.
+                Listings live in the central database. The software is $0 /
+                month. Listing on Find a Place is the paid marketplace product
+                ($12 per listing / month). Point your domain at Yall Come Back
+                if you want a vanity URL.
               </p>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-stone-700">
                 <li>
@@ -269,9 +273,9 @@ npm run build && npm start
                 Your servers + central marketplace
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                You run the MIT code on your own stack. You still create a free
-                host account on Yall Come Back, then push listings with a
-                syndication API key.
+                You run the MIT code on your own stack. Create a host account
+                on Yall Come Back, then push listings with a syndication API
+                key. Hosted marketplace listing is $12 per listing / month.
               </p>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-stone-700">
                 <li>
@@ -442,7 +446,7 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
             <ul className="mt-4 space-y-2 text-sm text-stone-600">
               <li>You run the app on your server or VPS</li>
               <li>You own the data and guest relationship</li>
-              <li>No monthly platform fee for the software</li>
+              <li>No monthly platform fee for the software — this is the only free product</li>
               <li>You maintain updates by pulling this repo</li>
             </ul>
           </div>
@@ -451,8 +455,8 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
               Platform-hosted (paid)
             </h2>
             <ul className="mt-4 space-y-2 text-sm text-stone-600">
+              <li>$12 / listing / month marketplace, or $25 / month branded website (unlimited listings, marketplace included)</li>
               <li>We list your stays with host branding on each listing</li>
-              <li>Approval + a small monthly hosting fee</li>
               <li>Still not a booking commission</li>
               <li>
                 Apply at{" "}

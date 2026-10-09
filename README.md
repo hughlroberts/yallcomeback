@@ -41,12 +41,12 @@ Open [http://localhost:3000](http://localhost:3000)
 | Host (live) | `host@example.com` | `host12345` | `/h/cherokee-landing` |
 | Host (pending) | `pending@example.com` | `host12345` | Waiting under Admin → Hosting |
 
-## Dual model + optional hosting fee
+## Dual model + hosting fees
 
 1. **Host sites** - branded mini-sites at `/h/your-slug` (or custom domain)
 2. **Shared marketplace** - **opt-in** listings at `/marketplace` (Find a Place)
-3. **Monthly hosting fee** (optional) - if we host the site for you: $25/mo branded website (whole site) or $5/listing marketplace-only — **not** a % of bookings
-4. **Free self-host** - $0 platform fee; either manage listings on the central app or run a remote open-source deploy
+3. **Monthly hosting fee** - if we host the site for you: **$25/mo branded website** (unlimited listings, marketplace included) or **$12/listing/mo marketplace-only** — **not** a % of bookings. The marketplace and branded websites are paid products.
+4. **Free self-host** - MIT software is the only free product ($0 platform fee when you run it). Listing on the hosted Yall Come Back marketplace is the paid marketplace product.
 
 Same calendar, pricing, and bookings either way. Marketplace is never required.
 

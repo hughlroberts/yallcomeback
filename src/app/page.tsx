@@ -137,8 +137,7 @@ export default async function HomePage() {
           <p className="mt-6 text-sm text-stone-300">
             {liveHosts} active host{liveHosts === 1 ? "" : "s"} ·{" "}
             {listings.length}+ listing
-            {listings.length === 1 ? "" : "s"} · free marketplace for
-            independent hosts
+            {listings.length === 1 ? "" : "s"} · book the host you know
           </p>
         </div>
       </section>

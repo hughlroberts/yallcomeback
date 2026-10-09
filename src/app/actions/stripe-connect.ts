@@ -107,7 +107,7 @@ export async function startHostingSubscription(formData?: FormData) {
   const host = await requireBrandHost(formData);
   if (hostProductPath(host) !== "website") {
     throw new Error(
-      "Card checkout is the $25 / month branded website plan. Marketplace-only hosts are billed $5 per listing by invoice.",
+      "Card checkout is the $25 / month branded website plan. Marketplace-only hosts are billed $12 per listing by invoice.",
     );
   }
   const stripeStatus = (host.stripeSubscriptionStatus || "").toLowerCase();

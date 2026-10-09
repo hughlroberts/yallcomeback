@@ -5,8 +5,9 @@ servers, their database) and still want listings to appear on the **central**
 Yall Come Back marketplace at [yallcomeback.app](https://www.yallcomeback.app)
 (or your production origin).
 
-Marketplace listing is **optional**. You can self-host forever with zero
-marketplace connection.
+The MIT software is free. Listing on the **hosted** Yall Come Back marketplace
+is a **paid** product ($12 per published listing / month). You can self-host
+forever with zero marketplace connection.
 
 ---
 
@@ -31,7 +32,7 @@ Path B is for true independence + optional discovery on the central marketplace.
    - Wait until a platform admin **approves** the host
 3. Brand details on the central account: **Admin → Brand & website**
    - Host / brand name, logo, contact
-   - **List this brand on the free marketplace** checked if you want discovery
+   - **List this brand on the Yall Come Back marketplace** checked if you want discovery (paid marketplace product)
    - Generate a **syndication API key**
 
 ---
@@ -45,7 +46,7 @@ https://www.yallcomeback.app/for-hosts?path=self
 ```
 
 - Choose **Free self-host** ($0 / month platform fee).
-- Optionally check **List on the free Yall Come Back marketplace**.
+- Optionally check **List on the Yall Come Back marketplace** (paid: $12 / listing / month).
 - Optionally request the **$500 full setup** one-time add-on (separate from hosting).
 - After approval you can sign in and open **Admin**.
 
@@ -54,7 +55,7 @@ https://www.yallcomeback.app/for-hosts?path=self
 On the **central** site (not your remote admin):
 
 1. Sign in → **Admin → Brand & website**
-2. Check **List this brand on the free marketplace** → **Save brand**
+2. Check **List this brand on the Yall Come Back marketplace** → **Save brand**
 3. Under **Open-source / remote syndication** → **Generate syndication API key**
 4. **Copy the key immediately** (shown once). Store it as a secret on your remote deploy.
 
@@ -197,7 +198,7 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \
 All of these must be true:
 
 1. Host is **approved** and **active** on the central site  
-2. Host **List this brand on the free marketplace** is on  
+2. Host **List this brand on the Yall Come Back marketplace** is on  
 3. Payload has `published: true`  
 4. Payload does not set `listOnMarketplace: false`  
 5. Host mode is free self-host (`SELF`) **or** paid with active subscription  

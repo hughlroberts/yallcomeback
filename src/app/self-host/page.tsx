@@ -9,7 +9,7 @@ import {
 
 export const metadata = {
   title: "Free self-host · migrate your rental website",
-  description: `Deploy ${PRODUCT_NAME} on your own website or any domain. Free MIT software. Optionally list on the free Yall Come Back marketplace.`,
+  description: `Deploy ${PRODUCT_NAME} on your own website or any domain. Free MIT software. The hosted marketplace and branded websites are paid products.`,
 };
 
 export default function SelfHostPage() {
@@ -26,9 +26,9 @@ export default function SelfHostPage() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-stone-300">
             Already have a rental website? Run Yall Come Back on your own domain
-            with ordinary website hosting — keep your brand. Listing on the free
-            Yall Come Back marketplace is optional so guests can find you either
-            way when you want discovery.
+            with ordinary website hosting — keep your brand. The software is
+            free. Listing on the hosted Yall Come Back marketplace is a paid
+            product ($12 per listing / month).
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {REPO_URL ? (
@@ -80,10 +80,11 @@ export default function SelfHostPage() {
         <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
           <p className="text-sm text-emerald-950">
             <strong>Self-host = free software ($0 / month platform fee).</strong>{" "}
-            You run the app on your servers/domain. Listing on the Yall Come Back
-            marketplace is <strong>optional</strong> — same choice paid hosts get.
-            Optional one-time full setup ($500) is available if you want help
-            going live.
+            You run the app on your servers/domain. That is the only free
+            product. The hosted marketplace is <strong>$12 per listing / month</strong>.
+            A branded website is <strong>$25 / month</strong> for unlimited
+            listings (marketplace included). Optional one-time full setup ($500)
+            is available if you want help going live.
           </p>
         </div>
       </div>
@@ -101,7 +102,7 @@ export default function SelfHostPage() {
             <ul className="mt-4 space-y-2 text-sm leading-relaxed text-stone-700">
               <li>· Deploy on your website (or any domain)</li>
               <li>· Full admin, calendars, bookings, photos, iCal</li>
-              <li>· Optional free Yall Come Back marketplace listing (your choice)</li>
+              <li>· Hosted marketplace listing is paid ($12 / listing / month)</li>
               <li>· No monthly platform fee, no booking commission</li>
               <li>· You own ops: SSL, backups, updates</li>
             </ul>
@@ -120,7 +121,7 @@ export default function SelfHostPage() {
               We run it for you
             </h2>
             <ul className="mt-4 space-y-2 text-sm leading-relaxed text-stone-700">
-              <li>· $25/mo website or $5/listing marketplace (not per booking)</li>
+              <li>· $25/mo website (unlimited listings, marketplace included) or $12/listing marketplace (not per booking)</li>
               <li>
                 · Choose guest surface: Yall Come Back listing URLs, your domain, or
                 both
@@ -169,8 +170,9 @@ export default function SelfHostPage() {
               </span>
               <span>
                 <strong className="text-stone-900">Register as free self-host</strong>{" "}
-                on Yall Come Back (hosting mode: Self) so your brand is known and
-                published listings syndicate to the free marketplace.
+                on Yall Come Back (hosting mode: Self) so your brand is known.
+                Listing on the hosted marketplace is a paid product ($12 per
+                listing / month).
               </span>
             </li>
             <li className="flex gap-3">

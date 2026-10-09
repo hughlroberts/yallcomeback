@@ -10,6 +10,13 @@ import type {
 } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
+export {
+  BRANDED_PLAN_DESCRIPTION,
+  BRANDED_WEBSITE_USD,
+  MARKETPLACE_LISTING_USD,
+  MARKETPLACE_PLAN_DESCRIPTION,
+} from "@/lib/hosting-prices";
+
 /** One-time done-for-you setup: listings, brand, custom domain / website. */
 export const SETUP_SERVICE_FEE_USD = 500;
 
@@ -135,11 +142,12 @@ export function sitePresenceLabel(mode: HostSitePresence): string {
 }
 
 /**
- * Paid product is marketplace ($5 / listing) vs branded website ($25 flat).
+ * Paid product is marketplace ($12 / listing) vs branded website ($25 flat).
  * Website is one monthly fee for the whole site so a mom-and-pop shop can
  * add every cabin, boat, and campsite without the bill growing.
  * Marketplace listing is a checkbox on the website plan, not a second fee.
  * Marketplace-only always lists on Find a Place.
+ * Open-source software is the only free product.
  */
 export function applyMarketplaceOptIn(
   hostingMode: "PLATFORM" | "SELF",

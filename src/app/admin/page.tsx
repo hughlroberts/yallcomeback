@@ -151,7 +151,7 @@ export default async function AdminDashboard() {
   if (host) {
     subtitleParts.push(host.name);
     if (host.hostingMode === "SELF") {
-      subtitleParts.push("free self-host · marketplace always on");
+      subtitleParts.push("free self-host software");
     } else if (host.listOnMarketplace) {
       subtitleParts.push("marketplace on");
     } else {

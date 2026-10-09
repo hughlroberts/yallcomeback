@@ -221,7 +221,7 @@ export default async function ForHostsPage({
             <div className="mt-4 space-y-3 lg:hidden">
               <div className="rounded-2xl border border-stone-200 bg-white p-4 ring-1 ring-black/5">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                  1 · Marketplace only · $5/listing/mo
+                  1 · Marketplace only · $12/listing/mo
                 </p>
                 <h3 className="mt-1 text-base font-semibold text-stone-900">
                   List on Yall Come Back
@@ -230,7 +230,7 @@ export default async function ForHostsPage({
                   Guests book on Find a Place. You keep the stay money.
                 </p>
                 <ul className="mt-2 space-y-0.5 text-xs text-stone-500">
-                  <li>✓ $5 / published listing / month</li>
+                  <li>✓ $12 / published listing / month</li>
                   <li>✓ Listing URLs · no branded mini-site</li>
                   <li>✓ Zero commission</li>
                 </ul>
@@ -273,7 +273,7 @@ export default async function ForHostsPage({
             <div className="mt-8 hidden gap-4 lg:grid lg:grid-cols-2">
               <div className="flex cursor-default flex-col rounded-3xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-black/5">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                  1 · Marketplace only · $5/listing/mo
+                  1 · Marketplace only · $12/listing/mo
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-stone-900">
                   List on Yall Come Back. Keep more of every stay.
@@ -287,13 +287,13 @@ export default async function ForHostsPage({
                   </strong>
                   — just{" "}
                   <strong className="font-semibold text-stone-800">
-                    $5 per published listing / month
+                    $12 per published listing / month
                   </strong>
                   . Perfect if you want discovery without a separate brand
                   website.
                 </p>
                 <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                  <li>✓ $5 / published listing / month</li>
+                  <li>✓ $12 / published listing / month</li>
                   <li>✓ Listing-first URLs (not a host mini-site)</li>
                   <li>✓ Zero commission · marketplace only</li>
                   <li>✓ Card payments and invoices</li>

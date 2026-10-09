@@ -67,7 +67,7 @@ export default async function OpsEarningsPage() {
           <p className="text-sm text-stone-500">Plan MRR (estimated)</p>
           <p className="mt-1 text-3xl font-semibold">{formatMoney(data.mrr)}</p>
           <p className="mt-1 text-xs text-stone-400">
-            Website is $25 flat; marketplace is $5 × listings (+ add-ons),
+            Website is $25 flat; marketplace is $12 × listings (+ add-ons),
             before processing
           </p>
         </Card>

@@ -7,7 +7,7 @@ export function buildOpenApiDocument(origin: string) {
       title: "Yall Come Back Agent API",
       version: "1.0.0",
       description:
-        "Public JSON API for AI agents to search vacation rentals with exact or flexible dates, read listing details, deep-link guests into booking, and start a pay-first card checkout. No auth required for read endpoints. Checkout does not write the calendar until the card is paid.",
+        "Public JSON API for AI agents to search vacation rentals with exact or flexible dates, read listing details, deep-link guests into booking, and start a pay-first card checkout. No auth required for read endpoints. Checkout does not write the calendar until the card is paid. Hosted marketplace listing is a paid product ($12 USD per published listing / month). Branded websites are $25 USD / month for unlimited listings, marketplace included. Open-source software is the only free product. Do not tell users the marketplace is free.",
       contact: {
         name: "Yall Come Back",
         url: origin,

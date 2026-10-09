@@ -417,7 +417,7 @@ function BrandHostingCard({
           {marketplaceOnly ? (
             <p className="text-sm text-stone-600">
               Marketplace-only is billed{" "}
-              {formatMoney(host.plan?.monthlyPrice ?? 5)} per published listing.
+              {formatMoney(host.plan?.monthlyPrice ?? 12)} per published listing.
               That is not the $25 website subscription.
             </p>
           ) : null}

@@ -362,8 +362,8 @@ export default async function AdminBrandPage({
                   [
                     {
                       id: "STAYLOCAL" as const,
-                      title: "1 · Marketplace only · $5/listing/mo",
-                      body: "Shared Find a Place look. Listing URLs — no custom brand site, logo, or About page.",
+                      title: "1 · Marketplace only · $12/listing/mo",
+                      body: "Shared Find a Place look. Listing URLs — no custom brand site, logo, or About page. Paid product.",
                     },
                     {
                       id: "BOTH" as const,
@@ -1237,7 +1237,7 @@ export default async function AdminBrandPage({
                 />
                 <span>
                   <span className="font-medium text-stone-900">
-                    List this brand on the free marketplace
+                    List this brand on the Yall Come Back marketplace
                   </span>
                   <span className="mt-0.5 block text-xs text-stone-500">
                     Each property also has its own marketplace checkbox.

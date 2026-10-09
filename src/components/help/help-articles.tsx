@@ -197,9 +197,9 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
     <HelpArticleLayout article={article}>
       <HelpLead>
         Yall Come Back is built so <strong>hosts own the guest relationship</strong>.
-        The shared marketplace is optional discovery. Hosts pay a simple hosting
-        fee, or self-host for free. Yall Come Back does not take a cut of every
-        booking.
+        The hosted marketplace and branded websites are paid products. Open-source
+        software is free when you run it. Yall Come Back does not take a cut of
+        every booking.
       </HelpLead>
 
       <HelpSection title="Two ways guests find a stay">
@@ -223,7 +223,7 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting vs self-host">
         <HelpUl>
           <li>
-            <strong>Platform hosting (paid)</strong> — Marketplace only at $5 per
+            <strong>Platform hosting (paid)</strong> — Marketplace only at $12 per
             published listing / month, or branded website at $25 / month for
             the whole site (marketplace included). Full brand-domain guide:{" "}
             <Link
@@ -235,9 +235,10 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
             .
           </li>
           <li>
-            <strong>Self-host (free)</strong> — You run the open-source app
-            on your own domain. There is no Yall Come Back hosting fee.
-            Marketplace listing is optional (same as paid hosts).
+            <strong>Self-host (free software)</strong> — You run the open-source
+            app on your own domain. There is no Yall Come Back hosting fee for
+            the software. Listing on the hosted marketplace is a paid product
+            ($12 per listing / month).
           </li>
         </HelpUl>
       </HelpSection>
@@ -729,7 +730,7 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting (paid)">
         <HelpUl>
           <li>
-            <strong>Marketplace only</strong> — $5 per published listing /
+            <strong>Marketplace only</strong> — $12 per published listing /
             month. Guests book on Find a Place. No custom brand site.
           </li>
           <li>
@@ -762,8 +763,9 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             hosting invoice.
           </li>
           <li>
-            You may list on the free Yall Come Back marketplace, or keep stays only
-            on your site. Marketplace is optional.
+            You may list on the hosted Yall Come Back marketplace ($12 per listing
+            / month), or keep stays only on your site. Marketplace listing on this
+            site is a paid product.
           </li>
           <li>
             Full steps:{" "}
@@ -1498,10 +1500,10 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         </HelpP>
         <HelpUl>
           <li>
-            <strong>1 · Marketplace only — $5 / listing / month</strong> —
+            <strong>1 · Marketplace only — $12 / listing / month</strong> —
             Publish listings on Find a Place. You do not need a custom domain.
             Guests book through the shared marketplace. Use this path if you do
-            not keep a separate brand website.
+            not keep a separate brand website. This is a paid product.
           </li>
           <li>
             <strong>2 · Branded website — $25 / month total</strong> — Yall
@@ -1509,8 +1511,8 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             with DNS. One $25 fee covers the whole website, no matter how many
             cabins, boats, or campsites you publish. This plan{" "}
             <strong>includes marketplace listing</strong> for the same stays —
-            you do not pay $5 again on top. Guests can book on your domain or on
-            Find a Place.
+            you do not pay $12 again on top. Guests can book on your domain or on
+            Find a Place. This is a paid product.
           </li>
           <li>
             <strong>3 · Free self-host / open source — $0 platform fee</strong> —
@@ -1524,9 +1526,9 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         </HelpUl>
         <HelpP>
           Example: seven published stays on the branded website plan cost{" "}
-          <strong>$25 / month</strong> total — the same as one stay. The same
-          seven stays on marketplace only cost <strong>$35 / month</strong>{" "}
-          ($5 × 7). Use marketplace-only if you do not need your own website.
+          <strong>$25 / month</strong> total. The same seven stays on
+          marketplace only cost <strong>$84 / month</strong> ($12 × 7). Use
+          marketplace-only if you do not need your own website.
         </HelpP>
       </HelpSection>
 
@@ -1736,8 +1738,9 @@ function SelfHost({ article }: { article: HelpArticle }) {
       <HelpLead>
         Yall Come Back is open source (MIT). Run it as{" "}
         <strong>your own rental website</strong> on your domain. This is normal
-        website hosting, not a separate app-store product. Keep your brand. List
-        stays on the free marketplace. This path is different from{" "}
+        website hosting, not a separate app-store product. Keep your brand. The
+        software is free. Listing on the hosted marketplace is a paid product.
+        This path is different from{" "}
         <Link href="/help/branded-website" className="font-semibold text-bonnet">
           platform branded hosting
         </Link>
@@ -1784,8 +1787,9 @@ function SelfHost({ article }: { article: HelpArticle }) {
       <HelpSection title="Marketplace and brand">
         <HelpUl>
           <li>
-            Self-host can join the free Yall Come Back marketplace, or stay on
-            your domain only. Marketplace is optional.
+            Marketplace is optional. Self-host can join the hosted Yall Come
+            Back marketplace ($12 per listing / month), or stay on your domain
+            only. Marketplace listing on this site is a paid product.
           </li>
           <li>
             <strong>On this site</strong> — Register at{" "}

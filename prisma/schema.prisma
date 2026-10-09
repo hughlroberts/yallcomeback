@@ -231,7 +231,7 @@ model Host {
   /// STAYLOCAL = use StayLocal listing URLs; CUSTOM = own domain; BOTH = both
   sitePresence         HostSitePresence    @default(STAYLOCAL)
   /// Host-level default: new properties inherit this for marketplace visibility
-  /// Opt into free marketplace discovery (optional for paid and free self-host)
+  /// Opt into hosted marketplace discovery (paid marketplace product; included on branded website)
   listOnMarketplace    Boolean             @default(true)
   /// Host account active (soft kill switch)
   active               Boolean             @default(true)

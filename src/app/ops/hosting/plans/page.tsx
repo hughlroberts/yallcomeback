@@ -47,7 +47,7 @@ export default async function OpsHostingPlansPage() {
           </strong>{" "}
           (any number of listings) and{" "}
           <strong className="font-medium text-stone-700">
-            marketplace-only is $5/listing/mo
+            marketplace-only is $12/listing/mo
           </strong>
           . Still not a booking commission.{" "}
           <strong className="font-medium text-stone-700">Complimentary</strong>{" "}

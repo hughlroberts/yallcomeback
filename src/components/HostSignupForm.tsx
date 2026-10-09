@@ -146,13 +146,13 @@ export function HostSignupForm({
                 [
                   {
                     id: "marketplace" as const,
-                    label: "Marketplace only · $5/listing/mo",
+                    label: "Marketplace only · $12/listing/mo",
                     hint: "Your stay on Find a Place. Use your name — no brand website to set up.",
                   },
                   {
                     id: "website" as const,
                     label: "Branded website · $25/mo",
-                    hint: "Your own site and domain. $25 covers every listing. We will ask for a brand name next.",
+                    hint: "Your own site and domain. $25 covers every listing, including marketplace. We will ask for a brand name next.",
                   },
                 ] as const
               ).map((opt) => (
@@ -193,13 +193,13 @@ export function HostSignupForm({
           <div className="space-y-3">
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
               <p className="font-semibold">
-                Self-host is free — $0 / month platform fee
+                Self-host is free software — $0 / month platform fee
               </p>
               <ul className="mt-2 list-inside list-disc text-xs leading-relaxed">
                 <li>Deploy the open-source stack on your own domain</li>
                 <li>Your brand, admin, calendars, and bookings — no monthly cut</li>
                 <li>
-                  Marketplace listing is <strong>optional</strong> (see below)
+                  The hosted marketplace and branded websites are paid products
                 </li>
               </ul>
               <p className="mt-2 text-xs">
@@ -267,7 +267,9 @@ export function HostSignupForm({
                 Also list on Find a Place
               </span>
               <span className="mt-0.5 block text-xs text-stone-500">
-                Included — no second fee. You can change this later.
+                {path === "self"
+                  ? "The hosted marketplace is a paid product ($12 per listing / month). Uncheck to keep stays only on your site."
+                  : "Included on the $25/month website plan — no second fee. You can change this later."}
               </span>
             </span>
           </label>

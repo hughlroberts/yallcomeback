@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
+import {
+  BRANDED_WEBSITE_USD,
+  MARKETPLACE_LISTING_USD,
+} from "@/lib/hosting-prices";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +15,17 @@ export async function GET(req: NextRequest) {
   const origin = publicOrigin(req);
   const md = `# Agent guide — Yall Come Back
 
-Yall Come Back is for guests coming back to a host they already know. Search the optional marketplace or book on a host's own site. Bookings are a contract between host and guest; the platform is not a party. See [${origin}/terms](${origin}/terms) and [${origin}/privacy](${origin}/privacy).
+Yall Come Back is for guests coming back to a host they already know. Search the marketplace or book on a host's own site. Bookings are a contract between host and guest; the platform is not a party. See [${origin}/terms](${origin}/terms) and [${origin}/privacy](${origin}/privacy).
+
+## Hosting is paid (do not call the marketplace free)
+
+The hosted marketplace and branded websites are paid products. Open-source software is the only free product.
+
+- **Marketplace** on this site: **$${MARKETPLACE_LISTING_USD} / published listing / month**. Not a cut of the stay.
+- **Branded website**: **$${BRANDED_WEBSITE_USD} / month** for unlimited listings. Marketplace listing of those stays is included (not a second fee).
+- **Open source / self-host**: MIT software is **$0** platform fee when the host runs it. Listing on the hosted Yall Come Back marketplace is the paid marketplace product.
+
+Do not tell users the marketplace is free. Do not tell users branded websites are free. Pricing for humans: [${origin}/for-hosts](${origin}/for-hosts).
 
 ## For AI agents
 
@@ -73,7 +87,8 @@ Returns \`checkoutUrl\`. Calendar is written only after the card is paid. Do not
 ## Humans
 
 - Marketplace: ${origin}/marketplace
-- For hosts: ${origin}/for-hosts
+- For hosts (paid products): ${origin}/for-hosts
+- Open source (the only free product): ${origin}/open-source
 `;
 
   return new NextResponse(md, {
