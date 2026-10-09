@@ -455,7 +455,7 @@ export default async function BookPage({
             {payOptions.map((opt) => (
               <label
                 key={opt.value}
-                className={`flex items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm ${
+                className={`flex min-h-11 items-start gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-base ${
                   opt.ready
                     ? "cursor-pointer hover:bg-stone-50"
                     : "cursor-not-allowed opacity-60"
@@ -467,7 +467,7 @@ export default async function BookPage({
                   value={opt.value}
                   defaultChecked={defaultPay === opt.value}
                   disabled={!opt.ready}
-                  className="mt-1"
+                  className="mt-1 size-5 shrink-0"
                 />
                 <span>
                   <span className="font-medium text-stone-900">{opt.label}</span>

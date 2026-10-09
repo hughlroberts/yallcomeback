@@ -113,9 +113,16 @@ body {
   input[type="url"],
   input[type="search"],
   input[type="tel"],
+  input[type="radio"],
+  input[type="checkbox"],
   select,
   textarea {
     font-size: 16px !important; /* beats text-sm; avoids cheap-Android zoom */
+  }
+  input[type="radio"],
+  input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
   }
 }
 

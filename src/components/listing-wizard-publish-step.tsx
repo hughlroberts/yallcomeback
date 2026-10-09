@@ -87,7 +87,7 @@ export function ListingWizardPublishStep({
           </legend>
           <label
             className={cn(
-              "flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2 text-sm",
+              "flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-base",
               visibility === "website"
                 ? "border-bonnet bg-petal/60"
                 : "border-stone-200 bg-white",
@@ -98,7 +98,7 @@ export function ListingWizardPublishStep({
               name="visibility"
               checked={visibility === "website"}
               onChange={() => setVisibility("website")}
-              className="mt-0.5"
+              className="mt-0.5 size-5 shrink-0"
             />
             <span>
               <span className="font-medium text-stone-900">
@@ -111,7 +111,7 @@ export function ListingWizardPublishStep({
           </label>
           <label
             className={cn(
-              "flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2 text-sm",
+              "flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-base",
               visibility === "both"
                 ? "border-bonnet bg-petal/60"
                 : "border-stone-200 bg-white",
@@ -122,7 +122,7 @@ export function ListingWizardPublishStep({
               name="visibility"
               checked={visibility === "both"}
               onChange={() => setVisibility("both")}
-              className="mt-0.5"
+              className="mt-0.5 size-5 shrink-0"
             />
             <span>
               <span className="font-medium text-stone-900">

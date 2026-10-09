@@ -159,12 +159,12 @@ export function HostSignupForm({
               ).map((opt) => (
                 <label
                   key={opt.id}
-                  className="flex cursor-pointer items-start gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm hover:bg-stone-50"
+                  className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-base hover:bg-stone-50"
                 >
                   <input
                     type="radio"
                     name="sitePresenceUi"
-                    className="mt-1"
+                    className="mt-1 size-5 shrink-0"
                     checked={paidPlan === opt.id}
                     onChange={() => {
                       setPaidPlan(opt.id);
