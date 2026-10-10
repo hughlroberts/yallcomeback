@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { registerHost, startHosting } from "@/app/actions/host";
 import {
   SETUP_SERVICE_FEE_USD,
@@ -39,6 +39,20 @@ export function HostSignupForm({
   const [path, setPath] = useState<Path>(initialPath);
   const [paidPlan, setPaidPlan] = useState<PaidPlan>(initialPlan);
   const [listOnMarketplace, setListOnMarketplace] = useState(true);
+
+  useEffect(() => {
+    void fetch("/api/analytics/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "host_signup_started",
+        path: "/for-hosts",
+      }),
+      keepalive: true,
+    }).catch(() => {
+      /* ignore */
+    });
+  }, []);
 
   const marketplacePlanId =
     plans.find((p) => p.slug === "marketplace")?.id ||

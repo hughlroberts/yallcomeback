@@ -184,6 +184,21 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
   -o yallcomeback-backup.json.gz
 ```
 
+## First-party analytics
+
+Page views and booking-funnel events are stored in Postgres (`page_views`, `events`). No third-party analytics services. No raw IP addresses. An anonymous visitor cookie (`ycb_vid`) and first-touch UTM cookie (`ycb_utm`) attribute later bookings and host signups to the landing campaign.
+
+Bots and `/admin`, `/ops`, `/api` paths are skipped. Funnel names: `listing_view`, `booking_started`, `booking_completed`, `booking_cancelled`, `host_signup_started`, `host_signup_completed`.
+
+**Stats API** (bearer `ANALYTICS_API_TOKEN`; missing token → 503):
+
+```bash
+curl -H "Authorization: Bearer $ANALYTICS_API_TOKEN" \
+  "https://www.yallcomeback.app/api/admin/stats?from=2026-10-01&to=2026-10-09"
+```
+
+Dates are UTC inclusive, max 366 days. JSON includes daily visitors and page views, top pages, top referrers and UTM sources, funnel counts and conversion rates, bookings count and revenue, and host signups — each broken down by UTM source.
+
 ## License
 
 MIT - free to use, modify, and self-host. See [LICENSE](./LICENSE).

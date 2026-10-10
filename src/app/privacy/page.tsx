@@ -60,12 +60,15 @@ export default function PrivacyPage() {
       <LegalH3>We collect automatically</LegalH3>
       <LegalUl>
         <li>
-          Device and log data: IP address, browser, pages viewed, dates, and
-          approximate location derived from IP.
+          First-party product analytics: page path, referrer (origin and path,
+          no query string), UTM source/medium/campaign, device type (phone,
+          tablet, or desktop), timestamp, and an anonymous visitor id from a
+          first-party cookie. We do not store raw IP addresses or the full
+          browser user-agent in those records.
         </li>
         <li>
-          Cookies and similar storage for sign-in, security, and preferences
-          (see § 7).
+          Cookies and similar storage for sign-in, security, preferences, and
+          first-party analytics (see § 6).
         </li>
         <li>
           Public API requests if you or an agent call documented endpoints.
@@ -96,6 +99,10 @@ export default function PrivacyPage() {
         <li>calculate quotes, including tax lines a host configured;</li>
         <li>bill platform hosting fees when you are on a paid plan;</li>
         <li>detect fraud, abuse, and security incidents;</li>
+        <li>
+          count visits, booking funnel, and social-campaign attribution in
+          first-party analytics (no third-party analytics services);
+        </li>
         <li>comply with law and enforce our Terms;</li>
         <li>improve the product, in aggregated or de-identified form when we can.</li>
       </LegalUl>
@@ -173,12 +180,19 @@ export default function PrivacyPage() {
           remember whether you chose Find a Place, Host a Place, or just
           browsing, so we do not ask again on the home page;
         </li>
-        <li>save on-device lists such as saved stays, where the product does that.</li>
+        <li>save on-device lists such as saved stays, where the product does that;</li>
+        <li>
+          anonymous first-party analytics: a visitor id cookie and first-touch
+          UTM tags so we can count visits and credit bookings or host signups
+          to the social post or platform that brought you here. We do not sell
+          this data or send it to third-party analytics services.
+        </li>
       </LegalUl>
       <LegalP>
-        These are primarily necessary and functional cookies. We do not run
-        third-party advertising networks on the Platform today. You can block
-        cookies in your browser; some features (sign-in) will not work.
+        These are primarily necessary and functional cookies, plus first-party
+        analytics. We do not run third-party advertising or analytics networks
+        on the Platform today. You can block cookies in your browser; some
+        features (sign-in) will not work.
       </LegalP>
 
       <LegalH2 id="retention">7. Retention</LegalH2>

@@ -949,3 +949,45 @@ model CronRun {
   lastSummary    String?
   updatedAt      DateTime @updatedAt
 }
+
+/// First-party page hit. No IP, no raw user-agent, no account id.
+model PageView {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  path        String
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  visitorId   String
+  deviceType  String
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([utmSource, createdAt])
+  @@map("page_views")
+}
+
+/// Funnel + attribution events. Names: listing_view, booking_started,
+/// booking_completed, booking_cancelled, host_signup_started, host_signup_completed.
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  name        String
+  visitorId   String?
+  listingId   String?
+  bookingId   String?
+  value       Float?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  path        String?
+
+  @@index([createdAt])
+  @@index([name, createdAt])
+  @@index([utmSource, createdAt])
+  @@index([listingId, createdAt])
+  @@index([bookingId, name])
+  @@map("events")
+}

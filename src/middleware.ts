@@ -7,6 +7,7 @@ import {
   isPlatformPath,
 } from "./lib/custom-domains";
 import { TENANT_SLUG_HEADER } from "./lib/tenant-constants";
+import { applyVisitorCookies } from "./lib/analytics-visitor";
 
 const { auth } = NextAuth(authConfig);
 
@@ -123,21 +124,30 @@ function withTenant(
   requestHeaders.set("x-pathname", req.nextUrl.pathname);
 
   if (opts?.rewriteUrl) {
-    return NextResponse.rewrite(opts.rewriteUrl, {
-      request: { headers: requestHeaders },
-    });
+    return applyVisitorCookies(
+      req,
+      NextResponse.rewrite(opts.rewriteUrl, {
+        request: { headers: requestHeaders },
+      }),
+    );
   }
-  return NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  return applyVisitorCookies(
+    req,
+    NextResponse.next({
+      request: { headers: requestHeaders },
+    }),
+  );
 }
 
 function passthrough(req: NextRequest): NextResponse {
   const requestHeaders = cleanRequestHeaders(req);
   requestHeaders.set("x-pathname", req.nextUrl.pathname);
-  return NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  return applyVisitorCookies(
+    req,
+    NextResponse.next({
+      request: { headers: requestHeaders },
+    }),
+  );
 }
 
 /**

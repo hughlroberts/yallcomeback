@@ -232,6 +232,15 @@ export async function createBooking(formData: FormData) {
     return created;
   });
 
+  const { trackAnalyticsEvent } = await import("@/lib/analytics");
+  trackAnalyticsEvent({
+    name: "booking_started",
+    listingId: property.id,
+    bookingId: booking.id,
+    value: quote.totalAmount,
+    path: `/book/${property.slug}`,
+  });
+
   // Host “on booking” template → guest inbox (if enabled on this listing)
   let autoMsgConversationId: string | undefined;
   try {
@@ -345,6 +354,14 @@ export async function markDepositPaid(formData: FormData) {
 
   revalidatePath("/admin/bookings");
   revalidatePath(`/admin/bookings/${bookingId}`);
+
+  const { trackAnalyticsEvent } = await import("@/lib/analytics");
+  trackAnalyticsEvent({
+    name: "booking_completed",
+    listingId: booking.propertyId,
+    bookingId: booking.id,
+    value: booking.totalAmount,
+  });
 }
 
 export async function cancelBooking(formData: FormData) {
@@ -368,4 +385,12 @@ export async function cancelBooking(formData: FormData) {
   ]);
 
   revalidatePath("/admin/bookings");
+
+  const { trackAnalyticsEvent } = await import("@/lib/analytics");
+  trackAnalyticsEvent({
+    name: "booking_cancelled",
+    listingId: booking.propertyId,
+    bookingId: booking.id,
+    value: booking.totalAmount,
+  });
 }

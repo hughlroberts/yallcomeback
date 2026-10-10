@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { recordPropertyView } from "@/lib/listing-insights";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
       published: true,
       host: { active: true },
     },
-    select: { id: true },
+    select: { id: true, slug: true },
   });
   if (!property) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -41,6 +42,11 @@ export async function POST(req: Request) {
 
   try {
     await recordPropertyView(property.id);
+    trackAnalyticsEvent({
+      name: "listing_view",
+      listingId: property.id,
+      path: `/marketplace/properties/${property.slug}`,
+    });
   } catch (e) {
     console.error("[listing-views]", e);
     return NextResponse.json({ error: "failed" }, { status: 500 });

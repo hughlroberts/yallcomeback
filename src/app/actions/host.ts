@@ -192,6 +192,12 @@ export async function registerHost(formData: FormData) {
   revalidatePath("/self-host");
   revalidatePath("/ops/hosting");
 
+  const { trackAnalyticsEvent } = await import("@/lib/analytics");
+  trackAnalyticsEvent({
+    name: "host_signup_completed",
+    path: "/for-hosts",
+  });
+
   try {
     await sendSignupVerificationEmail({
       userId,
@@ -341,6 +347,12 @@ export async function startHosting(formData: FormData) {
   revalidatePath("/admin/payments");
   revalidatePath("/account/settings/subscription");
   revalidatePath("/for-hosts");
+
+  const { trackAnalyticsEvent } = await import("@/lib/analytics");
+  trackAnalyticsEvent({
+    name: "host_signup_completed",
+    path: "/for-hosts",
+  });
 
   try {
     await sendSignupVerificationEmail({

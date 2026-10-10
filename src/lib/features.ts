@@ -219,6 +219,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "Prisma + SQLite by default (Postgres-ready via DATABASE_URL)",
       "Docker Compose starter",
       "Seed data with demo hosts and real-style listings",
+      "First-party analytics (page views + booking funnel; no third-party trackers)",
       "Open source under MIT - free to self-host and reuse",
     ],
   },

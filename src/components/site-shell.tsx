@@ -11,6 +11,7 @@ import {
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
+import { TrackPageView } from "@/components/track-page-view";
 
 /**
  * Picks YCB platform chrome vs host-owned chrome.
@@ -23,6 +24,7 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
   if (!tenant) {
     return (
       <>
+        <TrackPageView />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
@@ -62,6 +64,7 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-full flex-1 flex-col" style={hostBrandStyle(tenant)}>
+      <TrackPageView />
       <HostSiteDemoBanner
         host={tenant}
         isOwnerPreview={isOwnerPreview}

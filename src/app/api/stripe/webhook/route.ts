@@ -167,6 +167,13 @@ export async function POST(req: Request) {
             where: { id: booking.id },
             data: { status: "CONFIRMED" },
           });
+          const { trackAnalyticsEvent } = await import("@/lib/analytics");
+          trackAnalyticsEvent({
+            name: "booking_completed",
+            listingId: booking.propertyId,
+            bookingId: booking.id,
+            value: booking.totalAmount,
+          });
         }
       }
     }
@@ -197,7 +204,13 @@ export async function POST(req: Request) {
     ) {
       const booking = await prisma.booking.findUnique({
         where: { id: expired.metadata.bookingId },
-        select: { id: true, status: true, sourceChannel: true },
+        select: {
+          id: true,
+          status: true,
+          sourceChannel: true,
+          propertyId: true,
+          totalAmount: true,
+        },
       });
       if (booking && booking.status === "PENDING_PAYMENT") {
         await prisma.booking.update({
@@ -209,6 +222,13 @@ export async function POST(req: Request) {
             where: { bookingId: booking.id },
           });
         }
+        const { trackAnalyticsEvent } = await import("@/lib/analytics");
+        trackAnalyticsEvent({
+          name: "booking_cancelled",
+          listingId: booking.propertyId,
+          bookingId: booking.id,
+          value: booking.totalAmount,
+        });
       }
     }
   }

@@ -192,6 +192,15 @@ export async function createAgentStayCheckout(
     });
   });
 
+  const { trackAnalyticsEvent } = await import("@/lib/analytics");
+  trackAnalyticsEvent({
+    name: "booking_started",
+    listingId: property.id,
+    bookingId: booking.id,
+    value: quote.totalAmount,
+    path: `/book/${property.slug}`,
+  });
+
   const { createDirectChargeCheckout, depositCheckoutName } = await import(
     "@/lib/stripe-connect"
   );
