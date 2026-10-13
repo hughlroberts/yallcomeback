@@ -67,17 +67,31 @@ export async function buildAnalyticsStats(
         name: true,
         utmSource: true,
         value: true,
+        createdAt: true,
       },
     }),
   ]);
 
-  const dailyMap = new Map<string, { visitors: Set<string>; pageViews: number }>();
+  const dailyMap = new Map<
+    string,
+    {
+      visitors: Set<string>;
+      pageViews: number;
+      guestSignups: number;
+      hostSignups: number;
+    }
+  >();
   for (
     let t = range.start.getTime();
     t < range.endExclusive.getTime();
     t += 86400000
   ) {
-    dailyMap.set(utcDay(new Date(t)), { visitors: new Set(), pageViews: 0 });
+    dailyMap.set(utcDay(new Date(t)), {
+      visitors: new Set(),
+      pageViews: 0,
+      guestSignups: 0,
+      hostSignups: 0,
+    });
   }
 
   const pages = new Map<string, { views: number; visitors: Set<string> }>();
@@ -114,13 +128,23 @@ export async function buildAnalyticsStats(
 
   let bookingRevenue = 0;
   const bookingsByUtm: Record<string, { count: number; revenue: number }> = {};
-  const signupsByUtm: Record<string, number> = {};
+  const hostSignupsByUtm: Record<string, number> = {};
+  const guestSignupsByUtm: Record<string, number> = {};
 
   for (const ev of events) {
     if (!(ev.name in funnelCounts)) continue;
     funnelCounts[ev.name] += 1;
     const src = ev.utmSource || NONE;
     bump(funnelByUtm[ev.name]!, src);
+
+    const day = utcDay(ev.createdAt);
+    const dayBucket = dailyMap.get(day);
+    if (dayBucket && ev.name === "guest_signup_completed") {
+      dayBucket.guestSignups += 1;
+    }
+    if (dayBucket && ev.name === "host_signup_completed") {
+      dayBucket.hostSignups += 1;
+    }
 
     if (ev.name === "booking_completed") {
       const value = typeof ev.value === "number" ? ev.value : 0;
@@ -131,15 +155,20 @@ export async function buildAnalyticsStats(
       bookingsByUtm[src] = row;
     }
     if (ev.name === "host_signup_completed") {
-      bump(signupsByUtm, src);
+      bump(hostSignupsByUtm, src);
+    }
+    if (ev.name === "guest_signup_completed") {
+      bump(guestSignupsByUtm, src);
     }
   }
 
   const listingViews = funnelCounts.listing_view || 0;
   const bookingStarted = funnelCounts.booking_started || 0;
   const bookingCompleted = funnelCounts.booking_completed || 0;
-  const signupStarted = funnelCounts.host_signup_started || 0;
-  const signupCompleted = funnelCounts.host_signup_completed || 0;
+  const hostSignupStarted = funnelCounts.host_signup_started || 0;
+  const hostSignupCompleted = funnelCounts.host_signup_completed || 0;
+  const guestSignupStarted = funnelCounts.guest_signup_started || 0;
+  const guestSignupCompleted = funnelCounts.guest_signup_completed || 0;
 
   const topPages = [...pages.entries()]
     .map(([path, v]) => ({
@@ -171,6 +200,8 @@ export async function buildAnalyticsStats(
       date,
       visitors: v.visitors.size,
       pageViews: v.pageViews,
+      guestSignups: v.guestSignups,
+      hostSignups: v.hostSignups,
     })),
     topPages,
     topReferrers,
@@ -185,7 +216,14 @@ export async function buildAnalyticsStats(
           bookingStarted,
         ),
         listing_view_to_booking_completed: rate(bookingCompleted, listingViews),
-        host_signup_started_to_completed: rate(signupCompleted, signupStarted),
+        host_signup_started_to_completed: rate(
+          hostSignupCompleted,
+          hostSignupStarted,
+        ),
+        guest_signup_started_to_completed: rate(
+          guestSignupCompleted,
+          guestSignupStarted,
+        ),
       },
     },
     bookings: {
@@ -193,9 +231,17 @@ export async function buildAnalyticsStats(
       revenue: Math.round(bookingRevenue * 100) / 100,
       byUtmSource: bookingsByUtm,
     },
+    guestSignups: {
+      started: guestSignupStarted,
+      count: guestSignupCompleted,
+      conversionRate: rate(guestSignupCompleted, guestSignupStarted),
+      byUtmSource: guestSignupsByUtm,
+    },
     hostSignups: {
-      count: signupCompleted,
-      byUtmSource: signupsByUtm,
+      started: hostSignupStarted,
+      count: hostSignupCompleted,
+      conversionRate: rate(hostSignupCompleted, hostSignupStarted),
+      byUtmSource: hostSignupsByUtm,
     },
   };
 }

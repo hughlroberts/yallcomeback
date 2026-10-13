@@ -6,6 +6,7 @@ import { homeAfterLogin } from "@/lib/login-home";
 import { hashPassword } from "@/lib/password";
 import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 import { sendSignupVerificationEmail } from "@/lib/account-email";
+import { TrackSignupStarted } from "@/components/track-signup-started";
 
 export const metadata = { title: "Create account" };
 
@@ -46,6 +47,12 @@ export default async function RegisterPage({
         passwordHash,
         role: "GUEST",
       },
+    });
+
+    const { trackAnalyticsEvent } = await import("@/lib/analytics");
+    trackAnalyticsEvent({
+      name: "guest_signup_completed",
+      path: "/register",
     });
 
     try {
@@ -93,6 +100,7 @@ export default async function RegisterPage({
             Too many accounts created from this network. Try again later.
           </p>
         ) : null}
+        <TrackSignupStarted name="guest_signup_started" path="/register" />
         <form action={registerAction} className="mt-6 space-y-4">
           <div>
             <Label htmlFor="name">Name</Label>

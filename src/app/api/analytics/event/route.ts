@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { recordHostSignupStartedOnce } from "@/lib/analytics";
+import { recordSignupStartedOnce } from "@/lib/analytics";
 import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
-import { VISITOR_COOKIE, isValidVisitorId } from "@/lib/analytics-visitor";
+import {
+  VISITOR_COOKIE,
+  isSignupStartedName,
+  isValidVisitorId,
+} from "@/lib/analytics-visitor";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +31,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "bad_json" }, { status: 400 });
   }
 
-  if (body.name !== "host_signup_started") {
+  if (!body.name || !isSignupStartedName(body.name)) {
     return NextResponse.json({ error: "unsupported_event" }, { status: 400 });
   }
 
+  const fallbackPath =
+    body.name === "guest_signup_started" ? "/register" : "/for-hosts";
+
   try {
-    await recordHostSignupStartedOnce(body.path || "/for-hosts");
+    await recordSignupStartedOnce(body.name, body.path || fallbackPath);
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[analytics] event", e);

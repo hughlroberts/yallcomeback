@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  ANALYTICS_EVENT_NAMES,
   deviceTypeFromUserAgent,
   encodeUtmCookie,
+  isAnalyticsEventName,
   isBotUserAgent,
+  isSignupStartedName,
   isValidVisitorId,
   parseUtmCookie,
   parseUtmFromSearch,
@@ -43,6 +46,19 @@ describe("UTM parse", () => {
     expect(sanitizeUtmToken("twitter")).toBe("twitter");
     expect(sanitizeUtmToken("evil source")).toBeNull();
     expect(sanitizeUtmToken("https://x.com")).toBeNull();
+  });
+});
+
+describe("funnel event names", () => {
+  it("includes guest and host signup start/complete", () => {
+    expect(ANALYTICS_EVENT_NAMES).toContain("guest_signup_started");
+    expect(ANALYTICS_EVENT_NAMES).toContain("guest_signup_completed");
+    expect(ANALYTICS_EVENT_NAMES).toContain("host_signup_started");
+    expect(ANALYTICS_EVENT_NAMES).toContain("host_signup_completed");
+    expect(isAnalyticsEventName("guest_signup_completed")).toBe(true);
+    expect(isSignupStartedName("guest_signup_started")).toBe(true);
+    expect(isSignupStartedName("guest_signup_completed")).toBe(false);
+    expect(isSignupStartedName("listing_view")).toBe(false);
   });
 });
 

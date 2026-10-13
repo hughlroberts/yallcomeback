@@ -970,7 +970,8 @@ model PageView {
 }
 
 /// Funnel + attribution events. Names: listing_view, booking_started,
-/// booking_completed, booking_cancelled, host_signup_started, host_signup_completed.
+/// booking_completed, booking_cancelled, host_signup_started, host_signup_completed,
+/// guest_signup_started, guest_signup_completed.
 model AnalyticsEvent {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())

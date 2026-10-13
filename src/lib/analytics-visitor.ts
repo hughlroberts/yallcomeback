@@ -15,7 +15,20 @@ export const ANALYTICS_EVENT_NAMES = [
   "booking_cancelled",
   "host_signup_started",
   "host_signup_completed",
+  "guest_signup_started",
+  "guest_signup_completed",
 ] as const;
+
+export const SIGNUP_STARTED_EVENTS = [
+  "host_signup_started",
+  "guest_signup_started",
+] as const;
+
+export type SignupStartedName = (typeof SIGNUP_STARTED_EVENTS)[number];
+
+export function isSignupStartedName(value: string): value is SignupStartedName {
+  return (SIGNUP_STARTED_EVENTS as readonly string[]).includes(value);
+}
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];
 

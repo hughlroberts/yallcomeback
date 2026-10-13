@@ -183,9 +183,9 @@ export default function PrivacyPage() {
         <li>save on-device lists such as saved stays, where the product does that;</li>
         <li>
           anonymous first-party analytics: a visitor id cookie and first-touch
-          UTM tags so we can count visits and credit bookings or host signups
-          to the social post or platform that brought you here. We do not sell
-          this data or send it to third-party analytics services.
+          UTM tags so we can count visits and credit bookings, guest signups, or
+          host signups to the social post or platform that brought you here. We
+          do not sell this data or send it to third-party analytics services.
         </li>
       </LegalUl>
       <LegalP>

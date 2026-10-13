@@ -5,6 +5,7 @@ import {
   UTM_COOKIE,
   VISITOR_COOKIE,
   type AnalyticsEventName,
+  type SignupStartedName,
   type UtmAttribution,
   deviceTypeFromUserAgent,
   encodeUtmCookie,
@@ -170,18 +171,22 @@ export function trackAnalyticsEvent(
   });
 }
 
-export async function recordHostSignupStartedOnce(path: string): Promise<void> {
+export async function recordSignupStartedOnce(
+  name: SignupStartedName,
+  path: string,
+): Promise<void> {
   const attr = await readAttribution();
   if (!attr.visitorId) return;
   const existing = await prisma.analyticsEvent.findFirst({
-    where: { name: "host_signup_started", visitorId: attr.visitorId },
+    where: { name, visitorId: attr.visitorId },
     select: { id: true },
   });
   if (existing) return;
-  await recordAnalyticsEvent({
-    name: "host_signup_started",
-    path,
-  });
+  await recordAnalyticsEvent({ name, path });
+}
+
+export async function recordHostSignupStartedOnce(path: string): Promise<void> {
+  await recordSignupStartedOnce("host_signup_started", path);
 }
 
 export { ANALYTICS_EVENT_NAMES };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { registerHost, startHosting } from "@/app/actions/host";
 import {
   SETUP_SERVICE_FEE_USD,
@@ -8,6 +8,7 @@ import {
 } from "@/lib/hosting";
 import { MARKETPLACE_LISTING_USD } from "@/lib/hosting-prices";
 import { formatMoney } from "@/lib/utils";
+import { TrackSignupStarted } from "@/components/track-signup-started";
 
 type PlanOption = {
   id: string;
@@ -39,20 +40,6 @@ export function HostSignupForm({
   const [path, setPath] = useState<Path>(initialPath);
   const [paidPlan, setPaidPlan] = useState<PaidPlan>(initialPlan);
   const [listOnMarketplace, setListOnMarketplace] = useState(true);
-
-  useEffect(() => {
-    void fetch("/api/analytics/event", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: "host_signup_started",
-        path: "/for-hosts",
-      }),
-      keepalive: true,
-    }).catch(() => {
-      /* ignore */
-    });
-  }, []);
 
   const marketplacePlanId =
     plans.find((p) => p.slug === "marketplace")?.id ||
@@ -114,6 +101,7 @@ export function HostSignupForm({
       action={onSubmit}
       className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6"
     >
+      <TrackSignupStarted name="host_signup_started" path="/for-hosts" />
       <h2 className="text-lg font-semibold text-stone-900 sm:text-xl">
         {path === "self" ? "Start free self-host" : "Start hosting"}
       </h2>
