@@ -86,6 +86,15 @@ export function platformFromHeader(): string | null {
   return formatMailbox(name || PRODUCT_NAME, address);
 }
 
+/** Footer for reset / signup / billing mail. Stay threads stay replyable. */
+export function platformDoNotReplyLine(): string {
+  return `This is an automated message from ${PRODUCT_NAME}. Do not reply to this email — this mailbox is not monitored.`;
+}
+
+function withPlatformFooter(text: string): string {
+  return `${text.trim()}\n\n${platformDoNotReplyLine()}`;
+}
+
 /** Ops / billing mail (no conversation thread). */
 export async function dispatchPlatformEmail(opts: {
   to: string;
@@ -118,7 +127,7 @@ export async function dispatchPlatformEmail(opts: {
       detail: "MESSAGING_EMAIL_FROM missing",
     };
   }
-  const text = opts.text.trim();
+  const text = withPlatformFooter(opts.text);
   const html = `<p style="font:16px/1.5 system-ui,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</p>`;
   if (process.env.MESSAGING_EMAIL_DRY_RUN === "true") {
     console.info("[messaging:email:dry-run:platform]", {
