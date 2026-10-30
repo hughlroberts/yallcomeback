@@ -29,6 +29,14 @@ const nextConfig: NextConfig = {
   },
   // Required for Dockerfile (Railway Docker / standalone server.js)
   output: "standalone",
+  // Deterministic build ID from Railway git SHA (or falls back to Next.js default).
+  // Helps keep server action IDs and caches stable across deploys.
+  generateBuildId: async () => {
+    if (process.env.RAILWAY_GIT_COMMIT_SHA) {
+      return process.env.RAILWAY_GIT_COMMIT_SHA;
+    }
+    return null;
+  },
   async headers() {
     return [
       {
@@ -52,6 +60,14 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Apex → www, 301, every path; Next keeps the query string.
+      // Runs before middleware. Only fires if apex DNS points at this app.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "yallcomeback.app" }],
+        destination: "https://www.yallcomeback.app/:path*",
+        statusCode: 301,
+      },
       {
         source: "/admin/tax",
         destination: "/admin/taxes",

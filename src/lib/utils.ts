@@ -161,3 +161,62 @@ export function eachNight(checkIn: Date, checkOut: Date): Date[] {
   }
   return nights;
 }
+
+/**
+ * Detects server action mismatch errors (502, 409 "Server Action not found",
+ * network failures from mixed builds). Triggers graceful recovery UI.
+ */
+export function isServerActionMismatch(error: unknown): boolean {
+  if (!error) return false;
+  const message = error instanceof Error ? error.message : String(error);
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("server action not found") ||
+    normalized.includes("failed to find server action") ||
+    normalized.includes("409") ||
+    normalized.includes("502") ||
+    normalized.includes("failed to fetch") ||
+    normalized.includes("network")
+  );
+}
+
+/**
+ * Persist wizard form state to localStorage (per listing or 'new').
+ * Keyed to avoid collisions. Never stores passwords or secrets.
+ * Cleared on successful final publish.
+ */
+export function saveListingWizardDraft(
+  draftKey: string,
+  data: Record<string, unknown>,
+): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(
+      `ycb-listing-draft:${draftKey}`,
+      JSON.stringify(data),
+    );
+  } catch {
+    // Ignore storage quota or disabled errors
+  }
+}
+
+export function loadListingWizardDraft(
+  draftKey: string,
+): Record<string, unknown> | null {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const item = localStorage.getItem(`ycb-listing-draft:${draftKey}`);
+    if (!item) return null;
+    const parsed = JSON.parse(item);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearListingWizardDraft(draftKey: string): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.removeItem(`ycb-listing-draft:${draftKey}`);
+  } catch {}
+}

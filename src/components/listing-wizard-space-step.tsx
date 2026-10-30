@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { SPACE_TYPES, type SpaceTypeId } from "@/lib/listing-types";
 import { saveListingSpaceType } from "@/app/actions/properties";
+import {
+  isServerActionMismatch,
+  saveListingWizardDraft,
+  loadListingWizardDraft,
+} from "@/lib/utils";
 
 type Props = {
   propertyId: string;
@@ -14,6 +19,7 @@ export function ListingWizardSpaceStep({
   propertyId,
   initialSpaceType,
 }: Props) {
+  const draftKey = `property-${propertyId}`;
   const [selected, setSelected] = useState<SpaceTypeId | null>(
     initialSpaceType && SPACE_TYPES.some((t) => t.id === initialSpaceType)
       ? initialSpaceType
@@ -21,6 +27,23 @@ export function ListingWizardSpaceStep({
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // Restore draft on load; save on change. Persists across reloads from deploy mismatches.
+  useEffect(() => {
+    const draft = loadListingWizardDraft(draftKey);
+    if (
+      draft?.spaceType &&
+      SPACE_TYPES.some((t) => t.id === draft.spaceType)
+    ) {
+      setSelected(draft.spaceType as SpaceTypeId);
+    }
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (selected) {
+      saveListingWizardDraft(draftKey, { spaceType: selected });
+    }
+  }, [selected, draftKey]);
 
   function onNext() {
     setError(null);
@@ -34,8 +57,13 @@ export function ListingWizardSpaceStep({
         fd.set("id", propertyId);
         fd.set("spaceType", selected);
         await saveListingSpaceType(fd);
+        // Success redirects via server action
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong");
+        if (isServerActionMismatch(e)) {
+          setError("site-updated");
+        } else {
+          setError(e instanceof Error ? e.message : "Something went wrong");
+        }
       }
     });
   }
@@ -91,7 +119,24 @@ export function ListingWizardSpaceStep({
         </div>
 
         {error ? (
-          <p className="mt-6 text-sm text-red-600">{error}</p>
+          error === "site-updated" ? (
+            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm">
+              <p className="font-medium text-amber-900">
+                The site was just updated — reload to continue.
+              </p>
+              <p className="mt-1 text-amber-700">
+                Your entries are saved.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 rounded-[var(--radius-control)] bg-amber-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-900 active:bg-amber-950"
+              >
+                Reload page
+              </button>
+            </div>
+          ) : (
+            <p className="mt-6 text-sm text-red-600">{error}</p>
+          )
         ) : null}
       </main>
 

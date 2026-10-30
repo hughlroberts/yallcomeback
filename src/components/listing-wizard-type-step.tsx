@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { LISTING_TYPES, type ListingTypeId } from "@/lib/listing-types";
 import { startListingDraft } from "@/app/actions/properties";
+import {
+  isServerActionMismatch,
+  saveListingWizardDraft,
+  loadListingWizardDraft,
+} from "@/lib/utils";
 
 type Props = {
   hostId?: string;
@@ -11,10 +16,29 @@ type Props = {
 };
 
 export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
+  const draftKey = "new-listing";
   const [selected, setSelected] = useState<ListingTypeId | null>(null);
   const [chosenHostId, setChosenHostId] = useState(hostId || hosts[0]?.id || "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // Restore from localStorage draft on load
+  useEffect(() => {
+    const draft = loadListingWizardDraft(draftKey);
+    if (draft?.selected && LISTING_TYPES.some((t) => t.id === draft.selected)) {
+      setSelected(draft.selected as ListingTypeId);
+    }
+    if (draft?.chosenHostId) {
+      setChosenHostId(draft.chosenHostId as string);
+    }
+  }, [draftKey]);
+
+  // Save on change
+  useEffect(() => {
+    if (selected || chosenHostId) {
+      saveListingWizardDraft(draftKey, { selected, chosenHostId });
+    }
+  }, [selected, chosenHostId, draftKey]);
 
   function onNext() {
     setError(null);
@@ -28,8 +52,13 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
         fd.set("propertyType", selected);
         if (chosenHostId) fd.set("hostId", chosenHostId);
         await startListingDraft(fd);
+        // On success, the action redirects to step 2; draft cleared by later step
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong");
+        if (isServerActionMismatch(e)) {
+          setError("site-updated");
+        } else {
+          setError(e instanceof Error ? e.message : "Something went wrong");
+        }
       }
     });
   }
@@ -104,7 +133,22 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
         </div>
 
         {error ? (
-          <p className="mt-6 text-center text-sm text-red-600">{error}</p>
+          error === "site-updated" ? (
+            <div className="mx-auto mt-6 max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center text-sm">
+              <p className="font-medium text-amber-900">
+                The site was just updated — reload to continue.
+              </p>
+              <p className="mt-1 text-amber-700">Your entries are saved.</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 rounded-[var(--radius-control)] bg-amber-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-900 active:bg-amber-950"
+              >
+                Reload page
+              </button>
+            </div>
+          ) : (
+            <p className="mt-6 text-center text-sm text-red-600">{error}</p>
+          )
         ) : null}
       </main>
 

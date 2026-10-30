@@ -17,9 +17,13 @@ RUN npm ci --ignore-scripts
 
 # --- Build ---
 FROM node:22-alpine AS builder
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+# Railway passes service variables as build args only when declared here.
+ARG RAILWAY_GIT_COMMIT_SHA
 WORKDIR /app
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build"
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY}
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/prisma ./prisma
 COPY . .

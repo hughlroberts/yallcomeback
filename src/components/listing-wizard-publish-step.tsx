@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { publishListing } from "@/app/actions/properties";
 import type { ListingVisibility } from "@/lib/listing-visibility";
+import {
+  isServerActionMismatch,
+  clearListingWizardDraft,
+} from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -36,6 +40,7 @@ export function ListingWizardPublishStep({
   const [visibility, setVisibility] = useState<ListingVisibility>(
     defaultVisibility === "off" ? "website" : defaultVisibility,
   );
+  const draftKey = `property-${propertyId}`;
 
   const promo =
     discountNewListingPercent > 0
@@ -52,8 +57,13 @@ export function ListingWizardPublishStep({
         fd.set("id", propertyId);
         fd.set("visibility", visibility);
         await publishListing(fd);
+        clearListingWizardDraft(draftKey); // clear on successful final submit
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong");
+        if (isServerActionMismatch(e)) {
+          setError("site-updated");
+        } else {
+          setError(e instanceof Error ? e.message : "Something went wrong");
+        }
       }
     });
   }
@@ -278,7 +288,22 @@ export function ListingWizardPublishStep({
           </p>
         ) : null}
         {error ? (
-          <p className="mt-8 text-sm text-red-600">{error}</p>
+          error === "site-updated" ? (
+            <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm">
+              <p className="font-medium text-amber-900">
+                The site was just updated — reload to continue.
+              </p>
+              <p className="mt-1 text-amber-700">Your entries are saved.</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 rounded-[var(--radius-control)] bg-amber-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-amber-900 active:bg-amber-950"
+              >
+                Reload page
+              </button>
+            </div>
+          ) : (
+            <p className="mt-8 text-sm text-red-600">{error}</p>
+          )
         ) : null}
       </main>
 

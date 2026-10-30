@@ -18,8 +18,11 @@ Required for any deploy:
 - `AUTH_SECRET` — long random string (`openssl rand -base64 32`)
 - `AUTH_URL` — public site origin, e.g. `https://www.yallcomeback.app`
 - `NEXT_PUBLIC_SITE_NAME` — e.g. `Yall Come Back`
+- `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` — stable random string (openssl rand -base64 32). Same value on every deploy/build. Prevents mixed client/server action IDs.
 
 Optional: Stripe, Bitcoin, SMS/email messaging (see `.env.example`).
+
+Railway deploys should set RAILWAY_GIT_COMMIT_SHA (auto) and NEXT_SERVER_ACTIONS_ENCRYPTION_KEY for stable builds. See Dockerfile and next.config.ts.
 
 ## Quick start
 
