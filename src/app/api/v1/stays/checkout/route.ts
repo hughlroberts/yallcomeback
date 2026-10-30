@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { agentApiDisabledResponse } from "@/lib/agent/guard";
+import {
+  agentApiDisabledResponse,
+  agentCheckoutUnauthorized,
+} from "@/lib/agent/guard";
 import { createAgentStayCheckout } from "@/lib/agent/checkout";
+import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
+
+const CHECKOUT_IP_LIMIT = 10;
+const CHECKOUT_IP_WINDOW_MS = 15 * 60 * 1000;
+const CHECKOUT_EMAIL_LIMIT = 5;
+const CHECKOUT_EMAIL_WINDOW_MS = 60 * 60 * 1000;
+
+function withCors(res: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(CORS)) {
+    res.headers.set(key, value);
+  }
+  return res;
+}
 
 /**
  * Pay-first agent checkout. Card Checkout URL only.
@@ -18,6 +34,25 @@ export async function POST(req: NextRequest) {
   const disabled = agentApiDisabledResponse();
   if (disabled) return disabled;
 
+  const denied = agentCheckoutUnauthorized(req);
+  if (denied) return withCors(denied);
+
+  const ip = incomingIpFromRequest(req);
+  if (
+    !rateLimitAllow(
+      `agent-checkout:ip:${ip}`,
+      CHECKOUT_IP_LIMIT,
+      CHECKOUT_IP_WINDOW_MS,
+    )
+  ) {
+    return withCors(
+      NextResponse.json(
+        { ok: false, error: "Too many checkout attempts. Try again later." },
+        { status: 429 },
+      ),
+    );
+  }
+
   let body: Record<string, unknown> = {};
   try {
     body = (await req.json()) as Record<string, unknown>;
@@ -25,6 +60,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { ok: false, error: "JSON body required" },
       { status: 400, headers: CORS },
+    );
+  }
+
+  const guestEmail = String(body.guestEmail || "")
+    .trim()
+    .toLowerCase();
+  if (
+    guestEmail &&
+    !rateLimitAllow(
+      `agent-checkout:email:${guestEmail}`,
+      CHECKOUT_EMAIL_LIMIT,
+      CHECKOUT_EMAIL_WINDOW_MS,
+    )
+  ) {
+    return withCors(
+      NextResponse.json(
+        { ok: false, error: "Too many checkout attempts. Try again later." },
+        { status: 429 },
+      ),
     );
   }
 

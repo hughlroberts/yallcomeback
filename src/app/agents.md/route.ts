@@ -65,6 +65,7 @@ Use \`listing.url\` and \`listing.bookUrl\` to send humans into the product.
 
 \`\`\`
 POST ${origin}/api/v1/stays/checkout
+Authorization: Bearer <agent token>
 {
   "slug": "listing-slug",
   "checkIn": "2026-08-15",
@@ -76,7 +77,7 @@ POST ${origin}/api/v1/stays/checkout
 }
 \`\`\`
 
-Returns \`checkoutUrl\`. Calendar is written only after the card is paid. Do not send \`paid: true\`. Sessions expire in 30 minutes.
+Requires \`Authorization: Bearer\` with the platform agent token. Read endpoints stay open. Returns \`checkoutUrl\`. Calendar is written only after the card is paid. Do not send \`paid: true\`. Sessions expire in 30 minutes.
 
 ## Rate limits / etiquette
 

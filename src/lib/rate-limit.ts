@@ -34,13 +34,13 @@ export function rateLimitAllow(
   return true;
 }
 
+/**
+ * Railway overwrites X-Real-IP at the edge. CF-Connecting-IP is not set
+ * by Railway, so a caller can supply it and would otherwise win over the
+ * real address. Use X-Real-IP only.
+ */
 export function ipFromHeaders(h: Headers): string {
-  return (
-    h.get("cf-connecting-ip")?.trim() ||
-    h.get("x-real-ip")?.trim() ||
-    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown"
-  );
+  return h.get("x-real-ip")?.trim() || "unknown";
 }
 
 export async function incomingIp(): Promise<string> {

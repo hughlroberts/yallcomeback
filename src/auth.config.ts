@@ -1,5 +1,52 @@
 import type { NextAuthConfig } from "next-auth";
 
+/**
+ * Anonymous visits must return a redirect Response.
+ * Returning false does nothing when middleware.ts also supplies a
+ * custom middleware function: Auth.js then runs that function and
+ * skips the sign-in redirect.
+ */
+export function signInRedirect(nextUrl: URL): Response {
+  const dest = new URL("/login", nextUrl.origin);
+  dest.searchParams.set("callbackUrl", `${nextUrl.pathname}${nextUrl.search}`);
+  return Response.redirect(dest);
+}
+
+export function platformGate(input: {
+  isLoggedIn: boolean;
+  role?: string | null;
+  nextUrl: URL;
+}): true | Response {
+  const { isLoggedIn, role, nextUrl } = input;
+  const path = nextUrl.pathname;
+
+  if (path.startsWith("/admin")) {
+    // Login required here. HOST vs GUEST is enforced in the admin layout
+    // from the database so a guest who just chose Start hosting is not
+    // bounced by a stale JWT.
+    if (!isLoggedIn) return signInRedirect(nextUrl);
+    return true;
+  }
+
+  if (path.startsWith("/ops")) {
+    if (!isLoggedIn) return signInRedirect(nextUrl);
+    if (role !== "ADMIN") {
+      return Response.redirect(new URL("/admin?error=admin_only", nextUrl));
+    }
+    return true;
+  }
+
+  if (path.startsWith("/account") && !isLoggedIn) {
+    return signInRedirect(nextUrl);
+  }
+
+  if (path.startsWith("/messages") && !isLoggedIn) {
+    return signInRedirect(nextUrl);
+  }
+
+  return true;
+}
+
 export const authConfig = {
   pages: {
     signIn: "/login",
@@ -29,35 +76,11 @@ export const authConfig = {
       return session;
     },
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const role = auth?.user?.role;
-      const path = nextUrl.pathname;
-
-      if (path.startsWith("/admin")) {
-        // Login required here. HOST vs GUEST is enforced in the admin layout
-        // from the database so a guest who just chose Start hosting is not
-        // bounced by a stale JWT.
-        if (!isLoggedIn) return false;
-        return true;
-      }
-
-      if (path.startsWith("/ops")) {
-        if (!isLoggedIn) return false;
-        if (role !== "ADMIN") {
-          return Response.redirect(new URL("/admin?error=admin_only", nextUrl));
-        }
-        return true;
-      }
-
-      if (path.startsWith("/account") && !isLoggedIn) {
-        return false;
-      }
-
-      if (path.startsWith("/messages") && !isLoggedIn) {
-        return false;
-      }
-
-      return true;
+      return platformGate({
+        isLoggedIn: Boolean(auth?.user),
+        role: auth?.user?.role,
+        nextUrl,
+      });
     },
   },
 } satisfies NextAuthConfig;

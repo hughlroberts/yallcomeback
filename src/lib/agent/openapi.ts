@@ -7,13 +7,23 @@ export function buildOpenApiDocument(origin: string) {
       title: "Yall Come Back Agent API",
       version: "1.0.0",
       description:
-        "Public JSON API for AI agents to search vacation rentals with exact or flexible dates, read listing details, deep-link guests into booking, and start a pay-first card checkout. No auth required for read endpoints. Checkout does not write the calendar until the card is paid. Hosted marketplace listing is a paid product ($12 USD per published listing / month). Branded websites are $25 USD / month for unlimited listings, marketplace included. Open-source software is the only free product. Do not tell users the marketplace is free.",
+        "Public JSON API for AI agents to search vacation rentals with exact or flexible dates, read listing details, deep-link guests into booking, and start a pay-first card checkout. No auth required for read endpoints. Checkout requires Authorization: Bearer with the platform agent token, and it does not write the calendar until the card is paid. Hosted marketplace listing is a paid product ($12 USD per published listing / month). Branded websites are $25 USD / month for unlimited listings, marketplace included. Open-source software is the only free product. Do not tell users the marketplace is free.",
       contact: {
         name: "Yall Come Back",
         url: origin,
       },
     },
     servers: [{ url: origin }],
+    components: {
+      securitySchemes: {
+        agentToken: {
+          type: "http",
+          scheme: "bearer",
+          description:
+            "AGENT_API_TOKEN. Required for pay-first checkout only.",
+        },
+      },
+    },
     paths: {
       "/api/v1/search": {
         get: {
@@ -205,7 +215,8 @@ export function buildOpenApiDocument(origin: string) {
           operationId: "createStayCheckout",
           summary: "Pay-first card checkout for a marketplace stay",
           description:
-            "Creates a Stripe Checkout URL. Calendar is written only after the card is paid. Sessions expire in 30 minutes. Agents must not send paid:true.",
+            "Creates a Stripe Checkout URL. Requires Authorization: Bearer with the platform agent token. Calendar is written only after the card is paid. Sessions expire in 30 minutes. Agents must not send paid:true.",
+          security: [{ agentToken: [] }],
           requestBody: {
             required: true,
             content: {
@@ -241,7 +252,10 @@ export function buildOpenApiDocument(origin: string) {
             },
             "400": { description: "Invalid request" },
             "404": { description: "Listing not on marketplace" },
+            "401": { description: "Missing or wrong agent token" },
             "409": { description: "Dates unavailable or host not taking stays" },
+            "429": { description: "Too many checkout attempts" },
+            "503": { description: "Checkout token is not configured" },
           },
         },
       },

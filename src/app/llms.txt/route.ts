@@ -39,7 +39,7 @@ Help: ${origin}/help/become-a-host and ${origin}/help/branded-website
 - OpenAPI 3.1: ${origin}/api/v1/openapi.json
 - Search: ${origin}/api/v1/search
 - Listing detail: ${origin}/api/v1/listings/{slug}
-- Pay-first checkout: POST ${origin}/api/v1/stays/checkout
+- Pay-first checkout: POST ${origin}/api/v1/stays/checkout (Authorization: Bearer required)
 - Human marketplace: ${origin}/marketplace
 - Human docs page: ${origin}/agents.md
 - Terms of Service: ${origin}/terms
@@ -81,6 +81,7 @@ Returns availableWindows plus blockedRanges for agents that need calendar reason
 ## Pay-first checkout (card only)
 
 POST ${origin}/api/v1/stays/checkout
+Authorization: Bearer <agent token>
 Content-Type: application/json
 
 {
@@ -93,6 +94,7 @@ Content-Type: application/json
   "acceptTerms": true
 }
 
+- Send Authorization: Bearer with the platform agent token. Read endpoints do not use this token.
 - Returns checkoutUrl. Send the human there to pay with a card.
 - Calendar is not written until Stripe confirms the deposit is paid.
 - Checkout expires in 30 minutes. Abandoned sessions never hold nights.

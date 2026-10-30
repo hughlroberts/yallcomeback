@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import NextAuth from "next-auth";
-import { authConfig } from "./auth.config";
+import { authConfig, platformGate } from "./auth.config";
 import {
   resolveHostSlugForHostname,
   isPlatformPath,
@@ -165,6 +165,16 @@ function requestHostname(req: NextRequest): string | null {
  * 3) Strip spoofed x-tenant-* on every request
  */
 export default auth(async (req) => {
+  // Backstop: Auth.js skips its own sign-in redirect when this function
+  // exists and authorized() returns a boolean. Returning a Response from
+  // platformGate covers both that path and the authorized() callback.
+  const gate = platformGate({
+    isLoggedIn: Boolean(req.auth?.user),
+    role: req.auth?.user?.role,
+    nextUrl: req.nextUrl,
+  });
+  if (gate !== true) return gate;
+
   const hostname = requestHostname(req);
   // Env HOST_DOMAIN_MAP + Host.customDomain via /api/domain-map
   const hostSlug = await resolveHostSlugForHostname(hostname);
