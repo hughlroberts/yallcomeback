@@ -64,7 +64,6 @@ PLATFORM_PRODUCT_MODE=true
 # XAI_API_KEY=...
 # PRICING_INTELLIGENCE_MODEL=grok-4-1-fast-non-reasoning
 
-CRON_SECRET=...   # required for HTTP cron
 ```
 
 Open-source / pure self-host:
@@ -92,23 +91,7 @@ Without an active add-on, research runs are blocked (platform can bypass for sup
 
 ## Monthly schedule
 
-Hit once a month (GitHub Actions, Railway cron, etc.):
-
-```bash
-curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://www.yallcomeback.app/api/cron/pricing-intelligence
-```
-
-Skips hosts that already completed a run in the last 28 days.
-
-Optional (usually leave off):
-
-```env
-PRICING_INTELLIGENCE_MONTHLY_IN_PROCESS=true
-```
-
-That would attempt monthly logic inside the 20‑minute in-process cron (still
-idempotent via the 28-day window). Prefer an external monthly job.
+The in-process scheduler runs this. It skips a host who already completed a run in the last 28 days. There is no public URL for it.
 
 ---
 
@@ -159,7 +142,7 @@ Seed / maintain private comps: `scripts/migrate-pricing-comps-private.ts`
 | Surface | Open source | Hosted platform |
 |---------|-------------|-----------------|
 | Admin → Pricing intelligence | Hidden / disabled | Available |
-| `/api/cron/pricing-intelligence` | 404 | Auth’d monthly run |
+| Monthly pricing run | Not scheduled | In-process scheduler, no public URL |
 | Apply rate from recommendation | N/A | Human-gated |
 
 Do **not** list this feature in `FEATURE_GROUPS` (the open-source inventory).

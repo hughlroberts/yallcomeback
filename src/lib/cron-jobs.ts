@@ -101,19 +101,22 @@ export async function runAllCronJobs(): Promise<{
     };
   }
 
-  // Monthly pricing intelligence: only if explicitly enabled in-process.
-  // Prefer external monthly hit to /api/cron/pricing-intelligence.
-  let pricing:
-    | { skipped: boolean; hostsProcessed: number; errors: string[] }
-    | undefined;
-  if (
-    process.env.PRICING_INTELLIGENCE_MONTHLY_IN_PROCESS?.trim().toLowerCase() ===
-    "true"
-  ) {
+  // Once a host has a completed run in the last 28 days, this is a no-op.
+  // There is no public HTTP trigger.
+  let pricing: { skipped: boolean; hostsProcessed: number; errors: string[] } =
+    { skipped: true, hostsProcessed: 0, errors: [] };
+  try {
     const { runMonthlyPricingIntelligence } = await import(
       "@/lib/pricing-intelligence/run"
     );
     pricing = await runMonthlyPricingIntelligence();
+  } catch (e) {
+    console.error("[cron:pricing]", e);
+    pricing = {
+      skipped: false,
+      hostsProcessed: 0,
+      errors: [e instanceof Error ? e.message : "pricing failed"],
+    };
   }
 
   return { ical, messages, hostingPayments, backup, pricing };

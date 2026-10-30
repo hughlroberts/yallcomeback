@@ -10,11 +10,7 @@ import { messagingSiteOrigin } from "@/lib/messaging";
 export type NotifyChannel = "email" | "sms";
 
 function secret(): string {
-  return (
-    process.env.AUTH_SECRET ||
-    process.env.CRON_SECRET ||
-    "dev-notification-secret-change-me"
-  );
+  return process.env.AUTH_SECRET || "dev-notification-secret-change-me";
 }
 
 function b64url(buf: Buffer | string): string {

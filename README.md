@@ -166,23 +166,9 @@ On each property admin page:
 
 **Automatic (set-and-forget):**
 
-- **In-process** on Railway: `instrumentation.ts` runs iCal sync + booking auto-messages every ~20 minutes in production (`CRON_IN_PROCESS=true`). Hosting payments are reconciled **once per UTC day** on that same ticker (and retried if the last run failed).
-- **GitHub Actions backup**: `.github/workflows/cron.yml` pings iCal + messages every 20 minutes (needs secrets `CRON_SECRET` + `CRON_BASE_URL`). Hosting payments stay on the in-process daily ticker. Do not add a second GHA cron unless Ops health shows a missed day.
-- **Daily full backup**: the in-process scheduler writes a gzipped dump of listings, hosts, hosting invoices, calendar, and bookings to the Railway volume at `BACKUP_DIR` (`/data/backups`) once per UTC day, kept 90 days. Ops → Backups lists and downloads copies. Restore: `docs/backup-and-restore.md`.
-
-**Manual / external cron:**
-
-```bash
-curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://your-app.up.railway.app/api/cron/sync-ical
-curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://your-app.up.railway.app/api/cron/booking-messages
-curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://www.yallcomeback.app/api/cron/hosting-payments
-curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://www.yallcomeback.app/api/cron/backup \
-  -o yallcomeback-backup.json.gz
-```
+- **In-process** on Railway: `instrumentation.ts` runs iCal sync and booking auto-messages every ~20 minutes in production (`CRON_IN_PROCESS=true`). Hosting payments and the full backup run **once per UTC day** on that same ticker. Monthly pricing runs there too, and skips a host who already completed a run in the last 28 days.
+- There is no public cron URL and no `CRON_SECRET`. A copy of the database is not served over HTTP.
+- **Daily full backup**: the scheduler writes a gzipped dump to the Railway volume at `BACKUP_DIR` (`/data/backups`) once per UTC day, kept 90 days. A signed-in platform admin downloads copies from Ops → Backups. Restore: `docs/backup-and-restore.md`.
 
 ## First-party analytics
 

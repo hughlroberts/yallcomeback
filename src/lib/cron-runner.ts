@@ -1,6 +1,6 @@
 /**
  * In-process scheduler for long-running Node server.
- * Runs the same work as /api/cron/* so you don't need an external pinger.
+ * This is the only scheduler. Jobs are not exposed on a public URL.
  *
  * Control with env:
  *   CRON_IN_PROCESS=true|false  (default: on in production, off in dev)

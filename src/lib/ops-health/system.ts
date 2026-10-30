@@ -33,17 +33,11 @@ export async function runSystemChecks(): Promise<{
     return { findings, rows };
   }
 
-  const cronSecret = Boolean(process.env.CRON_SECRET?.trim());
   const cronInProcess =
     process.env.CRON_IN_PROCESS === "true" ||
     (process.env.CRON_IN_PROCESS !== "false" &&
       process.env.NODE_ENV === "production");
 
-  rows.push({
-    label: "Cron secret configured",
-    value: cronSecret ? "Yes" : "No",
-    tone: cronSecret ? "ok" : "warn",
-  });
   rows.push({
     label: "In-process scheduler",
     value: cronInProcess ? "On" : "Off",
@@ -102,13 +96,14 @@ export async function runSystemChecks(): Promise<{
     tone: icalErrors > 0 ? "warn" : "ok",
   });
 
-  if (!cronSecret && !cronInProcess) {
+  if (!cronInProcess) {
     findings.push({
       id: "cron:none",
       checkId: "cron_configured",
       severity: "warning",
-      title: "No cron path configured",
-      detail: "Neither CRON_SECRET nor in-process scheduler is clearly active. Calendar imports and auto messages may not run.",
+      title: "In-process scheduler is off",
+      detail:
+        "Calendar imports, booking messages, hosting payments, and the daily backup run inside the server. Set CRON_IN_PROCESS=true.",
     });
   }
 
@@ -147,7 +142,9 @@ export async function runSystemChecks(): Promise<{
           title: stale
             ? "Hosting payment check is stale"
             : "Hosting payment check last run failed",
-          detail: last.lastSummary || "Run GET /api/cron/hosting-payments with CRON_SECRET.",
+          detail:
+            last.lastSummary ||
+            "The in-process scheduler runs this once per UTC day. Restart the service if it has not caught up.",
         });
       }
     }
@@ -221,7 +218,7 @@ export async function runSystemChecks(): Promise<{
             : "Last Railway backup failed",
           detail:
             last.lastSummary ||
-            "Run Ops → Platform settings → Backups → Run backup now, or GET /api/cron/backup with CRON_SECRET.",
+            "Run Ops → Platform settings → Backups → Run backup now.",
           href: "/ops/settings/backups",
         });
       }

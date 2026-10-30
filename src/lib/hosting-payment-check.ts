@@ -5,8 +5,7 @@
  * 2) Confirm paid hosts (ACTIVE, clear dunning).
  * 3) Mark unpaid hosts PAST_DUE, then 3-day grace / day-5 reminder + pause.
  *
- * Must run once per UTC day. In-process cron gates on CronRun; GitHub Actions
- * and GET /api/cron/hosting-payments are backups.
+ * Must run once per UTC day. The in-process scheduler gates on CronRun.
  */
 
 import { prisma } from "@/lib/db";

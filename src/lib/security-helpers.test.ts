@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { isStoredBackupName } from "@/lib/backup";
 import { formatContinueSearchText } from "@/lib/browse-history";
-import { cronUnauthorized } from "@/lib/cron-auth";
 import {
   canonicalSiteOrigin,
   isLocalHostname,
@@ -175,41 +174,6 @@ describe("canonicalSiteOrigin", () => {
     process.env.AUTH_URL = "http://127.0.0.1:3000";
     expect(canonicalSiteOrigin()).toBe(PRODUCT_ORIGIN);
     expect(isLocalHostname("localhost:3000")).toBe(true);
-  });
-});
-
-describe("cronUnauthorized", () => {
-  const prev = process.env.CRON_SECRET;
-
-  afterEach(() => {
-    if (prev === undefined) delete process.env.CRON_SECRET;
-    else process.env.CRON_SECRET = prev;
-  });
-
-  it("fails closed when the secret is missing", () => {
-    delete process.env.CRON_SECRET;
-    const res = cronUnauthorized(new Request("https://www.yallcomeback.app/api/cron/sync-ical"));
-    expect(res?.status).toBe(503);
-  });
-
-  it("rejects a bad bearer", () => {
-    process.env.CRON_SECRET = "test-cron-secret";
-    const res = cronUnauthorized(
-      new Request("https://www.yallcomeback.app/api/cron/sync-ical", {
-        headers: { authorization: "Bearer wrong" },
-      }),
-    );
-    expect(res?.status).toBe(401);
-  });
-
-  it("allows the matching bearer", () => {
-    process.env.CRON_SECRET = "test-cron-secret";
-    const res = cronUnauthorized(
-      new Request("https://www.yallcomeback.app/api/cron/sync-ical", {
-        headers: { authorization: "Bearer test-cron-secret" },
-      }),
-    );
-    expect(res).toBeNull();
   });
 });
 
