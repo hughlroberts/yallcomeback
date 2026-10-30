@@ -149,6 +149,12 @@ export default async function RegisterPage({
             Sign in
           </a>
         </p>
+        <p className="mt-3 text-center text-sm text-stone-500">
+          Are you a host?{" "}
+          <a href="/signup" className="font-medium text-bonnet">
+            Apply here
+          </a>
+        </p>
       </Card>
     </div>
   );

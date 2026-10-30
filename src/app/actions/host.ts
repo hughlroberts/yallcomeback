@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireHostAdmin, signIn } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 import { hashPassword } from "@/lib/password";
+import { validateHostPassword } from "@/lib/host-password";
 import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 import { sendSignupVerificationEmail } from "@/lib/account-email";
 import {
@@ -64,8 +65,9 @@ export async function registerHost(formData: FormData) {
   if (!name || !email || !password) {
     return { error: "Please fill in all required fields." };
   }
-  if (password.length < 8) {
-    return { error: "Password must be at least 8 characters." };
+  const passwordError = validateHostPassword(password);
+  if (passwordError) {
+    return { error: passwordError };
   }
 
   const existingUser = await prisma.user.findUnique({ where: { email } });

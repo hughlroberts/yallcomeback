@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { registerHost, startHosting } from "@/app/actions/host";
 import {
+  HOST_PASSWORD_RULES,
+  validateHostPassword,
+} from "@/lib/host-password";
+import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
 } from "@/lib/hosting";
 import { MARKETPLACE_LISTING_USD } from "@/lib/hosting-prices";
 import { formatMoney } from "@/lib/utils";
 import { TrackSignupStarted } from "@/components/track-signup-started";
+import { Check, X } from "lucide-react";
 
 type PlanOption = {
   id: string;
@@ -40,6 +45,7 @@ export function HostSignupForm({
   const [path, setPath] = useState<Path>(initialPath);
   const [paidPlan, setPaidPlan] = useState<PaidPlan>(initialPlan);
   const [listOnMarketplace, setListOnMarketplace] = useState(true);
+  const [passwordValue, setPasswordValue] = useState("");
 
   const marketplacePlanId =
     plans.find((p) => p.slug === "marketplace")?.id ||
@@ -63,6 +69,14 @@ export function HostSignupForm({
   async function onSubmit(formData: FormData) {
     setPending(true);
     setError(null);
+
+    const passwordError = validateHostPassword(passwordValue);
+    if (passwordError) {
+      setError(passwordError);
+      setPending(false);
+      return;
+    }
+
     formData.set("hostingMode", path === "self" ? "SELF" : "PLATFORM");
     if (path === "self") {
       formData.set("sitePresence", "CUSTOM");
@@ -125,13 +139,44 @@ export function HostSignupForm({
           <>
             <Field label="Your name" name="name" required />
             <Field label="Email" name="email" type="email" required />
-            <Field
-              label="Password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-            />
+            <div>
+              <label className="block text-sm">
+                <span className="font-medium text-stone-700">Password</span>
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  minLength={8}
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
+                  className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-base"
+                />
+              </label>
+
+              <div className="mt-3 text-xs">
+                <p className="mb-2 font-medium text-stone-500">Must include:</p>
+                <div className="space-y-1.5">
+                  {HOST_PASSWORD_RULES.map((rule) => {
+                    const passes = passwordValue.length > 0 && rule.test(passwordValue);
+                    return (
+                      <div
+                        key={rule.id}
+                        className="flex items-center gap-2 text-stone-500"
+                      >
+                        {passes ? (
+                          <Check className="size-3.5 text-emerald-600" />
+                        ) : (
+                          <X className="size-3.5 text-stone-400" />
+                        )}
+                        <span className={passes ? "text-emerald-700" : ""}>
+                          {rule.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </>
         )}
 
