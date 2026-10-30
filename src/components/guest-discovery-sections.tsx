@@ -24,6 +24,7 @@ import {
   readRecentViews,
 } from "@/lib/browse-history-storage";
 import { listingHrefWithSearch } from "@/lib/listing-href";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { formatMoney } from "@/lib/utils";
 
 const emptyViews: RecentView[] = [];
@@ -162,7 +163,7 @@ function listingToCard(
       key={p.id}
       href={href}
       imageUrl={p.images[0]?.url ?? null}
-      imageAlt={p.images[0]?.alt || p.title}
+      imageAlt={listingPhotoAlt(p.title, p.images[0]?.alt, 0)}
       eyebrow={p.host?.name}
       title={p.title}
       subtitle={location || null}
@@ -335,7 +336,7 @@ export function GuestDiscoverySections({
                 key={v.id}
                 href={`/marketplace/properties/${v.slug}?host=${v.hostSlug}`}
                 imageUrl={v.imageUrl}
-                imageAlt={v.title}
+                imageAlt={listingPhotoAlt(v.title, null, 0)}
                 title={location || v.title}
                 subtitle={location ? v.title : null}
                 meta={`${v.bedrooms} bed · ${formatMoney(v.baseNightlyRate)} / night`}

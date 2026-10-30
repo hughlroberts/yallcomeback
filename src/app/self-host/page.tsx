@@ -7,10 +7,13 @@ import {
   SELF_HOST_STEPS,
 } from "@/lib/features";
 
-export const metadata = {
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
   title: "Free self-host · migrate your rental website",
   description: `Deploy ${PRODUCT_NAME} on your own website or any domain. Free MIT software. The hosted marketplace and branded websites are paid products.`,
-};
+  path: "/self-host",
+});
 
 export default function SelfHostPage() {
   return (

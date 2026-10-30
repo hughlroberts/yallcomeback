@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
+import { PRODUCT_EMAIL } from "@/lib/features";
+import { getMarketplaceListingCount } from "@/lib/host";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +11,7 @@ export async function GET(req: NextRequest) {
   const disabled = agentApiDisabledResponse();
   if (disabled) return disabled;
   const origin = publicOrigin(req);
+  const listingCount = await getMarketplaceListingCount();
   return NextResponse.json(
     {
       schema_version: "v1",
@@ -24,7 +27,8 @@ export async function GET(req: NextRequest) {
         url: `${origin}/api/v1/openapi.json`,
       },
       logo_url: `${origin}/brand/ycb-seal-512.png`,
-      contact_email: "support@yallcomeback.com",
+      contact_email: PRODUCT_EMAIL,
+      listing_count: listingCount,
       legal_info_url: `${origin}/about`,
     },
     {

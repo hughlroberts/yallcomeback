@@ -3,12 +3,17 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { publishListing } from "@/app/actions/properties";
+import {
+  resendVerificationEmail,
+  updateAccountEmailAndResend,
+} from "@/app/actions/auth-email";
 import type { ListingVisibility } from "@/lib/listing-visibility";
 import {
   isServerActionMismatch,
   clearListingWizardDraft,
 } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { WizardMissingFields } from "@/components/wizard-missing-fields";
 
 type Props = {
   propertyId: string;
@@ -21,6 +26,8 @@ type Props = {
   calendarHref: string;
   defaultVisibility?: ListingVisibility;
   emailVerified?: boolean;
+  /** Current account email (for edit/resend when unverified). */
+  accountEmail?: string;
 };
 
 export function ListingWizardPublishStep({
@@ -34,13 +41,26 @@ export function ListingWizardPublishStep({
   calendarHref,
   defaultVisibility = "website",
   emailVerified = true,
+  accountEmail = "",
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [visibility, setVisibility] = useState<ListingVisibility>(
     defaultVisibility === "off" ? "website" : defaultVisibility,
   );
+  const [email, setEmail] = useState(accountEmail);
+  const [savedEmail, setSavedEmail] = useState(accountEmail);
+  const [emailMsg, setEmailMsg] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailPending, setEmailPending] = useState(false);
   const draftKey = `property-${propertyId}`;
+  const emailUnchanged =
+    email.trim().toLowerCase() === savedEmail.trim().toLowerCase();
+
+  const missing: string[] = [];
+  if (!emailVerified) {
+    missing.push("Confirm your email address");
+  }
 
   const promo =
     discountNewListingPercent > 0
@@ -57,7 +77,8 @@ export function ListingWizardPublishStep({
         fd.set("id", propertyId);
         fd.set("visibility", visibility);
         await publishListing(fd);
-        clearListingWizardDraft(draftKey); // clear on successful final submit
+        clearListingWizardDraft(draftKey);
+        clearListingWizardDraft("new-listing");
       } catch (e) {
         if (isServerActionMismatch(e)) {
           setError("site-updated");
@@ -66,6 +87,30 @@ export function ListingWizardPublishStep({
         }
       }
     });
+  }
+
+  async function onResend() {
+    setEmailPending(true);
+    setEmailMsg(null);
+    setEmailError(null);
+    const result = await resendVerificationEmail();
+    setEmailPending(false);
+    if (result.error) setEmailError(result.error);
+    else setEmailMsg(result.message || "Sent.");
+  }
+
+  async function onSaveEmailAndResend() {
+    setEmailPending(true);
+    setEmailMsg(null);
+    setEmailError(null);
+    const result = await updateAccountEmailAndResend(email);
+    setEmailPending(false);
+    if (result.email) {
+      setEmail(result.email);
+      setSavedEmail(result.email);
+    }
+    if (result.error) setEmailError(result.error);
+    else setEmailMsg(result.message || "Sent.");
   }
 
   return (
@@ -146,7 +191,6 @@ export function ListingWizardPublishStep({
         </fieldset>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:items-start">
-          {/* Preview card */}
           <div>
             <Link
               href={previewHref}
@@ -201,7 +245,6 @@ export function ListingWizardPublishStep({
             </Link>
           </div>
 
-          {/* What's next */}
           <div>
             <h2 className="text-xl font-semibold text-stone-900">
               What&apos;s next?
@@ -275,17 +318,55 @@ export function ListingWizardPublishStep({
         </div>
 
         {!emailVerified ? (
-          <p className="mt-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            Confirm your email before you publish. Check your inbox, or resend
-            the link from{" "}
-            <Link
-              href="/account/settings/login"
-              className="font-semibold underline"
-            >
-              Login &amp; security
-            </Link>
-            .
-          </p>
+          <div className="mt-8 max-w-xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+            <p className="font-semibold">Confirm your email before you publish</p>
+            <p className="mt-1 text-amber-900/90">
+              We sent a link to your inbox. You can resend it, or update the
+              address if it was wrong.
+            </p>
+            <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-amber-900/80">
+              Email
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                className="mt-1 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-stone-900"
+              />
+            </label>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={emailPending || !email.trim()}
+                onClick={
+                  emailUnchanged ? onResend : onSaveEmailAndResend
+                }
+                className="rounded-lg bg-bonnet px-4 py-2 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300"
+              >
+                {emailPending
+                  ? "Sending…"
+                  : emailUnchanged
+                    ? "Resend confirmation"
+                    : "Save email & send confirmation"}
+              </button>
+            </div>
+            {emailError ? (
+              <p className="mt-2 text-sm text-red-700">{emailError}</p>
+            ) : null}
+            {emailMsg ? (
+              <p className="mt-2 text-sm text-emerald-800">{emailMsg}</p>
+            ) : null}
+            <p className="mt-3 text-xs text-amber-900/70">
+              You can also manage this from{" "}
+              <Link
+                href="/account/settings/login"
+                className="font-semibold underline"
+              >
+                Login &amp; security
+              </Link>
+              .
+            </p>
+          </div>
         ) : null}
         {error ? (
           error === "site-updated" ? (
@@ -311,21 +392,24 @@ export function ListingWizardPublishStep({
         <div className="h-1 bg-stone-100">
           <div className="h-full w-full bg-bonnet" />
         </div>
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link
-            href={`/admin/properties/${propertyId}/setup?step=9`}
-            className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
-          >
-            Back
-          </Link>
-          <button
-            type="button"
-            onClick={onPublish}
-            disabled={pending || !emailVerified}
-            className="rounded-lg bg-bonnet px-8 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300"
-          >
-            {pending ? "Publishing…" : "Publish"}
-          </button>
+        <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:px-6">
+          {!emailVerified ? <WizardMissingFields missing={missing} /> : null}
+          <div className="flex items-center justify-between">
+            <Link
+              href={`/admin/properties/${propertyId}/setup?step=9`}
+              className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
+            >
+              Back
+            </Link>
+            <button
+              type="button"
+              onClick={onPublish}
+              disabled={pending || !emailVerified}
+              className="rounded-lg bg-bonnet px-8 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300"
+            >
+              {pending ? "Publishing…" : "Publish"}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

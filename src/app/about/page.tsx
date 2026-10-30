@@ -1,7 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "About" };
+export const metadata = pageMetadata({
+  title: "About",
+  description:
+    "Built by hosts who still take return guests. Yall Come Back automates the busywork so familiar places stay easy to book again.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

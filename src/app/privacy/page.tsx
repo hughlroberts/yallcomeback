@@ -10,11 +10,13 @@ import {
 } from "@/components/legal-layout";
 import { PRODUCT_DOMAIN, PRODUCT_NAME } from "@/lib/features";
 import { LEGAL_EFFECTIVE_DATE, LEGAL_OPERATOR, TERMS_PATH } from "@/lib/legal";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Privacy Policy",
   description: `How ${PRODUCT_NAME} collects, uses, and shares information. We are a booking platform. Hosts and guests see what they need to complete a stay.`,
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  getMarketplaceListingCount,
   getMarketplaceListings,
   getMarketplacePlaceSuggestions,
   marketplaceDiscoveryEnabled,
@@ -13,12 +14,15 @@ import { GuestDiscoverySections } from "@/components/guest-discovery-sections";
 import { TrackRecentSearch } from "@/components/track-browse-history";
 import { searchIsMeaningful } from "@/lib/browse-history";
 
+import { pageMetadata } from "@/lib/seo";
+
 export const dynamic = "force-dynamic";
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Find a Place",
   description:
-    "Find a stay you already love — and book the host who made it great.",
-};
+    "Find a stay you already love — and book the host who made it great. Search lakeside and return-guest stays on Yall Come Back.",
+  path: "/marketplace",
+});
 
 type SearchFields = {
   where?: string;
@@ -138,7 +142,17 @@ async function StaysPanel({
   rawGuests?: string;
   rawPets?: string;
 }) {
-  const [listings, showDiscovery] = await Promise.all([
+  const currentSearch = {
+    where,
+    checkIn,
+    checkOut,
+    guests,
+    pets,
+    remember,
+  };
+  const hasActiveSearch = searchIsMeaningful(currentSearch);
+
+  const [listings, showDiscovery, totalListingCount] = await Promise.all([
     getMarketplaceListings({
       q: where,
       guests,
@@ -150,7 +164,15 @@ async function StaysPanel({
       take: 24,
     }),
     marketplaceDiscoveryEnabled(),
+    // Unfiltered browse uses the shared published-marketplace count.
+    hasActiveSearch
+      ? Promise.resolve(null)
+      : getMarketplaceListingCount(),
   ]);
+
+  const stayCount = hasActiveSearch
+    ? listings.length
+    : (totalListingCount ?? listings.length);
 
   const filters: string[] = [];
   if (where) filters.push(`near “${where}”`);
@@ -167,16 +189,6 @@ async function StaysPanel({
   if (guests) filters.push(`${guests} guest${guests === 1 ? "" : "s"}`);
   if (pets) filters.push(`${pets} pet${pets === 1 ? "" : "s"}`);
   if (remember) filters.push("from what you remember");
-
-  const currentSearch = {
-    where,
-    checkIn,
-    checkOut,
-    guests,
-    pets,
-    remember,
-  };
-  const hasActiveSearch = searchIsMeaningful(currentSearch);
 
   return (
     <>
@@ -201,7 +213,7 @@ async function StaysPanel({
 
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm text-slate-500">
-          {listings.length} stay{listings.length === 1 ? "" : "s"}
+          {stayCount} stay{stayCount === 1 ? "" : "s"}
           {filters.length > 0 ? (
             <span className="text-slate-400"> · {filters.join(" · ")}</span>
           ) : null}

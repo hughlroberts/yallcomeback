@@ -1,44 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition, useEffect } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { LISTING_TYPES, type ListingTypeId } from "@/lib/listing-types";
 import { startListingDraft } from "@/app/actions/properties";
-import {
-  isServerActionMismatch,
-  saveListingWizardDraft,
-  loadListingWizardDraft,
-} from "@/lib/utils";
+import { isServerActionMismatch } from "@/lib/utils";
+import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
+import { WizardMissingFields } from "@/components/wizard-missing-fields";
 
 type Props = {
   hostId?: string;
   hosts?: { id: string; name: string }[];
 };
 
+type TypeFields = {
+  selected: ListingTypeId | null;
+  chosenHostId: string;
+};
+
 export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
   const draftKey = "new-listing";
-  const [selected, setSelected] = useState<ListingTypeId | null>(null);
-  const [chosenHostId, setChosenHostId] = useState(hostId || hosts[0]?.id || "");
+  const { values, setValues } = useListingWizardAutosave<TypeFields>({
+    draftKey,
+    step: "type",
+    initial: {
+      selected: null,
+      chosenHostId: hostId || hosts[0]?.id || "",
+    },
+  });
+
+  const selected = values.selected;
+  const chosenHostId = values.chosenHostId;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // Restore from localStorage draft on load
-  useEffect(() => {
-    const draft = loadListingWizardDraft(draftKey);
-    if (draft?.selected && LISTING_TYPES.some((t) => t.id === draft.selected)) {
-      setSelected(draft.selected as ListingTypeId);
-    }
-    if (draft?.chosenHostId) {
-      setChosenHostId(draft.chosenHostId as string);
-    }
-  }, [draftKey]);
-
-  // Save on change
-  useEffect(() => {
-    if (selected || chosenHostId) {
-      saveListingWizardDraft(draftKey, { selected, chosenHostId });
-    }
-  }, [selected, chosenHostId, draftKey]);
+  const missing = useMemo(() => {
+    const m: string[] = [];
+    if (!selected) m.push("Place type");
+    return m;
+  }, [selected]);
 
   function onNext() {
     setError(null);
@@ -52,7 +52,6 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
         fd.set("propertyType", selected);
         if (chosenHostId) fd.set("hostId", chosenHostId);
         await startListingDraft(fd);
-        // On success, the action redirects to step 2; draft cleared by later step
       } catch (e) {
         if (isServerActionMismatch(e)) {
           setError("site-updated");
@@ -62,6 +61,8 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
       }
     });
   }
+
+  const nextDisabled = pending || missing.length > 0;
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col bg-white">
@@ -94,7 +95,12 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
             </label>
             <select
               value={chosenHostId}
-              onChange={(e) => setChosenHostId(e.target.value)}
+              onChange={(e) =>
+                setValues((prev) => ({
+                  ...prev,
+                  chosenHostId: e.target.value,
+                }))
+              }
               className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-base"
             >
               {hosts.map((h) => (
@@ -113,7 +119,9 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
               <button
                 key={type.id}
                 type="button"
-                onClick={() => setSelected(type.id)}
+                onClick={() =>
+                  setValues((prev) => ({ ...prev, selected: type.id }))
+                }
                 className={[
                   "flex flex-col items-start gap-3 rounded-xl border-2 p-4 text-left transition",
                   active
@@ -156,21 +164,26 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
         <div className="h-1 bg-stone-100">
           <div className="h-full w-[12%] bg-bonnet" />
         </div>
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link
-            href="/admin/properties"
-            className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
-          >
-            Back
-          </Link>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={pending || !selected}
-            className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-lupine/40"
-          >
-            {pending ? "Starting…" : "Next"}
-          </button>
+        <div className="mx-auto flex max-w-3xl flex-col gap-3 px-4 py-4 sm:px-6">
+          {nextDisabled && missing.length > 0 ? (
+            <WizardMissingFields missing={missing} />
+          ) : null}
+          <div className="flex items-center justify-between">
+            <Link
+              href="/admin/properties"
+              className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
+            >
+              Back
+            </Link>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={nextDisabled}
+              className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-lupine/40"
+            >
+              {pending ? "Starting…" : "Next"}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

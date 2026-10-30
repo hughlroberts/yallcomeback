@@ -150,6 +150,15 @@ export async function createBooking(formData: FormData) {
     throw new Error("Choose a payment method this listing offers.");
   }
   const method: PaymentMethod = guestValueToPaymentMethod(chosenPay);
+  // Server-side reject: Online card requires a usable Stripe connected account.
+  if (method === "STRIPE") {
+    const { isStripeConfigured } = await import("@/lib/stripe");
+    if (!isStripeConfigured() || !property.host.stripeAccountId) {
+      throw new Error(
+        "Online card is not available for this host. Choose another payment method, or message the host.",
+      );
+    }
+  }
 
   const btcAddress = method === "BITCOIN" ? getBitcoinAddress() : null;
   let bitcoinAmountBtc: number | null = null;

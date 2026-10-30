@@ -3,15 +3,24 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { saveListingBasics } from "@/app/actions/properties";
+import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
 
 type Props = {
   propertyId: string;
+  serverUpdatedAt?: string | Date | null;
   initial: {
     maxGuests: number;
     bedrooms: number;
     beds: number;
     bathrooms: number;
   };
+};
+
+type BasicsFields = {
+  guests: number;
+  bedrooms: number;
+  beds: number;
+  bathrooms: number;
 };
 
 function StepperRow({
@@ -37,7 +46,9 @@ function StepperRow({
           type="button"
           aria-label={`Fewer ${label.toLowerCase()}`}
           disabled={value <= min}
-          onClick={() => onChange(Math.max(min, Number((value - step).toFixed(1))))}
+          onClick={() =>
+            onChange(Math.max(min, Number((value - step).toFixed(1))))
+          }
           className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-lg text-stone-700 hover:border-stone-500 disabled:cursor-not-allowed disabled:opacity-30"
         >
           −
@@ -49,7 +60,9 @@ function StepperRow({
           type="button"
           aria-label={`More ${label.toLowerCase()}`}
           disabled={value >= max}
-          onClick={() => onChange(Math.min(max, Number((value + step).toFixed(1))))}
+          onClick={() =>
+            onChange(Math.min(max, Number((value + step).toFixed(1))))
+          }
           className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-lg text-stone-700 hover:border-stone-500 disabled:cursor-not-allowed disabled:opacity-30"
         >
           +
@@ -59,11 +72,25 @@ function StepperRow({
   );
 }
 
-export function ListingWizardBasicsStep({ propertyId, initial }: Props) {
-  const [guests, setGuests] = useState(initial.maxGuests || 2);
-  const [bedrooms, setBedrooms] = useState(initial.bedrooms || 1);
-  const [beds, setBeds] = useState(initial.beds || 1);
-  const [bathrooms, setBathrooms] = useState(initial.bathrooms || 1);
+export function ListingWizardBasicsStep({
+  propertyId,
+  serverUpdatedAt,
+  initial,
+}: Props) {
+  const draftKey = `property-${propertyId}`;
+  const { values, setValues } = useListingWizardAutosave<BasicsFields>({
+    draftKey,
+    step: "basics",
+    serverUpdatedAt,
+    initial: {
+      guests: initial.maxGuests || 2,
+      bedrooms: initial.bedrooms || 1,
+      beds: initial.beds || 1,
+      bathrooms: initial.bathrooms || 1,
+    },
+  });
+
+  const { guests, bedrooms, beds, bathrooms } = values;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -112,21 +139,21 @@ export function ListingWizardBasicsStep({ propertyId, initial }: Props) {
             value={guests}
             min={1}
             max={30}
-            onChange={setGuests}
+            onChange={(n) => setValues((p) => ({ ...p, guests: n }))}
           />
           <StepperRow
             label="Bedrooms"
             value={bedrooms}
             min={0}
             max={20}
-            onChange={setBedrooms}
+            onChange={(n) => setValues((p) => ({ ...p, bedrooms: n }))}
           />
           <StepperRow
             label="Beds"
             value={beds}
             min={1}
             max={30}
-            onChange={setBeds}
+            onChange={(n) => setValues((p) => ({ ...p, beds: n }))}
           />
           <StepperRow
             label="Bathrooms"
@@ -134,7 +161,7 @@ export function ListingWizardBasicsStep({ propertyId, initial }: Props) {
             min={0}
             max={20}
             step={0.5}
-            onChange={setBathrooms}
+            onChange={(n) => setValues((p) => ({ ...p, bathrooms: n }))}
           />
         </div>
 

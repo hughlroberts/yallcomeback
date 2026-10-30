@@ -31,7 +31,10 @@ export type AgentSearchParams = {
 
 export type AgentListingSummary = {
   id: string;
+  /** Property (listing) slug — never the host brand slug */
   slug: string;
+  /** Host brand slug (e.g. cherokee-landing). Separate from listing slug. */
+  hostSlug: string;
   title: string;
   tagline: string | null;
   city: string | null;
@@ -181,21 +184,24 @@ export async function agentSearch(
   const results: AgentListingSummary[] = [];
 
   for (const p of listings) {
+    // Always the property slug — never host.slug (host brand lives in hostSlug).
+    const listingSlug = p.slug;
+    const hostSlug = p.host.slug;
     const searchForHref = {
       checkIn: hasExactDates ? params.checkIn : undefined,
       checkOut: hasExactDates ? params.checkOut : undefined,
       guests: params.guests,
       pets: params.pets,
     };
-    const path = listingHrefWithSearch(p.slug, p.host.slug, searchForHref);
+    const path = listingHrefWithSearch(listingSlug, hostSlug, searchForHref);
     const url = absoluteUrl(origin, path);
     const bookUrl = absoluteUrl(
       origin,
-      `/book/${encodeURIComponent(p.slug)}${hasExactDates ? `?checkIn=${params.checkIn}&checkOut=${params.checkOut}` : ""}`,
+      `/book/${encodeURIComponent(listingSlug)}${hasExactDates ? `?checkIn=${params.checkIn}&checkOut=${params.checkOut}` : ""}`,
     );
     const apiUrl = absoluteUrl(
       origin,
-      `/api/v1/listings/${encodeURIComponent(p.slug)}`,
+      `/api/v1/listings/${encodeURIComponent(listingSlug)}`,
     );
 
     let priceEstimate: AgentListingSummary["priceEstimate"] = null;
@@ -280,7 +286,8 @@ export async function agentSearch(
 
     results.push({
       id: p.id,
-      slug: p.slug,
+      slug: listingSlug,
+      hostSlug,
       title: p.title,
       tagline: p.tagline,
       city: p.city,
@@ -303,7 +310,7 @@ export async function agentSearch(
       host: {
         id: p.host.id,
         name: p.host.name,
-        slug: p.host.slug,
+        slug: hostSlug,
       },
       url,
       bookUrl,

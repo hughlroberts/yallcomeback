@@ -60,10 +60,13 @@ export default async function ListingSetupPage({
   const stepRaw = sp.step || "2";
   const step = stepRaw === "done" ? "done" : Number(stepRaw);
 
+  const serverUpdatedAt = property.updatedAt.toISOString();
+
   if (step === 2) {
     return (
       <ListingWizardSpaceStep
         propertyId={property.id}
+        serverUpdatedAt={serverUpdatedAt}
         initialSpaceType={property.spaceType as SpaceTypeId}
       />
     );
@@ -73,6 +76,7 @@ export default async function ListingSetupPage({
     return (
       <ListingWizardLocationStep
         propertyId={property.id}
+        serverUpdatedAt={serverUpdatedAt}
         initial={{
           address: property.address || "",
           city: property.city || "",
@@ -91,6 +95,7 @@ export default async function ListingSetupPage({
     return (
       <ListingWizardBasicsStep
         propertyId={property.id}
+        serverUpdatedAt={serverUpdatedAt}
         initial={{
           maxGuests: property.maxGuests,
           bedrooms: property.bedrooms,
@@ -105,6 +110,7 @@ export default async function ListingSetupPage({
     return (
       <ListingWizardAmenitiesStep
         propertyId={property.id}
+        serverUpdatedAt={serverUpdatedAt}
         initialIds={selectedAmenityIds(parseAmenities(property.amenities))}
       />
     );
@@ -114,6 +120,7 @@ export default async function ListingSetupPage({
     return (
       <ListingWizardTitleStep
         propertyId={property.id}
+        serverUpdatedAt={serverUpdatedAt}
         placeWord={listingTypeLabel(property.propertyType)}
         initialTitle={property.title}
       />
@@ -124,6 +131,7 @@ export default async function ListingSetupPage({
     return (
       <ListingWizardDescriptionStep
         propertyId={property.id}
+        serverUpdatedAt={serverUpdatedAt}
         initialDescription={property.description || ""}
       />
     );
@@ -133,6 +141,7 @@ export default async function ListingSetupPage({
     return (
       <ListingWizardPriceStep
         propertyId={property.id}
+        serverUpdatedAt={serverUpdatedAt}
         canEditDepositMethod={canManageBrand(
           resolveHostAccessInfo({
             isPlatform: access.isPlatform,
@@ -153,6 +162,7 @@ export default async function ListingSetupPage({
     return (
       <ListingWizardDiscountsStep
         propertyId={property.id}
+        serverUpdatedAt={serverUpdatedAt}
         initial={{
           discountNewListingPercent: property.discountNewListingPercent,
           discountLastMinutePercent: property.discountLastMinutePercent,
@@ -172,6 +182,15 @@ export default async function ListingSetupPage({
       userId: access.session.user.id,
       bypass: access.isPlatform,
     });
+    const accountEmail =
+      access.session.user.email ||
+      (
+        await prisma.user.findUnique({
+          where: { id: access.session.user.id },
+          select: { email: true },
+        })
+      )?.email ||
+      "";
     return (
       <ListingWizardPublishStep
         propertyId={property.id}
@@ -186,6 +205,7 @@ export default async function ListingSetupPage({
           property.host.listOnMarketplace ? "both" : "website"
         }
         emailVerified={emailVerified}
+        accountEmail={accountEmail}
       />
     );
   }

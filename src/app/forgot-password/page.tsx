@@ -4,7 +4,14 @@ import { Button, Input, Label, Card } from "@/components/ui";
 import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Forgot password" };
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Forgot password",
+  description: "Reset your Yall Come Back password.",
+  path: "/forgot-password",
+  noIndex: true,
+});
 
 export default async function ForgotPasswordPage({
   searchParams,

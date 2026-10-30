@@ -7,10 +7,16 @@ import {
   type AmenityOption,
 } from "@/lib/listing-amenities";
 import { saveListingAmenities } from "@/app/actions/properties";
+import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
 
 type Props = {
   propertyId: string;
   initialIds: string[];
+  serverUpdatedAt?: string | Date | null;
+};
+
+type AmenityFields = {
+  selectedIds: string[];
 };
 
 function AmenityCard({
@@ -47,19 +53,26 @@ function AmenityCard({
 export function ListingWizardAmenitiesStep({
   propertyId,
   initialIds,
+  serverUpdatedAt,
 }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(initialIds),
-  );
+  const draftKey = `property-${propertyId}`;
+  const { values, setValues } = useListingWizardAutosave<AmenityFields>({
+    draftKey,
+    step: "amenities",
+    serverUpdatedAt,
+    initial: { selectedIds: initialIds },
+  });
+
+  const selected = new Set(values.selectedIds);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function toggle(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
+    setValues((prev) => {
+      const next = new Set(prev.selectedIds);
       if (next.has(id)) next.delete(id);
       else next.add(id);
-      return next;
+      return { selectedIds: [...next] };
     });
   }
 
@@ -69,7 +82,7 @@ export function ListingWizardAmenitiesStep({
       try {
         const fd = new FormData();
         fd.set("id", propertyId);
-        fd.set("amenityIds", [...selected].join(","));
+        fd.set("amenityIds", values.selectedIds.join(","));
         await saveListingAmenities(fd);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");

@@ -184,6 +184,7 @@ export function isServerActionMismatch(error: unknown): boolean {
  * Persist wizard form state to localStorage (per listing or 'new').
  * Keyed to avoid collisions. Never stores passwords or secrets.
  * Cleared on successful final publish.
+ * Merges with any existing draft so steps do not wipe each other.
  */
 export function saveListingWizardDraft(
   draftKey: string,
@@ -191,9 +192,10 @@ export function saveListingWizardDraft(
 ): void {
   if (typeof localStorage === "undefined") return;
   try {
+    const existing = loadListingWizardDraft(draftKey) || {};
     localStorage.setItem(
       `ycb-listing-draft:${draftKey}`,
-      JSON.stringify(data),
+      JSON.stringify({ ...existing, ...data, savedAt: Date.now() }),
     );
   } catch {
     // Ignore storage quota or disabled errors
@@ -219,4 +221,20 @@ export function clearListingWizardDraft(draftKey: string): void {
   try {
     localStorage.removeItem(`ycb-listing-draft:${draftKey}`);
   } catch {}
+}
+
+/** ms timestamp from Date / ISO string / number; null if unusable. */
+export function toMillis(
+  value: Date | string | number | null | undefined,
+): number | null {
+  if (value == null) return null;
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (value instanceof Date) {
+    const t = value.getTime();
+    return Number.isFinite(t) ? t : null;
+  }
+  const t = Date.parse(value);
+  return Number.isFinite(t) ? t : null;
 }

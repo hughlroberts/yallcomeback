@@ -1,30 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { saveListingDescription } from "@/app/actions/properties";
+import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
+import { WizardMissingFields } from "@/components/wizard-missing-fields";
 
 const MAX = 500;
+const MIN = 20;
 
 type Props = {
   propertyId: string;
   initialDescription: string;
+  serverUpdatedAt?: string | Date | null;
+};
+
+type DescriptionFields = {
+  description: string;
 };
 
 export function ListingWizardDescriptionStep({
   propertyId,
   initialDescription,
+  serverUpdatedAt,
 }: Props) {
-  const [description, setDescription] = useState(
-    (initialDescription || "").slice(0, MAX),
-  );
+  const draftKey = `property-${propertyId}`;
+  const { values, setValues } = useListingWizardAutosave<DescriptionFields>({
+    draftKey,
+    step: "description",
+    serverUpdatedAt,
+    initial: { description: (initialDescription || "").slice(0, MAX) },
+  });
+
+  const description = values.description;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const missing = useMemo(() => {
+    const m: string[] = [];
+    const len = description.trim().length;
+    if (len < MIN) {
+      m.push(
+        len === 0
+          ? "Description"
+          : `Description (at least ${MIN} characters; ${MIN - len} more)`,
+      );
+    }
+    return m;
+  }, [description]);
 
   function onNext() {
     setError(null);
     const trimmed = description.trim();
-    if (trimmed.length < 20) {
+    if (trimmed.length < MIN) {
       setError("Write a little more so guests know what to expect");
       return;
     }
@@ -39,6 +67,8 @@ export function ListingWizardDescriptionStep({
       }
     });
   }
+
+  const nextDisabled = pending || missing.length > 0;
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col bg-white">
@@ -65,7 +95,9 @@ export function ListingWizardDescriptionStep({
         <div className="mt-10">
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value.slice(0, MAX))}
+            onChange={(e) =>
+              setValues({ description: e.target.value.slice(0, MAX) })
+            }
             maxLength={MAX}
             rows={8}
             placeholder="Peaceful lake views, a full kitchen, and room for the whole family…"
@@ -86,21 +118,26 @@ export function ListingWizardDescriptionStep({
         <div className="h-1 bg-stone-100">
           <div className="h-full w-[88%] bg-bonnet" />
         </div>
-        <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link
-            href={`/admin/properties/${propertyId}/setup?step=6`}
-            className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
-          >
-            Back
-          </Link>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={pending || description.trim().length < 20}
-            className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-lupine/40"
-          >
-            {pending ? "Saving…" : "Next"}
-          </button>
+        <div className="mx-auto flex max-w-xl flex-col gap-3 px-4 py-4 sm:px-6">
+          {nextDisabled && missing.length > 0 ? (
+            <WizardMissingFields missing={missing} />
+          ) : null}
+          <div className="flex items-center justify-between">
+            <Link
+              href={`/admin/properties/${propertyId}/setup?step=6`}
+              className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
+            >
+              Back
+            </Link>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={nextDisabled}
+              className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-lupine/40"
+            >
+              {pending ? "Saving…" : "Next"}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

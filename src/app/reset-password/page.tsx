@@ -3,7 +3,14 @@ import { Button, Input, Label, Card } from "@/components/ui";
 import { peekAuthToken } from "@/lib/auth-tokens";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Reset password" };
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Reset password",
+  description: "Choose a new password for your Yall Come Back account.",
+  path: "/reset-password",
+  noIndex: true,
+});
 
 export default async function ResetPasswordPage({
   searchParams,

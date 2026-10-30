@@ -8,7 +8,14 @@ import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 import { sendSignupVerificationEmail } from "@/lib/account-email";
 import { TrackSignupStarted } from "@/components/track-signup-started";
 
-export const metadata = { title: "Create account" };
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Create account",
+  description: "Create a Yall Come Back guest account to book stays and message hosts.",
+  path: "/register",
+  noIndex: true,
+});
 
 export default async function RegisterPage({
   searchParams,

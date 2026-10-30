@@ -30,7 +30,7 @@ export function buildOpenApiDocument(origin: string) {
           operationId: "searchListings",
           summary: "Search marketplace listings",
           description:
-            "Search published marketplace stays by location, guests, pets, and optional dates. Use flexible=true or flexibilityDays for ± day windows (same idea as the homepage “I’m flexible” / dateFlex control).",
+            "Search published marketplace stays by location, guests, pets, and optional dates. Use flexible=true or flexibilityDays for ± day windows (same idea as the homepage “I’m flexible” / dateFlex control). Each result.slug is the property (listing) slug; result.hostSlug is the host brand slug. url, bookUrl, and apiUrl are built from the property slug.",
           parameters: [
             {
               name: "location",

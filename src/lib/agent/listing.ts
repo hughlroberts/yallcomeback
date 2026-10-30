@@ -10,6 +10,7 @@ import {
   isStayAvailable,
 } from "@/lib/agent/availability";
 import { absoluteUrl } from "@/lib/agent/origin";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
 /** Street and pin only when the guest listing already shows them. */
 export function publicListingLocation(listing: {
@@ -230,9 +231,9 @@ export async function getAgentListingDetail(
     cancellationPolicy: property.cancellationPolicy,
     longTermCancellationPolicy: property.longTermCancellationPolicy,
     amenities,
-    images: property.images.map((img) => ({
+    images: property.images.map((img, index) => ({
       url: absoluteUrl(origin, img.url),
-      alt: img.alt,
+      alt: listingPhotoAlt(property.title, img.alt, index),
       isCover: img.isCover,
     })),
     host: {

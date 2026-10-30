@@ -265,8 +265,8 @@ export const SELF_HOST_DEV_STEPS = [
   {
     title: "Copy the project",
     body: REPO_URL
-      ? `Clone the open-source repo (${REPO_URL}). Everything on the live platform is in that codebase.`
-      : "Clone or download the open-source repository (public git URL will be linked here at launch). Everything you see on the platform is in that codebase.",
+      ? `Clone the open-source repo (${REPO_URL}). Core booking, host sites, and admin live in that codebase. Some hosted-only tools (agent API, listing import, pricing intelligence) stay platform-only and are not part of the MIT inventory.`
+      : "Clone or download the open-source repository (public git URL will be linked here at launch). Core booking, host sites, and admin live in that codebase. Some hosted-only tools stay platform-only and are not part of the MIT inventory.",
   },
   {
     title: "Install & seed",

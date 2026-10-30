@@ -11,12 +11,15 @@ import {
 } from "@/lib/hosting";
 import { formatMoney } from "@/lib/utils";
 
+import { pageMetadata } from "@/lib/seo";
+
 export const dynamic = "force-dynamic";
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Host a Place",
   description:
     "Built by hosts at Cherokee Landing. Automate return-guest bookings, keep the familiar stay, and skip the giant platform bill.",
-};
+  path: "/for-hosts",
+});
 
 const BENEFITS = [
   {

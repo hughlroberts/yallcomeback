@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
 function useIsClient() {
   return useSyncExternalStore(
@@ -61,11 +62,11 @@ export function PhotoGallery({
           type="button"
           onClick={() => openAt(0)}
           className="relative aspect-[4/3] bg-stone-100 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet sm:col-span-2 sm:row-span-2 sm:aspect-auto"
-          aria-label={`View photo 1 of ${photos.length}: ${main.alt || title}`}
+          aria-label={`View photo 1 of ${photos.length}: ${listingPhotoAlt(title, main.alt, 0)}`}
         >
           <Image
             src={main.url}
-            alt={main.alt || title}
+            alt={listingPhotoAlt(title, main.alt, 0)}
             fill
             className="object-cover transition group-hover:brightness-95"
             sizes="(max-width: 768px) 100vw, 50vw"
@@ -85,12 +86,12 @@ export function PhotoGallery({
               aria-label={
                 isLastGrid
                   ? `View all ${photos.length} photos`
-                  : `View photo ${photoIndex + 1} of ${photos.length}: ${img.alt || title}`
+                  : `View photo ${photoIndex + 1} of ${photos.length}: ${listingPhotoAlt(title, img.alt, photoIndex)}`
               }
             >
               <Image
                 src={img.url}
-                alt={img.alt || title}
+                alt={listingPhotoAlt(title, img.alt, photoIndex)}
                 fill
                 className="object-cover"
                 sizes="25vw"
@@ -118,11 +119,11 @@ export function PhotoGallery({
                 type="button"
                 onClick={() => openAt(i + 1)}
                 className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
-                aria-label={`View photo ${i + 2} of ${photos.length}`}
+                aria-label={`View photo ${i + 2} of ${photos.length}: ${listingPhotoAlt(title, img.alt, i + 1)}`}
               >
                 <Image
                   src={img.url}
-                  alt={img.alt || title}
+                  alt={listingPhotoAlt(title, img.alt, i + 1)}
                   fill
                   className="object-cover"
                   sizes="112px"
@@ -262,7 +263,7 @@ function PhotoLightbox({
             <Image
               key={current.id}
               src={current.url}
-              alt={current.alt || `${title} photo ${index + 1}`}
+              alt={listingPhotoAlt(title, current.alt, index)}
               fill
               className="object-contain"
               sizes="(max-width: 1280px) 100vw, 1024px"
@@ -316,12 +317,12 @@ function PhotoLightbox({
                     ? "ring-white"
                     : "ring-transparent opacity-70 hover:opacity-100",
                 )}
-                aria-label={`Go to photo ${i + 1}`}
+                aria-label={`Go to photo ${i + 1}: ${listingPhotoAlt(title, img.alt, i)}`}
                 aria-current={i === index ? "true" : undefined}
               >
                 <Image
                   src={img.url}
-                  alt=""
+                  alt={listingPhotoAlt(title, img.alt, i)}
                   fill
                   className="object-cover"
                   sizes="96px"

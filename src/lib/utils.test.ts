@@ -74,7 +74,20 @@ describe("wizard helpers", () => {
     it("saves and loads draft", () => {
       saveListingWizardDraft(testKey, testData);
       const loaded = loadListingWizardDraft(testKey);
-      expect(loaded).toEqual(testData);
+      expect(loaded).toMatchObject(testData);
+      expect(typeof loaded?.savedAt).toBe("number");
+    });
+
+    it("merges with existing draft so steps do not wipe each other", () => {
+      saveListingWizardDraft(testKey, { title: { values: { title: "A" } } });
+      saveListingWizardDraft(testKey, {
+        description: { values: { description: "B" } },
+      });
+      const loaded = loadListingWizardDraft(testKey);
+      expect(loaded?.title).toEqual({ values: { title: "A" } });
+      expect(loaded?.description).toEqual({
+        values: { description: "B" },
+      });
     });
 
     it("returns null for missing draft", () => {

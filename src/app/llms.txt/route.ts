@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { agentExampleDates } from "@/lib/agent/example-dates";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import {
   BRANDED_WEBSITE_USD,
   MARKETPLACE_LISTING_USD,
 } from "@/lib/hosting-prices";
+import { getMarketplaceListingCount } from "@/lib/host";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +19,14 @@ export async function GET(req: NextRequest) {
   const disabled = agentApiDisabledResponse();
   if (disabled) return disabled;
   const origin = publicOrigin(req);
+  const [{ generated, checkIn, checkOut, from }, listingCount] =
+    await Promise.all([agentExampleDates(), getMarketplaceListingCount()]);
   const body = `# Yall Come Back
 
 > Repeat stays booked directly with the host. Texas lakeside focus (Cedar Creek Lake, Athens, Malakoff, and more).
+
+Generated: ${generated}
+Published marketplace listings: ${listingCount}
 
 This site is agent-friendly. Prefer the JSON API below over scraping HTML.
 
@@ -47,17 +54,18 @@ Help: ${origin}/help/become-a-host and ${origin}/help/branded-website
 
 ## How to search (exact dates)
 
-GET ${origin}/api/v1/search?location=Cedar%20Creek%20Lake&checkIn=2026-08-15&checkOut=2026-08-18&guests=4
+GET ${origin}/api/v1/search?location=Cedar%20Creek%20Lake&checkIn=${checkIn}&checkOut=${checkOut}&guests=4
 
 - checkIn / checkOut are YYYY-MM-DD (checkout exclusive, like hotel nights).
 - Response includes listing summaries, priceEstimate when dates are free, url deep links.
+- Each listing.slug is the property slug. listing.hostSlug is the host brand slug. URLs use the property slug.
 
 ## How to search (I'm flexible / ± days)
 
 Homepage-style flexibility:
 
 1) Preferred week ± 3 days:
-   GET ${origin}/api/v1/search?location=Athens%2C%20TX&checkIn=2026-08-15&checkOut=2026-08-18&flexible=true&flexibilityDays=3
+   GET ${origin}/api/v1/search?location=Athens%2C%20TX&checkIn=${checkIn}&checkOut=${checkOut}&flexible=true&flexibilityDays=3
 
 2) No dates yet (next available windows):
    GET ${origin}/api/v1/search?location=Malakoff&flexible=true&guests=4&pets=1
@@ -68,13 +76,13 @@ Homepage-style flexibility:
 
 ## Listing detail + availability
 
-GET ${origin}/api/v1/listings/{slug}?checkIn=2026-08-15&checkOut=2026-08-18&pets=1
+GET ${origin}/api/v1/listings/{slug}?checkIn=${checkIn}&checkOut=${checkOut}&pets=1
 
 Returns description, amenities, house rules, photos, host name, nextWindows, and a quote when dates are given. Host email and phone are not included. Street, postal code, and coordinates are included only when the listing shows a precise location.
 
 ## Calendar / next free windows
 
-GET ${origin}/api/v1/listings/{slug}/availability?nights=3&from=2026-08-01&days=90
+GET ${origin}/api/v1/listings/{slug}/availability?nights=3&from=${from}&days=90
 
 Returns availableWindows plus blockedRanges for agents that need calendar reasoning.
 
@@ -86,8 +94,8 @@ Content-Type: application/json
 
 {
   "slug": "listing-slug",
-  "checkIn": "2026-08-15",
-  "checkOut": "2026-08-18",
+  "checkIn": "${checkIn}",
+  "checkOut": "${checkOut}",
   "guests": 4,
   "guestName": "Guest Name",
   "guestEmail": "guest@example.com",

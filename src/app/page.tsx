@@ -2,11 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import {
+  getMarketplaceListingCount,
   getMarketplaceListings,
   getMarketplacePlaceSuggestions,
   marketplaceDiscoveryEnabled,
   soleMarketplaceCity,
 } from "@/lib/host";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
 import { GuestDiscoverySections } from "@/components/guest-discovery-sections";
@@ -16,8 +18,10 @@ import { getSiteOrigin } from "@/lib/site-url";
 import { auth } from "@/lib/auth";
 import { getRequestTenant } from "@/lib/tenant";
 import { INTENT_COOKIE, parseVisitIntent } from "@/lib/intent-cookie";
+import { homePageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const metadata = homePageMetadata();
 
 export default async function HomePage() {
   const [showDiscovery, origin, tenant, session, jar] = await Promise.all([
@@ -34,9 +38,10 @@ export default async function HomePage() {
     !isHostOrAdmin &&
     parseVisitIntent(jar.get(INTENT_COOKIE)?.value) == null;
 
-  const [listings, liveHosts, featuredHost, placeSuggestions] =
+  const [listings, listingCount, liveHosts, featuredHost, placeSuggestions] =
     await Promise.all([
       getMarketplaceListings({ take: 6 }),
+      getMarketplaceListingCount(),
       prisma.host.count({
         where: {
           active: true,
@@ -136,8 +141,8 @@ export default async function HomePage() {
           </div>
           <p className="mt-6 text-sm text-stone-300">
             {liveHosts} active host{liveHosts === 1 ? "" : "s"} ·{" "}
-            {listings.length}+ listing
-            {listings.length === 1 ? "" : "s"} · book the host you know
+            {listingCount} listing
+            {listingCount === 1 ? "" : "s"} · book the host you know
           </p>
         </div>
       </section>
@@ -201,7 +206,11 @@ export default async function HomePage() {
                     featuredHost.properties[0]?.images[0]?.url ||
                     "/seed/hero/home.jpg"
                   }
-                  alt={featuredHost.name}
+                  alt={listingPhotoAlt(
+                    featuredHost.properties[0]?.title || featuredHost.name,
+                    featuredHost.properties[0]?.images[0]?.alt,
+                    0,
+                  )}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 50vw"

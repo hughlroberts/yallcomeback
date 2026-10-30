@@ -1,7 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Contact" };
+export const metadata = pageMetadata({
+  title: "Contact",
+  description:
+    "Questions about hosting, billing, or a stay on the marketplace? Reach Yall Come Back and we will point you in the right direction.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

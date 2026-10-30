@@ -9,10 +9,13 @@ import {
   SELF_HOST_DEV_STEPS,
 } from "@/lib/features";
 
-export const metadata = {
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
   title: "Open source · free self-host",
-  description: `Run a free copy of ${PRODUCT_NAME} on your own website. MIT licensed, full feature set.`,
-};
+  description: `Run a free MIT copy of ${PRODUCT_NAME} on your own servers. Host-branded sites, calendars, and bookings — marketplace listing on yallcomeback.app is a separate paid product.`,
+  path: "/open-source",
+});
 
 export default function OpenSourcePage() {
   return (
@@ -27,10 +30,12 @@ export default function OpenSourcePage() {
             Copy {PRODUCT_NAME} for your own website - free and open source
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-stone-300">
-            Hosts can run the entire platform themselves: branded sites,
-            marketplace, calendars, bookings, iCal, and admin. No license fee.
-            When we ship new features here, they land in this same codebase for
-            you to pull in.
+            The MIT software is free to run on your own servers: host-branded
+            sites, calendars, bookings, iCal, and admin. No license fee. Listing
+            those stays on the hosted Yall Come Back marketplace
+            (yallcomeback.app) is a separate paid product. Core features that
+            ship in this repo are listed below; some hosted-only tools stay on
+            the paid platform and are not part of the open-source inventory.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {REPO_URL ? (
@@ -99,8 +104,9 @@ export default function OpenSourcePage() {
             How to run your own copy
           </h2>
           <p className="mt-2 max-w-2xl text-stone-600">
-            This is the same stack powering the demo you&apos;re browsing. Point
-            your domain at it when you&apos;re ready.
+            Same core app stack as the demo you&apos;re browsing (see the feature
+            list below). Point your domain at your own deploy when you&apos;re
+            ready. Bring your own database, secrets, and Stripe account.
           </p>
 
           <div className="mt-6 space-y-3">
@@ -224,13 +230,14 @@ npm run build && npm start
                 Path A · simpler
               </p>
               <h3 className="mt-2 text-xl font-semibold text-stone-900">
-                Free self-host on this platform
+                Host account on yallcomeback.app (no separate server)
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                Listings live in the central database. The software is $0 /
-                month. Listing on Find a Place is the paid marketplace product
-                ($12 per listing / month). Point your domain at Yall Come Back
-                if you want a vanity URL.
+                You do not run the MIT app yourself. Listings live in the
+                central database on this site. There is no separate software
+                license fee for that account mode. Publishing on Find a Place is
+                still the paid marketplace product ($12 per listing / month).
+                Point your domain at Yall Come Back if you want a vanity URL.
               </p>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-stone-700">
                 <li>
@@ -260,8 +267,8 @@ npm run build && npm start
                 </li>
               </ol>
               <p className="mt-4 text-xs text-stone-500">
-                No API key required. Best when you do not need a separate
-                server or database.
+                No API key and no separate server. This is hosted on Yall Come
+                Back, not a copy of the open-source app on your machines.
               </p>
             </article>
 
@@ -399,12 +406,17 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="text-3xl font-semibold text-stone-900">
-                Everything included (so far)
+                What the MIT copy includes
               </h2>
               <p className="mt-2 max-w-2xl text-stone-600">
-                Version {PRODUCT_VERSION}. When new capabilities ship on this
-                platform, they&apos;re added to the open-source tree and listed
-                here.
+                Version {PRODUCT_VERSION}. This inventory is the open-source
+                product surface (see{" "}
+                <code className="rounded bg-stone-100 px-1.5 py-0.5 text-stone-800">
+                  src/lib/features.ts
+                </code>
+                ). Hosted-only tools such as the public agent API and market
+                pricing intelligence are not listed here and stay on the paid
+                platform.
               </p>
             </div>
             <span className="rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-stone-600">
@@ -473,8 +485,8 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
             See it working first
           </h2>
           <p className="mx-auto mt-2 max-w-lg text-stone-600">
-            Browse the demo stays and calendars, then spin up your own copy with
-            the same features.
+            Browse the demo stays and calendars, then spin up your own MIT copy
+            with the features listed above.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link

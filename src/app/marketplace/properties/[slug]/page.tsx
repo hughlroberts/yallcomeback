@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -30,8 +31,80 @@ import { getSiteOrigin } from "@/lib/site-url";
 import { listingPublicPath } from "@/lib/site-url";
 import { getRequestTenant } from "@/lib/tenant";
 import { resolveBookingChannel } from "@/lib/host-payments";
+import { pageMetadata } from "@/lib/seo";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ host?: string; via?: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const sp = await searchParams;
+  const marketplaceWhere = marketplacePropertyWhere();
+
+  const property = await prisma.property.findFirst({
+    where: {
+      slug,
+      ...(sp.via === "host_site" && sp.host
+        ? {
+            published: true,
+            host: { slug: sp.host, active: true },
+          }
+        : {
+            published: marketplaceWhere.published,
+            listOnMarketplace: marketplaceWhere.listOnMarketplace,
+            host: {
+              ...marketplaceWhere.host,
+              ...(sp.host ? { slug: sp.host } : {}),
+            },
+          }),
+    },
+    select: {
+      title: true,
+      tagline: true,
+      description: true,
+      city: true,
+      region: true,
+      slug: true,
+      host: { select: { name: true, slug: true } },
+      images: {
+        orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
+        take: 1,
+        select: { url: true, alt: true },
+      },
+    },
+  });
+
+  if (!property) {
+    return pageMetadata({
+      title: "Listing",
+      description: "Stay again with a host you know on Yall Come Back.",
+      path: `/marketplace/properties/${encodeURIComponent(slug)}`,
+      noIndex: true,
+    });
+  }
+
+  const place = [property.city, property.region].filter(Boolean).join(", ");
+  const description =
+    property.tagline?.trim() ||
+    property.description?.trim().slice(0, 160) ||
+    `${property.title}${place ? ` in ${place}` : ""} — book direct with ${property.host.name}.`;
+  const cover = property.images[0];
+  const path = listingPublicPath(property.slug, property.host.slug);
+
+  return pageMetadata({
+    title: property.title,
+    description,
+    path,
+    image: cover?.url,
+    imageAlt: listingPhotoAlt(property.title, cover?.alt, 0),
+  });
+}
 
 export default async function MarketplacePropertyPage({
   params,
@@ -259,7 +332,7 @@ export default async function MarketplacePropertyPage({
         {cover ? (
           <Image
             src={cover}
-            alt=""
+            alt={listingPhotoAlt(property.title, property.images[0]?.alt, 0)}
             fill
             className="object-cover opacity-90"
             sizes="100vw"

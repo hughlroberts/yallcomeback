@@ -1,15 +1,53 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import {
   HOST_SITE_RESERVED_PATHS,
   hostServicesHref,
+  hostServicesPageLabel,
   hostServicesPathSegment,
 } from "@/lib/host-site";
 import { HostServicesPageView } from "@/components/host-services-page";
+import { pageMetadata } from "@/lib/seo";
 import { slugify } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ hostSlug: string; pageSlug: string }>;
+}): Promise<Metadata> {
+  const { hostSlug, pageSlug: rawSlug } = await params;
+  const pageSlug = slugify(rawSlug);
+  const host = await getHostForGuestSite(hostSlug);
+  if (
+    !host ||
+    !host.sitePageServices ||
+    !pageSlug ||
+    HOST_SITE_RESERVED_PATHS.has(pageSlug) ||
+    pageSlug !== hostServicesPathSegment(host)
+  ) {
+    return pageMetadata({
+      title: "Page",
+      description: "Host page.",
+      path: `/h/${encodeURIComponent(hostSlug)}/${encodeURIComponent(rawSlug)}`,
+      noIndex: true,
+    });
+  }
+  const label = hostServicesPageLabel(host);
+  return pageMetadata({
+    title: label,
+    description:
+      host.siteServicesBody?.slice(0, 160) ||
+      `${label} from ${host.name}.`,
+    path: `/h/${encodeURIComponent(host.slug)}/${pageSlug}`,
+    siteName: host.name,
+    image: host.logoUrl,
+    imageAlt: host.name,
+  });
+}
 
 /**
  * Custom host page slug — currently used for the Services / boat rentals page

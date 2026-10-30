@@ -5,8 +5,15 @@ import {
 } from "@/lib/notification-prefs";
 import { Card } from "@/components/ui";
 
+import { pageMetadata } from "@/lib/seo";
+
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Unsubscribe" };
+export const metadata = pageMetadata({
+  title: "Unsubscribe",
+  description: "Manage email notification preferences for Yall Come Back.",
+  path: "/notifications/unsubscribe",
+  noIndex: true,
+});
 
 export default async function UnsubscribePage({
   searchParams,

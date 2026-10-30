@@ -1,8 +1,14 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { PRODUCT_ORIGIN } from "@/lib/features";
-import { marketplacePropertyWhere } from "@/lib/host";
+import { HELP_ARTICLES, helpPath } from "@/lib/help";
+import {
+  MARKETPLACE_EXCLUDED_HOST_SLUGS,
+  marketplacePropertyWhere,
+} from "@/lib/host";
+import { HOSTING_PUBLIC_STATUSES } from "@/lib/hosting";
 import { isAgentApiEnabled } from "@/lib/platform-features";
+import { listingPublicPath } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +23,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/marketplace`, changeFrequency: "hourly", priority: 0.95 },
     { url: `${base}/for-hosts`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${base}/about`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${base}/open-source`, changeFrequency: "monthly", priority: 0.55 },
+    { url: `${base}/self-host`, changeFrequency: "monthly", priority: 0.55 },
+    { url: `${base}/help`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${base}/terms`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/contact`, changeFrequency: "yearly", priority: 0.3 },
+    ...HELP_ARTICLES.map(
+      (article): MetadataRoute.Sitemap[number] => ({
+        url: `${base}${helpPath(article.slug)}`,
+        changeFrequency: "monthly",
+        priority: 0.45,
+      }),
+    ),
     ...(isAgentApiEnabled()
       ? ([
           {
@@ -54,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       orderBy: { updatedAt: "desc" },
     });
     listings = props.map((p) => ({
-      url: `${base}/marketplace/properties/${p.slug}?host=${encodeURIComponent(p.host.slug)}`,
+      url: `${base}${listingPublicPath(p.slug, p.host.slug)}`,
       lastModified: p.updatedAt,
       changeFrequency: "daily" as const,
       priority: 0.85,
@@ -63,5 +79,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Build/DB unavailable — static routes only
   }
 
-  return [...staticRoutes, ...listings];
+  let hostPages: MetadataRoute.Sitemap = [];
+  try {
+    const hosts = await prisma.host.findMany({
+      where: {
+        active: true,
+        approvalStatus: "APPROVED",
+        sitePublishState: { in: ["DEMO", "LIVE"] },
+        slug: { notIn: [...MARKETPLACE_EXCLUDED_HOST_SLUGS] },
+        OR: [
+          { hostingMode: "SELF" },
+          {
+            hostingMode: "PLATFORM",
+            subscriptionStatus: { in: [...HOSTING_PUBLIC_STATUSES] },
+          },
+        ],
+      },
+      select: { slug: true, updatedAt: true },
+      take: 2000,
+      orderBy: { updatedAt: "desc" },
+    });
+    hostPages = hosts.map((h) => ({
+      url: `${base}/h/${encodeURIComponent(h.slug)}`,
+      lastModified: h.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+  } catch {
+    // Build/DB unavailable
+  }
+
+  return [...staticRoutes, ...listings, ...hostPages];
 }

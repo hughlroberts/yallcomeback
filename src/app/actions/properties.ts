@@ -407,14 +407,27 @@ export async function saveListingLocation(formData: FormData) {
 
   const address = String(formData.get("address") || "").trim();
   const city = String(formData.get("city") || "").trim();
-  const lat = Number(formData.get("latitude"));
-  const lng = Number(formData.get("longitude"));
 
   if (!address && !city) {
     throw new Error("Add a street address or city");
   }
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    throw new Error("Map pin is required");
+
+  // Geocode is optional: accept null pin or manual coordinates.
+  const latRaw = String(formData.get("latitude") ?? "").trim();
+  const lngRaw = String(formData.get("longitude") ?? "").trim();
+  let latitude: number | null = null;
+  let longitude: number | null = null;
+  if (latRaw !== "" || lngRaw !== "") {
+    const lat = Number(latRaw);
+    const lng = Number(lngRaw);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      throw new Error("Enter valid latitude and longitude, or leave both blank");
+    }
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      throw new Error("Latitude must be −90…90 and longitude −180…180");
+    }
+    latitude = lat;
+    longitude = lng;
   }
 
   await prisma.property.update({
@@ -425,8 +438,8 @@ export async function saveListingLocation(formData: FormData) {
       region: String(formData.get("region") || "").trim() || null,
       country: String(formData.get("country") || "").trim() || null,
       postalCode: String(formData.get("postalCode") || "").trim() || null,
-      latitude: lat,
-      longitude: lng,
+      latitude,
+      longitude,
       showPreciseLocation: formData.get("showPreciseLocation") === "on",
     },
   });

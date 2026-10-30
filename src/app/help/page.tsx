@@ -1,11 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { HELP_ARTICLES, HELP_CATEGORIES, helpPath } from "@/lib/help";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Help center",
-  description: "Yall Come Back help for hosts and guests. Written in clear, simple English.",
-};
+  description:
+    "Yall Come Back help for hosts and guests. Written in clear, simple English.",
+  path: "/help",
+});
 
 export default function HelpIndexPage() {
   return (

@@ -10,11 +10,13 @@ import {
 } from "@/components/legal-layout";
 import { PRODUCT_DOMAIN, PRODUCT_NAME } from "@/lib/features";
 import { LEGAL_EFFECTIVE_DATE, LEGAL_OPERATOR, PRIVACY_PATH } from "@/lib/legal";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Terms of Service",
   description: `Terms of Service for ${PRODUCT_NAME}. The booking contract is between host and guest. The platform is not a party, innkeeper, broker, or insurer.`,
-};
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

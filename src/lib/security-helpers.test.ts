@@ -57,12 +57,39 @@ describe("guestPaymentOptions", () => {
     websitePaymentMethod: "MANUAL" as const,
   };
 
+  const prevEnabled = process.env.STRIPE_ENABLED;
+  const prevSecret = process.env.STRIPE_SECRET_KEY;
+
+  afterEach(() => {
+    if (prevEnabled === undefined) delete process.env.STRIPE_ENABLED;
+    else process.env.STRIPE_ENABLED = prevEnabled;
+    if (prevSecret === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = prevSecret;
+  });
+
+  function enableStripeEnv() {
+    process.env.STRIPE_ENABLED = "true";
+    process.env.STRIPE_SECRET_KEY = "sk_test_security_helpers";
+  }
+
   it("marketplace stays card-only even when the listing is cash or bitcoin", () => {
+    enableStripeEnv();
     const options = guestPaymentOptions(host, "marketplace", {
       websitePaymentMethod: "BITCOIN",
     });
     expect(options).toHaveLength(1);
     expect(options[0]?.value).toBe("card");
+    expect(options[0]?.ready).toBe(true);
+  });
+
+  it("hides Online card when the host has no Stripe connected account", () => {
+    enableStripeEnv();
+    const options = guestPaymentOptions(
+      { stripeAccountId: null, websitePaymentMethod: "STRIPE" },
+      "marketplace",
+      { websitePaymentMethod: "STRIPE" },
+    );
+    expect(options.find((o) => o.value === "card")).toBeUndefined();
   });
 
   it("host site follows the listing deposit method", () => {

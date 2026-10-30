@@ -166,11 +166,15 @@ export function guestPaymentOptions(
   channel: BookingChannel,
   listing?: { websitePaymentMethod?: PaymentMethod | null } | null,
 ): GuestPayOption[] {
+  let options: GuestPayOption[];
   if (channel === "marketplace") {
-    return [optionForMethod("STRIPE", host)];
+    options = [optionForMethod("STRIPE", host)];
+  } else {
+    const method = listingDepositMethod({ listing, host });
+    options = [optionForMethod(method, host)];
   }
-  const method = listingDepositMethod({ listing, host });
-  return [optionForMethod(method, host)];
+  // Hide Online card when the host has no usable Stripe connected account.
+  return options.filter((o) => o.value !== "card" || o.ready);
 }
 
 export function defaultGuestPayMethod(

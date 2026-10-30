@@ -2,6 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Geist_Mono } from "next/font/google";
 import { SiteShell } from "@/components/site-shell";
 import { PRODUCT_NAME, PRODUCT_ORIGIN, PRODUCT_TAGLINE } from "@/lib/features";
+import {
+  DEFAULT_OG_IMAGE,
+  DEFAULT_TWITTER_IMAGE,
+  seoOrigin,
+} from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,11 +27,14 @@ const geistMono = Geist_Mono({
 });
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || PRODUCT_NAME;
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.AUTH_URL ||
-  PRODUCT_ORIGIN;
+/** Prefer live product origin so metadataBase is never a build-time localhost. */
+const siteUrl = seoOrigin() || PRODUCT_ORIGIN;
 
+/**
+ * Root defaults only. Do not set alternates.canonical here — that would make
+ * every page canonical to the homepage. Each public page sets its own
+ * canonical, og:url, and social tags via pageMetadata().
+ */
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -41,10 +49,9 @@ export const metadata: Metadata = {
     siteName,
     title: siteName,
     description: PRODUCT_TAGLINE,
-    // opengraph-image.tsx is auto-linked by Next; keep absolute fallback
     images: [
       {
-        url: "/opengraph-image",
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
         alt: `${siteName} — ${PRODUCT_TAGLINE}`,
@@ -55,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteName,
     description: PRODUCT_TAGLINE,
-    images: ["/twitter-image"],
+    images: [DEFAULT_TWITTER_IMAGE],
   },
   icons: {
     icon: [

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { DISCOUNT_DEFAULTS } from "@/lib/listing-discounts";
 import { saveListingDiscounts } from "@/app/actions/properties";
+import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
 
 type Props = {
   propertyId: string;
+  serverUpdatedAt?: string | Date | null;
   initial: {
     discountNewListingPercent: number;
     discountLastMinutePercent: number;
@@ -20,6 +22,13 @@ type Row = {
   percent: number;
   title: string;
   description: string;
+};
+
+type DiscountFields = {
+  newListing: boolean;
+  lastMinute: boolean;
+  weekly: boolean;
+  monthly: boolean;
 };
 
 const ROWS: Row[] = [
@@ -49,13 +58,25 @@ const ROWS: Row[] = [
   },
 ];
 
-export function ListingWizardDiscountsStep({ propertyId, initial }: Props) {
-  const [on, setOn] = useState({
-    newListing: initial.discountNewListingPercent > 0,
-    lastMinute: initial.discountLastMinutePercent > 0,
-    weekly: initial.discountWeeklyPercent > 0,
-    monthly: initial.discountMonthlyPercent > 0,
-  });
+export function ListingWizardDiscountsStep({
+  propertyId,
+  serverUpdatedAt,
+  initial,
+}: Props) {
+  const draftKey = `property-${propertyId}`;
+  const { values: on, setValues: setOn } =
+    useListingWizardAutosave<DiscountFields>({
+      draftKey,
+      step: "discounts",
+      serverUpdatedAt,
+      initial: {
+        newListing: initial.discountNewListingPercent > 0,
+        lastMinute: initial.discountLastMinutePercent > 0,
+        weekly: initial.discountWeeklyPercent > 0,
+        monthly: initial.discountMonthlyPercent > 0,
+      },
+    });
+
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 

@@ -1,11 +1,40 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { PropertyCard } from "@/components/property-card";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ hostSlug: string }>;
+}): Promise<Metadata> {
+  const { hostSlug } = await params;
+  const host = await getHostForGuestSite(hostSlug);
+  if (!host) {
+    return pageMetadata({
+      title: "Stays",
+      description: "Host stays.",
+      path: `/h/${encodeURIComponent(hostSlug)}/stays`,
+      noIndex: true,
+    });
+  }
+  return pageMetadata({
+    title: "Stays",
+    description:
+      host.tagline ||
+      `Browse stays from ${host.name} and book direct.`,
+    path: `/h/${encodeURIComponent(host.slug)}/stays`,
+    siteName: host.name,
+    image: host.logoUrl,
+    imageAlt: host.name,
+  });
+}
 
 export default async function HostStaysPage({
   params,

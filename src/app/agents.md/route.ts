@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { agentExampleDates } from "@/lib/agent/example-dates";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import {
   BRANDED_WEBSITE_USD,
   MARKETPLACE_LISTING_USD,
 } from "@/lib/hosting-prices";
+import { getMarketplaceListingCount } from "@/lib/host";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,14 @@ export async function GET(req: NextRequest) {
   const disabled = agentApiDisabledResponse();
   if (disabled) return disabled;
   const origin = publicOrigin(req);
+  const [{ generated, checkIn, checkOut }, listingCount] = await Promise.all([
+    agentExampleDates(),
+    getMarketplaceListingCount(),
+  ]);
   const md = `# Agent guide — Yall Come Back
+
+Generated: ${generated}
+Published marketplace listings: ${listingCount}
 
 Yall Come Back is for guests coming back to a host they already know. Search the marketplace or book on a host's own site. Bookings are a contract between host and guest; the platform is not a party. See [${origin}/terms](${origin}/terms) and [${origin}/privacy](${origin}/privacy).
 
@@ -38,7 +47,7 @@ Start here:
 ### Exact dates
 
 \`\`\`
-GET ${origin}/api/v1/search?location=Cedar%20Creek%20Lake&checkIn=2026-08-15&checkOut=2026-08-18&guests=4
+GET ${origin}/api/v1/search?location=Cedar%20Creek%20Lake&checkIn=${checkIn}&checkOut=${checkOut}&guests=4
 \`\`\`
 
 ### Flexible dates (“I’m flexible”)
@@ -47,7 +56,7 @@ Same semantics as the homepage date picker:
 
 \`\`\`
 # Preferred stay ± 3 days
-GET ${origin}/api/v1/search?location=Athens%2C%20TX&checkIn=2026-08-15&checkOut=2026-08-18&flexible=true&flexibilityDays=3
+GET ${origin}/api/v1/search?location=Athens%2C%20TX&checkIn=${checkIn}&checkOut=${checkOut}&flexible=true&flexibilityDays=3
 
 # No dates — next free windows
 GET ${origin}/api/v1/search?location=Malakoff&flexible=true&guests=4&pets=1&amenities=lake_view
@@ -56,8 +65,10 @@ GET ${origin}/api/v1/search?location=Malakoff&flexible=true&guests=4&pets=1&amen
 ### Listing detail
 
 \`\`\`
-GET ${origin}/api/v1/listings/{slug}?checkIn=2026-08-15&checkOut=2026-08-18
+GET ${origin}/api/v1/listings/{slug}?checkIn=${checkIn}&checkOut=${checkOut}
 \`\`\`
+
+Each result uses the **property** slug in \`slug\`, \`url\`, \`bookUrl\`, and \`apiUrl\`. The host brand slug is \`hostSlug\` (also under \`host.slug\`).
 
 Use \`listing.url\` and \`listing.bookUrl\` to send humans into the product.
 
@@ -68,8 +79,8 @@ POST ${origin}/api/v1/stays/checkout
 Authorization: Bearer <agent token>
 {
   "slug": "listing-slug",
-  "checkIn": "2026-08-15",
-  "checkOut": "2026-08-18",
+  "checkIn": "${checkIn}",
+  "checkOut": "${checkOut}",
   "guests": 4,
   "guestName": "Guest Name",
   "guestEmail": "guest@example.com",

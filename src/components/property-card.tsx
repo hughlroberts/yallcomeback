@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { formatMoney } from "@/lib/utils";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { SaveListingButton } from "@/components/save-listing-button";
 
 type Props = {
@@ -54,7 +55,7 @@ export function PropertyCard({
           {cover ? (
             <Image
               src={cover.url}
-              alt={cover.alt || property.title}
+              alt={listingPhotoAlt(property.title, cover.alt, 0)}
               fill
               className="object-cover transition duration-500 group-hover:scale-[1.04]"
               sizes="(max-width: 768px) 100vw, 33vw"

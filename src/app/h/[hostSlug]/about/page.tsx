@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -5,8 +6,38 @@ import { MessageHostButton } from "@/components/message-host-form";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { hostSocialLinks } from "@/lib/host-site";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ hostSlug: string }>;
+}): Promise<Metadata> {
+  const { hostSlug } = await params;
+  const host = await getHostForGuestSite(hostSlug);
+  if (!host || !host.sitePageAbout) {
+    return pageMetadata({
+      title: "About",
+      description: "Host about page.",
+      path: `/h/${encodeURIComponent(hostSlug)}/about`,
+      noIndex: true,
+    });
+  }
+  return pageMetadata({
+    title: "About",
+    description:
+      host.tagline ||
+      host.description?.slice(0, 160) ||
+      `About ${host.name}`,
+    path: `/h/${encodeURIComponent(host.slug)}/about`,
+    absoluteTitle: false,
+    siteName: host.name,
+    image: host.logoUrl,
+    imageAlt: host.name,
+  });
+}
 
 /**
  * Fixed About page — same content width as Stays (max-w-6xl).

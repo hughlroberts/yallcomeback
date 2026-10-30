@@ -6,7 +6,14 @@ import { Card } from "@/components/ui";
 import { ResendVerifyButton } from "@/components/resend-verify-button";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Confirm email" };
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Confirm email",
+  description: "Confirm your email address for Yall Come Back.",
+  path: "/verify-email",
+  noIndex: true,
+});
 
 export default async function VerifyEmailPage({
   searchParams,

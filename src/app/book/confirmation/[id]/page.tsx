@@ -13,8 +13,15 @@ import {
 } from "@/lib/bitcoin";
 import { verifyBookingAccessToken } from "@/lib/booking-access";
 
+import { pageMetadata } from "@/lib/seo";
+
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Booking confirmation" };
+export const metadata = pageMetadata({
+  title: "Booking confirmation",
+  description: "Your stay booking confirmation on Yall Come Back.",
+  path: "/book/confirmation",
+  noIndex: true,
+});
 
 export default async function ConfirmationPage({
   params,

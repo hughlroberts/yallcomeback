@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { saveListingTitle } from "@/app/actions/properties";
+import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
+import { WizardMissingFields } from "@/components/wizard-missing-fields";
 
 const MAX = 50;
 
@@ -10,18 +12,39 @@ type Props = {
   propertyId: string;
   placeWord: string;
   initialTitle: string;
+  serverUpdatedAt?: string | Date | null;
+};
+
+type TitleFields = {
+  title: string;
 };
 
 export function ListingWizardTitleStep({
   propertyId,
   placeWord,
   initialTitle,
+  serverUpdatedAt,
 }: Props) {
+  const draftKey = `property-${propertyId}`;
   const starter =
     initialTitle === "Untitled listing" ? "" : initialTitle.slice(0, MAX);
-  const [title, setTitle] = useState(starter);
+
+  const { values, setValues } = useListingWizardAutosave<TitleFields>({
+    draftKey,
+    step: "title",
+    serverUpdatedAt,
+    initial: { title: starter },
+  });
+
+  const title = values.title;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const missing = useMemo(() => {
+    const m: string[] = [];
+    if (!title.trim()) m.push("Title");
+    return m;
+  }, [title]);
 
   function onNext() {
     setError(null);
@@ -41,6 +64,8 @@ export function ListingWizardTitleStep({
       }
     });
   }
+
+  const nextDisabled = pending || missing.length > 0;
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col bg-white">
@@ -68,7 +93,9 @@ export function ListingWizardTitleStep({
         <div className="mt-10">
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value.slice(0, MAX))}
+            onChange={(e) =>
+              setValues({ title: e.target.value.slice(0, MAX) })
+            }
             maxLength={MAX}
             placeholder="Cozy lakefront cabin"
             className="w-full rounded-xl border border-stone-300 px-4 py-4 text-center text-lg text-stone-900 outline-none focus:border-stone-900"
@@ -88,21 +115,26 @@ export function ListingWizardTitleStep({
         <div className="h-1 bg-stone-100">
           <div className="h-full w-[80%] bg-bonnet" />
         </div>
-        <div className="mx-auto flex max-w-xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link
-            href={`/admin/properties/${propertyId}/setup?step=5`}
-            className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
-          >
-            Back
-          </Link>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={pending || !title.trim()}
-            className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-lupine/40"
-          >
-            {pending ? "Saving…" : "Next"}
-          </button>
+        <div className="mx-auto flex max-w-xl flex-col gap-3 px-4 py-4 sm:px-6">
+          {nextDisabled && missing.length > 0 ? (
+            <WizardMissingFields missing={missing} />
+          ) : null}
+          <div className="flex items-center justify-between">
+            <Link
+              href={`/admin/properties/${propertyId}/setup?step=5`}
+              className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
+            >
+              Back
+            </Link>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={nextDisabled}
+              className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-lupine/40"
+            >
+              {pending ? "Saving…" : "Next"}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

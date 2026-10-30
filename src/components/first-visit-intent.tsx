@@ -4,11 +4,11 @@ import { useEffect, useId, useRef } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { setVisitIntent } from "@/app/actions/intent";
-import { BrandMark } from "@/components/brand-logo";
 
 /**
  * First visit to the platform home: Find a Place vs Host a Place.
  * Skip/close writes `browse` so this does not return for ~1 year.
+ * Sits below the site header (z-[200]) so nav stays visible and clickable.
  */
 export function FirstVisitIntentGate() {
   const titleId = useId();
@@ -41,18 +41,11 @@ export function FirstVisitIntentGate() {
       aria-modal="true"
       aria-labelledby={titleId}
       tabIndex={-1}
-      className="fixed inset-0 z-[400] flex flex-col overflow-y-auto bg-buttermilk pt-[env(safe-area-inset-top,0px)] outline-none"
+      // Below site header (z-[200]) so nav stays visible and clickable.
+      className="fixed inset-x-0 bottom-0 top-[var(--site-header-offset,4.5rem)] z-[150] flex flex-col overflow-y-auto bg-buttermilk outline-none sm:top-[var(--site-header-offset,5rem)]"
     >
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 sm:px-6 sm:py-10">
-        <div className="flex items-start justify-between gap-3">
-          <div className="ycb-logo inline-flex items-center gap-2.5">
-            <BrandMark
-              size={56}
-              priority
-              className="h-10 w-10 sm:h-12 sm:w-12"
-            />
-            <span className="ycb-logo__text">Yall Come Back</span>
-          </div>
+        <div className="flex items-start justify-end gap-3">
           <form ref={browseFormRef} action={setVisitIntent}>
             <input type="hidden" name="intent" value="browse" />
             <button
@@ -65,7 +58,7 @@ export function FirstVisitIntentGate() {
           </form>
         </div>
 
-        <div className="mx-auto mt-8 max-w-2xl text-center sm:mt-12">
+        <div className="mx-auto mt-4 max-w-2xl text-center sm:mt-8">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-bonnet">
             Welcome
           </p>

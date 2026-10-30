@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { Card } from "@/components/ui";
 
-export const metadata = {
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
   title: "Syndication API key · Help",
   description:
     "What the marketplace syndication key is for, and when hosts need it.",
-};
+  path: "/help/syndication-api-key",
+});
 
 /**
  * In-app doc linked from Brand & website (i button).

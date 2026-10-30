@@ -141,3 +141,123 @@ export async function resendVerificationEmail(): Promise<{
     message: "Check your inbox for a new confirmation link.",
   };
 }
+
+/**
+ * Change the signed-in user's email (unverified or re-verify), then send a
+ * fresh confirmation link. Rejects addresses already used by another account.
+ */
+export async function updateAccountEmailAndResend(newEmailRaw: string): Promise<{
+  ok?: true;
+  error?: string;
+  message?: string;
+  email?: string;
+}> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "Sign in to update your email." };
+  }
+  const ip = await incomingIp();
+  if (
+    !rateLimitAllow(`verify-email-change:ip:${ip}`, 5, 60 * 60 * 1000) ||
+    !rateLimitAllow(
+      `verify-email-change:user:${session.user.id}`,
+      3,
+      60 * 60 * 1000,
+    )
+  ) {
+    return { error: "Too many attempts. Wait a few minutes." };
+  }
+
+  const email = String(newEmailRaw || "")
+    .trim()
+    .toLowerCase();
+  if (
+    !email ||
+    !email.includes("@") ||
+    email.includes(" ") ||
+    email.length >= 254
+  ) {
+    return { error: "Enter a valid email address." };
+  }
+  const at = email.indexOf("@");
+  const domain = at >= 0 ? email.slice(at + 1) : "";
+  if (!domain.includes(".") || domain.startsWith(".") || domain.endsWith(".")) {
+    return { error: "Enter a valid email address." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      emailVerifiedAt: true,
+    },
+  });
+  if (!user) return { error: "Account not found." };
+
+  if (email === user.email) {
+    if (user.emailVerifiedAt) {
+      return {
+        ok: true,
+        email,
+        message: "This email is already confirmed.",
+      };
+    }
+    try {
+      await sendSignupVerificationEmail({
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        kind: user.role === "HOST" || user.role === "ADMIN" ? "host" : "guest",
+      });
+    } catch (err) {
+      console.error("[auth] resend verify email failed", err);
+      return { error: "Could not send the email. Try again in a few minutes." };
+    }
+    return {
+      ok: true,
+      email,
+      message: "Check your inbox for a new confirmation link.",
+    };
+  }
+
+  const taken = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  if (taken) {
+    return { error: "That email is already used by another account." };
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      email,
+      emailVerifiedAt: null,
+    },
+  });
+
+  try {
+    await sendSignupVerificationEmail({
+      userId: user.id,
+      email,
+      name: user.name,
+      kind: user.role === "HOST" || user.role === "ADMIN" ? "host" : "guest",
+    });
+  } catch (err) {
+    console.error("[auth] change-email verify send failed", err);
+    return {
+      error:
+        "Email was updated, but the confirmation could not be sent. Try resend in a few minutes.",
+      email,
+    };
+  }
+
+  return {
+    ok: true,
+    email,
+    message: "Email updated. Check your inbox for a new confirmation link.",
+  };
+}

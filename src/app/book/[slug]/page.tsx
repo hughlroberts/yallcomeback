@@ -22,8 +22,56 @@ import {
 } from "@/lib/host-payments";
 import { getRequestTenant } from "@/lib/tenant";
 
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+import { marketplacePropertyWhere } from "@/lib/host";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
+
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Book" };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const property = await prisma.property.findFirst({
+    where: { slug, ...marketplacePropertyWhere() },
+    select: {
+      title: true,
+      tagline: true,
+      description: true,
+      city: true,
+      region: true,
+      host: { select: { name: true, slug: true } },
+      images: {
+        orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
+        take: 1,
+        select: { url: true },
+      },
+    },
+  });
+  if (!property) {
+    return pageMetadata({
+      title: "Book",
+      description: "Complete your stay booking on Yall Come Back.",
+      path: `/book/${encodeURIComponent(slug)}`,
+      noIndex: true,
+    });
+  }
+  const place = [property.city, property.region].filter(Boolean).join(", ");
+  const description =
+    property.tagline?.trim() ||
+    property.description?.trim().slice(0, 160) ||
+    `Book ${property.title}${place ? ` in ${place}` : ""} with ${property.host.name}.`;
+  return pageMetadata({
+    title: `Book · ${property.title}`,
+    description,
+    path: `/book/${encodeURIComponent(slug)}`,
+    image: property.images[0]?.url,
+    noIndex: true,
+  });
+}
 
 export default async function BookPage({
   params,
@@ -151,7 +199,11 @@ export default async function BookPage({
   const bitcoinOffered = payOptions.some((o) => o.value === "bitcoin" && o.ready);
   const onlineCardOffered = payOptions.some((o) => o.value === "card" && o.ready);
   const payReady = payOptions.some((o) => o.ready);
-  const payBlocked = payOptions.find((o) => !o.ready)?.blockedReason;
+  const payBlocked =
+    payOptions.find((o) => !o.ready)?.blockedReason ||
+    (payOptions.length === 0
+      ? "Online card is not available for this host yet."
+      : undefined);
   const { canHostAddFutureWork } = await import("@/lib/hosting");
   const hostTakesNewStays = canHostAddFutureWork(property.host);
   const btcQuote =
@@ -183,7 +235,7 @@ export default async function BookPage({
             {cover?.url ? (
               <Image
                 src={cover.url}
-                alt={cover.alt || property.title}
+                alt={listingPhotoAlt(property.title, cover.alt, 0)}
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 100vw, 256px"

@@ -4,10 +4,15 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { destAfterHostAuth } from "@/lib/host-signup";
 
+import { pageMetadata } from "@/lib/seo";
+
 export const dynamic = "force-dynamic";
-export const metadata = {
-  title: "Apply to host on Y'all Come Back",
-};
+export const metadata = pageMetadata({
+  title: "Apply to host",
+  description:
+    "Apply to host on Yall Come Back. List on the marketplace or launch a branded website.",
+  path: "/signup",
+});
 
 export default async function SignupPage({
   searchParams,
