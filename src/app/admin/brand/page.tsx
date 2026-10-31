@@ -1071,7 +1071,8 @@ export default async function AdminBrandPage({
                 <p className="mt-1 text-xs leading-relaxed">
                   Filling in a custom domain only teaches Yall Come Back which
                   brand owns that hostname. Guests keep using your old site until
-                  Ops enables SSL and you (or they) update DNS at the registrar.
+                  Yall Come Back enables SSL and you (or your web person) update
+                  DNS at the registrar.
                   Until then, use the preview link below.
                 </p>
               </div>
@@ -1120,7 +1121,7 @@ export default async function AdminBrandPage({
                     </p>
                     <p className="mt-0.5 text-xs text-stone-500">
                       On Save, Yall Come Back tries to register www for HTTPS and
-                      shows DNS values below. Ops also gets a Messages alert if
+                      shows DNS values below. Our team also gets an alert if
                       anything needs a human.
                     </p>
                   </div>
@@ -1164,7 +1165,7 @@ export default async function AdminBrandPage({
                   <code className="rounded bg-stone-100 px-1">
                     cherokeelanding.net
                   </code>
-                  . Leave empty to stay on preview only. Saving notifies Ops and
+                  . Leave empty to stay on preview only. Saving notifies our team and
                   tries to prepare DNS values automatically.
                 </p>
                 {host.customDomain ? (

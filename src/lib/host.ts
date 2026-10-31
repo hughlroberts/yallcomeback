@@ -26,6 +26,11 @@ import {
   type FlexListing,
 } from "./flexible-dates";
 import { addDaysYmd, nightsBetweenYmd } from "./search-dates";
+import {
+  hasListingFilters,
+  listingMatchesFilters,
+  type ListingFilters,
+} from "@/lib/search-filters";
 
 export type PropertyWithHost = Property & {
   host: Pick<Host, "id" | "name" | "slug" | "listOnMarketplace" | "active">;
@@ -190,6 +195,13 @@ type MarketplaceListing = Awaited<
 export type MarketplaceSearchResult = {
   listings: MarketplaceListing[];
   /**
+   * Every stay matching the search (not cut to the page size), counted over
+   * the same candidate pool as flexibleDates.currentCount, so the two agree
+   * for exact dates. The pool holds at most MARKETPLACE_CANDIDATE_CAP (200)
+   * stays when overfetching (dates, memory, filters or withTotal).
+   */
+  total: number;
+  /**
    * Only when asked for (withFlexibleDates), exact dates are set (no ±flex),
    * results are limited, and a nearby window has more stays.
    */
@@ -244,8 +256,10 @@ export async function searchMarketplace(
   opts?: MarketplaceSearchOpts,
   extra?: {
     withFlexibleDates?: boolean;
-    /** Extra in-memory filter (agent bedrooms / price / amenities). */
-    filter?: (p: MarketplaceListing) => boolean;
+    /** Bedrooms / price / amenities (in memory, before the page slice). */
+    filters?: ListingFilters;
+    /** Overfetch so `total` is not limited to the page size. */
+    withTotal?: boolean;
   },
 ): Promise<MarketplaceSearchResult> {
   const remembered = parseRememberSearch(opts?.remember);
@@ -274,15 +288,22 @@ export async function searchMarketplace(
     opts?.take != null && Number.isFinite(opts.take) && opts.take > 0
       ? Math.min(100, Math.floor(opts.take))
       : MARKETPLACE_PAGE_SIZE;
+  const filters = extra?.filters;
+  const hasFilters = hasListingFilters(filters);
   const needsOverfetch =
-    hasDates || remembered.tokens.length > 0 || Boolean(extra?.filter);
+    hasDates ||
+    remembered.tokens.length > 0 ||
+    hasFilters ||
+    Boolean(extra?.withTotal);
   const candidateLimit = needsOverfetch
     ? Math.min(MARKETPLACE_CANDIDATE_CAP, Math.max(pageSize * 4, 80))
     : pageSize;
 
   let pool = await fetchMarketplacePool(opts, { guests, pets, candidateLimit });
 
-  if (extra?.filter) pool = pool.filter(extra.filter);
+  if (filters && hasFilters) {
+    pool = pool.filter((p) => listingMatchesFilters(p, filters));
+  }
 
   // Memory search: keep matches only, best first (date fit doesn't reorder).
   if (remembered.tokens.length > 0) {
@@ -297,7 +318,11 @@ export async function searchMarketplace(
   }
 
   if (!hasDates || !checkInYmd || !checkOutYmd) {
-    return { listings: pool.slice(0, pageSize), flexibleDates: null };
+    return {
+      listings: pool.slice(0, pageSize),
+      total: pool.length,
+      flexibleDates: null,
+    };
   }
 
   const wantFlex = Boolean(extra?.withFlexibleDates) && dateFlex === 0;
@@ -362,11 +387,16 @@ export async function searchMarketplace(
           guests: opts?.guests && opts.guests > 0 ? Math.floor(opts.guests) : undefined,
           pets: opts?.pets && opts.pets > 0 ? Math.floor(opts.pets) : undefined,
           remember: opts?.remember?.trim() || undefined,
+          filters: hasFilters ? filters : undefined,
         },
       })
     : null;
 
-  return { listings: listings.slice(0, pageSize), flexibleDates };
+  return {
+    listings: listings.slice(0, pageSize),
+    total: listings.length,
+    flexibleDates,
+  };
 }
 
 /**

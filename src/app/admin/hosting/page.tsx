@@ -21,7 +21,7 @@ export default async function AdminHostingPage() {
       <Card className="space-y-3 p-6">
         <p className="text-sm text-stone-600">
           Platform hosting plans, invoices, and approvals are managed by Yall
-          Come Back ops. As a host you manage your listings, calendars, and
+          Come Back team. As a host you manage your listings, calendars, and
           bookings from admin.
         </p>
         <p className="text-sm text-stone-600">

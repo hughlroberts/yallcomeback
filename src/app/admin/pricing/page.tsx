@@ -21,7 +21,7 @@ export default async function AdminPricingRedirect() {
       </h1>
       <Card className="space-y-3 p-6">
         <p className="text-sm text-stone-600">
-          Market pricing research is run by Yall Come Back ops. It is not in
+          Market pricing research is run by the Yall Come Back team. It is not in
           Host admin yet. You still set rates on each listing.
         </p>
         <Link

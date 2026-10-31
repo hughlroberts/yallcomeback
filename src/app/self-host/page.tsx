@@ -107,7 +107,7 @@ export default function SelfHostPage() {
               <li>· Full admin, calendars, bookings, photos, iCal</li>
               <li>· Hosted marketplace listing is paid ($12 / listing / month)</li>
               <li>· No monthly platform fee, no booking commission</li>
-              <li>· You own ops: SSL, backups, updates</li>
+              <li>· You run it: SSL, backups, updates</li>
             </ul>
             <a
               href="#deploy"

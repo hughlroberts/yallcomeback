@@ -72,7 +72,7 @@ export async function upsertPricingMarketComp(formData: FormData) {
       baseNightlyRate,
       amenitiesJson: JSON.stringify(amenityIds),
       active: true,
-      sourceNote: "Ops manual entry — private pricing proxy",
+      sourceNote: "Manual entry — private pricing proxy",
     },
     update: {
       title,

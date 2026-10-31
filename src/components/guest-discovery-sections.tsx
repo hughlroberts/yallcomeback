@@ -26,6 +26,7 @@ import {
 import { listingHrefWithSearch } from "@/lib/listing-href";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { formatMoney } from "@/lib/utils";
+import { checkSearchDates } from "@/lib/search-dates";
 
 const emptyViews: RecentView[] = [];
 const emptySearches: RecentSearch[] = [];
@@ -247,8 +248,12 @@ export function GuestDiscoverySections({
     let cancelled = false;
     const params = new URLSearchParams();
     if (lastSearch.where) params.set("where", lastSearch.where);
-    if (lastSearch.checkIn) params.set("checkIn", lastSearch.checkIn);
-    if (lastSearch.checkOut) params.set("checkOut", lastSearch.checkOut);
+    // A saved search can be from last month: drop dates that have passed
+    // (the API rejects them) and show stays for the place instead.
+    if (checkSearchDates(lastSearch.checkIn, lastSearch.checkOut).ok) {
+      if (lastSearch.checkIn) params.set("checkIn", lastSearch.checkIn);
+      if (lastSearch.checkOut) params.set("checkOut", lastSearch.checkOut);
+    }
     if (lastSearch.guests) params.set("guests", String(lastSearch.guests));
     if (lastSearch.pets) params.set("pets", String(lastSearch.pets));
     params.set("take", "12");

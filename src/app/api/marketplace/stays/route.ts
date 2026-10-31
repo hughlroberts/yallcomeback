@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchMarketplace } from "@/lib/host";
 import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
+import { checkSearchDates } from "@/lib/search-dates";
+import { listingFiltersFromParams } from "@/lib/search-filters";
 
 /**
  * JSON marketplace search for guest discovery carousels
@@ -21,7 +23,17 @@ export async function GET(req: NextRequest) {
   const take = takeRaw ? Math.min(24, Math.max(1, Number(takeRaw) || 12)) : 12;
   const dateFlex = dateFlexRaw ? Number(dateFlexRaw) : undefined;
 
-  const { listings, flexibleDates } = await searchMarketplace(
+  // Past, inverted or malformed dates are a client error, never ignored.
+  const dates = checkSearchDates(checkIn, checkOut);
+  if (!dates.ok) {
+    return NextResponse.json(
+      { ok: false, code: dates.code, error: dates.error },
+      { status: 400 },
+    );
+  }
+  const filters = listingFiltersFromParams((k) => sp.get(k));
+
+  const { listings, total, flexibleDates } = await searchMarketplace(
     {
       q: where,
       checkIn,
@@ -40,7 +52,7 @@ export async function GET(req: NextRequest) {
           : undefined,
       take,
     },
-    { withFlexibleDates: true },
+    { withFlexibleDates: true, withTotal: true, filters },
   );
 
   const ambiguous = await ambiguousMarketplaceSlugs(
@@ -48,6 +60,8 @@ export async function GET(req: NextRequest) {
   );
 
   return NextResponse.json({
+    /** All matching stays (not cut to take); agrees with flexibleDates.currentCount. */
+    count: total,
     listings: listings.map((p) => ({
       id: p.id,
       slug: p.slug,

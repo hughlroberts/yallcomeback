@@ -107,19 +107,33 @@ export function buildOpenApiDocument(origin: string) {
                   schema: {
                     type: "object",
                     properties: {
-                      count: { type: "integer" },
+                      count: {
+                        type: "integer",
+                        description:
+                          "All stays matching the search, not limited by take. Same rule and pool as flexibleDates.currentCount, so they agree for exact dates. Both are counted over at most 200 candidate stays.",
+                      },
+                      returned: {
+                        type: "integer",
+                        description: "Listings in this response (at most take).",
+                      },
                       listings: { type: "array", items: { type: "object" } },
-                      humanSearchUrl: { type: "string" },
+                      humanSearchUrl: {
+                        type: "string",
+                        description:
+                          "Same search on the website, with every active filter (dates, guests, pets, bedrooms, price, amenities).",
+                      },
                       flexibleDates: {
-                        type: "object",
-                        nullable: true,
+                        type: ["object", "null"],
                         description:
                           "Only for exact dates with limited results (fewer than 3, or stays hidden by bookings or a minimum stay). Windows shift check-in ±1–3 days (same length) or lengthen the stay to meet a minimum; only windows with more stays than the current search, best first, max 4. Counts honor your other filters.",
                         properties: {
-                          currentCount: { type: "integer" },
+                          currentCount: {
+                            type: "integer",
+                            description:
+                              "Stays that fit the exact dates (equals count; at most 200 candidates).",
+                          },
                           minStay: {
-                            type: "object",
-                            nullable: true,
+                            type: ["object", "null"],
                             description:
                               "Stays free on these dates but hidden only by a minimum stay.",
                             properties: {
@@ -147,13 +161,40 @@ export function buildOpenApiDocument(origin: string) {
                                   example: "Nov 6–8 · 5 stays",
                                 },
                                 searchPath: { type: "string" },
-                                searchUrl: { type: "string" },
+                                searchUrl: {
+                                  type: "string",
+                                  description:
+                                    "Marketplace search for this window; keeps every active filter, amenities included.",
+                                },
                               },
                             },
                           },
                         },
                       },
                       docs: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description:
+                "Bad dates: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn) or invalid_date (not YYYY-MM-DD).",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok: { type: "boolean", const: false },
+                      code: {
+                        type: "string",
+                        enum: [
+                          "past_dates",
+                          "checkout_not_after_checkin",
+                          "invalid_date",
+                        ],
+                      },
+                      error: { type: "string" },
                     },
                   },
                 },

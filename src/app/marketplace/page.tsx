@@ -15,6 +15,14 @@ import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 import { GuestDiscoverySections } from "@/components/guest-discovery-sections";
 import { TrackRecentSearch } from "@/components/track-browse-history";
 import { searchIsMeaningful } from "@/lib/browse-history";
+import { checkSearchDates } from "@/lib/search-dates";
+import {
+  appendListingFilterParams,
+  hasListingFilters,
+  listingFilterLabels,
+  listingFiltersFromParams,
+  type ListingFilters,
+} from "@/lib/search-filters";
 
 import { pageMetadata } from "@/lib/seo";
 
@@ -35,6 +43,11 @@ type SearchFields = {
   checkOut?: string;
   dateFlex?: string;
   remember?: string;
+  bedrooms?: string;
+  minNightly?: string;
+  maxNightly?: string;
+  amenities?: string;
+  amenity?: string;
 };
 
 function parsePositiveInt(raw: string | undefined): number | undefined {
@@ -55,8 +68,19 @@ export default async function MarketplacePage({
   const where = (params.where ?? params.q)?.trim() || undefined;
   const guests = parsePositiveInt(params.guests);
   const pets = parsePositiveInt(params.pets);
-  const checkIn = params.checkIn?.trim() || undefined;
-  const checkOut = params.checkOut?.trim() || undefined;
+  // Past, inverted or malformed dates: say so and search without dates
+  // (the APIs answer 400 for the same input).
+  const dateCheck = checkSearchDates(params.checkIn, params.checkOut);
+  const dateMessage = dateCheck.ok ? undefined : dateCheck.message;
+  const checkIn = dateCheck.ok ? dateCheck.checkIn : undefined;
+  const checkOut = dateCheck.ok ? dateCheck.checkOut : undefined;
+  const filters = listingFiltersFromParams(
+    (k) => params[k as keyof SearchFields],
+  );
+  // Resubmitting the form keeps bedrooms / price / amenity filters.
+  const filterParams = new URLSearchParams();
+  appendListingFilterParams(filterParams, filters);
+  const hiddenFields = Object.fromEntries(filterParams.entries());
   const dateFlexRaw = Number(params.dateFlex);
   const dateFlex =
     Number.isFinite(dateFlexRaw) && dateFlexRaw > 0
@@ -102,7 +126,16 @@ export default async function MarketplacePage({
             defaultPets={params.pets ?? ""}
             defaultRemember={params.remember ?? ""}
             placeSuggestions={placeSuggestions}
+            hiddenFields={hiddenFields}
           />
+          {dateMessage ? (
+            <p
+              role="alert"
+              className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              {dateMessage} Showing stays for any dates.
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -117,6 +150,7 @@ export default async function MarketplacePage({
           remember={params.remember?.trim() || undefined}
           rawGuests={params.guests}
           rawPets={params.pets}
+          listingFilters={filters}
         />
       </div>
     </div>
@@ -133,6 +167,7 @@ async function StaysPanel({
   remember,
   rawGuests,
   rawPets,
+  listingFilters,
 }: {
   where?: string;
   guests?: number;
@@ -143,6 +178,7 @@ async function StaysPanel({
   remember?: string;
   rawGuests?: string;
   rawPets?: string;
+  listingFilters: ListingFilters;
 }) {
   const currentSearch = {
     where,
@@ -152,9 +188,10 @@ async function StaysPanel({
     pets,
     remember,
   };
-  const hasActiveSearch = searchIsMeaningful(currentSearch);
+  const hasFilters = hasListingFilters(listingFilters);
+  const hasActiveSearch = searchIsMeaningful(currentSearch) || hasFilters;
 
-  const [{ listings, flexibleDates }, showDiscovery, totalListingCount] =
+  const [{ listings, total, flexibleDates }, showDiscovery, totalListingCount] =
     await Promise.all([
       searchMarketplace(
         {
@@ -167,7 +204,11 @@ async function StaysPanel({
           remember,
           take: 24,
         },
-        { withFlexibleDates: true },
+        {
+          withFlexibleDates: true,
+          withTotal: true,
+          filters: hasFilters ? listingFilters : undefined,
+        },
       ),
       marketplaceDiscoveryEnabled(),
       // Unfiltered browse uses the shared published-marketplace count.
@@ -181,8 +222,9 @@ async function StaysPanel({
     listings.map((p) => p.slug),
   );
 
+  // Same total as flexibleDates.currentCount (not cut to the 24 shown).
   const stayCount = hasActiveSearch
-    ? listings.length
+    ? total
     : (totalListingCount ?? listings.length);
 
   const filters: string[] = [];
@@ -199,6 +241,7 @@ async function StaysPanel({
   }
   if (guests) filters.push(`${guests} guest${guests === 1 ? "" : "s"}`);
   if (pets) filters.push(`${pets} pet${pets === 1 ? "" : "s"}`);
+  filters.push(...listingFilterLabels(listingFilters));
   if (remember) filters.push("from what you remember");
 
   return (
@@ -224,7 +267,9 @@ async function StaysPanel({
 
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm text-slate-500">
-          {stayCount} stay{stayCount === 1 ? "" : "s"}
+          {hasActiveSearch && stayCount > listings.length
+            ? `Showing ${listings.length} of ${stayCount} stays`
+            : `${stayCount} stay${stayCount === 1 ? "" : "s"}`}
           {filters.length > 0 ? (
             <span className="text-slate-400"> · {filters.join(" · ")}</span>
           ) : null}

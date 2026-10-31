@@ -7,6 +7,7 @@
  * season that covers one of the nights — the same rule booking uses).
  */
 import { addDaysYmd, formatYmd, isYmd, nightsBetweenYmd } from "@/lib/search-dates";
+import { appendListingFilterParams, type ListingFilters } from "@/lib/search-filters";
 
 export type FlexBlock = { start: Date; end: Date };
 export type FlexSeason = { startDate: Date; endDate: Date; minNights: number };
@@ -205,9 +206,11 @@ export type FlexSearchContext = {
   guests?: number;
   pets?: number;
   remember?: string;
+  /** Bedrooms / price / amenities: kept on every suggestion link. */
+  filters?: ListingFilters;
 };
 
-/** Clean /marketplace URL: only the params that are set. */
+/** Clean /marketplace URL: only the params that are set, filters included. */
 export function marketplaceSearchPath(
   ctx: FlexSearchContext,
   checkIn: string,
@@ -220,6 +223,7 @@ export function marketplaceSearchPath(
   if (ctx.guests && ctx.guests > 0) sp.set("guests", String(ctx.guests));
   if (ctx.pets && ctx.pets > 0) sp.set("pets", String(ctx.pets));
   if (ctx.remember?.trim()) sp.set("remember", ctx.remember.trim());
+  appendListingFilterParams(sp, ctx.filters);
   return `/marketplace?${sp.toString()}`;
 }
 

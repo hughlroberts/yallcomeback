@@ -154,7 +154,7 @@ export async function requestPricingIntelligenceAddon(formData: FormData) {
     data: {
       pricingIntelligenceAddonStatus: "REQUESTED",
       pricingIntelligenceAddonAmount: amount,
-      pricingIntelligenceAddonNotes: `Host requested $${amount}/mo pricing intelligence add-on (not included in hosting). Stripe not configured — activate in ops after payment.`,
+      pricingIntelligenceAddonNotes: `Host requested $${amount}/mo pricing intelligence add-on (not included in hosting). Stripe not configured — activate after payment.`,
     },
   });
 
@@ -221,7 +221,7 @@ export async function setPricingIntelligenceAddonStatus(formData: FormData) {
       ...(status === "ACTIVE"
         ? {
             pricingIntelligenceAddonStartedAt: new Date(),
-            pricingIntelligenceAddonNotes: `Activated by ops · $${PRICING_INTELLIGENCE_ADDON_USD}/mo add-on (separate from hosting)`,
+            pricingIntelligenceAddonNotes: `Activated by platform admin · $${PRICING_INTELLIGENCE_ADDON_USD}/mo add-on (separate from hosting)`,
           }
         : {}),
     },

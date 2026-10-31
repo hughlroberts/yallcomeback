@@ -64,6 +64,8 @@ GET ${origin}/api/v1/search?location=Malakoff&flexible=true&guests=4&pets=1&amen
 
 Exact dates but few results? \`flexibleDates\` (null otherwise) suggests up to 4 nearby windows with more stays — check-in ±1–3 days, or a longer stay that meets a minimum (1 night → 2). Each has \`checkIn\`, \`checkOut\`, \`nights\`, \`count\`, \`label\` (“Nov 6–8 · 5 stays”) and \`searchUrl\`; \`flexibleDates.minStay.message\` says e.g. “Some places need a 2-night minimum”. Also on \`GET /api/marketplace/stays\`.
 
+\`count\` is every matching stay (not cut to \`take\`; \`returned\` is how many came back) and equals \`flexibleDates.currentCount\` for exact dates — both counted over at most 200 candidate stays. \`humanSearchUrl\` and every \`searchUrl\` keep all active filters, amenities included. Past dates or a check-out on/before check-in get HTTP 400 \`{ok:false, code, error}\` (\`past_dates\`, \`checkout_not_after_checkin\`, \`invalid_date\`).
+
 ### Listing detail
 
 \`\`\`

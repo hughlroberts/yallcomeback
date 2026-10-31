@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
-import { agentSearch } from "@/lib/agent/search";
+import { agentSearch, SearchInputError } from "@/lib/agent/search";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +108,12 @@ export async function GET(req: NextRequest) {
       },
     );
   } catch (e) {
+    if (e instanceof SearchInputError) {
+      return NextResponse.json(
+        { ok: false, code: e.code, error: e.message },
+        { status: 400, headers: { "Access-Control-Allow-Origin": "*" } },
+      );
+    }
     return NextResponse.json(
       {
         ok: false,

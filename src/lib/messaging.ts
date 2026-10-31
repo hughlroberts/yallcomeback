@@ -573,7 +573,7 @@ export async function dispatchSms(opts: {
       attempted: false,
       status: "not_configured",
       channel: "SMS",
-      detail: "SMS not enabled (ops)",
+      detail: "SMS not enabled",
     };
   }
 

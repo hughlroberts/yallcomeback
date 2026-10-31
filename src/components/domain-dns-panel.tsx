@@ -98,7 +98,7 @@ export function DomainDnsPanel({ host, variant = "brand" }: Props) {
         <p className="text-xs leading-relaxed text-stone-700">
           {host.domainProvisionError
             ? host.domainProvisionError
-            : "DNS values are not ready yet. Ops was notified in Messages."}
+            : "DNS values are not ready yet. Our team was notified and will reply in Messages."}
         </p>
       )}
     </div>

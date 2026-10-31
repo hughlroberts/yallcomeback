@@ -32,7 +32,7 @@ export function hostAccessDescription(level: HostAccessLevel): string {
     case "OWNER":
       return "Full control of the brand, team invites, and listings.";
     case "FULL":
-      return "Manage listings, brand site, bookings, messages, and earnings. Cannot remove the owner or access platform ops.";
+      return "Manage listings, brand site, bookings, messages, and earnings. Cannot remove the owner or access platform administration.";
     case "LIMITED":
       return "Help with day-to-day hosting: calendars, bookings, messages, and listing content. No brand settings, team, or earnings.";
   }

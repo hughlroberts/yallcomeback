@@ -5,7 +5,7 @@ import type {
 } from "@/lib/flexible-dates";
 import { calculateQuote } from "@/lib/pricing";
 import { listingHrefWithSearch } from "@/lib/listing-href";
-import { nightsBetweenYmd, isYmd } from "@/lib/search-dates";
+import { checkSearchDates, isYmd, nightsBetweenYmd } from "@/lib/search-dates";
 import { prisma } from "@/lib/db";
 import {
   findAvailableWindows,
@@ -13,6 +13,21 @@ import {
   type AvailableWindow,
 } from "@/lib/agent/availability";
 import { absoluteUrl } from "@/lib/agent/origin";
+import {
+  appendListingFilterParams,
+  normalizeListingFilters,
+} from "@/lib/search-filters";
+
+/** Bad search input (past or inverted dates, bad format) → HTTP 400. */
+export class SearchInputError extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "SearchInputError";
+  }
+}
 
 export type AgentSearchParams = {
   /** Free-text location / city / region / host / title */
@@ -79,7 +94,14 @@ export type AgentSearchResult = {
     flexible: boolean;
     flexibilityDays: number;
   };
+  /**
+   * All stays matching the search, not cut to `take` (same pool and rule as
+   * flexibleDates.currentCount, so the two agree for exact dates). Counted
+   * over at most 200 candidate stays.
+   */
   count: number;
+  /** Listings in this response (count capped by take). */
+  returned: number;
   listings: AgentListingSummary[];
   humanSearchUrl: string;
   /**
@@ -109,6 +131,8 @@ export async function agentSearch(
   origin: string,
   params: AgentSearchParams,
 ): Promise<AgentSearchResult> {
+  const dates = checkSearchDates(params.checkIn, params.checkOut);
+  if (!dates.ok) throw new SearchInputError(dates.code, dates.error);
   const take = Math.min(50, Math.max(1, params.take ?? 20));
   const flexible = Boolean(params.flexible);
   let flexibilityDays = Math.min(
@@ -132,16 +156,20 @@ export async function agentSearch(
   const dateFlex =
     hasExactDates && (flexible || flexibilityDays > 0) ? flexibilityDays : 0;
 
-  const wantAmenities = (params.amenities ?? []).map((a) => a.toLowerCase());
-  const hasExtraFilters =
-    (params.bedrooms != null && params.bedrooms > 0) ||
-    (params.minNightly != null && Number.isFinite(params.minNightly)) ||
-    (params.maxNightly != null && Number.isFinite(params.maxNightly)) ||
-    wantAmenities.length > 0;
+  const filters = normalizeListingFilters({
+    bedrooms: params.bedrooms,
+    minNightly: params.minNightly,
+    maxNightly: params.maxNightly,
+    amenities: params.amenities,
+  });
 
   // Bedroom / price / amenity filters run on the candidate pool (before the
-  // page slice) so flexibleDates counts honor them too.
-  const { listings: found, flexibleDates } = await searchMarketplace(
+  // page slice) so count and flexibleDates honor them, and every link keeps them.
+  const {
+    listings: found,
+    total,
+    flexibleDates,
+  } = await searchMarketplace(
     {
       q: params.location,
       checkIn: hasExactDates ? params.checkIn : undefined,
@@ -151,45 +179,7 @@ export async function agentSearch(
       pets: params.pets,
       take,
     },
-    {
-      withFlexibleDates: true,
-      filter: hasExtraFilters
-        ? (p) => {
-            if (
-              params.bedrooms != null &&
-              params.bedrooms > 0 &&
-              p.bedrooms < params.bedrooms
-            ) {
-              return false;
-            }
-            if (
-              params.minNightly != null &&
-              Number.isFinite(params.minNightly) &&
-              p.baseNightlyRate < params.minNightly
-            ) {
-              return false;
-            }
-            if (
-              params.maxNightly != null &&
-              Number.isFinite(params.maxNightly) &&
-              p.baseNightlyRate > params.maxNightly
-            ) {
-              return false;
-            }
-            if (wantAmenities.length > 0) {
-              const have = parseAmenities(p.amenities).map((a) =>
-                a.toLowerCase(),
-              );
-              return wantAmenities.every(
-                (w) =>
-                  have.includes(w) ||
-                  have.some((h) => h.includes(w) || w.includes(h)),
-              );
-            }
-            return true;
-          }
-        : undefined,
-    },
+    { withFlexibleDates: true, withTotal: true, filters },
   );
   const listings = found.slice(0, take);
 
@@ -370,6 +360,7 @@ export async function agentSearch(
   }
   if (params.guests) humanParams.set("guests", String(params.guests));
   if (params.pets) humanParams.set("pets", String(params.pets));
+  appendListingFilterParams(humanParams, filters);
 
   return {
     query: {
@@ -377,7 +368,8 @@ export async function agentSearch(
       flexible: flexible || !hasExactDates,
       flexibilityDays: dateFlex,
     },
-    count: results.length,
+    count: total,
+    returned: results.length,
     listings: results,
     humanSearchUrl: absoluteUrl(
       origin,

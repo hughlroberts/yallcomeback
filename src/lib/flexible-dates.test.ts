@@ -176,6 +176,39 @@ describe("labels and URLs", () => {
       marketplaceSearchPath({ where: " Lake Lure ", guests: 4, pets: 0 }, "2026-11-06", "2026-11-08"),
     ).toBe("/marketplace?where=Lake+Lure&checkIn=2026-11-06&checkOut=2026-11-08&guests=4");
   });
+
+  it("keeps amenities and the other filters on suggestion links", () => {
+    expect(
+      marketplaceSearchPath(
+        {
+          where: "Malakoff",
+          guests: 2,
+          pets: 1,
+          remember: "dock",
+          filters: { bedrooms: 2, minNightly: 100, maxNightly: 300, amenities: ["lake_view", "wifi"] },
+        },
+        "2026-11-06",
+        "2026-11-08",
+      ),
+    ).toBe(
+      "/marketplace?where=Malakoff&checkIn=2026-11-06&checkOut=2026-11-08&guests=2&pets=1&remember=dock&bedrooms=2&minNightly=100&maxNightly=300&amenities=lake_view%2Cwifi",
+    );
+  });
+
+  it("carries filters into computeFlexibleDates suggestion URLs", () => {
+    const out = computeFlexibleDates({
+      pool: [
+        listing({ id: "a", blocks: [{ start: d("2026-11-06"), end: d("2026-11-08") }] }),
+        listing({ id: "b", blocks: [{ start: d("2026-11-06"), end: d("2026-11-08") }] }),
+      ],
+      checkIn: "2026-11-06",
+      checkOut: "2026-11-08",
+      today: "2026-11-01",
+      context: { where: "Malakoff", filters: { amenities: ["lake_view"] } },
+    });
+    expect(out!.suggestions.length).toBeGreaterThan(0);
+    for (const s of out!.suggestions) expect(s.searchPath).toContain("amenities=lake_view");
+  });
 });
 
 describe("computeFlexibleDates", () => {

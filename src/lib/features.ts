@@ -212,7 +212,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     ],
   },
   {
-    category: "Stack & ops",
+    category: "Stack & deployment",
     summary: "Modern app you can run locally or on a small VPS.",
     items: [
       "Next.js App Router + TypeScript + Tailwind",

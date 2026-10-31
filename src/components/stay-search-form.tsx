@@ -100,6 +100,12 @@ export function StaySearchForm({
       return;
     }
 
+    if (checkIn < todayYmd) {
+      e.preventDefault();
+      setDateError("Those dates have already passed. Pick dates from today on.");
+      return;
+    }
+
     const nights = nightsBetweenYmd(checkIn, checkOut);
     if (nights < 1) {
       e.preventDefault();

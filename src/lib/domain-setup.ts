@@ -4,9 +4,16 @@ import { dispatchEmail } from "@/lib/messaging";
 import { canSendEmailTo } from "@/lib/notification-prefs";
 import { ensurePlatformCustomDomain } from "@/lib/platform-domains";
 
-const OPS_DOMAIN_EMAIL = "ops-domain@yallcomeback.app";
+/**
+ * Sender shown on the host's "Domain setup" Messages thread. The older
+ * address is still matched so threads opened before the rename are reused
+ * and archived.
+ */
+const DOMAIN_SETUP_EMAIL = "domain-setup@yallcomeback.app";
+const DOMAIN_SETUP_EMAILS = [DOMAIN_SETUP_EMAIL, "ops-domain@yallcomeback.app"];
 
-function dnsInstructionsBody(opts: {
+/** Message body for the host-visible thread (exported for tests). */
+export function dnsInstructionsBody(opts: {
   hostName: string;
   bare: string;
   wwwHost: string;
@@ -17,7 +24,6 @@ function dnsInstructionsBody(opts: {
   txtValue: string | null;
   error?: string | null;
   brandPath: string;
-  opsPath: string;
 }): string {
   const lines: string[] = [
     `Domain setup for ${opts.hostName}`,
@@ -42,20 +48,17 @@ function dnsInstructionsBody(opts: {
     lines.push(
       `3) Optional: forward apex ${opts.bare} → https://${opts.wwwHost} (301)`,
       "",
-      "Saving Brand does not change DNS by itself — the host (or you) must paste these records.",
+      "Saving Brand does not change DNS by itself — these records must be pasted at the registrar.",
     );
   } else {
     lines.push(
       "Platform could not auto-fill DNS values yet.",
-      "Ops: enable the hostname on the platform service, then reply here with the CNAME and TXT values for the host.",
+      "Our team will enable the hostname and reply here with the CNAME and TXT values.",
       "",
     );
   }
 
-  lines.push(
-    `Brand: ${opts.brandPath}`,
-    `Ops manage: ${opts.opsPath}`,
-  );
+  lines.push(`Brand: ${opts.brandPath}`);
   return lines.join("\n");
 }
 
@@ -91,7 +94,8 @@ async function notifyPlatformAdminsEmail(opts: {
 
 /**
  * After customDomain changes on a host: provision SSL hostname when possible,
- * store DNS values on the host, and always open an Ops-alert conversation.
+ * store DNS values on the host, and always open a "Domain setup" alert thread
+ * (visible to the host, so its text never names internal tools).
  */
 export async function handleCustomDomainChange(opts: {
   hostId: string;
@@ -111,9 +115,8 @@ export async function handleCustomDomainChange(opts: {
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     PRODUCT_ORIGIN;
   const brandPath = `${site}/admin/brand?hostId=${host.id}`;
-  const opsPath = `${site}/ops/hosting/${host.id}`;
 
-  // Cleared domain — archive prior ops threads and clear DNS fields
+  // Cleared domain — archive prior domain-setup threads and clear DNS fields
   if (!nextDomain) {
     await prisma.host.update({
       where: { id: hostId },
@@ -133,7 +136,7 @@ export async function handleCustomDomainChange(opts: {
       where: {
         hostId,
         opsAlert: true,
-        guestEmail: OPS_DOMAIN_EMAIL,
+        guestEmail: { in: DOMAIN_SETUP_EMAILS },
         status: "OPEN",
       },
       data: { status: "ARCHIVED" },
@@ -202,15 +205,14 @@ export async function handleCustomDomainChange(opts: {
     txtValue,
     error,
     brandPath,
-    opsPath,
   });
 
-  // Reuse open ops-domain thread for this host, or create one
+  // Reuse the open domain-setup thread for this host, or create one
   let conversation = await prisma.conversation.findFirst({
     where: {
       hostId,
       opsAlert: true,
-      guestEmail: OPS_DOMAIN_EMAIL,
+      guestEmail: { in: DOMAIN_SETUP_EMAILS },
       status: "OPEN",
     },
     orderBy: { updatedAt: "desc" },
@@ -230,7 +232,7 @@ export async function handleCustomDomainChange(opts: {
       data: {
         hostId,
         guestName: "Domain setup",
-        guestEmail: OPS_DOMAIN_EMAIL,
+        guestEmail: DOMAIN_SETUP_EMAIL,
         subject,
         opsAlert: true,
         lastMessageAt: new Date(),
@@ -248,7 +250,7 @@ export async function handleCustomDomainChange(opts: {
   });
 
   await notifyPlatformAdminsEmail({
-    subject: `[Yall Come Back Ops] ${subject}`,
+    subject: `[Yall Come Back] ${subject}`,
     body: `${body}\n\nOpen inbox: ${site}/admin/messages/${conversation.id}`,
     conversationId: conversation.id,
   });

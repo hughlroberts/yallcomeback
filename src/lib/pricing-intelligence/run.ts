@@ -56,7 +56,7 @@ export async function runPricingIntelligenceForHost(
   if (!hostRow) throw new Error("Host not found");
   if (!opts.bypassAddonCheck && !canRunPricingIntelligence(hostRow)) {
     throw new Error(
-      `Pricing intelligence requires ops beta access and the $${PRICING_INTELLIGENCE_ADDON_USD}/mo add-on (ACTIVE). Not included in hosting.`,
+      `Pricing intelligence requires beta access and the $${PRICING_INTELLIGENCE_ADDON_USD}/mo add-on (ACTIVE). Not included in hosting.`,
     );
   }
 

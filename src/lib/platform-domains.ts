@@ -126,7 +126,7 @@ export async function ensurePlatformCustomDomain(
       ok: false,
       configured: false,
       error:
-        "Platform domain API is not configured. Ops must enable the hostname manually, then paste CNAME/TXT for the host.",
+        "Platform domain API is not configured. Our team will enable the hostname and send the CNAME/TXT values in Messages.",
     };
   }
 

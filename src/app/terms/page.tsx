@@ -218,7 +218,7 @@ export default function TermsPage() {
       <LegalP>
         Card checkout is not live. Deposits and hosting invoices are confirmed
         manually (or by other methods a host enables, such as Bitcoin) until we
-        say otherwise in Ops. When you pay a host, you are paying the host, not
+        notify you otherwise. When you pay a host, you are paying the host, not
         us. We do not hold guest stay funds as a bank, escrow, or trustee.
       </LegalP>
       <LegalP>
