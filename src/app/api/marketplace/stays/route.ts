@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchMarketplace } from "@/lib/host";
 import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 import { checkSearchDates } from "@/lib/search-dates";
-import { listingFiltersFromParams } from "@/lib/search-filters";
+import { listingFiltersFromParams, searchLimitFromParams } from "@/lib/search-filters";
 
 /**
  * JSON marketplace search for guest discovery carousels
  * (based on your previous search, stay in place, etc.).
+ * limit (alias take): default 20, max 50 — same as /api/v1/search.
  */
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -15,12 +16,12 @@ export async function GET(req: NextRequest) {
   const checkOut = sp.get("checkOut")?.trim() || undefined;
   const guestsRaw = sp.get("guests");
   const petsRaw = sp.get("pets");
-  const takeRaw = sp.get("take");
   const dateFlexRaw = sp.get("dateFlex") || sp.get("flexibilityDays");
 
   const guests = guestsRaw ? Number(guestsRaw) : undefined;
   const pets = petsRaw ? Number(petsRaw) : undefined;
-  const take = takeRaw ? Math.min(24, Math.max(1, Number(takeRaw) || 12)) : 12;
+  // take / limit: same default (20) and max (50) as /api/v1/search.
+  const take = searchLimitFromParams((k) => sp.get(k));
   const dateFlex = dateFlexRaw ? Number(dateFlexRaw) : undefined;
 
   // Past, inverted or malformed dates are a client error, never ignored.
@@ -62,6 +63,10 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     /** All matching stays (not cut to take); agrees with flexibleDates.currentCount. */
     count: total,
+    /** Listings in this response (at most take / limit). */
+    returned: listings.length,
+    /** Stays matching the current search; equals count and flexibleDates.currentCount. */
+    currentCount: flexibleDates?.currentCount ?? total,
     listings: listings.map((p) => ({
       id: p.id,
       slug: p.slug,

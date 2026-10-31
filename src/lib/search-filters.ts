@@ -132,3 +132,21 @@ export function listingFilterLabels(f: ListingFilters): string[] {
     out.push(f.amenities.map((a) => a.replace(/_/g, " ")).join(", "));
   return out;
 }
+
+/** Default and max results per search response (agent API and stays API). */
+export const SEARCH_DEFAULT_LIMIT = 20;
+export const SEARCH_MAX_LIMIT = 50;
+
+/**
+ * Results per response from `take` (alias `limit`): default 20, clamped to
+ * 1..50. Non-numbers fall back to the default.
+ */
+export function searchLimit(raw: string | number | null | undefined): number {
+  const n = typeof raw === "number" ? raw : raw?.trim() ? Number(raw) : NaN;
+  if (!Number.isFinite(n)) return SEARCH_DEFAULT_LIMIT;
+  return Math.min(SEARCH_MAX_LIMIT, Math.max(1, Math.floor(n)));
+}
+
+export function searchLimitFromParams(get: (key: string) => string | null | undefined): number {
+  return searchLimit(get("take") || get("limit"));
+}

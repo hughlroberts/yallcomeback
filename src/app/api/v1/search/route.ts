@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import { agentSearch, SearchInputError } from "@/lib/agent/search";
+import { searchLimitFromParams } from "@/lib/search-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -47,9 +48,8 @@ export async function GET(req: NextRequest) {
   const maxNightly = sp.get("maxNightly")
     ? Number(sp.get("maxNightly"))
     : undefined;
-  const take = sp.get("take") || sp.get("limit")
-    ? Number(sp.get("take") || sp.get("limit"))
-    : undefined;
+  // Same rule as /api/marketplace/stays: default 20, max 50.
+  const take = searchLimitFromParams((k) => sp.get(k));
 
   const amenitiesRaw = sp.get("amenities") || sp.get("amenity");
   const amenities = amenitiesRaw
@@ -90,8 +90,7 @@ export async function GET(req: NextRequest) {
           ? maxNightly
           : undefined,
       amenities,
-      take:
-        take != null && Number.isFinite(take) ? Math.floor(take) : undefined,
+      take,
     });
 
     return NextResponse.json(

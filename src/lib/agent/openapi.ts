@@ -95,8 +95,15 @@ export function buildOpenApiDocument(origin: string) {
             {
               name: "take",
               in: "query",
-              schema: { type: "integer", minimum: 1, maximum: 50 },
-              description: "Max results (default 20, alias: limit)",
+              schema: { type: "integer", minimum: 1, maximum: 50, default: 20 },
+              description:
+                "Max results (default 20, max 50; larger values are clamped). Alias: limit.",
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", minimum: 1, maximum: 50, default: 20 },
+              description: "Alias of take; take wins when both are sent.",
             },
           ],
           responses: {
@@ -115,6 +122,11 @@ export function buildOpenApiDocument(origin: string) {
                       returned: {
                         type: "integer",
                         description: "Listings in this response (at most take).",
+                      },
+                      currentCount: {
+                        type: "integer",
+                        description:
+                          "Stays matching the current search; same as count (and flexibleDates.currentCount when present).",
                       },
                       listings: { type: "array", items: { type: "object" } },
                       humanSearchUrl: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { WhereAutocomplete } from "@/components/where-autocomplete";
 import { SearchDateRangePicker } from "@/components/search-date-range-picker";
 import {
@@ -8,6 +8,7 @@ import {
   isYmd,
   nightsBetweenYmd,
 } from "@/lib/search-dates";
+import { SEARCH_DATES_EVENT, searchDatesFromEvent } from "@/lib/search-date-sync";
 
 export { addDaysYmd, nightsBetweenYmd } from "@/lib/search-dates";
 
@@ -73,6 +74,21 @@ export function StaySearchForm({
   const [dateError, setDateError] = useState<string | null>(null);
 
   const todayYmd = useMemo(() => formatYmd(new Date()), []);
+
+  // A flexible-date chip announces its dates on click, before the new page
+  // arrives, so the When field never shows the old dates in between.
+  useEffect(() => {
+    function onAnnounce(e: Event) {
+      const next = searchDatesFromEvent(e);
+      if (!next) return;
+      setDateError(null);
+      setCheckIn(next.checkIn);
+      setCheckOut(next.checkOut);
+      setDateFlex(next.dateFlex);
+    }
+    window.addEventListener(SEARCH_DATES_EVENT, onAnnounce);
+    return () => window.removeEventListener(SEARCH_DATES_EVENT, onAnnounce);
+  }, []);
 
   function onDatesChange(next: {
     checkIn: string;

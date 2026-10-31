@@ -50,4 +50,53 @@ describe("GET /api/marketplace/stays", () => {
       filters: { amenities: ["lake_view"] },
     });
   });
+
+  const takeOf = (i = 0) => host.searchMarketplace.mock.calls[i][0].take;
+
+  it("honors limit like /api/v1/search: default 20, max 50, take wins", async () => {
+    await get("where=Malakoff");
+    await get("limit=5");
+    await get("limit=500");
+    await get("limit=0");
+    await get("limit=abc");
+    await get("take=7&limit=30");
+    await get("take=12");
+    expect([0, 1, 2, 3, 4, 5, 6].map(takeOf)).toEqual([20, 5, 50, 1, 20, 7, 12]);
+  });
+
+  it("returns count (full total), returned and currentCount", async () => {
+    const listing = {
+      id: "p1",
+      slug: "lake-house",
+      title: "Lake house",
+      tagline: null,
+      city: "Malakoff",
+      region: "TX",
+      baseNightlyRate: 150,
+      maxGuests: 6,
+      bedrooms: 3,
+      bathrooms: 2,
+      images: [],
+      host: null,
+    };
+    host.searchMarketplace.mockResolvedValueOnce({
+      listings: [listing, { ...listing, id: "p2", slug: "cabin" }],
+      total: 31,
+      flexibleDates: null,
+    });
+    const body = await (await get("limit=2")).json();
+    expect(body).toMatchObject({ count: 31, returned: 2, currentCount: 31 });
+    expect(body.listings).toHaveLength(2);
+
+    host.searchMarketplace.mockResolvedValueOnce({
+      listings: [],
+      total: 4,
+      flexibleDates: { currentCount: 4, suggestions: [] },
+    });
+    const exact = await (
+      await get(`checkIn=${ymd(9)}&checkOut=${ymd(11)}&limit=10`)
+    ).json();
+    expect(exact).toMatchObject({ count: 4, returned: 0, currentCount: 4 });
+    expect(exact.flexibleDates.currentCount).toBe(exact.count);
+  });
 });

@@ -6,6 +6,10 @@ import {
   listingFilterLabels,
   listingFiltersFromParams,
   listingMatchesFilters,
+  SEARCH_DEFAULT_LIMIT,
+  SEARCH_MAX_LIMIT,
+  searchLimit,
+  searchLimitFromParams,
 } from "./search-filters";
 
 const params = (q: string) => {
@@ -127,5 +131,24 @@ describe("checkSearchDates", () => {
     expect(earliestTodayYmd(new Date("2026-11-01T13:00:00Z"))).toBe(
       "2026-11-01",
     );
+  });
+});
+
+describe("searchLimit", () => {
+  it("defaults to 20 and clamps to 1..50", () => {
+    expect(SEARCH_DEFAULT_LIMIT).toBe(20);
+    expect(SEARCH_MAX_LIMIT).toBe(50);
+    expect(searchLimit(undefined)).toBe(20);
+    expect(searchLimit("")).toBe(20);
+    expect(searchLimit("x")).toBe(20);
+    expect(searchLimit("8.9")).toBe(8);
+    expect(searchLimit("0")).toBe(1);
+    expect(searchLimit(-3)).toBe(1);
+    expect(searchLimit("999")).toBe(50);
+  });
+  it("reads take, then limit", () => {
+    expect(searchLimitFromParams(params("limit=9"))).toBe(9);
+    expect(searchLimitFromParams(params("take=4&limit=9"))).toBe(4);
+    expect(searchLimitFromParams(params(""))).toBe(20);
   });
 });

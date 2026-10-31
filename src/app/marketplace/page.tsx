@@ -16,6 +16,7 @@ import { GuestDiscoverySections } from "@/components/guest-discovery-sections";
 import { TrackRecentSearch } from "@/components/track-browse-history";
 import { searchIsMeaningful } from "@/lib/browse-history";
 import { checkSearchDates } from "@/lib/search-dates";
+import { searchFormKey } from "@/lib/search-date-sync";
 import {
   appendListingFilterParams,
   hasListingFilters,
@@ -118,6 +119,17 @@ export default async function MarketplacePage({
           </p>
 
           <StaySearchForm
+            // Remount from the URL on every search change (e.g. a flexible-date
+            // chip), so no field keeps the previous search's values.
+            key={searchFormKey({
+              where: where ?? onlyCity ?? "",
+              checkIn,
+              checkOut,
+              dateFlex,
+              guests: params.guests,
+              pets: params.pets,
+              remember: params.remember,
+            })}
             defaultWhere={where ?? onlyCity ?? ""}
             defaultCheckIn={checkIn ?? ""}
             defaultCheckOut={checkOut ?? ""}

@@ -16,6 +16,7 @@ import { absoluteUrl } from "@/lib/agent/origin";
 import {
   appendListingFilterParams,
   normalizeListingFilters,
+  searchLimit,
 } from "@/lib/search-filters";
 
 /** Bad search input (past or inverted dates, bad format) → HTTP 400. */
@@ -102,6 +103,8 @@ export type AgentSearchResult = {
   count: number;
   /** Listings in this response (count capped by take). */
   returned: number;
+  /** Stays matching the current search; equals count (and flexibleDates.currentCount when present). */
+  currentCount: number;
   listings: AgentListingSummary[];
   humanSearchUrl: string;
   /**
@@ -133,7 +136,7 @@ export async function agentSearch(
 ): Promise<AgentSearchResult> {
   const dates = checkSearchDates(params.checkIn, params.checkOut);
   if (!dates.ok) throw new SearchInputError(dates.code, dates.error);
-  const take = Math.min(50, Math.max(1, params.take ?? 20));
+  const take = searchLimit(params.take);
   const flexible = Boolean(params.flexible);
   let flexibilityDays = Math.min(
     14,
@@ -370,6 +373,7 @@ export async function agentSearch(
     },
     count: total,
     returned: results.length,
+    currentCount: flexibleDates?.currentCount ?? total,
     listings: results,
     humanSearchUrl: absoluteUrl(
       origin,
