@@ -78,12 +78,20 @@ describe("GET /api/v1/search", () => {
   });
 
   it("limit: default 20, max 50, take wins; returns currentCount", async () => {
-    for (const q of ["", "limit=5", "limit=500", "limit=0", "limit=abc", "take=7&limit=30"]) {
+    for (const q of [
+      "",
+      "limit=5",
+      "limit=500",
+      "limit=0",
+      "limit=-3",
+      "limit=abc",
+      "take=7&limit=30",
+    ]) {
       await get(`location=Malakoff&${q}`);
     }
     expect(
       host.searchMarketplace.mock.calls.map((c) => c[0].take),
-    ).toEqual([20, 5, 50, 1, 20, 7]);
+    ).toEqual([20, 5, 50, 20, 20, 20, 7]);
     const json = await (await get("location=Malakoff")).json();
     expect(json).toMatchObject({ count: 37, returned: 0, currentCount: 37 });
   });

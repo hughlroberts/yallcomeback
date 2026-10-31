@@ -73,12 +73,12 @@ Homepage-style flexibility:
 - flexibilityDays (aliases: dateFlex, flex) is ± days on check-in, same night count.
 - When flexible without dates, each listing includes availableWindows (next free stays).
 - Use amenities=lake_view,wifi for amenity filters (comma-separated ids).
-- limit (alias take): default 20, max 50 (larger values are clamped).
+- limit (alias take): default 20, max 50 (larger values are clamped; 0, negative or non-numeric values get the default 20).
 - count is every matching stay (not limited by limit; returned is how many are in this response; currentCount equals count). It matches flexibleDates.currentCount for exact dates; both are counted over at most 200 candidate stays.
 - GET ${origin}/api/marketplace/stays takes the same where, checkIn, checkOut, guests, pets, filters and limit/take (default 20, max 50) and returns the same count, returned and currentCount.
 - Past dates (checkIn before today) or checkOut on/before checkIn return HTTP 400 with {ok:false, code, error}; code is past_dates, checkout_not_after_checkin or invalid_date. Same on GET /api/marketplace/stays.
 - humanSearchUrl and each flexibleDates searchUrl keep every active filter (guests, pets, bedrooms, price, amenities).
-- Exact dates with few results: the response has flexibleDates (else null) with up to 4 nearby windows that have more stays — check-in shifted ±1–3 days, or a longer stay that meets a minimum (e.g. 1 night → 2). Each suggestion: checkIn, checkOut, nights, count, label ("Nov 6–8 · 5 stays"), searchUrl. flexibleDates.minStay.message (e.g. "Some places need a 2-night minimum") appears when stays were hidden only by a minimum stay. Re-search with a suggestion's dates to get those listings. GET /api/marketplace/stays returns the same flexibleDates (searchPath, relative).
+- Exact dates with few results: the response has flexibleDates (else null) with up to 4 nearby windows that have more stays — check-in shifted ±1–3 days, or a longer stay that meets a minimum (e.g. 1 night → 2). Each suggestion: checkIn, checkOut, nights, count, label ("Nov 6–8 · 5 stays"), searchUrl. Suggestion count and label never depend on limit/take; "+" (e.g. "200+ stays") appears only when the 200-stay candidate pool cap is reached. flexibleDates.minStay.message (e.g. "Some places need a 2-night minimum") appears when stays were hidden only by a minimum stay. Re-search with a suggestion's dates to get those listings. GET /api/marketplace/stays returns the same flexibleDates (searchPath, relative).
 
 ## Listing detail + availability
 

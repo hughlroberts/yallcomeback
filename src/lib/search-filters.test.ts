@@ -135,15 +135,22 @@ describe("checkSearchDates", () => {
 });
 
 describe("searchLimit", () => {
-  it("defaults to 20 and clamps to 1..50", () => {
+  it("defaults to 20 (also for 0, negative, non-numeric) and caps at 50", () => {
     expect(SEARCH_DEFAULT_LIMIT).toBe(20);
     expect(SEARCH_MAX_LIMIT).toBe(50);
     expect(searchLimit(undefined)).toBe(20);
     expect(searchLimit("")).toBe(20);
     expect(searchLimit("x")).toBe(20);
     expect(searchLimit("8.9")).toBe(8);
-    expect(searchLimit("0")).toBe(1);
-    expect(searchLimit(-3)).toBe(1);
+    expect(searchLimit("0")).toBe(20);
+    expect(searchLimit(0)).toBe(20);
+    expect(searchLimit("-1")).toBe(20);
+    expect(searchLimit(-3)).toBe(20);
+    expect(searchLimit("0.5")).toBe(20);
+    expect(searchLimit("NaN")).toBe(20);
+    expect(searchLimit("Infinity")).toBe(20);
+    expect(searchLimit("1")).toBe(1);
+    expect(searchLimit("50")).toBe(50);
     expect(searchLimit("999")).toBe(50);
   });
   it("reads take, then limit", () => {

@@ -174,9 +174,15 @@ export function formatWindowLabel(checkIn: string, checkOut: string): string {
   return m1 === m2 ? `${a}–${d2}` : `${a}–${MONTH[m2 - 1]} ${d2}`;
 }
 
-/** "5 stays", "1 stay", or "24+ stays" past the page size. */
-export function formatStayCount(count: number, cap?: number): string {
-  if (cap != null && count > cap) return `${cap}+ stays`;
+/**
+ * "5 stays" or "1 stay". Never cut to the page size (take / limit): "+" only
+ * when the count reaches the candidate pool cap ("200+ stays"), where more
+ * stays may exist beyond what was counted.
+ */
+export function formatStayCount(count: number, poolCap?: number): string {
+  if (poolCap != null && poolCap > 0 && count >= poolCap) {
+    return `${poolCap}+ stays`;
+  }
   return `${count} stay${count === 1 ? "" : "s"}`;
 }
 
@@ -241,8 +247,11 @@ export function computeFlexibleDates(input: {
   checkOut: string;
   today?: string;
   context?: FlexSearchContext;
-  /** Results page size; counts above it read "24+ stays". */
-  pageSize?: number;
+  /**
+   * Set only when the candidate fetch hit its cap (200): a count reaching it
+   * reads "200+ stays". Labels never depend on the page size.
+   */
+  poolCap?: number;
   limit?: number;
 }): FlexibleDates | null {
   const { pool, checkIn, checkOut } = input;
@@ -291,7 +300,7 @@ export function computeFlexibleDates(input: {
   const suggestions = rankFlexibleWindows(scored, currentCount, input.limit ?? 4).map((w) => {
     const parts = [formatWindowLabel(w.checkIn, w.checkOut)];
     if (w.nights !== nights) parts.push(`${w.nights} nights`);
-    parts.push(formatStayCount(w.count, input.pageSize));
+    parts.push(formatStayCount(w.count, input.poolCap));
     return {
       ...w,
       label: parts.join(" · "),

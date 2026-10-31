@@ -138,13 +138,15 @@ export const SEARCH_DEFAULT_LIMIT = 20;
 export const SEARCH_MAX_LIMIT = 50;
 
 /**
- * Results per response from `take` (alias `limit`): default 20, clamped to
- * 1..50. Non-numbers fall back to the default.
+ * Results per response from `take` (alias `limit`): default 20, max 50.
+ * Missing, 0, negative or non-numeric values get the default (20).
  */
 export function searchLimit(raw: string | number | null | undefined): number {
   const n = typeof raw === "number" ? raw : raw?.trim() ? Number(raw) : NaN;
   if (!Number.isFinite(n)) return SEARCH_DEFAULT_LIMIT;
-  return Math.min(SEARCH_MAX_LIMIT, Math.max(1, Math.floor(n)));
+  const whole = Math.floor(n);
+  if (whole < 1) return SEARCH_DEFAULT_LIMIT;
+  return Math.min(SEARCH_MAX_LIMIT, whole);
 }
 
 export function searchLimitFromParams(get: (key: string) => string | null | undefined): number {

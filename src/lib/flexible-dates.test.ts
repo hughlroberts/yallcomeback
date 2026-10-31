@@ -165,7 +165,11 @@ describe("labels and URLs", () => {
   it("formats counts", () => {
     expect(formatStayCount(1)).toBe("1 stay");
     expect(formatStayCount(5)).toBe("5 stays");
-    expect(formatStayCount(30, 24)).toBe("24+ stays");
+    // Never capped at the page size; "+" only at the 200-stay pool cap.
+    expect(formatStayCount(8)).toBe("8 stays");
+    expect(formatStayCount(199, 200)).toBe("199 stays");
+    expect(formatStayCount(200, 200)).toBe("200+ stays");
+    expect(formatStayCount(200)).toBe("200 stays");
   });
 
   it("builds clean marketplace URLs", () => {
@@ -262,5 +266,34 @@ describe("computeFlexibleDates", () => {
   it("returns null without valid dates or listings", () => {
     expect(computeFlexibleDates({ pool: [], checkIn: "2026-11-10", checkOut: "2026-11-12", today })).toBeNull();
     expect(computeFlexibleDates({ pool: [listing()], checkIn: "2026-11-12", checkOut: "2026-11-10", today })).toBeNull();
+  });
+});
+
+describe("suggestion labels ignore the page size", () => {
+  const today = "2026-11-01";
+  const booked = { start: d("2026-11-10"), end: d("2026-11-11") };
+
+  it("reads the full window count ('8 stays', not '2+')", () => {
+    const pool = Array.from({ length: 8 }, (_, i) =>
+      listing({ id: `p${i}`, blocks: i < 7 ? [booked] : [] }),
+    );
+    const out = computeFlexibleDates({ pool, checkIn: "2026-11-10", checkOut: "2026-11-11", today });
+    expect(out!.suggestions[0]).toMatchObject({ count: 8, label: "Nov 9–10 · 8 stays" });
+  });
+
+  it("uses '+' only at the 200-stay pool cap", () => {
+    const pool = Array.from({ length: 200 }, (_, i) =>
+      listing({ id: `p${i}`, blocks: i === 0 ? [booked] : [] }),
+    );
+    const capped = computeFlexibleDates({
+      pool,
+      checkIn: "2026-11-10",
+      checkOut: "2026-11-11",
+      today,
+      poolCap: 200,
+    });
+    expect(capped!.suggestions[0]).toMatchObject({ count: 200, label: "Nov 9–10 · 200+ stays" });
+    const uncapped = computeFlexibleDates({ pool, checkIn: "2026-11-10", checkOut: "2026-11-11", today });
+    expect(uncapped!.suggestions[0].label).toBe("Nov 9–10 · 200 stays");
   });
 });

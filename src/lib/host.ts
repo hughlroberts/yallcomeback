@@ -295,11 +295,19 @@ export async function searchMarketplace(
     remembered.tokens.length > 0 ||
     hasFilters ||
     Boolean(extra?.withTotal);
-  const candidateLimit = needsOverfetch
-    ? Math.min(MARKETPLACE_CANDIDATE_CAP, Math.max(pageSize * 4, 80))
-    : pageSize;
+  // Counts (total, currentCount, flexible-date suggestions) must not depend on
+  // take / limit, so whenever they are reported, count the full capped pool.
+  const wantsCounts =
+    Boolean(extra?.withTotal) || Boolean(extra?.withFlexibleDates);
+  const candidateLimit = !needsOverfetch
+    ? pageSize
+    : wantsCounts
+      ? MARKETPLACE_CANDIDATE_CAP
+      : Math.min(MARKETPLACE_CANDIDATE_CAP, Math.max(pageSize * 4, 80));
 
   let pool = await fetchMarketplacePool(opts, { guests, pets, candidateLimit });
+  // Hit the 200 cap → more stays may exist; suggestion labels say "200+".
+  const poolCapped = pool.length >= MARKETPLACE_CANDIDATE_CAP;
 
   if (filters && hasFilters) {
     pool = pool.filter((p) => listingMatchesFilters(p, filters));
@@ -381,7 +389,7 @@ export async function searchMarketplace(
         pool: flexPool,
         checkIn: checkInYmd,
         checkOut: checkOutYmd,
-        pageSize,
+        poolCap: poolCapped ? MARKETPLACE_CANDIDATE_CAP : undefined,
         context: {
           where: opts?.q?.trim() || undefined,
           guests: opts?.guests && opts.guests > 0 ? Math.floor(opts.guests) : undefined,

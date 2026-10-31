@@ -97,7 +97,7 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "integer", minimum: 1, maximum: 50, default: 20 },
               description:
-                "Max results (default 20, max 50; larger values are clamped). Alias: limit.",
+                "Max results (default 20, max 50; larger values are clamped; 0, negative or non-numeric values get the default 20). Alias: limit.",
             },
             {
               name: "limit",
