@@ -182,7 +182,7 @@ export function PricingRecommendationCard({ rec }: { rec: PricingRecCardData }) 
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={cover}
-              alt=""
+              alt={`${rec.property.title} cover photo`}
               className="h-full w-full object-cover"
             />
           ) : (

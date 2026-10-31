@@ -182,14 +182,15 @@ export default async function ListingSetupPage({
       userId: access.session.user.id,
       bypass: access.isPlatform,
     });
+    // Read from the DB: the session email can lag after an inline change.
     const accountEmail =
-      access.session.user.email ||
       (
         await prisma.user.findUnique({
           where: { id: access.session.user.id },
           select: { email: true },
         })
       )?.email ||
+      access.session.user.email ||
       "";
     return (
       <ListingWizardPublishStep

@@ -208,7 +208,7 @@ export function ListingImportAgent({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={preview.imageUrls[0]}
-                alt=""
+                alt={`${preview.title || "Imported listing"} cover photo`}
                 className="h-36 w-full rounded-xl object-cover sm:h-40"
               />
             ) : null}

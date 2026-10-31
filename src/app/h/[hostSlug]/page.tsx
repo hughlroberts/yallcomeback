@@ -11,6 +11,7 @@ import {
 import { hostSiteMarkUrl } from "@/lib/host-images";
 import { PropertyCard } from "@/components/property-card";
 import { cn } from "@/lib/utils";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,11 @@ export default async function HostSiteHomePage({
     }),
   ]);
 
-  const cover = properties[0]?.images[0]?.url || "/seed/hero/home.jpg";
+  const coverProperty = properties[0]?.images[0] ? properties[0] : null;
+  const cover = coverProperty?.images[0]?.url || "/seed/hero/home.jpg";
+  const coverAlt = coverProperty
+    ? listingPhotoAlt(coverProperty.title, coverProperty.images[0]?.alt, 0)
+    : `${host.name} — lake house exterior`;
   const pageButtons = hostSiteNavItems(host, base);
   const servicesLabel = hostServicesPageLabel(host);
   const logoUrl = hostSiteMarkUrl(host, owner?.avatarUrl);
@@ -65,7 +70,7 @@ export default async function HostSiteHomePage({
       <section className="relative min-h-[44vh] overflow-hidden bg-stone-900 sm:min-h-[46vh]">
         <Image
           src={cover}
-          alt=""
+          alt={coverAlt}
           fill
           priority
           className="object-cover opacity-70"

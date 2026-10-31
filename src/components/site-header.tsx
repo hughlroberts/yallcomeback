@@ -1,15 +1,10 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { SiteHeaderNav } from "@/components/site-header-nav";
-import { auth, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export async function SiteHeader() {
   const session = await auth();
-
-  async function signOutAction() {
-    "use server";
-    await signOut({ redirectTo: "/" });
-  }
 
   let avatarUrl: string | null = null;
   if (session?.user?.hostId) {
@@ -39,7 +34,6 @@ export async function SiteHeader() {
           userName={session?.user?.name}
           userEmail={session?.user?.email}
           avatarUrl={avatarUrl}
-          signOutAction={signOutAction}
         />
       </div>
     </header>

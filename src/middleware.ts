@@ -196,6 +196,8 @@ export default auth(async (req) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // /logout is excluded: Auth.js middleware re-issues the session cookie
+    // on every request, which would undo the logout on that response.
+    "/((?!_next/static|_next/image|logout$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

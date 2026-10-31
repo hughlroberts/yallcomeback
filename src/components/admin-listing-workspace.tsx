@@ -39,6 +39,7 @@ import {
 } from "@/lib/listing-visibility";
 import { ListingVisibilityForm } from "@/components/listing-visibility-form";
 import { cn, formatMoney } from "@/lib/utils";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
 type Photo = {
   id: string;
@@ -1454,21 +1455,21 @@ export function AdminListingWorkspace({
           >
             {cover ? (
               <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-100 shadow-sm">
-                <Image src={cover} alt="" fill className="object-cover" sizes="96px" />
+                <Image src={cover} alt={`${property.title} cover photo`} fill className="object-cover" sizes="96px" />
               </div>
             ) : (
               <div className="flex aspect-[3/4] items-center justify-center rounded-xl border border-dashed border-stone-300 bg-stone-50">
                 <ImageIcon className="size-6 text-stone-400" />
               </div>
             )}
-            {photos.slice(1, 5).map((p) => (
+            {photos.slice(1, 5).map((p, i) => (
               <div
                 key={p.id}
                 className="relative aspect-square w-full overflow-hidden rounded-lg border border-stone-200 bg-stone-100"
               >
                 <Image
                   src={p.url}
-                  alt={p.alt || ""}
+                  alt={listingPhotoAlt(property.title, p.alt, i + 1)}
                   fill
                   className="object-cover"
                   sizes="96px"

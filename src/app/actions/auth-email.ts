@@ -1,11 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { auth, signIn } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { incomingIp, rateLimitAllow } from "@/lib/rate-limit";
 import { homeAfterLogin } from "@/lib/login-home";
+import { normalizeNewEmail } from "@/lib/email-change";
 import {
   consumeAuthToken,
   peekAuthToken,
@@ -168,22 +170,9 @@ export async function updateAccountEmailAndResend(newEmailRaw: string): Promise<
     return { error: "Too many attempts. Wait a few minutes." };
   }
 
-  const email = String(newEmailRaw || "")
-    .trim()
-    .toLowerCase();
-  if (
-    !email ||
-    !email.includes("@") ||
-    email.includes(" ") ||
-    email.length >= 254
-  ) {
-    return { error: "Enter a valid email address." };
-  }
-  const at = email.indexOf("@");
-  const domain = at >= 0 ? email.slice(at + 1) : "";
-  if (!domain.includes(".") || domain.startsWith(".") || domain.endsWith(".")) {
-    return { error: "Enter a valid email address." };
-  }
+  const parsed = normalizeNewEmail(newEmailRaw);
+  if ("error" in parsed) return { error: parsed.error };
+  const email = parsed.email;
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -231,13 +220,22 @@ export async function updateAccountEmailAndResend(newEmailRaw: string): Promise<
     return { error: "That email is already used by another account." };
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      email,
-      emailVerifiedAt: null,
-    },
-  });
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email,
+        emailVerifiedAt: null,
+      },
+    });
+  } catch (err) {
+    // Unique index race: someone took the address between check and write.
+    if ((err as { code?: string })?.code === "P2002") {
+      return { error: "That email is already used by another account." };
+    }
+    throw err;
+  }
+  revalidatePath("/account/settings", "layout");
 
   try {
     await sendSignupVerificationEmail({

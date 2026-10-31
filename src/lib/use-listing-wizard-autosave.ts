@@ -13,34 +13,25 @@ import {
   saveListingWizardDraft,
   toMillis,
 } from "@/lib/utils";
+import {
+  readStepBlob,
+  resolveWizardDraftValues,
+  stableSnapshot,
+} from "@/lib/listing-wizard-draft";
 
-const DEBOUNCE_MS = 500;
-
-type StepBlob = {
-  values?: Record<string, unknown>;
-  savedAt?: number;
-};
-
-function readStepBlob(
-  draft: Record<string, unknown> | null,
-  step: string,
-): StepBlob | null {
-  if (!draft) return null;
-  const raw = draft[step];
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
-  return raw as StepBlob;
-}
+const DEBOUNCE_MS = 300;
 
 /**
  * Debounced localStorage autosave for one listing-wizard step.
- * Restores draft values on mount when the draft is newer than server data
- * (or when no server timestamp is available).
+ * Restores the draft on mount unless the server values for this step
+ * changed since the draft was started. Pending writes are flushed when the
+ * page is hidden, reloaded, or closed, and on unmount.
  */
 export function useListingWizardAutosave<T extends Record<string, unknown>>(opts: {
   draftKey: string;
   step: string;
   initial: T;
-  /** Property/user updatedAt — drafts older than this are ignored. */
+  /** Property/user updatedAt — only used for drafts saved by older code. */
   serverUpdatedAt?: Date | string | number | null;
 }): {
   values: T;
@@ -50,72 +41,82 @@ export function useListingWizardAutosave<T extends Record<string, unknown>>(opts
   const { draftKey, step, initial, serverUpdatedAt } = opts;
   const [values, setValuesState] = useState<T>(initial);
   const [hydrated, setHydrated] = useState(false);
+  const hydratedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dirtyRef = useRef(false);
   const latestRef = useRef(values);
-  latestRef.current = values;
+  const baseRef = useRef(stableSnapshot(initial));
+
+  const writeNow = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (!dirtyRef.current) return;
+    dirtyRef.current = false;
+    saveListingWizardDraft(draftKey, {
+      [step]: {
+        values: latestRef.current,
+        savedAt: Date.now(),
+        base: baseRef.current,
+      },
+    });
+  }, [draftKey, step]);
 
   // Restore once on mount (client).
   useEffect(() => {
-    const draft = loadListingWizardDraft(draftKey);
-    const blob = readStepBlob(draft, step);
-    const draftSavedAt =
-      typeof blob?.savedAt === "number" ? blob.savedAt : null;
-    const serverMs = toMillis(serverUpdatedAt);
-
-    let next = initial;
-    if (blob?.values && typeof blob.values === "object") {
-      const draftIsFresh =
-        draftSavedAt == null ||
-        serverMs == null ||
-        draftSavedAt > serverMs;
-      if (draftIsFresh) {
-        next = { ...initial, ...(blob.values as Partial<T>) };
-      }
+    const base = stableSnapshot(initial);
+    baseRef.current = base;
+    const blob = readStepBlob(loadListingWizardDraft(draftKey), step);
+    const { values: next } = resolveWizardDraftValues(
+      initial,
+      blob,
+      toMillis(serverUpdatedAt),
+    );
+    // Keep the original base while the draft is still in use.
+    if (blob && typeof blob.base === "string" && blob.base === base) {
+      baseRef.current = blob.base;
     }
     setValuesState(next);
     latestRef.current = next;
+    hydratedRef.current = true;
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once per draft/step
   }, [draftKey, step]);
 
-  const persist = useCallback(
-    (next: T) => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        saveListingWizardDraft(draftKey, {
-          [step]: { values: next, savedAt: Date.now() },
-        });
-      }, DEBOUNCE_MS);
-    },
-    [draftKey, step],
-  );
-
   const setValues = useCallback(
     (update: SetStateAction<T>) => {
-      setValuesState((prev) => {
-        const next =
-          typeof update === "function"
-            ? (update as (p: T) => T)(prev)
-            : update;
-        latestRef.current = next;
-        if (hydrated) persist(next);
-        return next;
-      });
+      const prev = latestRef.current;
+      const next =
+        typeof update === "function"
+          ? (update as (p: T) => T)(prev)
+          : update;
+      latestRef.current = next;
+      setValuesState(next);
+      if (!hydratedRef.current) return;
+      dirtyRef.current = true;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(writeNow, DEBOUNCE_MS);
     },
-    [hydrated, persist],
+    [writeNow],
   );
 
+  // Flush on reload / tab close / tab hidden, and on unmount.
   useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        // Flush pending write on unmount so a quick navigation does not drop input.
-        saveListingWizardDraft(draftKey, {
-          [step]: { values: latestRef.current, savedAt: Date.now() },
-        });
-      }
+    const onHide = () => writeNow();
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") writeNow();
     };
-  }, [draftKey, step]);
+    window.addEventListener("pagehide", onHide);
+    window.addEventListener("beforeunload", onHide);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", onHide);
+      window.removeEventListener("beforeunload", onHide);
+      document.removeEventListener("visibilitychange", onVisibility);
+      writeNow();
+    };
+  }, [writeNow]);
 
   return { values, setValues, hydrated };
 }

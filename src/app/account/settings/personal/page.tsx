@@ -12,6 +12,7 @@ import {
   maskEmail,
   maskPhone,
 } from "@/components/account-settings-shell";
+import { AccountEmailChange } from "@/components/account-email-change";
 import { Button, Input, Label, Textarea } from "@/components/ui";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -107,7 +108,11 @@ export default async function PersonalInfoPage({
           <Row
             label="Email address"
             value={maskEmail(user.email)}
-            hint="Used for booking confirmations and host messages."
+            hint={
+              user.emailVerifiedAt
+                ? "Used for sign-in, booking confirmations, and host messages."
+                : "Not confirmed yet. Edit to change it or resend the link."
+            }
             href="/account/settings/personal?edit=1"
             action="Edit"
           />
@@ -196,6 +201,23 @@ export default async function PersonalInfoPage({
             ) : null}
           </div>
 
+          <div className="rounded-2xl border border-stone-200 p-5">
+            <h2 className="text-sm font-semibold text-stone-900">
+              Email address
+            </h2>
+            <p className="mt-1 text-xs text-stone-500">
+              Used for sign-in, booking confirmations, and host messages.
+              {user.emailVerifiedAt ? " Confirmed." : " Not confirmed yet."}
+            </p>
+            <div className="mt-4">
+              <AccountEmailChange
+                initialEmail={user.email}
+                emailVerified={Boolean(user.emailVerifiedAt)}
+                inputId="email"
+              />
+            </div>
+          </div>
+
         <form action={updatePersonalInfo} className="space-y-4">
           <div>
             <Label htmlFor="name">Legal name</Label>
@@ -208,18 +230,6 @@ export default async function PersonalInfoPage({
               name="preferredName"
               defaultValue={user.preferredName ?? ""}
             />
-          </div>
-          <div>
-            <Label htmlFor="email">Email address</Label>
-            <Input
-              id="email"
-              value={user.email}
-              disabled
-              className="bg-stone-50 text-stone-500"
-            />
-            <p className="mt-1 text-xs text-stone-400">
-              Email changes require support for now (used as your sign-in).
-            </p>
           </div>
           <div>
             <Label htmlFor="phone">Phone number</Label>

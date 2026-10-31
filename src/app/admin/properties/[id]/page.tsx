@@ -48,6 +48,7 @@ import {
   parseSleepingArrangements,
   seedRoomsFromCounts,
 } from "@/lib/sleeping-arrangements";
+import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
 
 export const dynamic = "force-dynamic";
@@ -428,12 +429,12 @@ export default async function AdminPropertyDetailPage({
     <Card>
       <h2 className="text-lg font-semibold">Photos</h2>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {property.images.map((img) => (
+        {property.images.map((img, i) => (
           <div
             key={img.id}
             className="relative aspect-square overflow-hidden rounded-lg bg-stone-100"
           >
-            <Image src={img.url} alt={img.alt || ""} fill className="object-cover" />
+            <Image src={img.url} alt={listingPhotoAlt(property.title, img.alt, i)} fill className="object-cover" />
             <div className="absolute bottom-2 right-2">
               <ConfirmRemovePhotoButton
                 imageId={img.id}

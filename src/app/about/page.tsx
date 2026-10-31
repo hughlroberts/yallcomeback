@@ -15,7 +15,7 @@ export default function AboutPage() {
       <div className="relative overflow-hidden bg-stone-900">
         <Image
           src="/seed/hero/about.jpg"
-          alt=""
+          alt="Lake view through the screened porch window of a lake house"
           fill
           className="object-cover opacity-50"
           sizes="100vw"

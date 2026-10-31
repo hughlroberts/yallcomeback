@@ -28,11 +28,12 @@ import { TrackRecentlyViewed } from "@/components/track-browse-history";
 import { TrackListingView } from "@/components/track-listing-view";
 import { ListingJsonLd } from "@/components/listing-json-ld";
 import { getSiteOrigin } from "@/lib/site-url";
-import { listingPublicPath } from "@/lib/site-url";
+import { listingCanonicalPath, listingPublicPath } from "@/lib/site-url";
 import { getRequestTenant } from "@/lib/tenant";
 import { resolveBookingChannel } from "@/lib/host-payments";
 import { pageMetadata } from "@/lib/seo";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
+import { listingMetaDescription } from "@/lib/listing-meta-description";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,9 @@ export async function generateMetadata({
       city: true,
       region: true,
       slug: true,
+      maxGuests: true,
+      beds: true,
+      bedrooms: true,
       host: { select: { name: true, slug: true } },
       images: {
         orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
@@ -89,13 +93,20 @@ export async function generateMetadata({
     });
   }
 
-  const place = [property.city, property.region].filter(Boolean).join(", ");
-  const description =
-    property.tagline?.trim() ||
-    property.description?.trim().slice(0, 160) ||
-    `${property.title}${place ? ` in ${place}` : ""} — book direct with ${property.host.name}.`;
+  const description = listingMetaDescription({
+    title: property.title,
+    tagline: property.tagline,
+    description: property.description,
+    city: property.city,
+    region: property.region,
+    maxGuests: property.maxGuests,
+    beds: property.beds,
+    bedrooms: property.bedrooms,
+    hostName: property.host.name,
+  });
   const cover = property.images[0];
-  const path = listingPublicPath(property.slug, property.host.slug);
+  // Canonical/og:url carry no query string (no ?host=).
+  const path = listingCanonicalPath(property.slug);
 
   return pageMetadata({
     title: property.title,
@@ -283,7 +294,7 @@ export default async function MarketplacePropertyPage({
   );
 
   const origin = await getSiteOrigin();
-  const listingUrl = `${origin}${listingPublicPath(property.slug, property.host.slug)}`;
+  const listingUrl = `${origin}${listingCanonicalPath(property.slug)}`;
   const absImages = property.images.map((img) =>
     img.url.startsWith("http") ? img.url : `${origin}${img.url}`,
   );

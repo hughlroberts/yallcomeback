@@ -3,10 +3,6 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { publishListing } from "@/app/actions/properties";
-import {
-  resendVerificationEmail,
-  updateAccountEmailAndResend,
-} from "@/app/actions/auth-email";
 import type { ListingVisibility } from "@/lib/listing-visibility";
 import {
   isServerActionMismatch,
@@ -14,6 +10,7 @@ import {
 } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { WizardMissingFields } from "@/components/wizard-missing-fields";
+import { AccountEmailChange } from "@/components/account-email-change";
 
 type Props = {
   propertyId: string;
@@ -48,14 +45,7 @@ export function ListingWizardPublishStep({
   const [visibility, setVisibility] = useState<ListingVisibility>(
     defaultVisibility === "off" ? "website" : defaultVisibility,
   );
-  const [email, setEmail] = useState(accountEmail);
-  const [savedEmail, setSavedEmail] = useState(accountEmail);
-  const [emailMsg, setEmailMsg] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [emailPending, setEmailPending] = useState(false);
   const draftKey = `property-${propertyId}`;
-  const emailUnchanged =
-    email.trim().toLowerCase() === savedEmail.trim().toLowerCase();
 
   const missing: string[] = [];
   if (!emailVerified) {
@@ -87,30 +77,6 @@ export function ListingWizardPublishStep({
         }
       }
     });
-  }
-
-  async function onResend() {
-    setEmailPending(true);
-    setEmailMsg(null);
-    setEmailError(null);
-    const result = await resendVerificationEmail();
-    setEmailPending(false);
-    if (result.error) setEmailError(result.error);
-    else setEmailMsg(result.message || "Sent.");
-  }
-
-  async function onSaveEmailAndResend() {
-    setEmailPending(true);
-    setEmailMsg(null);
-    setEmailError(null);
-    const result = await updateAccountEmailAndResend(email);
-    setEmailPending(false);
-    if (result.email) {
-      setEmail(result.email);
-      setSavedEmail(result.email);
-    }
-    if (result.error) setEmailError(result.error);
-    else setEmailMsg(result.message || "Sent.");
   }
 
   return (
@@ -203,7 +169,7 @@ export function ListingWizardPublishStep({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={coverImageUrl}
-                    alt=""
+                    alt={`${title.trim() || "Listing"} cover photo`}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -324,38 +290,14 @@ export function ListingWizardPublishStep({
               We sent a link to your inbox. You can resend it, or update the
               address if it was wrong.
             </p>
-            <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-amber-900/80">
-              Email
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                className="mt-1 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-stone-900"
+            <div className="mt-4">
+              <AccountEmailChange
+                initialEmail={accountEmail}
+                emailVerified={false}
+                tone="amber"
+                inputId="publish-email"
               />
-            </label>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={emailPending || !email.trim()}
-                onClick={
-                  emailUnchanged ? onResend : onSaveEmailAndResend
-                }
-                className="rounded-lg bg-bonnet px-4 py-2 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300"
-              >
-                {emailPending
-                  ? "Sending…"
-                  : emailUnchanged
-                    ? "Resend confirmation"
-                    : "Save email & send confirmation"}
-              </button>
             </div>
-            {emailError ? (
-              <p className="mt-2 text-sm text-red-700">{emailError}</p>
-            ) : null}
-            {emailMsg ? (
-              <p className="mt-2 text-sm text-emerald-800">{emailMsg}</p>
-            ) : null}
             <p className="mt-3 text-xs text-amber-900/70">
               You can also manage this from{" "}
               <Link
@@ -367,7 +309,20 @@ export function ListingWizardPublishStep({
               .
             </p>
           </div>
-        ) : null}
+        ) : (
+          <details className="mt-8 max-w-xl rounded-xl border border-stone-200 px-4 py-3 text-sm">
+            <summary className="cursor-pointer font-medium text-stone-800">
+              Account email: {accountEmail || "not set"} · Change
+            </summary>
+            <div className="mt-3">
+              <AccountEmailChange
+                initialEmail={accountEmail}
+                emailVerified
+                inputId="publish-email"
+              />
+            </div>
+          </details>
+        )}
         {error ? (
           error === "site-updated" ? (
             <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm">

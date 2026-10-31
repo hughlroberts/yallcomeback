@@ -25,7 +25,6 @@ export type UserMenuProps = {
   userName?: string | null;
   userEmail?: string | null;
   avatarUrl?: string | null;
-  signOutAction: () => Promise<void>;
 };
 
 function initials(name?: string | null, email?: string | null) {
@@ -87,6 +86,7 @@ function MenuRow({
   return (
     <Link
       href={href}
+      prefetch={false}
       onClick={onNavigate}
       className="flex items-center gap-3 px-4 py-3 text-[15px] text-stone-800 transition hover:bg-stone-50"
     >
@@ -112,7 +112,6 @@ export function UserMenu({
   userName,
   userEmail,
   avatarUrl,
-  signOutAction,
 }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -285,7 +284,8 @@ export function UserMenu({
           </div>
 
           <div className="border-t border-stone-100 py-1">
-            <form action={signOutAction}>
+            {/* Plain POST to /logout: a full navigation, no server action id. */}
+            <form method="post" action="/logout">
               <button
                 type="submit"
                 className="flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-stone-800 transition hover:bg-stone-50"

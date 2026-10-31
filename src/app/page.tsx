@@ -299,7 +299,7 @@ export default async function HomePage() {
         <div className="absolute inset-0">
           <Image
             src="/seed/hero/marketplace.jpg"
-            alt=""
+            alt="Lake view through a screened porch window at a marketplace stay"
             fill
             className="object-cover"
             sizes="100vw"

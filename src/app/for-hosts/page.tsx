@@ -45,21 +45,25 @@ const FEATURES = [
     title: "The stay they already know",
     body: "Your name and photos on every listing — not a giant catalog logo in the middle.",
     image: "/seed/lakefront/01.jpg",
+    imageAlt: "Lake and boat dock seen from a lakefront rental's deck",
   },
   {
     title: "Calendar without the clipboard",
     body: "Blocked dates, seasons, and two-way iCal — booked on Airbnb or VRBO is booked here too.",
     image: "/seed/eagles-nest/01.jpg",
+    imageAlt: "Covered wooden deck with chairs overlooking the lake",
   },
   {
     title: "Deposits and messages",
     body: "Holds, guest notes, and the “see you Friday” note — without starting from a blank text.",
     image: "/seed/eagles-nest/02.jpg",
+    imageAlt: "Bright rental kitchen with open shelving and a gas range",
   },
   {
     title: "A fee you can live with",
     body: "A small monthly hosting fee. Not a cut of every booking.",
     image: "/seed/lakefront/03.jpg",
+    imageAlt: "Lakefront rental kitchen and dining table",
   },
 ];
 
@@ -128,7 +132,7 @@ export default async function ForHostsPage({
       <div className="relative overflow-hidden bg-stone-900">
         <Image
           src="/seed/hero/for-hosts.jpg"
-          alt=""
+          alt="Lake view through the screened porch window of a host's cabin"
           fill
           className="object-cover opacity-45"
           sizes="100vw"
@@ -346,7 +350,7 @@ export default async function ForHostsPage({
                   <div className="relative aspect-[16/10]">
                     <Image
                       src={item.image}
-                      alt=""
+                      alt={item.imageAlt}
                       fill
                       className="object-cover"
                       sizes="(max-width: 1024px) 100vw, 25vw"

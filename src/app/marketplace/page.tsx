@@ -70,7 +70,7 @@ export default async function MarketplacePage({
         <div className="absolute inset-0">
           <Image
             src="/seed/hero/marketplace.jpg"
-            alt=""
+            alt="Lake view through a screened porch window at a marketplace stay"
             fill
             className="object-cover opacity-30"
             sizes="100vw"

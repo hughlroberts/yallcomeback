@@ -426,7 +426,7 @@ export default async function BookPage({
           <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-base text-amber-900">
             {payBlocked}
             {channel === "marketplace"
-              ? " Marketplace stays are paid by card. Message the host, or book on their website if they take another method."
+              ? " Message the host, or book on their website if they take another method."
               : ""}
           </p>
         ) : null}

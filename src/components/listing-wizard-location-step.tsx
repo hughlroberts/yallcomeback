@@ -8,6 +8,14 @@ import {
 } from "@/app/actions/properties";
 import { WizardMissingFields } from "@/components/wizard-missing-fields";
 import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
+import {
+  locationAfterLookupFailure,
+  locationAfterPin,
+  locationContinueAnyway,
+  locationMissingFields,
+  parseManualCoords,
+  type WizardLocationValues,
+} from "@/lib/wizard-location";
 
 type Props = {
   propertyId: string;
@@ -26,16 +34,7 @@ type Props = {
 
 type Phase = "pin" | "visibility";
 
-type LocationFields = {
-  address: string;
-  city: string;
-  region: string;
-  country: string;
-  postalCode: string;
-  lat: number | null;
-  lng: number | null;
-  showPrecise: boolean;
-};
+type LocationFields = WizardLocationValues & { addressUnresolved: boolean };
 
 /** Host wizard always centers on the true pin; wider bbox previews guest “area” view. */
 function mapEmbedUrl(lat: number, lng: number, precise: boolean) {
@@ -81,11 +80,21 @@ export function ListingWizardLocationStep({
       lat: initial.latitude,
       lng: initial.longitude,
       showPrecise: initial.showPreciseLocation,
+      addressUnresolved: false,
     },
   });
 
-  const { address, city, region, country, postalCode, lat, lng, showPrecise } =
-    values;
+  const {
+    address,
+    city,
+    region,
+    country,
+    postalCode,
+    lat,
+    lng,
+    showPrecise,
+    addressUnresolved,
+  } = values;
 
   const [phase, setPhase] = useState<Phase>("pin");
   const [error, setError] = useState<string | null>(null);
@@ -112,10 +121,7 @@ export function ListingWizardLocationStep({
       .join(", ");
   }, [address, city, region, postalCode, country]);
 
-  const missing: string[] = [];
-  if (phase === "pin" && !address.trim() && !city.trim()) {
-    missing.push("Street address or city");
-  }
+  const missing: string[] = phase === "pin" ? locationMissingFields(values) : [];
   const nextDisabled = pending || missing.length > 0;
 
   function patch(partial: Partial<LocationFields>) {
@@ -133,12 +139,13 @@ export function ListingWizardLocationStep({
     try {
       const result = await geocodeListingAddress(queryLine);
       if (!result) {
+        // Drop the old pin so a stale spot is never saved for this address.
+        setValues((prev) => locationAfterLookupFailure(prev));
         setWarning(geocodeMissMessage(city, region));
         return;
       }
-      patch({
-        lat: result.lat,
-        lng: result.lng,
+      setValues((prev) => ({
+        ...locationAfterPin(prev, result.lat, result.lng),
         city: result.city && !city ? result.city : city,
         region: result.region && !region ? result.region : region,
         postalCode:
@@ -147,11 +154,12 @@ export function ListingWizardLocationStep({
           result.country && country === "USA" && result.country !== "USA"
             ? result.country
             : country,
-      });
+      }));
       setLatInput(String(result.lat));
       setLngInput(String(result.lng));
       setWarning(null);
     } catch (e) {
+      setValues((prev) => locationAfterLookupFailure(prev));
       setWarning(
         e instanceof Error
           ? `${e.message} You can place a pin manually or continue anyway.`
@@ -164,22 +172,14 @@ export function ListingWizardLocationStep({
 
   function applyManualCoords() {
     setError(null);
-    const la = Number(latInput);
-    const ln = Number(lngInput);
-    if (!Number.isFinite(la) || !Number.isFinite(ln)) {
-      setError("Enter numeric latitude and longitude");
+    const parsed = parseManualCoords(latInput, lngInput);
+    if ("error" in parsed) {
+      setError(parsed.error);
       return;
     }
-    if (la < -90 || la > 90 || ln < -180 || ln > 180) {
-      setError("Latitude must be −90…90 and longitude −180…180");
-      return;
-    }
-    patch({
-      lat: Number(la.toFixed(6)),
-      lng: Number(ln.toFixed(6)),
-    });
-    setLatInput(la.toFixed(6));
-    setLngInput(ln.toFixed(6));
+    setValues((prev) => locationAfterPin(prev, parsed.lat, parsed.lng));
+    setLatInput(String(parsed.lat));
+    setLngInput(String(parsed.lng));
     setWarning(null);
   }
 
@@ -192,10 +192,23 @@ export function ListingWizardLocationStep({
     setLngInput(String(nextLng));
   }
 
+  function continueAnyway() {
+    setError(null);
+    setWarning(null);
+    setValues((prev) => locationContinueAnyway(prev));
+    setPhase("visibility");
+  }
+
   function onNextFromPin() {
     setError(null);
     if (!address.trim() && !city.trim()) {
       setError("Add at least a street or city");
+      return;
+    }
+    if (addressUnresolved) {
+      setError(
+        "We couldn’t find that address. Find it on the map, enter coordinates, or choose Continue anyway.",
+      );
       return;
     }
     if (lat == null || lng == null) {
@@ -470,16 +483,19 @@ export function ListingWizardLocationStep({
           </>
         )}
 
-        {warning ? (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            <p>{warning}</p>
-            {phase === "pin" && (lat == null || lng == null) ? (
+        {warning || (phase === "pin" && addressUnresolved) ? (
+          <div
+            role="alert"
+            className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          >
+            <p>
+              {warning ||
+                "We couldn’t find that address on the map. Place the pin with latitude and longitude, or continue anyway."}
+            </p>
+            {phase === "pin" && (addressUnresolved || lat == null || lng == null) ? (
               <button
                 type="button"
-                onClick={() => {
-                  setWarning(null);
-                  setPhase("visibility");
-                }}
+                onClick={continueAnyway}
                 className="mt-3 rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100"
               >
                 Continue anyway

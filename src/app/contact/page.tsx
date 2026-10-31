@@ -15,7 +15,7 @@ export default function ContactPage() {
       <div className="relative overflow-hidden bg-stone-900">
         <Image
           src="/seed/hero/contact.jpg"
-          alt=""
+          alt="Lake house with a deck and picnic table on a sunny lawn"
           fill
           className="object-cover opacity-45"
           sizes="100vw"

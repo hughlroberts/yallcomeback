@@ -8,7 +8,7 @@ import {
 } from "@/lib/host";
 import { HOSTING_PUBLIC_STATUSES } from "@/lib/hosting";
 import { isAgentApiEnabled } from "@/lib/platform-features";
-import { listingPublicPath } from "@/lib/site-url";
+import { listingCanonicalPath } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       orderBy: { updatedAt: "desc" },
     });
     listings = props.map((p) => ({
-      url: `${base}${listingPublicPath(p.slug, p.host.slug)}`,
+      url: `${base}${listingCanonicalPath(p.slug)}`,
       lastModified: p.updatedAt,
       changeFrequency: "daily" as const,
       priority: 0.85,

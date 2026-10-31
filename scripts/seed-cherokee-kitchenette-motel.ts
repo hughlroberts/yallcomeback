@@ -223,7 +223,7 @@ Hosted by Cherokee Landing — family-owned resort on Cedar Creek Lake.`;
   ];
 
   const motelAlts = [
-    "Motel exterior placeholder",
+    "Motel exterior",
     "Motel / lodging area",
     "Motel building exterior",
   ];

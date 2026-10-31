@@ -22,6 +22,11 @@ export function listingPublicPath(slug: string, hostSlug: string): string {
   return `/marketplace/properties/${slug}?host=${encodeURIComponent(hostSlug)}`;
 }
 
+/** Canonical listing URL path (no query string) for canonical, og:url, sitemap. */
+export function listingCanonicalPath(slug: string): string {
+  return `/marketplace/properties/${encodeURIComponent(slug)}`;
+}
+
 /** Where a fridge-magnet QR should open. */
 export type MagnetLinkTarget = "marketplace" | "host";
 

@@ -23,4 +23,16 @@ describe("listingPhotoAlt", () => {
       "Lake cabin, photo 2",
     );
   });
+
+  it("replaces placeholder captions with '<title> exterior'", () => {
+    expect(listingPhotoAlt("Motel Room 1", "Motel exterior placeholder", 0)).toBe(
+      "Motel Room 1 exterior",
+    );
+    expect(listingPhotoAlt("Motel Room 2", "placeholder", 2)).toBe(
+      "Motel Room 2 exterior (photo 3)",
+    );
+    expect(listingPhotoAlt("Cabin", "Placeholder kitchen", 0)).not.toMatch(
+      /placeholder/i,
+    );
+  });
 });
