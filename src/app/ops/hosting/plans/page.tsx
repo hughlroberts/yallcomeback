@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import {
   deleteHostingPlan,
   upsertHostingPlan,
@@ -18,9 +17,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Hosting plans · Ops" };
 
 export default async function OpsHostingPlansPage() {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/hosting/plans");
-
+  await requirePlatformAdminOr404();
   const plans = await prisma.hostingPlan.findMany({
     include: { _count: { select: { hosts: true } } },
     orderBy: [{ isActive: "desc" }, { sortOrder: "asc" }],

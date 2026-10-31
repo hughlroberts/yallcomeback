@@ -44,9 +44,8 @@ function loginErrorMessage(code: string | undefined): {
         password: "Enter your password.",
       };
     case "admin_only":
-      return {
-        form: "That page is for platform admins only. Sign in with a platform admin account.",
-      };
+      // Legacy code; never shown (internal /ops now 404s for non-admins).
+      return {};
     case "credentials":
     case "CredentialsSignin":
     case "Configuration":

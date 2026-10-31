@@ -28,7 +28,6 @@ export default function robots(): MetadataRoute.Robots {
           : ["/", "/marketplace"],
         disallow: [
           "/admin",
-          "/ops",
           "/api/admin",
           "/api/cron",
           "/api/stripe",

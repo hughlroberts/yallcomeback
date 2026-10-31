@@ -1,10 +1,9 @@
-import { redirect } from "next/navigation";
 import {
   addPlatformManager,
   removePlatformManager,
 } from "@/app/actions/managers";
 import { Button, Card, Input, Label } from "@/components/ui";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -15,9 +14,7 @@ export default async function OpsManagersPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/settings/managers");
-
+  const session = await requirePlatformAdminOr404();
   const sp = await searchParams;
   const managers = await prisma.user.findMany({
     where: { role: "ADMIN" },

@@ -30,7 +30,11 @@ export async function SiteHeader() {
         <SiteHeaderNav
           isSignedIn={Boolean(session?.user)}
           isHostOrAdmin={isHostOrAdmin}
-          isPlatformAdmin={session?.user?.role === "ADMIN"}
+          staffLink={
+            session?.user?.role === "ADMIN"
+              ? { href: "/ops", label: "Ops portal" }
+              : null
+          }
           userName={session?.user?.name}
           userEmail={session?.user?.email}
           avatarUrl={avatarUrl}

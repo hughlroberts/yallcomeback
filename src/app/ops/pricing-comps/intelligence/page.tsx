@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
   isPricingIntelligenceEnabled,
@@ -41,8 +40,7 @@ export default async function OpsPricingPage({
     );
   }
 
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/pricing-comps/intelligence");
+  await requirePlatformAdminOr404();
   const sp = await searchParams;
 
   const hosts = await prisma.host.findMany({

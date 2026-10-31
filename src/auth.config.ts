@@ -1,4 +1,21 @@
 import type { NextAuthConfig } from "next-auth";
+import { NextResponse } from "next/server";
+
+/**
+ * Internal rewrite target that matches no route, so Next renders its normal
+ * 404 page with a 404 status, byte-for-byte like any other unknown URL.
+ * The browser URL stays the requested path.
+ */
+export const NOT_FOUND_REWRITE_PATH = "/__not-found";
+
+/** /ops is internal: platform admins only; everyone else sees a plain 404. */
+export function isOpsPath(pathname: string): boolean {
+  return pathname === "/ops" || pathname.startsWith("/ops/");
+}
+
+export function notFoundRewrite(nextUrl: URL): Response {
+  return NextResponse.rewrite(new URL(NOT_FOUND_REWRITE_PATH, nextUrl.origin));
+}
 
 /**
  * Anonymous visits must return a redirect Response.
@@ -6,9 +23,8 @@ import type { NextAuthConfig } from "next-auth";
  * custom middleware function: Auth.js then runs that function and
  * skips the sign-in redirect.
  */
-export function signInRedirect(nextUrl: URL, error?: string): Response {
+export function signInRedirect(nextUrl: URL): Response {
   const dest = new URL("/login", nextUrl.origin);
-  if (error) dest.searchParams.set("error", error);
   dest.searchParams.set("callbackUrl", `${nextUrl.pathname}${nextUrl.search}`);
   return Response.redirect(dest);
 }
@@ -29,12 +45,11 @@ export function platformGate(input: {
     return true;
   }
 
-  if (path.startsWith("/ops")) {
-    // Signed out: login shows "That page is for platform admins only."
-    if (!isLoggedIn) return signInRedirect(nextUrl, "admin_only");
-    if (role !== "ADMIN") {
-      return Response.redirect(new URL("/admin?error=admin_only", nextUrl));
-    }
+  if (isOpsPath(path)) {
+    // Internal: signed out, guest, host and host admin all get a plain 404
+    // (no /login redirect, no "admin only" notice) so /ops stays unknown.
+    // Pages and route handlers re-check the DB role (requirePlatformAdminOr404).
+    if (!isLoggedIn || role !== "ADMIN") return notFoundRewrite(nextUrl);
     return true;
   }
 

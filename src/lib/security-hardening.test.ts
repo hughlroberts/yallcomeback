@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { platformGate, signInRedirect } from "@/auth.config";
+import {
+  isOpsPath,
+  NOT_FOUND_REWRITE_PATH,
+  platformGate,
+  signInRedirect,
+} from "@/auth.config";
 import { ipFromHeaders } from "@/lib/rate-limit";
 import { assertSafeOutboundUrl, pinnedLookup } from "@/lib/safe-url";
 
@@ -22,36 +27,63 @@ describe("platformGate", () => {
     ).toBe(true);
   });
 
-  it("sends a signed-in host away from ops", () => {
-    const gate = platformGate({
-      isLoggedIn: true,
-      role: "HOST",
-      nextUrl: new URL("https://www.yallcomeback.app/ops"),
-    });
-    expect(gate).toBeInstanceOf(Response);
-    expect((gate as Response).headers.get("location")).toContain(
-      "/admin?error=admin_only",
-    );
-  });
+  const opsPaths = [
+    "/ops",
+    "/ops/users",
+    "/ops/users/export",
+    "/ops/settings/backups/download",
+    "/ops/settings/backups/file/x.json",
+    "/ops/hosting/plans?tab=1",
+  ];
+  const nonAdmins: Array<{ who: string; isLoggedIn: boolean; role?: string }> = [
+    { who: "signed out", isLoggedIn: false },
+    { who: "guest", isLoggedIn: true, role: "GUEST" },
+    { who: "host / host admin", isLoggedIn: true, role: "HOST" },
+    { who: "role missing", isLoggedIn: true, role: undefined },
+  ];
 
-  it.each(["/ops", "/ops/users", "/ops/users/export", "/ops/settings/backups/download"])(
-    "sends anonymous %s visitors to login with the admin-only notice",
-    (path) => {
+  describe.each(nonAdmins)("/ops for $who", ({ isLoggedIn, role }) => {
+    it.each(opsPaths)("%s is a plain 404 rewrite (no login, no notice)", (path) => {
       const gate = platformGate({
-        isLoggedIn: false,
+        isLoggedIn,
+        role,
         nextUrl: new URL(`https://www.yallcomeback.app${path}`),
       });
       expect(gate).toBeInstanceOf(Response);
-      const location = new URL((gate as Response).headers.get("location") ?? "");
-      expect(location.pathname).toBe("/login");
-      expect(location.searchParams.get("error")).toBe("admin_only");
-      expect(location.searchParams.get("callbackUrl")).toBe(path);
-    },
-  );
+      const res = gate as Response;
+      // No redirect anywhere: nothing points at /login or carries admin_only.
+      expect(res.headers.get("location")).toBeNull();
+      expect(res.status).not.toBeGreaterThanOrEqual(300);
+      const rewrite = res.headers.get("x-middleware-rewrite") ?? "";
+      expect(new URL(rewrite).pathname).toBe(NOT_FOUND_REWRITE_PATH);
+      expect(rewrite).not.toContain("admin_only");
+      expect(rewrite).not.toContain("/login");
+    });
+  });
 
-  it("does not add the admin-only notice for anonymous /admin visitors", () => {
+  it("lets platform admins into /ops", () => {
+    for (const path of opsPaths) {
+      expect(
+        platformGate({
+          isLoggedIn: true,
+          role: "ADMIN",
+          nextUrl: new URL(`https://www.yallcomeback.app${path}`),
+        }),
+      ).toBe(true);
+    }
+  });
+
+  it("only treats /ops and /ops/* as ops", () => {
+    expect(isOpsPath("/ops")).toBe(true);
+    expect(isOpsPath("/ops/users")).toBe(true);
+    expect(isOpsPath("/opsfoo")).toBe(false);
+    expect(isOpsPath("/admin")).toBe(false);
+  });
+
+  it("sends anonymous /admin visitors to login without an error code", () => {
     const gate = platformGate({ isLoggedIn: false, nextUrl });
     const location = new URL((gate as Response).headers.get("location") ?? "");
+    expect(location.pathname).toBe("/login");
     expect(location.searchParams.get("error")).toBeNull();
   });
 

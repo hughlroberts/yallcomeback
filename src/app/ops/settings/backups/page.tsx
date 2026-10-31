@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import { Card } from "@/components/ui";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { BACKUP_RETENTION_DAYS, backupOpsSnapshot } from "@/lib/backup";
 
@@ -22,9 +21,7 @@ function bytesLabel(n: number): string {
 }
 
 export default async function OpsBackupsPage() {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/settings/backups");
-
+  await requirePlatformAdminOr404();
   const [snap, propertyCount, hostCount, invoiceCount, bookingCount] =
     await Promise.all([
       backupOpsSnapshot(),

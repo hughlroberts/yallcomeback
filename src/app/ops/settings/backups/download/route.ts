@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import {
   createAndPersistBackup,
   recordBackupRun,
@@ -9,10 +9,8 @@ export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = await requirePlatformAdmin();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Non-admins get a plain 404 (/ops is internal).
+  await requirePlatformAdminOr404();
 
   const startedAt = new Date();
   try {

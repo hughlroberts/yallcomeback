@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import NextAuth from "next-auth";
-import { authConfig, platformGate } from "./auth.config";
+import { authConfig, isOpsPath, platformGate } from "./auth.config";
 import {
   resolveHostSlugForHostname,
   isPlatformPath,
@@ -174,6 +174,13 @@ export default auth(async (req) => {
     nextUrl: req.nextUrl,
   });
   if (gate !== true) return gate;
+
+  // Platform admins only reach here for /ops; keep it out of every index.
+  if (isOpsPath(req.nextUrl.pathname)) {
+    const res = passthrough(req);
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return res;
+  }
 
   const hostname = requestHostname(req);
   // Env HOST_DOMAIN_MAP + Host.customDomain via /api/domain-map

@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   opsResetUserPassword,
   opsUpdateUserRole,
   opsUpsertUser,
 } from "@/app/actions/ops-users";
 import { Button, Card, Input, Label } from "@/components/ui";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hostAccessLabel } from "@/lib/host-access";
 
@@ -18,9 +17,7 @@ export default async function OpsUsersPage({
 }: {
   searchParams: Promise<{ saved?: string; error?: string; q?: string; role?: string }>;
 }) {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/users");
-
+  const session = await requirePlatformAdminOr404();
   const sp = await searchParams;
   const q = sp.q?.trim().toLowerCase() || "";
   const roleFilter = sp.role?.trim() || "";

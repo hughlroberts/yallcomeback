@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import {
   issueHostingInvoice,
   suspendHost,
   updateHostOps,
 } from "@/app/actions/hosting";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { OpsHostDomainGuide } from "@/components/ops-host-domain-guide";
 import { OpsHostEditForm } from "@/components/ops-host-edit-form";
@@ -42,9 +42,7 @@ export default async function OpsHostDetailPage({
 }: {
   params: Promise<{ hostId: string }>;
 }) {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/hosting");
-
+  await requirePlatformAdminOr404();
   const { hostId } = await params;
   const [host, plans] = await Promise.all([
     prisma.host.findUnique({

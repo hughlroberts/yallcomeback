@@ -1,10 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { OpsNav } from "@/components/ops-nav";
 import { OpsHostManageChrome } from "@/components/ops-host-manage-chrome";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+
+/** Internal portal: never indexed (non-admins get a 404 before this renders). */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false, nocache: true },
+};
 
 /**
  * Private platform ops portal (hosting billing, plans, site settings).
@@ -16,10 +21,7 @@ export default async function OpsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await requirePlatformAdmin();
-  if (!session) {
-    redirect("/login?callbackUrl=/ops&error=admin_only");
-  }
+  await requirePlatformAdminOr404();
 
   const h = await headers();
   const pathname = (h.get("x-pathname") || "").split("?")[0] || "";

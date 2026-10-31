@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { buildUsersCsv, usersCsvFilename } from "@/lib/users-csv";
 
@@ -7,10 +7,8 @@ export const dynamic = "force-dynamic";
 
 /** Platform ops: download every user as CSV (email, host/guest). */
 export async function GET() {
-  const session = await requirePlatformAdmin();
-  if (!session) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  // Non-admins get a plain 404 (/ops is internal).
+  await requirePlatformAdminOr404();
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },

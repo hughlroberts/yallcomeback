@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireHostAdmin, requirePlatformAdmin } from "@/lib/auth";
+import { requireHostAdmin, requirePlatformAdminOr404 } from "@/lib/auth";
 import {
   hostHasPricingIntelligenceAddon,
   isPricingIntelligenceEnabled,
@@ -199,8 +199,7 @@ export async function cancelPricingIntelligenceAddon(formData: FormData) {
  */
 export async function setPricingIntelligenceAddonStatus(formData: FormData) {
   assertEnabled();
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/hosting");
+  await requirePlatformAdminOr404();
 
   const hostId = String(formData.get("hostId") || "");
   const status = String(formData.get("status") || "NONE");
@@ -235,8 +234,7 @@ export async function setPricingIntelligenceAddonStatus(formData: FormData) {
 
 export async function startPricingResearch(formData: FormData) {
   assertEnabled();
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
+  await requirePlatformAdminOr404();
 
   const hostId = String(formData.get("hostId") || "");
   if (!hostId) redirect("/ops/pricing-comps/intelligence?error=host");
@@ -330,7 +328,11 @@ function parseFeedbackFromForm(formData: FormData): {
 export async function decidePricingRecommendation(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
+  if (!access) redirect("/login?callbackUrl=/admin");
+  // Hosts never get sent to /ops (internal; must not learn it exists).
+  const intelHome = access.isPlatform
+    ? "/ops/pricing-comps/intelligence"
+    : "/admin/pricing";
 
   const id = String(formData.get("id") || "");
   const decision = String(formData.get("decision") || ""); // approve | reject
@@ -342,15 +344,15 @@ export async function decidePricingRecommendation(formData: FormData) {
       property: { select: { hostId: true, title: true } },
     },
   });
-  if (!rec) redirect("/ops/pricing-comps/intelligence?error=missing");
+  if (!rec) redirect(`${intelHome}?error=missing`);
   if (
     !access.isPlatform &&
     access.hostId !== rec.run.hostId
   ) {
-    redirect("/ops/pricing-comps/intelligence?error=forbidden");
+    redirect(`${intelHome}?error=forbidden`);
   }
   if (rec.status !== "PENDING") {
-    redirect(`/ops/pricing-comps/intelligence/${rec.runId}?error=already_decided`);
+    redirect(`${intelHome}${access.isPlatform ? `/${rec.runId}` : ""}?error=already_decided`);
   }
 
   await prisma.pricingRecommendation.update({
@@ -365,7 +367,7 @@ export async function decidePricingRecommendation(formData: FormData) {
 
   revalidatePath(`/ops/pricing-comps/intelligence/${rec.runId}`);
   revalidatePath("/ops/pricing-comps/intelligence");
-  redirect(`/ops/pricing-comps/intelligence/${rec.runId}?decided=1`);
+  redirect(`${intelHome}${access.isPlatform ? `/${rec.runId}` : ""}?decided=1`);
 }
 
 /**
@@ -374,7 +376,11 @@ export async function decidePricingRecommendation(formData: FormData) {
 export async function applyPricingRecommendation(formData: FormData) {
   assertEnabled();
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
+  if (!access) redirect("/login?callbackUrl=/admin");
+  // Hosts never get sent to /ops (internal; must not learn it exists).
+  const intelHome = access.isPlatform
+    ? "/ops/pricing-comps/intelligence"
+    : "/admin/pricing";
 
   const id = String(formData.get("id") || "");
   const rec = await prisma.pricingRecommendation.findUnique({
@@ -384,12 +390,12 @@ export async function applyPricingRecommendation(formData: FormData) {
       property: { select: { id: true, hostId: true, title: true } },
     },
   });
-  if (!rec) redirect("/ops/pricing-comps/intelligence?error=missing");
+  if (!rec) redirect(`${intelHome}?error=missing`);
   if (!access.isPlatform && access.hostId !== rec.run.hostId) {
-    redirect("/ops/pricing-comps/intelligence?error=forbidden");
+    redirect(`${intelHome}?error=forbidden`);
   }
   if (rec.status !== "APPROVED") {
-    redirect(`/ops/pricing-comps/intelligence/${rec.runId}?error=not_approved`);
+    redirect(`${intelHome}${access.isPlatform ? `/${rec.runId}` : ""}?error=not_approved`);
   }
 
   const feedback = parseFeedbackFromForm(formData);
@@ -425,5 +431,5 @@ export async function applyPricingRecommendation(formData: FormData) {
   revalidatePath(`/ops/pricing-comps/intelligence/${rec.runId}`);
   revalidatePath(`/admin/properties/${rec.propertyId}`);
   revalidatePath("/marketplace");
-  redirect(`/ops/pricing-comps/intelligence/${rec.runId}?applied=1`);
+  redirect(`${intelHome}${access.isPlatform ? `/${rec.runId}` : ""}?applied=1`);
 }

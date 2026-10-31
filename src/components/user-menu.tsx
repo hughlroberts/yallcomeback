@@ -22,7 +22,11 @@ import { cn } from "@/lib/utils";
 export type UserMenuProps = {
   isSignedIn: boolean;
   isHostOrAdmin: boolean;
-  isPlatformAdmin: boolean;
+  /**
+   * Internal ops portal link, set by the server only for platform admins.
+   * Kept out of the client bundle so non-admins never see the path.
+   */
+  staffLink?: { href: string; label: string } | null;
   userName?: string | null;
   userEmail?: string | null;
   avatarUrl?: string | null;
@@ -109,7 +113,7 @@ function MenuRow({
 export function UserMenu({
   isSignedIn,
   isHostOrAdmin,
-  isPlatformAdmin,
+  staffLink,
   userName,
   userEmail,
   avatarUrl,
@@ -287,11 +291,11 @@ export function UserMenu({
                   label="Calendar"
                   onNavigate={close}
                 />
-                {isPlatformAdmin ? (
+                {staffLink ? (
                   <MenuRow
-                    href="/ops"
+                    href={staffLink.href}
                     icon={Settings}
-                    label="Ops portal"
+                    label={staffLink.label}
                     onNavigate={close}
                   />
                 ) : null}

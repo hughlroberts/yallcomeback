@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isPricingIntelligenceEnabled } from "@/lib/platform-features";
 import { PricingRecommendationCard } from "@/components/pricing-recommendation-card";
@@ -34,9 +34,7 @@ export default async function OpsPricingRunPage({
     redirect("/ops/pricing-comps/intelligence");
   }
 
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/pricing-comps/intelligence");
-
+  await requirePlatformAdminOr404();
   const { runId } = await params;
   const sp = await searchParams;
 

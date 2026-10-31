@@ -59,6 +59,9 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
+    // No /ops entries here: config redirects run before middleware and would
+    // reveal /ops paths to non-admins. Legacy /ops aliases live as pages/routes
+    // under src/app/ops, behind the platform-admin gate.
     return [
       // Apex → www, 301, every path; Next keeps the query string.
       // Runs before middleware. Only fires if apex DNS points at this app.
@@ -91,41 +94,6 @@ const nextConfig: NextConfig = {
       {
         source: "/account/settings/notifications",
         destination: "/messages",
-        permanent: false,
-      },
-      {
-        source: "/ops/pricing",
-        destination: "/ops/pricing-comps/intelligence",
-        permanent: false,
-      },
-      {
-        source: "/ops/pricing/:runId",
-        destination: "/ops/pricing-comps/intelligence/:runId",
-        permanent: false,
-      },
-      {
-        source: "/ops/managers",
-        destination: "/ops/settings/managers",
-        permanent: false,
-      },
-      {
-        source: "/ops/health",
-        destination: "/ops/settings/health",
-        permanent: false,
-      },
-      {
-        source: "/ops/backups",
-        destination: "/ops/settings/backups",
-        permanent: false,
-      },
-      {
-        source: "/ops/backups/download",
-        destination: "/ops/settings/backups/download",
-        permanent: false,
-      },
-      {
-        source: "/ops/backups/file/:name",
-        destination: "/ops/settings/backups/file/:name",
         permanent: false,
       },
     ];

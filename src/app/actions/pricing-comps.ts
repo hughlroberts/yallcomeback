@@ -3,13 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 
 const PATH = "/ops/pricing-comps";
 
 export async function setPricingMarketCompActive(formData: FormData) {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/pricing-comps");
+  await requirePlatformAdminOr404();
 
   const id = String(formData.get("id") || "");
   const active = String(formData.get("active") || "") === "1";
@@ -25,8 +24,7 @@ export async function setPricingMarketCompActive(formData: FormData) {
 }
 
 export async function upsertPricingMarketComp(formData: FormData) {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/pricing-comps");
+  await requirePlatformAdminOr404();
 
   const key = String(formData.get("key") || "")
     .trim()

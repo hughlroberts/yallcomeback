@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Card } from "@/components/ui";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import {
   REPO_URL,
   STRIPE_LIVE_READY,
@@ -22,9 +21,7 @@ import {
 export const metadata = { title: "Platform settings · Ops" };
 
 export default async function OpsSettingsPage() {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/settings");
-
+  await requirePlatformAdminOr404();
   const stripeEnabled = process.env.STRIPE_ENABLED === "true";
   const hasSecret = Boolean(process.env.STRIPE_SECRET_KEY);
   const hasPublishable = Boolean(

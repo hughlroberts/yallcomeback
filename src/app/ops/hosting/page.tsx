@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import {
   approveHost,
   rejectHost,
@@ -26,9 +25,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Website hosting · Ops" };
 
 export default async function OpsHostingPage() {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/hosting");
-
+  await requirePlatformAdminOr404();
   const [pending, hosts, openInvoices, plans, renewals] = await Promise.all([
     prisma.host.findMany({
       where: { approvalStatus: "PENDING_REVIEW" },

@@ -118,11 +118,7 @@ export default async function AdminDashboard({
   const adminOnly = sp.error === "admin_only";
   const access = await requireHostAdmin();
   if (!access) {
-    redirect(
-      adminOnly
-        ? "/login?error=admin_only&callbackUrl=/admin/calendar"
-        : "/login?callbackUrl=/admin/calendar",
-    );
+    redirect("/login?callbackUrl=/admin/calendar");
   }
 
   const propWhere = propertyScopeWhere(access);

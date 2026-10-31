@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Card } from "@/components/ui";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { parseHealthTab, runHealthChecks } from "@/lib/ops-health/run";
 import type {
@@ -120,9 +119,7 @@ export default async function OpsHealthPage({
 }: {
   searchParams: Promise<{ tab?: string; hostId?: string }>;
 }) {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/settings/health");
-
+  await requirePlatformAdminOr404();
   const sp = await searchParams;
   const tab = parseHealthTab(sp.tab);
   const hostId = sp.hostId?.trim() || "";

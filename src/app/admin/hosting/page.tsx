@@ -5,7 +5,7 @@ import { Card } from "@/components/ui";
 
 /**
  * Hosts manage listings here; platform billing lives in /ops (ADMIN only).
- * Do not bounce HOST users into ops (they get admin_only).
+ * Do not bounce HOST users into ops (they would get a 404).
  */
 export default async function AdminHostingPage() {
   const access = await requireHostAdmin();

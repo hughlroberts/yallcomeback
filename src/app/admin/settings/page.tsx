@@ -5,7 +5,7 @@ import { Card } from "@/components/ui";
 
 /**
  * Platform settings are under /ops. Hosts get account settings instead of a
- * hard bounce to ops (admin_only).
+ * hard bounce (non-admins get a 404 from /ops).
  */
 export default async function AdminSettingsPage() {
   const access = await requireHostAdmin();

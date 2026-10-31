@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { isStoredBackupName, readStoredBackup } from "@/lib/backup";
 
 export const dynamic = "force-dynamic";
@@ -8,10 +8,8 @@ export async function GET(
   _req: Request,
   ctx: { params: Promise<{ name: string }> },
 ) {
-  const session = await requirePlatformAdmin();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Non-admins get a plain 404 (/ops is internal).
+  await requirePlatformAdminOr404();
 
   const { name } = await ctx.params;
   const decoded = decodeURIComponent(name);

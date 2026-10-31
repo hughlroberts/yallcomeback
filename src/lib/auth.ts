@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+import { notFound } from "next/navigation";
 import { prisma } from "./db";
 import { authConfig } from "@/auth.config";
 import type { HostAccessLevel, Role } from "@prisma/client";
@@ -152,6 +153,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+/**
+ * /ops pages and route handlers: platform admin or a plain 404.
+ * /ops is internal — signed-out visitors, guests, hosts and host admins must
+ * not learn it exists, so no /login redirect and no "admin only" notice.
+ */
+export async function requirePlatformAdminOr404() {
+  const session = await requirePlatformAdmin();
+  if (!session) notFound();
+  return session;
+}
 
 /** Platform operator — always re-read role from DB (do not trust a stale JWT). */
 export async function requirePlatformAdmin() {

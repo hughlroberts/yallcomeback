@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Card } from "@/components/ui";
-import { requirePlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { loadOpsEarnings } from "@/lib/platform-earnings";
 import { subscriptionLabel } from "@/lib/hosting";
 import { formatDateUS, formatMoney } from "@/lib/utils";
@@ -16,9 +15,7 @@ function stripeInvoiceUrl(id: string | null | undefined, hosted: string | null |
 }
 
 export default async function OpsEarningsPage() {
-  const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/earnings");
-
+  await requirePlatformAdminOr404();
   const data = await loadOpsEarnings();
   const payingCustomers = data.customers.filter((c) => !c.complimentary);
   const complimentary = data.customers.filter((c) => c.complimentary);
