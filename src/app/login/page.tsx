@@ -43,6 +43,10 @@ function loginErrorMessage(code: string | undefined): {
         email: "Enter your email.",
         password: "Enter your password.",
       };
+    case "admin_only":
+      return {
+        form: "That page is for platform admins only. Sign in with a platform admin account.",
+      };
     case "credentials":
     case "CredentialsSignin":
     case "Configuration":

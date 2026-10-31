@@ -109,9 +109,21 @@ function blockAccentClass(source: string, blockType: string | null): string {
   return "border-l-slate-300";
 }
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const sp = await searchParams;
+  const adminOnly = sp.error === "admin_only";
   const access = await requireHostAdmin();
-  if (!access) redirect("/login?callbackUrl=/admin/calendar");
+  if (!access) {
+    redirect(
+      adminOnly
+        ? "/login?error=admin_only&callbackUrl=/admin/calendar"
+        : "/login?callbackUrl=/admin/calendar",
+    );
+  }
 
   const propWhere = propertyScopeWhere(access);
   const bookWhere = bookingScopeWhere(access);
@@ -186,6 +198,15 @@ export default async function AdminDashboard() {
           </Link>
         }
       />
+
+      {adminOnly ? (
+        <p
+          role="alert"
+          className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        >
+          That page is for platform admins only.
+        </p>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <KpiCard label="Properties" value={propertyCount} />

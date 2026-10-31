@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
 import {
@@ -16,6 +16,11 @@ import {
   type PetFeeUnit,
 } from "@/lib/pets";
 import { AvailabilityCalendar } from "@/components/availability-calendar";
+import {
+  publishBookingBarState,
+  resetBookingBarState,
+  setBookingBarAction,
+} from "@/lib/booking-bar-state";
 
 type Season = {
   name: string;
@@ -272,6 +277,28 @@ export function BookingWidget({
     const base = bookBasePath || `/book/${propertySlug}`;
     router.push(`${base}?${params.toString()}`);
   }
+
+  // Mirror dates/total to the mobile bottom bar and let it start the same flow.
+  const onBookRef = useRef(onBook);
+  useEffect(() => {
+    onBookRef.current = onBook;
+  });
+  const barNights = quote?.nights ?? null;
+  const barTotal = quote?.error ? null : (quote?.total ?? null);
+  const barError = quote?.error || null;
+  useEffect(() => {
+    publishBookingBarState({
+      checkIn,
+      checkOut,
+      nights: barNights,
+      total: barTotal,
+      error: barError,
+    });
+  }, [checkIn, checkOut, barNights, barTotal, barError]);
+  useEffect(() => {
+    setBookingBarAction(() => onBookRef.current());
+    return () => resetBookingBarState();
+  }, []);
 
   return (
     <div

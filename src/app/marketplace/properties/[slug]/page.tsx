@@ -510,7 +510,10 @@ export default async function MarketplacePropertyPage({
           </div>
         </div>
 
-        <MobileReserveBar nightlyRate={property.baseNightlyRate} />
+        <MobileReserveBar
+          nightlyRate={property.baseNightlyRate}
+          depositDueNow={depositDueNow}
+        />
 
         {/* Full-width bottom stack: map → meet host → things to know */}
         <ListingLocationMap
