@@ -8,6 +8,7 @@ import {
 } from "@/lib/features";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import {
+  guestDepositDueNow,
   guestPaymentOptions,
   guestValueToPaymentMethod,
   parsePaymentMethod,
@@ -97,6 +98,45 @@ describe("guestPaymentOptions", () => {
       websitePaymentMethod: "IN_PERSON_CARD",
     });
     expect(options[0]?.value).toBe("in_person_card");
+  });
+});
+
+describe("guestDepositDueNow", () => {
+  const prevEnabled = process.env.STRIPE_ENABLED;
+  const prevSecret = process.env.STRIPE_SECRET_KEY;
+  afterEach(() => {
+    if (prevEnabled === undefined) delete process.env.STRIPE_ENABLED;
+    else process.env.STRIPE_ENABLED = prevEnabled;
+    if (prevSecret === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = prevSecret;
+  });
+
+  it("is true when the host has a ready Stripe account", () => {
+    process.env.STRIPE_ENABLED = "true";
+    process.env.STRIPE_SECRET_KEY = "sk_test_security_helpers";
+    const options = guestPaymentOptions(
+      { stripeAccountId: "acct_test", websitePaymentMethod: "STRIPE" },
+      "marketplace",
+    );
+    expect(guestDepositDueNow(options)).toBe(true);
+  });
+
+  it("is false (request to book) when the host cannot take cards", () => {
+    process.env.STRIPE_ENABLED = "true";
+    process.env.STRIPE_SECRET_KEY = "sk_test_security_helpers";
+    const options = guestPaymentOptions(
+      { stripeAccountId: null, websitePaymentMethod: "STRIPE" },
+      "marketplace",
+    );
+    expect(guestDepositDueNow(options)).toBe(false);
+  });
+
+  it("is false for pay-the-host methods on the host site", () => {
+    const options = guestPaymentOptions(
+      { stripeAccountId: null, websitePaymentMethod: "MANUAL" },
+      "host_site",
+    );
+    expect(guestDepositDueNow(options)).toBe(false);
   });
 });
 

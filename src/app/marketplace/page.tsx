@@ -10,6 +10,7 @@ import {
 import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
 import { listingHrefWithSearch } from "@/lib/listing-href";
+import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 import { GuestDiscoverySections } from "@/components/guest-discovery-sections";
 import { TrackRecentSearch } from "@/components/track-browse-history";
 import { searchIsMeaningful } from "@/lib/browse-history";
@@ -170,6 +171,11 @@ async function StaysPanel({
       : getMarketplaceListingCount(),
   ]);
 
+  // Card links use the clean canonical URL unless the slug is shared.
+  const ambiguousSlugs = await ambiguousMarketplaceSlugs(
+    listings.map((p) => p.slug),
+  );
+
   const stayCount = hasActiveSearch
     ? listings.length
     : (totalListingCount ?? listings.length);
@@ -237,7 +243,7 @@ async function StaysPanel({
               checkOut,
               guests: rawGuests || guests,
               pets: rawPets || pets,
-            })}
+            }, ambiguousSlugs)}
             showHost
           />
         ))}

@@ -29,6 +29,12 @@ type Props = {
   propertySlug: string;
   hostSlug?: string;
   channel?: "host_site" | "marketplace" | "direct";
+  /**
+   * False when the host can't take the deposit online (no card/Bitcoin ready):
+   * show the /book request flow copy instead of "Deposit due now" / "Reserve".
+   * Computed server-side with guestDepositDueNow (same check as /book).
+   */
+  depositDueNow?: boolean;
   bookBasePath?: string;
   baseNightlyRate: number;
   weekendPremiumPercent?: number;
@@ -94,6 +100,7 @@ export function BookingWidget({
   propertySlug,
   hostSlug,
   channel = "host_site",
+  depositDueNow = true,
   bookBasePath,
   baseNightlyRate,
   weekendPremiumPercent = 0,
@@ -446,7 +453,11 @@ export function BookingWidget({
             </span>
           </div>
           <div className="flex justify-between text-stone-500">
-            <span>Deposit due now ({depositPercent}%)</span>
+            <span>
+              {depositDueNow
+                ? `Deposit due now (${depositPercent}%)`
+                : "Deposit after host approval · nothing charged now"}
+            </span>
             <span>
               {formatMoney((quote as { deposit: number }).deposit, currencySymbol)}
             </span>
@@ -465,10 +476,12 @@ export function BookingWidget({
         onClick={onBook}
         className="mt-4 min-h-12 w-full rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
       >
-        Reserve
+        {depositDueNow ? "Reserve" : "Request to book"}
       </button>
       <p className="mt-2 text-center text-xs text-stone-400">
-        You won&apos;t be charged until you confirm
+        {depositDueNow
+          ? "You won't be charged until you confirm"
+          : "The host reviews your request first"}
       </p>
     </div>
   );

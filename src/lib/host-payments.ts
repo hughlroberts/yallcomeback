@@ -177,6 +177,18 @@ export function guestPaymentOptions(
   return options.filter((o) => o.value !== "card" || o.ready);
 }
 
+/**
+ * True when the guest pays the deposit online at checkout (card or Bitcoin
+ * ready). Otherwise booking is a request: the deposit is arranged with the
+ * host after approval and nothing is charged now. Shared by /book and the
+ * listing page quote box so both show the same flow.
+ */
+export function guestDepositDueNow(options: GuestPayOption[]): boolean {
+  return options.some(
+    (o) => o.ready && (o.value === "card" || o.value === "bitcoin"),
+  );
+}
+
 export function defaultGuestPayMethod(
   options: GuestPayOption[],
 ): GuestPayMethod {

@@ -17,6 +17,7 @@ import { auth } from "@/lib/auth";
 import { formatBtc, quoteBtcFromUsd } from "@/lib/bitcoin";
 import {
   defaultGuestPayMethod,
+  guestDepositDueNow,
   guestPaymentOptions,
   resolveBookingChannel,
 } from "@/lib/host-payments";
@@ -204,7 +205,7 @@ export default async function BookPage({
   // No online card / Bitcoin / host method ready: this page becomes a
   // request to book. The deposit is arranged with the host after approval.
   const requestOnly = !payReady;
-  const paysNow = onlineCardOffered || bitcoinOffered;
+  const paysNow = guestDepositDueNow(payOptions);
   const btcQuote =
     bitcoinOffered && !quote.error
       ? await quoteBtcFromUsd(quote.depositAmount)

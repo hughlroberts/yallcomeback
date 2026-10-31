@@ -47,6 +47,8 @@ type ApiListing = {
   bathrooms?: number;
   images: { url: string; alt: string | null }[];
   host?: { name: string; slug: string } | null;
+  /** From /api/marketplace/stays: slug shared across hosts → keep ?host= */
+  slugShared?: boolean;
 };
 
 type Props = {
@@ -155,7 +157,7 @@ function listingToCard(
         checkOut: trip?.checkOut,
         guests: trip?.guests,
         pets: trip?.pets,
-      })
+      }, p.slugShared ? new Set([p.slug]) : new Set<string>())
     : `/marketplace/properties/${p.slug}`;
   const location = [p.city, p.region].filter(Boolean).join(", ");
   return (

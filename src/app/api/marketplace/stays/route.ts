@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMarketplaceListings } from "@/lib/host";
+import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 
 /**
  * JSON marketplace search for guest discovery carousels
@@ -39,6 +40,8 @@ export async function GET(req: NextRequest) {
     take,
   });
 
+  const ambiguous = await ambiguousMarketplaceSlugs(listings.map((p) => p.slug));
+
   return NextResponse.json({
     listings: listings.map((p) => ({
       id: p.id,
@@ -58,6 +61,8 @@ export async function GET(req: NextRequest) {
       host: p.host
         ? { name: p.host.name, slug: p.host.slug }
         : null,
+      /** Another marketplace host uses this slug → link needs ?host= */
+      slugShared: ambiguous.has(p.slug),
     })),
   });
 }

@@ -192,6 +192,13 @@ export default async function OpsUsersPage({
             Filter
           </Button>
         </form>
+        <a
+          href="/ops/users/export"
+          download
+          className="inline-flex h-11 items-center rounded-lg border border-stone-300 bg-white px-4 text-sm font-medium text-stone-800 hover:bg-stone-50"
+        >
+          Download CSV
+        </a>
         <Link href="/ops/settings/managers" className="text-sm font-medium text-bonnet hover:underline">
           Platform managers →
         </Link>

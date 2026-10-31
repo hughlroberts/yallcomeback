@@ -31,7 +31,11 @@ import { getSiteOrigin } from "@/lib/site-url";
 import { listingCanonicalPath, marketplaceListingHref } from "@/lib/site-url";
 import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 import { getRequestTenant } from "@/lib/tenant";
-import { resolveBookingChannel } from "@/lib/host-payments";
+import {
+  guestDepositDueNow,
+  guestPaymentOptions,
+  resolveBookingChannel,
+} from "@/lib/host-payments";
 import { pageMetadata } from "@/lib/seo";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { listingMetaDescription } from "@/lib/listing-meta-description";
@@ -160,6 +164,8 @@ export default async function MarketplacePropertyPage({
         createdAt: true,
         taxLiabilityAcknowledged: true,
         defaultDisclaimer: true,
+        stripeAccountId: true,
+        websitePaymentMethod: true,
         taxLines: {
           where: { active: true },
           orderBy: { sortOrder: "asc" as const },
@@ -256,6 +262,10 @@ export default async function MarketplacePropertyPage({
     tenantHostSlug: tenant?.slug,
     listingHostSlug: property.host.slug,
   });
+  // Same readiness check as /book: no card/Bitcoin ready → request to book.
+  const depositDueNow = guestDepositDueNow(
+    guestPaymentOptions(property.host, bookingChannel, property),
+  );
 
   const [ranges, staysHosted, brandOwner] = await Promise.all([
     getPublicUnavailableRanges(property.id),
@@ -457,6 +467,7 @@ export default async function MarketplacePropertyPage({
               hostSlug={property.host.slug}
               bookBasePath={`/book/${property.slug}`}
               channel={bookingChannel}
+              depositDueNow={depositDueNow}
               baseNightlyRate={property.baseNightlyRate}
               weekendPremiumPercent={property.weekendPremiumPercent}
               discountNewListingPercent={property.discountNewListingPercent}

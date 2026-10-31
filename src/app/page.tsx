@@ -14,7 +14,8 @@ import { StaySearchForm } from "@/components/stay-search-form";
 import { GuestDiscoverySections } from "@/components/guest-discovery-sections";
 import { FirstVisitIntentGate } from "@/components/first-visit-intent";
 import { prisma } from "@/lib/db";
-import { getSiteOrigin } from "@/lib/site-url";
+import { getSiteOrigin, marketplaceListingHref } from "@/lib/site-url";
+import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 import { auth } from "@/lib/auth";
 import { getRequestTenant } from "@/lib/tenant";
 import { INTENT_COOKIE, shouldShowIntentGate } from "@/lib/intent-cookie";
@@ -85,6 +86,12 @@ export default async function HomePage({
         : Promise.resolve(null),
       getMarketplacePlaceSuggestions(),
     ]);
+
+  // Listing links use the clean canonical URL unless the slug is shared.
+  const ambiguousSlugs = await ambiguousMarketplaceSlugs([
+    ...listings.map((p) => p.slug),
+    ...(featuredHost?.properties.map((p) => p.slug) ?? []),
+  ]);
 
   const websiteLd = {
     "@context": "https://schema.org",
@@ -247,7 +254,11 @@ export default async function HomePage({
                 ) : null}
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link
-                    href={`/marketplace/properties/${featuredHost.properties[0].slug}?host=${featuredHost.slug}`}
+                    href={marketplaceListingHref(
+                      featuredHost.properties[0].slug,
+                      featuredHost.slug,
+                      ambiguousSlugs,
+                    )}
                     className="rounded-full bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
                   >
                     View listing
@@ -294,7 +305,7 @@ export default async function HomePage({
               <PropertyCard
                 key={p.id}
                 property={p}
-                href={`/marketplace/properties/${p.slug}?host=${p.host.slug}`}
+                href={marketplaceListingHref(p.slug, p.host.slug, ambiguousSlugs)}
                 showHost
               />
             ))}
