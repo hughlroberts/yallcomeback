@@ -34,6 +34,27 @@ describe("platformGate", () => {
     );
   });
 
+  it.each(["/ops", "/ops/users", "/ops/users/export", "/ops/settings/backups/download"])(
+    "sends anonymous %s visitors to login with the admin-only notice",
+    (path) => {
+      const gate = platformGate({
+        isLoggedIn: false,
+        nextUrl: new URL(`https://www.yallcomeback.app${path}`),
+      });
+      expect(gate).toBeInstanceOf(Response);
+      const location = new URL((gate as Response).headers.get("location") ?? "");
+      expect(location.pathname).toBe("/login");
+      expect(location.searchParams.get("error")).toBe("admin_only");
+      expect(location.searchParams.get("callbackUrl")).toBe(path);
+    },
+  );
+
+  it("does not add the admin-only notice for anonymous /admin visitors", () => {
+    const gate = platformGate({ isLoggedIn: false, nextUrl });
+    const location = new URL((gate as Response).headers.get("location") ?? "");
+    expect(location.searchParams.get("error")).toBeNull();
+  });
+
   it("builds a same-origin login redirect", () => {
     const res = signInRedirect(nextUrl);
     const location = new URL(res.headers.get("location") ?? "");

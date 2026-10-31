@@ -6,8 +6,9 @@ import type { NextAuthConfig } from "next-auth";
  * custom middleware function: Auth.js then runs that function and
  * skips the sign-in redirect.
  */
-export function signInRedirect(nextUrl: URL): Response {
+export function signInRedirect(nextUrl: URL, error?: string): Response {
   const dest = new URL("/login", nextUrl.origin);
+  if (error) dest.searchParams.set("error", error);
   dest.searchParams.set("callbackUrl", `${nextUrl.pathname}${nextUrl.search}`);
   return Response.redirect(dest);
 }
@@ -29,7 +30,8 @@ export function platformGate(input: {
   }
 
   if (path.startsWith("/ops")) {
-    if (!isLoggedIn) return signInRedirect(nextUrl);
+    // Signed out: login shows "That page is for platform admins only."
+    if (!isLoggedIn) return signInRedirect(nextUrl, "admin_only");
     if (role !== "ADMIN") {
       return Response.redirect(new URL("/admin?error=admin_only", nextUrl));
     }

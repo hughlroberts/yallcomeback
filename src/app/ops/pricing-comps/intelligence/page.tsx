@@ -42,7 +42,7 @@ export default async function OpsPricingPage({
   }
 
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/pricing-comps/intelligence");
   const sp = await searchParams;
 
   const hosts = await prisma.host.findMany({

@@ -16,7 +16,7 @@ export default async function OpsManagersPage({
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/settings/managers");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/settings/managers");
 
   const sp = await searchParams;
   const managers = await prisma.user.findMany({

@@ -3,10 +3,12 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { formatMoney } from "@/lib/utils";
 import {
+  type BookingBarState,
   bookingBarCta,
   bookingBarDateLabel,
-  getBookingBarState,
+  getPublishedBookingBarState,
   getServerBookingBarState,
+  getServerPublishedBookingBarState,
   runBookingBarAction,
   subscribeBookingBar,
 } from "@/lib/booking-bar-state";
@@ -18,6 +20,12 @@ type Props = {
   targetId?: string;
   /** Same payment-ready flag as the quote box (guestDepositDueNow). */
   depositDueNow?: boolean;
+  /**
+   * Bar state computed on the server from ?checkIn/?checkOut (same quote math
+   * as the widget). Used for SSR and until the widget publishes, so the first
+   * paint shows dates/total instead of "Select dates to book".
+   */
+  initialState?: BookingBarState;
 };
 
 /**
@@ -29,14 +37,16 @@ export function MobileReserveBar({
   currencySymbol = "$",
   targetId = "reserve",
   depositDueNow = true,
+  initialState,
 }: Props) {
   const [show, setShow] = useState(true);
-  // Live dates/total from the booking widget (seeded from URL params there).
-  const bar = useSyncExternalStore(
+  // Live dates/total from the booking widget; server-computed state until it publishes.
+  const live = useSyncExternalStore(
     subscribeBookingBar,
-    getBookingBarState,
-    getServerBookingBarState,
+    getPublishedBookingBarState,
+    getServerPublishedBookingBarState,
   );
+  const bar = live ?? initialState ?? getServerBookingBarState();
   const dateLabel = bookingBarDateLabel(bar.checkIn, bar.checkOut);
   const ready = Boolean(dateLabel && bar.total != null && !bar.error);
 
@@ -91,7 +101,8 @@ export function MobileReserveBar({
               <span className="text-sm font-normal text-stone-500"> night</span>
             </p>
           )}
-          <p className="truncate text-xs text-stone-500">
+          {/* Wrap (max 2 lines) so "Minimum stay is N nights" isn't cut off at ~400px. */}
+          <p className="line-clamp-2 text-xs leading-snug text-stone-500">
             {dateLabel
               ? bar.error
                 ? `${dateLabel} · ${bar.error}`

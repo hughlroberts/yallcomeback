@@ -3,6 +3,8 @@ import {
   bookingBarCta,
   bookingBarDateLabel,
   getBookingBarState,
+  getPublishedBookingBarState,
+  getServerPublishedBookingBarState,
   publishBookingBarState,
   resetBookingBarState,
   runBookingBarAction,
@@ -56,5 +58,25 @@ describe("booking bar store", () => {
     expect(action).toHaveBeenCalled();
     setBookingBarAction(null);
     expect(runBookingBarAction()).toBe(false);
+  });
+  it("is unpublished until the widget publishes, and again after reset", () => {
+    resetBookingBarState();
+    expect(getServerPublishedBookingBarState()).toBeNull();
+    expect(getPublishedBookingBarState()).toBeNull();
+    const fn = vi.fn();
+    const unsub = subscribeBookingBar(fn);
+    // First publish notifies even when equal to the empty state (dates cleared).
+    publishBookingBarState({
+      checkIn: "",
+      checkOut: "",
+      nights: null,
+      total: null,
+      error: null,
+    });
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(getPublishedBookingBarState()).not.toBeNull();
+    resetBookingBarState();
+    expect(getPublishedBookingBarState()).toBeNull();
+    unsub();
   });
 });

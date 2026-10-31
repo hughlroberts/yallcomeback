@@ -23,7 +23,7 @@ export const metadata = { title: "Platform settings · Ops" };
 
 export default async function OpsSettingsPage() {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/settings");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/settings");
 
   const stripeEnabled = process.env.STRIPE_ENABLED === "true";
   const hasSecret = Boolean(process.env.STRIPE_SECRET_KEY);

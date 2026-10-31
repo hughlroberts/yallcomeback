@@ -43,7 +43,7 @@ export default async function OpsHostDetailPage({
   params: Promise<{ hostId: string }>;
 }) {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/hosting");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/hosting");
 
   const { hostId } = await params;
   const [host, plans] = await Promise.all([

@@ -21,7 +21,7 @@ export default async function OpsPricingCompsPage({
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/pricing-comps");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/pricing-comps");
   const sp = await searchParams;
   const comps = await prisma.pricingMarketComp.findMany({
     orderBy: [{ active: "desc" }, { region: "asc" }, { city: "asc" }, { title: "asc" }],

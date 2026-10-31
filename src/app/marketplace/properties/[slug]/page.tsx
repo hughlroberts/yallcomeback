@@ -1,3 +1,5 @@
+import { computeBookingQuote, initialPetCount } from "@/lib/booking-quote";
+import { bookingBarStateFromQuote } from "@/lib/booking-bar-state";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -286,6 +288,50 @@ export default async function MarketplacePropertyPage({
     }),
   ]);
   const blockedDates = Array.from(expandBlockedDates(ranges));
+  const widgetSeasons = property.seasons.map((s) => ({
+    name: s.name,
+    startDate: s.startDate.toISOString(),
+    endDate: s.endDate.toISOString(),
+    nightlyRate: s.nightlyRate,
+    minNights: s.minNights,
+  }));
+  const widgetTaxLines = property.host.taxLines.map((t) => ({
+    name: t.name,
+    ratePercent: t.ratePercent,
+    applyToLodging: t.applyToLodging,
+    applyToCleaning: t.applyToCleaning,
+    applyToPetFee: t.applyToPetFee,
+  }));
+  const initialPets = sp.pets ? Number(sp.pets) || undefined : undefined;
+  // Same quote math as the widget, so the mobile bar's first paint shows dates/total.
+  const initialCheckIn = sp.checkIn ?? "";
+  const initialCheckOut = sp.checkOut ?? "";
+  const initialBarState = bookingBarStateFromQuote(
+    initialCheckIn,
+    initialCheckOut,
+    computeBookingQuote({
+      checkIn: initialCheckIn,
+      checkOut: initialCheckOut,
+      pets: initialPetCount(property, initialPets),
+      baseNightlyRate: property.baseNightlyRate,
+      weekendPremiumPercent: property.weekendPremiumPercent,
+      discountNewListingPercent: property.discountNewListingPercent,
+      discountLastMinutePercent: property.discountLastMinutePercent,
+      discountWeeklyPercent: property.discountWeeklyPercent,
+      discountMonthlyPercent: property.discountMonthlyPercent,
+      defaultMinNights: property.defaultMinNights,
+      cleaningFee: property.cleaningFee,
+      petFee: property.petFee,
+      petFeeUnit: property.petFeeUnit,
+      petsAllowed: property.petsAllowed,
+      maxPets: property.maxPets,
+      depositPercent: property.depositPercent,
+      seasons: widgetSeasons,
+      blocked: new Set(blockedDates),
+      taxLines: widgetTaxLines,
+      taxLiabilityAcknowledged: property.host.taxLiabilityAcknowledged,
+    }),
+  );
   const amenities = parseAmenities(property.amenities);
   const disclaimer = resolveDisclaimer(
     property.disclaimer,
@@ -482,30 +528,18 @@ export default async function MarketplacePropertyPage({
               maxPets={property.maxPets}
               depositPercent={property.depositPercent}
               maxGuests={property.maxGuests}
-              seasons={property.seasons.map((s) => ({
-                name: s.name,
-                startDate: s.startDate.toISOString(),
-                endDate: s.endDate.toISOString(),
-                nightlyRate: s.nightlyRate,
-                minNights: s.minNights,
-              }))}
+              seasons={widgetSeasons}
               blockedDates={blockedDates}
               initialCheckIn={sp.checkIn}
               initialCheckOut={sp.checkOut}
               initialGuests={
                 sp.guests ? Number(sp.guests) || undefined : undefined
               }
-              initialPets={sp.pets ? Number(sp.pets) || undefined : undefined}
+              initialPets={initialPets}
               taxLiabilityAcknowledged={
                 property.host.taxLiabilityAcknowledged
               }
-              taxLines={property.host.taxLines.map((t) => ({
-                name: t.name,
-                ratePercent: t.ratePercent,
-                applyToLodging: t.applyToLodging,
-                applyToCleaning: t.applyToCleaning,
-                applyToPetFee: t.applyToPetFee,
-              }))}
+              taxLines={widgetTaxLines}
             />
           </div>
         </div>
@@ -513,6 +547,7 @@ export default async function MarketplacePropertyPage({
         <MobileReserveBar
           nightlyRate={property.baseNightlyRate}
           depositDueNow={depositDueNow}
+          initialState={initialBarState}
         />
 
         {/* Full-width bottom stack: map → meet host → things to know */}

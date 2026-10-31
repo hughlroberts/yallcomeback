@@ -23,7 +23,7 @@ function bytesLabel(n: number): string {
 
 export default async function OpsBackupsPage() {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/settings/backups");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/settings/backups");
 
   const [snap, propertyCount, hostCount, invoiceCount, bookingCount] =
     await Promise.all([

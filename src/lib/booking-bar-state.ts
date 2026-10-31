@@ -21,10 +21,18 @@ const EMPTY: BookingBarState = {
 };
 
 let state: BookingBarState = EMPTY;
+/** False until the widget publishes (and again after it unmounts). */
+let published = false;
 let bookAction: (() => void) | null = null;
 const listeners = new Set<() => void>();
 
 export function publishBookingBarState(next: BookingBarState): void {
+  if (!published) {
+    published = true;
+    state = next;
+    listeners.forEach((l) => l());
+    return;
+  }
   if (
     next.checkIn === state.checkIn &&
     next.checkOut === state.checkOut &&
@@ -40,7 +48,9 @@ export function publishBookingBarState(next: BookingBarState): void {
 
 export function resetBookingBarState(): void {
   bookAction = null;
-  publishBookingBarState(EMPTY);
+  published = false;
+  state = EMPTY;
+  listeners.forEach((l) => l());
 }
 
 export function subscribeBookingBar(listener: () => void): () => void {
@@ -54,6 +64,34 @@ export function getBookingBarState(): BookingBarState {
 
 export function getServerBookingBarState(): BookingBarState {
   return EMPTY;
+}
+
+/**
+ * Live widget state, or null before the widget has published.
+ * The bar falls back to its server-computed initial state while null, so the
+ * first paint (SSR + hydration) already shows dates/total from the URL.
+ */
+export function getPublishedBookingBarState(): BookingBarState | null {
+  return published ? state : null;
+}
+
+export function getServerPublishedBookingBarState(): BookingBarState | null {
+  return null;
+}
+
+/** Map a quote (computeBookingQuote) to bar state; used by widget and server. */
+export function bookingBarStateFromQuote(
+  checkIn: string,
+  checkOut: string,
+  quote: { nights?: number; total?: number; error?: string } | null,
+): BookingBarState {
+  return {
+    checkIn,
+    checkOut,
+    nights: quote?.nights ?? null,
+    total: quote?.error ? null : (quote?.total ?? null),
+    error: quote?.error || null,
+  };
 }
 
 /** Widget registers its "book" handler so the bar can start the same flow. */

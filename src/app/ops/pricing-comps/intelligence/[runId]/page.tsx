@@ -35,7 +35,7 @@ export default async function OpsPricingRunPage({
   }
 
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/pricing-comps/intelligence");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/pricing-comps/intelligence");
 
   const { runId } = await params;
   const sp = await searchParams;

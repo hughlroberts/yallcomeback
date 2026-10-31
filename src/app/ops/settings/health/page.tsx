@@ -121,7 +121,7 @@ export default async function OpsHealthPage({
   searchParams: Promise<{ tab?: string; hostId?: string }>;
 }) {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/settings/health");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/settings/health");
 
   const sp = await searchParams;
   const tab = parseHealthTab(sp.tab);

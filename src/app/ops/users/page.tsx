@@ -19,7 +19,7 @@ export default async function OpsUsersPage({
   searchParams: Promise<{ saved?: string; error?: string; q?: string; role?: string }>;
 }) {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/users");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/users");
 
   const sp = await searchParams;
   const q = sp.q?.trim().toLowerCase() || "";

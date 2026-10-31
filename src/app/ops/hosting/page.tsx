@@ -27,7 +27,7 @@ export const metadata = { title: "Website hosting · Ops" };
 
 export default async function OpsHostingPage() {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/hosting");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/hosting");
 
   const [pending, hosts, openInvoices, plans, renewals] = await Promise.all([
     prisma.host.findMany({

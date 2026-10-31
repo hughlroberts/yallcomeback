@@ -17,7 +17,7 @@ function stripeInvoiceUrl(id: string | null | undefined, hosted: string | null |
 
 export default async function OpsEarningsPage() {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/earnings");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/earnings");
 
   const data = await loadOpsEarnings();
   const payingCustomers = data.customers.filter((c) => !c.complimentary);

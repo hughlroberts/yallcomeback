@@ -19,7 +19,7 @@ export const metadata = { title: "Hosting plans · Ops" };
 
 export default async function OpsHostingPlansPage() {
   const session = await requirePlatformAdmin();
-  if (!session) redirect("/login?callbackUrl=/ops/hosting/plans");
+  if (!session) redirect("/login?error=admin_only&callbackUrl=/ops/hosting/plans");
 
   const plans = await prisma.hostingPlan.findMany({
     include: { _count: { select: { hosts: true } } },
