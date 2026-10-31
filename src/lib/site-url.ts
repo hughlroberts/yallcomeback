@@ -27,6 +27,21 @@ export function listingCanonicalPath(slug: string): string {
   return `/marketplace/properties/${encodeURIComponent(slug)}`;
 }
 
+/**
+ * Internal marketplace link to a listing. Uses the clean canonical path
+ * (no ?host=) unless another marketplace host uses the same property slug,
+ * in which case ?host= is still needed to pick the right listing.
+ */
+export function marketplaceListingHref(
+  slug: string,
+  hostSlug: string,
+  ambiguousSlugs: ReadonlySet<string>,
+): string {
+  return ambiguousSlugs.has(slug)
+    ? listingPublicPath(slug, hostSlug)
+    : listingCanonicalPath(slug);
+}
+
 /** Where a fridge-magnet QR should open. */
 export type MagnetLinkTarget = "marketplace" | "host";
 

@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import {
   Building2,
   CalendarDays,
   Globe,
   Heart,
+  Loader2,
   LogOut,
   Menu,
   MessageCircle,
@@ -135,6 +136,34 @@ export function UserMenu({
   }, [open]);
 
   const close = () => setOpen(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  /**
+   * Close the menu and show a pending state right away, POST /logout (which
+   * clears the session cookies), then hard-navigate so no signed-in client
+   * state or RSC cache survives. Falls back to the native form POST.
+   */
+  async function onLogout(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (loggingOut) return;
+    const form = e.currentTarget;
+    setOpen(false);
+    setLoggingOut(true);
+    try {
+      const res = await fetch("/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        redirect: "manual",
+      });
+      if (res.type !== "opaqueredirect" && !res.ok) {
+        throw new Error(`logout ${res.status}`);
+      }
+      window.location.replace("/");
+    } catch {
+      form.submit();
+    }
+  }
 
   // Logged out: account only — Find / Host live in the primary nav
   if (!isSignedIn) {
@@ -157,6 +186,9 @@ export function UserMenu({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-controls={menuId}
+        disabled={loggingOut}
+        aria-busy={loggingOut || undefined}
+        aria-label={loggingOut ? "Logging out" : undefined}
         onClick={(e) => {
           e.stopPropagation();
           setOpen((v) => !v);
@@ -165,6 +197,7 @@ export function UserMenu({
           "flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 shadow-sm transition",
           "hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet",
           open && "shadow-md ring-1 ring-slate-200",
+          loggingOut && "cursor-wait opacity-60",
         )}
       >
         <AvatarCircle
@@ -174,11 +207,27 @@ export function UserMenu({
           sizeClass="size-9"
         />
         <span className="relative flex size-8 items-center justify-center rounded-full">
-          <Menu className="size-4 text-stone-800" strokeWidth={2} />
+          {loggingOut ? (
+            <Loader2
+              className="size-4 animate-spin text-stone-800"
+              strokeWidth={2}
+            />
+          ) : (
+            <Menu className="size-4 text-stone-800" strokeWidth={2} />
+          )}
         </span>
       </button>
 
-      {open ? (
+      {loggingOut ? (
+        <span
+          role="status"
+          className="absolute right-0 top-full z-[210] mt-2 whitespace-nowrap rounded-[var(--radius-control)] bg-stone-900 px-3 py-1.5 text-xs font-medium text-white shadow-lg"
+        >
+          Logging out…
+        </span>
+      ) : null}
+
+      {open && !loggingOut ? (
         <div
           id={menuId}
           role="menu"
@@ -284,10 +333,11 @@ export function UserMenu({
           </div>
 
           <div className="border-t border-stone-100 py-1">
-            {/* Plain POST to /logout: a full navigation, no server action id. */}
-            <form method="post" action="/logout">
+            {/* POST /logout (no server action id), then a hard navigation. */}
+            <form method="post" action="/logout" onSubmit={onLogout}>
               <button
                 type="submit"
+                disabled={loggingOut}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-stone-800 transition hover:bg-stone-50"
               >
                 <LogOut

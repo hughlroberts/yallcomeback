@@ -15,3 +15,26 @@ export function parseVisitIntent(raw: string | undefined | null): VisitIntent | 
   if (v === "find" || v === "host" || v === "browse") return v;
   return null;
 }
+
+/** `?welcome=1` (or true/yes) forces the welcome overlay, e.g. for demos and QA. */
+export function isWelcomeForced(raw: string | string[] | undefined | null): boolean {
+  const v = (Array.isArray(raw) ? raw[0] : raw)?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+/** Whether the platform home shows the Find / Host welcome overlay. */
+export function shouldShowIntentGate(input: {
+  isTenantSite: boolean;
+  isHostOrAdmin: boolean;
+  intentCookie: string | undefined | null;
+  welcomeParam?: string | string[] | null;
+}): boolean {
+  // Host custom sites never show the marketplace fork.
+  if (input.isTenantSite) return false;
+  // Forced: ignore the cookie (and role) so anyone can preview it.
+  if (isWelcomeForced(input.welcomeParam)) return true;
+  return (
+    !input.isHostOrAdmin &&
+    parseVisitIntent(input.intentCookie) == null
+  );
+}

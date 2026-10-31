@@ -795,6 +795,20 @@ model Payment {
   bitcoinRateUsd  Float?
   /// On-chain transaction id when confirmed
   bitcoinTxId     String?
+  /// Stripe PaymentIntent (pi_…) for card deposits; set by the checkout webhook
+  stripePaymentIntentId String?
+  /// Connected account (acct_…) the Direct Charge lives on
+  stripeAccountId String?
+  /// Last Stripe refund id (re_…)
+  stripeRefundId  String?
+  /// Total refunded so far in USD (partial or full)
+  refundedAmount  Float?
+  refundedAt      DateTime?
+  /// User id of the platform admin who refunded, or null for automatic refunds
+  refundedByUserId String?
+  /// Email of the admin, or "system:stripe-webhook" for automatic race refunds
+  refundedBy      String?
+  refundReason    String?
   notes           String?
   paidAt          DateTime?
   createdAt       DateTime      @default(now())

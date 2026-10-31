@@ -199,13 +199,12 @@ export default async function BookPage({
   const bitcoinOffered = payOptions.some((o) => o.value === "bitcoin" && o.ready);
   const onlineCardOffered = payOptions.some((o) => o.value === "card" && o.ready);
   const payReady = payOptions.some((o) => o.ready);
-  const payBlocked =
-    payOptions.find((o) => !o.ready)?.blockedReason ||
-    (payOptions.length === 0
-      ? "Online card is not available for this host yet."
-      : undefined);
   const { canHostAddFutureWork } = await import("@/lib/hosting");
   const hostTakesNewStays = canHostAddFutureWork(property.host);
+  // No online card / Bitcoin / host method ready: this page becomes a
+  // request to book. The deposit is arranged with the host after approval.
+  const requestOnly = !payReady;
+  const paysNow = onlineCardOffered || bitcoinOffered;
   const btcQuote =
     bitcoinOffered && !quote.error
       ? await quoteBtcFromUsd(quote.depositAmount)
@@ -222,7 +221,7 @@ export default async function BookPage({
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
-        Confirm and pay deposit
+        {paysNow ? "Confirm and pay deposit" : "Request to book"}
       </h1>
       {channel === "marketplace" ? (
         <p className="mt-1 text-sm text-stone-500">via marketplace</p>
@@ -332,12 +331,15 @@ export default async function BookPage({
           <div className="flex flex-col items-end gap-3 sm:min-w-[220px]">
             <BrandSeal size={64} className="h-16 w-16" />
             <div className="w-full rounded-2xl bg-bonnet px-6 py-5 text-white shadow-md sm:text-right">
-              <p className="text-sm font-medium text-honey/90">Deposit due now</p>
+              <p className="text-sm font-medium text-honey/90">
+                {paysNow ? "Deposit due now" : "Deposit after host approval"}
+              </p>
               <p className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
                 {formatMoney(quote.depositAmount)}
               </p>
               <p className="mt-1 text-sm text-honey/80">
                 of {formatMoney(quote.totalAmount)} stay total
+                {paysNow ? "" : " · nothing charged now"}
               </p>
             </div>
           </div>
@@ -422,12 +424,12 @@ export default async function BookPage({
             unchanged.
           </p>
         ) : null}
-        {!payReady && payBlocked ? (
+        {requestOnly && hostTakesNewStays ? (
           <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-base text-amber-900">
-            {payBlocked}
-            {channel === "marketplace"
-              ? " Message the host, or book on their website if they take another method."
-              : ""}
+            This host does not take online payment yet, so this is a request to
+            book. Nothing is charged now. The host reviews your request and,
+            once they approve it, arranges the{" "}
+            {formatMoney(quote.depositAmount)} deposit with you directly.
           </p>
         ) : null}
         {payReady && !onlineCardOffered ? (
@@ -490,7 +492,7 @@ export default async function BookPage({
 
       <div className="mt-10 max-w-xl">
         <h2 className="text-xl font-semibold text-stone-900">
-          Payment &amp; contact
+          {requestOnly ? "Your details" : <>Payment &amp; contact</>}
         </h2>
         <form action={createBooking} className="mt-5 space-y-4">
           <input type="hidden" name="propertyId" value={property.id} />
@@ -500,6 +502,7 @@ export default async function BookPage({
           <input type="hidden" name="pets" value={pets} />
           <input type="hidden" name="sourceChannel" value={channel} />
 
+          {requestOnly ? null : (
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium text-stone-800">
               How will you pay the deposit?
@@ -534,6 +537,7 @@ export default async function BookPage({
               </label>
             ))}
           </fieldset>
+          )}
 
           {isSignedIn && signedInUser ? (
             <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
@@ -645,12 +649,10 @@ export default async function BookPage({
 
           <Button
             type="submit"
-            disabled={!available || !!quote.error || !payReady || !hostTakesNewStays}
+            disabled={!available || !!quote.error || !hostTakesNewStays}
             className="w-full"
           >
-            {onlineCardOffered || bitcoinOffered
-              ? "Continue to pay deposit"
-              : "Request booking"}
+            {paysNow ? "Continue to pay deposit" : "Request to book"}
           </Button>
         </form>
       </div>

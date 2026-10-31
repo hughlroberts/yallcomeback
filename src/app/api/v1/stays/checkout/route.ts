@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  agentApiDisabledResponse,
-  agentCheckoutUnauthorized,
-} from "@/lib/agent/guard";
+import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { createAgentStayCheckout } from "@/lib/agent/checkout";
 import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
 
@@ -11,11 +8,15 @@ export const dynamic = "force-dynamic";
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type",
 };
 
+// Public endpoint (no token). Per-IP limits stop anonymous callers from
+// flooding Stripe with Checkout Sessions; Railway sets X-Real-IP at the edge.
 const CHECKOUT_IP_LIMIT = 10;
 const CHECKOUT_IP_WINDOW_MS = 15 * 60 * 1000;
+const CHECKOUT_IP_DAILY_LIMIT = 40;
+const CHECKOUT_IP_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const CHECKOUT_EMAIL_LIMIT = 5;
 const CHECKOUT_EMAIL_WINDOW_MS = 60 * 60 * 1000;
 
@@ -27,15 +28,13 @@ function withCors(res: NextResponse): NextResponse {
 }
 
 /**
- * Pay-first agent checkout. Card Checkout URL only.
- * Calendar is not written until Stripe says the deposit is paid.
+ * Public pay-first agent checkout (no token). Card Checkout URL only.
+ * Nothing is held: the calendar is written only when Stripe says the deposit
+ * is paid, and the webhook refunds a payment that lost the dates to another.
  */
 export async function POST(req: NextRequest) {
   const disabled = agentApiDisabledResponse();
   if (disabled) return disabled;
-
-  const denied = agentCheckoutUnauthorized(req);
-  if (denied) return withCors(denied);
 
   const ip = incomingIpFromRequest(req);
   if (
@@ -43,6 +42,11 @@ export async function POST(req: NextRequest) {
       `agent-checkout:ip:${ip}`,
       CHECKOUT_IP_LIMIT,
       CHECKOUT_IP_WINDOW_MS,
+    ) ||
+    !rateLimitAllow(
+      `agent-checkout:ip-day:${ip}`,
+      CHECKOUT_IP_DAILY_LIMIT,
+      CHECKOUT_IP_DAILY_WINDOW_MS,
     )
   ) {
     return withCors(

@@ -1,7 +1,11 @@
 <!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
 
-This version has breaking changes - APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
 <!-- END:nextjs-agent-rules -->
 
 # Yall Come Back agent rules
@@ -89,7 +93,7 @@ When the hosted product is on (`isAgentApiEnabled()`):
 | Search | `/api/v1/search` |
 | Listing detail | `/api/v1/listings/{slug}` |
 | Availability | `/api/v1/listings/{slug}/availability` |
-| Pay-first checkout | `POST /api/v1/stays/checkout` with `Authorization: Bearer` (`AGENT_API_TOKEN`). Read endpoints stay public. |
+| Pay-first checkout | `POST /api/v1/stays/checkout`, public (no token), rate limited per IP and guest email. No date hold; the Stripe webhook rechecks the dates and refunds a payment that lost the race. |
 | Plugin hint | `/.well-known/ai-plugin.json` |
 
 Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`. Keep those files in sync with marketplace search when you change hosted search/listing fields. Do not advertise this surface in the open-source product.

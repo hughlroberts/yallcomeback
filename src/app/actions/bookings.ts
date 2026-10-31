@@ -136,20 +136,23 @@ export async function createBooking(formData: FormData) {
 
   const payOptions = guestPaymentOptions(property.host, channel, property);
   const allowed = new Set(payOptions.filter((o) => o.ready).map((o) => o.value));
-  if (allowed.size === 0) {
-    throw new Error(
-      payOptions[0]?.blockedReason ||
-        "This listing is not ready to take a deposit.",
-    );
-  }
+  // No payment method ready (e.g. host has not finished card onboarding):
+  // take a request to book. Nothing is charged; the host approves and
+  // arranges the deposit with the guest directly (recorded as MANUAL).
+  const requestOnly = allowed.size === 0;
 
-  const chosenPay = payMethodRaw
-    ? paymentMethodToGuestValue(guestValueToPaymentMethod(payMethodRaw))
-    : defaultGuestPayMethod(payOptions);
-  if (!allowed.has(chosenPay)) {
-    throw new Error("Choose a payment method this listing offers.");
+  let method: PaymentMethod;
+  if (requestOnly) {
+    method = "MANUAL";
+  } else {
+    const chosenPay = payMethodRaw
+      ? paymentMethodToGuestValue(guestValueToPaymentMethod(payMethodRaw))
+      : defaultGuestPayMethod(payOptions);
+    if (!allowed.has(chosenPay)) {
+      throw new Error("Choose a payment method this listing offers.");
+    }
+    method = guestValueToPaymentMethod(chosenPay);
   }
-  const method: PaymentMethod = guestValueToPaymentMethod(chosenPay);
   // Server-side reject: Online card requires a usable Stripe connected account.
   if (method === "STRIPE") {
     const { isStripeConfigured } = await import("@/lib/stripe");
@@ -219,7 +222,9 @@ export async function createBooking(formData: FormData) {
             notes:
               method === "BITCOIN"
                 ? `Bitcoin deposit - pay ${quote.depositAmount.toFixed(2)} USD equivalent`
-                : null,
+                : requestOnly
+                  ? "Request to book - deposit to be arranged with the host after approval"
+                  : null,
           },
         },
       },

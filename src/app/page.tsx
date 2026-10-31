@@ -17,13 +17,18 @@ import { prisma } from "@/lib/db";
 import { getSiteOrigin } from "@/lib/site-url";
 import { auth } from "@/lib/auth";
 import { getRequestTenant } from "@/lib/tenant";
-import { INTENT_COOKIE, parseVisitIntent } from "@/lib/intent-cookie";
+import { INTENT_COOKIE, shouldShowIntentGate } from "@/lib/intent-cookie";
 import { homePageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const metadata = homePageMetadata();
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ welcome?: string | string[] }>;
+}) {
+  const sp = (await searchParams) ?? {};
   const [showDiscovery, origin, tenant, session, jar] = await Promise.all([
     marketplaceDiscoveryEnabled(),
     getSiteOrigin(),
@@ -33,10 +38,13 @@ export default async function HomePage() {
   ]);
   const isHostOrAdmin =
     session?.user?.role === "HOST" || session?.user?.role === "ADMIN";
-  const showIntentGate =
-    !tenant &&
-    !isHostOrAdmin &&
-    parseVisitIntent(jar.get(INTENT_COOKIE)?.value) == null;
+  // ?welcome=1 forces the overlay regardless of the ycb_intent cookie.
+  const showIntentGate = shouldShowIntentGate({
+    isTenantSite: Boolean(tenant),
+    isHostOrAdmin,
+    intentCookie: jar.get(INTENT_COOKIE)?.value,
+    welcomeParam: sp.welcome,
+  });
 
   const [listings, listingCount, liveHosts, featuredHost, placeSuggestions] =
     await Promise.all([

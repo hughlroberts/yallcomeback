@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/utils";
 import { markDepositPaid, cancelBooking } from "@/app/actions/bookings";
+import { adminRefundBookingDeposit } from "@/app/actions/booking-refunds";
+import { refundableRemaining } from "@/lib/booking-refunds";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { SleepingArrangementsDisplay } from "@/components/sleeping-arrangements-display";
 import { requireHostAdmin } from "@/lib/auth";
@@ -12,8 +14,10 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminBookingDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ refunded?: string; refundError?: string }>;
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/bookings");
@@ -24,6 +28,17 @@ export default async function AdminBookingDetailPage({
     include: { property: true, payments: true },
   });
   if (!booking) notFound();
+
+  const flash = (await searchParams) ?? {};
+  // Refund button: platform admins only (the action re-checks server-side).
+  const refundable = access.isPlatform
+    ? booking.payments.find(
+        (p) =>
+          p.method === "STRIPE" &&
+          p.status === "PAID" &&
+          refundableRemaining(p) > 0,
+      )
+    : undefined;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -100,6 +115,17 @@ export default async function AdminBookingDetailPage({
         )}
       </Card>
 
+      {flash.refunded ? (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {flash.refunded}
+        </p>
+      ) : null}
+      {flash.refundError ? (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          Refund not issued: {flash.refundError}
+        </p>
+      ) : null}
+
       <Card>
         <h2 className="font-semibold">Payments</h2>
         <ul className="mt-3 space-y-2 text-sm">
@@ -115,6 +141,17 @@ export default async function AdminBookingDetailPage({
                 </span>
                 <span className="shrink-0">{formatMoney(p.amount)} USD</span>
               </div>
+              {p.refundedAmount ? (
+                <div className="text-xs text-stone-500">
+                  Refunded {formatMoney(p.refundedAmount)} USD
+                  {p.refundedAt
+                    ? ` on ${p.refundedAt.toISOString().slice(0, 16).replace("T", " ")} UTC`
+                    : ""}
+                  {p.refundedBy ? ` by ${p.refundedBy}` : ""}
+                  {p.stripeRefundId ? ` · ${p.stripeRefundId}` : ""}
+                  {p.refundReason ? ` · ${p.refundReason}` : ""}
+                </div>
+              ) : null}
               {p.method === "BITCOIN" ? (
                 <div className="text-xs text-stone-500">
                   {p.bitcoinAmountBtc != null
@@ -189,6 +226,42 @@ export default async function AdminBookingDetailPage({
           </form>
         </Card>
       )}
+
+      {refundable ? (
+        <Card>
+          <h2 className="font-semibold">Refund card deposit</h2>
+          <p className="mt-1 text-sm text-stone-500">
+            Platform admin only. Refunds through Stripe on the host&apos;s
+            connected account. Up to{" "}
+            {formatMoney(refundableRemaining(refundable))} USD is refundable.
+          </p>
+          <form action={adminRefundBookingDeposit} className="mt-4 space-y-3">
+            <input type="hidden" name="bookingId" value={booking.id} />
+            <div>
+              <Label htmlFor="refundAmount">
+                Amount in USD (leave blank for a full refund)
+              </Label>
+              <Input
+                id="refundAmount"
+                name="amount"
+                inputMode="decimal"
+                placeholder={refundableRemaining(refundable).toFixed(2)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="refundReason">Reason (saved on the booking)</Label>
+              <Textarea id="refundReason" name="reason" rows={2} />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="cancelBooking" />
+              Also cancel the booking and free the calendar
+            </label>
+            <Button type="submit" variant="danger">
+              Refund through Stripe
+            </Button>
+          </form>
+        </Card>
+      ) : null}
 
       {booking.status !== "CANCELLED" && (
         <form action={cancelBooking}>

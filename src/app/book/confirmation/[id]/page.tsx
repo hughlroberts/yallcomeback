@@ -81,6 +81,9 @@ export default async function ConfirmationPage({
   const isBitcoin =
     payment?.method === "BITCOIN" && payment.status === "PENDING";
   const isStripePending = sp.pendingStripe === "1" || payment?.method === "STRIPE";
+  const isRequest =
+    payment?.method === "MANUAL" &&
+    Boolean(payment.notes?.startsWith("Request to book"));
 
   const btcUri =
     isBitcoin && payment?.bitcoinAddress
@@ -104,7 +107,9 @@ export default async function ConfirmationPage({
         <p className="mt-2 text-stone-500">
           {isBitcoin
             ? `We've reserved ${booking.property.title}. Send the deposit in Bitcoin to confirm.`
-            : `We've reserved ${booking.property.title} for your dates. A host will confirm your deposit shortly.`}
+            : isRequest
+              ? `Your request for ${booking.property.title} is in. Nothing was charged. The host will review it and arrange the deposit with you after they approve.`
+              : `We've reserved ${booking.property.title} for your dates. A host will confirm your deposit shortly.`}
         </p>
       </div>
 

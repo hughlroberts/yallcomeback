@@ -317,9 +317,14 @@ export async function createDirectChargeCheckout(opts: {
           quantity: opts.quantity ?? 1,
         },
       ],
+      // Copy metadata onto the PaymentIntent so refunds can find the charge
+      // by bookingId (PaymentIntent search) even without a stored pi_ id.
       payment_intent_data:
-        fee > 0
-          ? { application_fee_amount: fee }
+        fee > 0 || opts.metadata
+          ? {
+              ...(fee > 0 ? { application_fee_amount: fee } : {}),
+              ...(opts.metadata ? { metadata: opts.metadata } : {}),
+            }
           : undefined,
       success_url: `${origin}${opts.successPath}${opts.successPath.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${opts.cancelPath}`,

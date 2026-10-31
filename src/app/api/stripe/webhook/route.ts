@@ -25,19 +25,31 @@ export async function POST(req: Request) {
 
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Platform endpoint secret, plus an optional second secret when the
+  // "Connected accounts" endpoint is a separate destination in Stripe.
+  const secrets = [
+    process.env.STRIPE_WEBHOOK_SECRET?.trim(),
+    process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim(),
+  ].filter((v): v is string => Boolean(v));
 
-  if (!sig || !secret) {
+  if (!sig || secrets.length === 0) {
     return NextResponse.json(
       { error: "Webhook not configured" },
       { status: 503 },
     );
   }
 
-  let event;
-  try {
-    event = stripeClient.webhooks.constructEvent(body, sig, secret);
-  } catch {
+  let event: ReturnType<typeof stripeClient.webhooks.constructEvent> | null =
+    null;
+  for (const secret of secrets) {
+    try {
+      event = stripeClient.webhooks.constructEvent(body, sig, secret);
+      break;
+    } catch {
+      /* try the next secret */
+    }
+  }
+  if (!event) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -101,80 +113,27 @@ export async function POST(req: Request) {
         },
       });
     }
-    if (
-      session.metadata?.kind === "booking_deposit" &&
-      session.metadata.bookingId &&
-      session.payment_status === "paid"
-    ) {
-      const booking = await prisma.booking.findUnique({
-        where: { id: session.metadata.bookingId },
-        include: { payments: true },
-      });
-      if (booking && booking.status === "PENDING_PAYMENT") {
-        const existingBlock = await prisma.calendarBlock.findFirst({
-          where: { bookingId: booking.id },
-          select: { id: true },
-        });
-        let calendarOk = Boolean(existingBlock);
-        if (!existingBlock) {
-          const { isRangeAvailable, lockPropertyBookings } = await import(
-            "@/lib/availability"
-          );
-          try {
-            await prisma.$transaction(async (tx) => {
-              await lockPropertyBookings(tx, booking.propertyId);
-              const free = await isRangeAvailable(
-                booking.propertyId,
-                booking.checkIn,
-                booking.checkOut,
-                booking.id,
-                tx,
-              );
-              if (!free) {
-                throw new Error("Dates taken after checkout");
-              }
-              await tx.calendarBlock.create({
-                data: {
-                  propertyId: booking.propertyId,
-                  bookingId: booking.id,
-                  source: "BOOKING",
-                  startDate: booking.checkIn,
-                  endDate: booking.checkOut,
-                  occupantName: booking.guestName,
-                  paymentMethod: "STRIPE",
-                  notes: `Booking ${booking.id} (CONFIRMED)`,
-                },
-              });
-            });
-            calendarOk = true;
-          } catch (e) {
-            console.error(
-              "[stripe] booking calendar block failed",
-              booking.id,
-              e,
-            );
-          }
-        }
-        if (calendarOk) {
-          const pending = booking.payments.find((p) => p.status === "PENDING");
-          if (pending) {
-            await prisma.payment.update({
-              where: { id: pending.id },
-              data: { status: "PAID", paidAt: new Date() },
-            });
-          }
-          await prisma.booking.update({
-            where: { id: booking.id },
-            data: { status: "CONFIRMED" },
-          });
-          const { trackAnalyticsEvent } = await import("@/lib/analytics");
-          trackAnalyticsEvent({
-            name: "booking_completed",
-            listingId: booking.propertyId,
-            bookingId: booking.id,
-            value: booking.totalAmount,
-          });
-        }
+    if (session.metadata?.kind === "booking_deposit") {
+      // Direct Charges live on the host's connected account (event.account).
+      const { settleBookingDepositSession } = await import(
+        "@/lib/booking-deposit-webhook"
+      );
+      try {
+        await settleBookingDepositSession(
+          event.data.object as Parameters<typeof settleBookingDepositSession>[0],
+          (event as { account?: string | null }).account ?? null,
+        );
+      } catch (e) {
+        console.error(
+          "[stripe] booking deposit settle failed",
+          session.metadata.bookingId,
+          e,
+        );
+        // 500 → Stripe retries; settle + refund are idempotent.
+        return NextResponse.json(
+          { error: "Booking deposit not settled" },
+          { status: 500 },
+        );
       }
     }
     if (session.metadata?.kind === "hosting_subscription") {

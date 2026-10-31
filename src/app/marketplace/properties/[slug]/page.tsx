@@ -28,7 +28,8 @@ import { TrackRecentlyViewed } from "@/components/track-browse-history";
 import { TrackListingView } from "@/components/track-listing-view";
 import { ListingJsonLd } from "@/components/listing-json-ld";
 import { getSiteOrigin } from "@/lib/site-url";
-import { listingCanonicalPath, listingPublicPath } from "@/lib/site-url";
+import { listingCanonicalPath, marketplaceListingHref } from "@/lib/site-url";
+import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 import { getRequestTenant } from "@/lib/tenant";
 import { resolveBookingChannel } from "@/lib/host-payments";
 import { pageMetadata } from "@/lib/seo";
@@ -291,6 +292,10 @@ export default async function MarketplacePropertyPage({
       region: property.region,
     },
     6,
+  );
+  // Sibling links use the clean canonical URL unless the slug is shared.
+  const ambiguousNearby = await ambiguousMarketplaceSlugs(
+    nearby.map((n) => n.slug),
   );
 
   const origin = await getSiteOrigin();
@@ -572,7 +577,11 @@ export default async function MarketplacePropertyPage({
                     ...item,
                     images: item.images ?? [],
                   }}
-                  href={`/marketplace/properties/${item.slug}?host=${item.host.slug}`}
+                  href={marketplaceListingHref(
+                    item.slug,
+                    item.host.slug,
+                    ambiguousNearby,
+                  )}
                   showHost
                   distanceLabel={item.distanceLabel}
                 />

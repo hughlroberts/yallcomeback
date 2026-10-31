@@ -1,7 +1,9 @@
 /**
- * Pay-first agent stay checkout.
+ * Pay-first agent stay checkout (public, rate limited per IP).
  * Stripe Checkout is created first. Calendar is written only after the
  * charge webhook. Abandoned sessions expire; they never hold the calendar.
+ * If two guests pay for overlapping nights, the first webhook wins and the
+ * later payment is refunded automatically (see booking-deposit-webhook.ts).
  */
 import { prisma } from "@/lib/db";
 import { calculateQuote } from "@/lib/pricing";
@@ -111,11 +113,20 @@ export async function createAgentStayCheckout(
     return { ok: false, status: 400, error: "This stay does not allow pets." };
   }
 
-  if (!isStripeConfigured() || !property.host.stripeAccountId) {
+  if (!isStripeConfigured()) {
     return {
       ok: false,
       status: 409,
-      error: "This listing is not ready to take a card deposit.",
+      error:
+        "This listing is not ready to take a card deposit: online card is not on for the platform yet.",
+    };
+  }
+  if (!property.host.stripeAccountId) {
+    return {
+      ok: false,
+      status: 409,
+      error:
+        "This listing is not ready to take a card deposit: the host has not finished Stripe card onboarding. Send the guest to bookUrl or have them message the host.",
     };
   }
 

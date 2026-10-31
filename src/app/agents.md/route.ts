@@ -76,7 +76,7 @@ Use \`listing.url\` and \`listing.bookUrl\` to send humans into the product.
 
 \`\`\`
 POST ${origin}/api/v1/stays/checkout
-Authorization: Bearer <agent token>
+Content-Type: application/json
 {
   "slug": "listing-slug",
   "checkIn": "${checkIn}",
@@ -88,7 +88,7 @@ Authorization: Bearer <agent token>
 }
 \`\`\`
 
-Requires \`Authorization: Bearer\` with the platform agent token. Read endpoints stay open. Returns \`checkoutUrl\`. Calendar is written only after the card is paid. Do not send \`paid: true\`. Sessions expire in 30 minutes.
+Public: no token or API key, rate limited per IP (10 per 15 minutes, 40 per day) and per guest email (5 per hour). Returns \`checkoutUrl\`. Dates are not held; the calendar is written only after the card is paid. If another guest pays for overlapping nights first, this payment is refunded in full automatically and the booking is cancelled. A 409 means the dates are taken or the host is not ready to take a card deposit yet. Do not send \`paid: true\`. Sessions expire in 30 minutes.
 
 ## Rate limits / etiquette
 

@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { platformGate, signInRedirect } from "@/auth.config";
-import { agentCheckoutUnauthorized } from "@/lib/agent/guard";
 import { ipFromHeaders } from "@/lib/rate-limit";
 import { assertSafeOutboundUrl, pinnedLookup } from "@/lib/safe-url";
 
@@ -58,41 +57,6 @@ describe("ipFromHeaders", () => {
       "x-forwarded-for": "198.51.100.8",
     });
     expect(ipFromHeaders(headers)).toBe("unknown");
-  });
-});
-
-describe("agentCheckoutUnauthorized", () => {
-  const prev = process.env.AGENT_API_TOKEN;
-
-  afterEach(() => {
-    if (prev === undefined) delete process.env.AGENT_API_TOKEN;
-    else process.env.AGENT_API_TOKEN = prev;
-  });
-
-  it("fails closed when the token is unset", async () => {
-    delete process.env.AGENT_API_TOKEN;
-    const res = agentCheckoutUnauthorized(
-      new Request("https://www.yallcomeback.app/api/v1/stays/checkout"),
-    );
-    expect(res?.status).toBe(503);
-  });
-
-  it("rejects a missing bearer", async () => {
-    process.env.AGENT_API_TOKEN = "test-agent-token";
-    const res = agentCheckoutUnauthorized(
-      new Request("https://www.yallcomeback.app/api/v1/stays/checkout"),
-    );
-    expect(res?.status).toBe(401);
-  });
-
-  it("accepts the matching bearer", () => {
-    process.env.AGENT_API_TOKEN = "test-agent-token";
-    const res = agentCheckoutUnauthorized(
-      new Request("https://www.yallcomeback.app/api/v1/stays/checkout", {
-        headers: { authorization: "Bearer test-agent-token" },
-      }),
-    );
-    expect(res).toBeNull();
   });
 });
 

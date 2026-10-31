@@ -46,7 +46,7 @@ Help: ${origin}/help/become-a-host and ${origin}/help/branded-website
 - OpenAPI 3.1: ${origin}/api/v1/openapi.json
 - Search: ${origin}/api/v1/search
 - Listing detail: ${origin}/api/v1/listings/{slug}
-- Pay-first checkout: POST ${origin}/api/v1/stays/checkout (Authorization: Bearer required)
+- Pay-first checkout: POST ${origin}/api/v1/stays/checkout (public, no token, rate limited per IP)
 - Human marketplace: ${origin}/marketplace
 - Human docs page: ${origin}/agents.md
 - Terms of Service: ${origin}/terms
@@ -89,7 +89,6 @@ Returns availableWindows plus blockedRanges for agents that need calendar reason
 ## Pay-first checkout (card only)
 
 POST ${origin}/api/v1/stays/checkout
-Authorization: Bearer <agent token>
 Content-Type: application/json
 
 {
@@ -102,9 +101,11 @@ Content-Type: application/json
   "acceptTerms": true
 }
 
-- Send Authorization: Bearer with the platform agent token. Read endpoints do not use this token.
+- No token or API key. Rate limited: 10 checkouts per IP per 15 minutes, 40 per IP per day, 5 per guest email per hour (HTTP 429).
 - Returns checkoutUrl. Send the human there to pay with a card.
-- Calendar is not written until Stripe confirms the deposit is paid.
+- Dates are not held. Calendar is not written until Stripe confirms the deposit is paid.
+- If another guest pays for overlapping nights first, this payment is refunded in full automatically and the booking is cancelled. Tell the guest this can happen.
+- 409 means the dates are taken or the host is not ready to take a card deposit yet; send the guest to bookUrl instead.
 - Checkout expires in 30 minutes. Abandoned sessions never hold nights.
 - Never send paid: true. Agents cannot mark a stay paid.
 
