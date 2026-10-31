@@ -73,6 +73,7 @@ Homepage-style flexibility:
 - flexibilityDays (aliases: dateFlex, flex) is ± days on check-in, same night count.
 - When flexible without dates, each listing includes availableWindows (next free stays).
 - Use amenities=lake_view,wifi for amenity filters (comma-separated ids).
+- Exact dates with few results: the response has flexibleDates (else null) with up to 4 nearby windows that have more stays — check-in shifted ±1–3 days, or a longer stay that meets a minimum (e.g. 1 night → 2). Each suggestion: checkIn, checkOut, nights, count, label ("Nov 6–8 · 5 stays"), searchUrl. flexibleDates.minStay.message (e.g. "Some places need a 2-night minimum") appears when stays were hidden only by a minimum stay. Re-search with a suggestion's dates to get those listings. GET /api/marketplace/stays returns the same flexibleDates (searchPath, relative).
 
 ## Listing detail + availability
 

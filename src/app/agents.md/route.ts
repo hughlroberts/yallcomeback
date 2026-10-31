@@ -62,6 +62,8 @@ GET ${origin}/api/v1/search?location=Athens%2C%20TX&checkIn=${checkIn}&checkOut=
 GET ${origin}/api/v1/search?location=Malakoff&flexible=true&guests=4&pets=1&amenities=lake_view
 \`\`\`
 
+Exact dates but few results? \`flexibleDates\` (null otherwise) suggests up to 4 nearby windows with more stays — check-in ±1–3 days, or a longer stay that meets a minimum (1 night → 2). Each has \`checkIn\`, \`checkOut\`, \`nights\`, \`count\`, \`label\` (“Nov 6–8 · 5 stays”) and \`searchUrl\`; \`flexibleDates.minStay.message\` says e.g. “Some places need a 2-night minimum”. Also on \`GET /api/marketplace/stays\`.
+
 ### Listing detail
 
 \`\`\`

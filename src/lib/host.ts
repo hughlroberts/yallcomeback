@@ -17,6 +17,15 @@ import {
   MARKETPLACE_PAGE_SIZE,
   marketplaceTextSearchOr,
 } from "./marketplace-search";
+import {
+  computeFlexibleDates,
+  FLEX_MAX_ADDED_NIGHTS,
+  FLEX_MAX_SHIFT_DAYS,
+  stayFit,
+  type FlexibleDates,
+  type FlexListing,
+} from "./flexible-dates";
+import { addDaysYmd, nightsBetweenYmd } from "./search-dates";
 
 export type PropertyWithHost = Property & {
   host: Pick<Host, "id" | "name" | "slug" | "listOnMarketplace" | "active">;
@@ -171,43 +180,29 @@ function parseYmd(raw: string | undefined): Date | null {
  * All filters are optional; omit everything → all live marketplace stays.
  */
 export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
+  return (await searchMarketplace(opts)).listings;
+}
+
+type MarketplaceListing = Awaited<
+  ReturnType<typeof fetchMarketplacePool>
+>[number];
+
+export type MarketplaceSearchResult = {
+  listings: MarketplaceListing[];
+  /**
+   * Only when asked for (withFlexibleDates), exact dates are set (no ±flex),
+   * results are limited, and a nearby window has more stays.
+   */
+  flexibleDates: FlexibleDates | null;
+};
+
+async function fetchMarketplacePool(
+  opts: MarketplaceSearchOpts | undefined,
+  input: { guests?: number; pets?: number; candidateLimit: number },
+) {
   const q = opts?.q?.trim();
-  const remembered = parseRememberSearch(opts?.remember);
-  const guests =
-    opts?.guests != null && !Number.isNaN(opts.guests) && opts.guests > 0
-      ? Math.floor(opts.guests)
-      : remembered.guests;
-  const pets =
-    opts?.pets != null && !Number.isNaN(opts.pets) && opts.pets > 0
-      ? Math.floor(opts.pets)
-      : remembered.pets;
-
-  const checkIn = parseYmd(opts?.checkIn);
-  const checkOut = parseYmd(opts?.checkOut);
-  // Valid stay: checkout after check-in (at least 1 night). Invalid pairs are ignored.
-  const nights =
-    checkIn && checkOut
-      ? Math.round(
-          (checkOut.getTime() - checkIn.getTime()) / 86400000,
-        )
-      : 0;
-  const hasDates = Boolean(checkIn && checkOut && nights >= 1);
-  const dateFlexRaw = opts?.dateFlex ?? 0;
-  const dateFlex =
-    Number.isFinite(dateFlexRaw) && dateFlexRaw > 0
-      ? Math.min(14, Math.floor(dateFlexRaw))
-      : 0;
-
-  const pageSize =
-    opts?.take != null && Number.isFinite(opts.take) && opts.take > 0
-      ? Math.min(100, Math.floor(opts.take))
-      : MARKETPLACE_PAGE_SIZE;
-  const needsOverfetch = hasDates || remembered.tokens.length > 0;
-  const candidateLimit = needsOverfetch
-    ? Math.min(MARKETPLACE_CANDIDATE_CAP, Math.max(pageSize * 4, 80))
-    : pageSize;
-
-  const listings = await prisma.property.findMany({
+  const { guests, pets } = input;
+  return prisma.property.findMany({
     where: {
       ...marketplacePropertyWhere(),
       ...(guests ? { maxGuests: { gte: guests } } : {}),
@@ -236,86 +231,142 @@ export async function getMarketplaceListings(opts?: MarketplaceSearchOpts) {
       images: { orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }], take: 1 },
     },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-    take: candidateLimit,
+    take: input.candidateLimit,
   });
+}
 
-  let filtered = listings;
+/**
+ * Search + (optionally) "More stays with flexible dates".
+ * One property query, one calendar-block query and one season query; date
+ * fit uses stayFit (blocks + listing/peak minimum), the same rule booking uses.
+ */
+export async function searchMarketplace(
+  opts?: MarketplaceSearchOpts,
+  extra?: {
+    withFlexibleDates?: boolean;
+    /** Extra in-memory filter (agent bedrooms / price / amenities). */
+    filter?: (p: MarketplaceListing) => boolean;
+  },
+): Promise<MarketplaceSearchResult> {
+  const remembered = parseRememberSearch(opts?.remember);
+  const guests =
+    opts?.guests != null && !Number.isNaN(opts.guests) && opts.guests > 0
+      ? Math.floor(opts.guests)
+      : remembered.guests;
+  const pets =
+    opts?.pets != null && !Number.isNaN(opts.pets) && opts.pets > 0
+      ? Math.floor(opts.pets)
+      : remembered.pets;
 
-  if (hasDates && checkIn && checkOut) {
-    // Drop stays whose listing minimum nights exceeds this trip length
-    const capacityOk = filtered.filter((p) => p.defaultMinNights <= nights);
+  const checkInYmd = opts?.checkIn && parseYmd(opts.checkIn) ? opts.checkIn : null;
+  const checkOutYmd = opts?.checkOut && parseYmd(opts.checkOut) ? opts.checkOut : null;
+  // Valid stay: checkout after check-in (at least 1 night). Invalid pairs are ignored.
+  const nights =
+    checkInYmd && checkOutYmd ? nightsBetweenYmd(checkInYmd, checkOutYmd) : 0;
+  const hasDates = Boolean(checkInYmd && checkOutYmd && nights >= 1);
+  const dateFlexRaw = opts?.dateFlex ?? 0;
+  const dateFlex =
+    Number.isFinite(dateFlexRaw) && dateFlexRaw > 0
+      ? Math.min(14, Math.floor(dateFlexRaw))
+      : 0;
 
-    if (capacityOk.length === 0) {
-      filtered = [];
-    } else {
-      const ids = capacityOk.map((p) => p.id);
-      // Load blocks that could touch the flexible search window
-      const windowStart = new Date(checkIn);
-      windowStart.setDate(windowStart.getDate() - dateFlex);
-      const windowEnd = new Date(checkOut);
-      windowEnd.setDate(windowEnd.getDate() + dateFlex);
+  const pageSize =
+    opts?.take != null && Number.isFinite(opts.take) && opts.take > 0
+      ? Math.min(100, Math.floor(opts.take))
+      : MARKETPLACE_PAGE_SIZE;
+  const needsOverfetch =
+    hasDates || remembered.tokens.length > 0 || Boolean(extra?.filter);
+  const candidateLimit = needsOverfetch
+    ? Math.min(MARKETPLACE_CANDIDATE_CAP, Math.max(pageSize * 4, 80))
+    : pageSize;
 
-      const blocks = await prisma.calendarBlock.findMany({
-        where: {
-          propertyId: { in: ids },
-          startDate: { lt: windowEnd },
-          endDate: { gt: windowStart },
-        },
-        select: {
-          propertyId: true,
-          startDate: true,
-          endDate: true,
-        },
-      });
+  let pool = await fetchMarketplacePool(opts, { guests, pets, candidateLimit });
 
-      const byProp = new Map<string, { start: Date; end: Date }[]>();
-      for (const b of blocks) {
-        const list = byProp.get(b.propertyId) || [];
-        list.push({ start: b.startDate, end: b.endDate });
-        byProp.set(b.propertyId, list);
-      }
+  if (extra?.filter) pool = pool.filter(extra.filter);
 
-      function rangeFree(
-        propId: string,
-        start: Date,
-        end: Date,
-      ): boolean {
-        const propBlocks = byProp.get(propId) || [];
-        for (const b of propBlocks) {
-          if (b.start < end && b.end > start) return false;
-        }
-        return true;
-      }
-
-      filtered = capacityOk.filter((p) => {
-        if (dateFlex === 0) {
-          return rangeFree(p.id, checkIn, checkOut);
-        }
-        // Any same-length window with check-in shifted by up to ±flex
-        for (let d = -dateFlex; d <= dateFlex; d++) {
-          const start = new Date(checkIn);
-          start.setDate(start.getDate() + d);
-          const end = new Date(start);
-          end.setDate(end.getDate() + nights);
-          if (rangeFree(p.id, start, end)) return true;
-        }
-        return false;
-      });
-    }
-  }
-
+  // Memory search: keep matches only, best first (date fit doesn't reorder).
   if (remembered.tokens.length > 0) {
-    const scored = filtered
+    pool = pool
       .map((p) => ({
         p,
         score: rememberScore(rememberHaystack(p), remembered.tokens),
       }))
       .filter((row) => row.score > 0)
-      .sort((a, b) => b.score - a.score);
-    filtered = scored.map((row) => row.p);
+      .sort((a, b) => b.score - a.score)
+      .map((row) => row.p);
   }
 
-  return filtered.slice(0, pageSize);
+  if (!hasDates || !checkInYmd || !checkOutYmd) {
+    return { listings: pool.slice(0, pageSize), flexibleDates: null };
+  }
+
+  const wantFlex = Boolean(extra?.withFlexibleDates) && dateFlex === 0;
+  // Calendar data covering every window we may test.
+  const reach = Math.max(dateFlex, wantFlex ? FLEX_MAX_SHIFT_DAYS + FLEX_MAX_ADDED_NIGHTS : 0);
+  const windowStart = new Date(`${addDaysYmd(checkInYmd, -reach)}T00:00:00`);
+  const windowEnd = new Date(`${addDaysYmd(checkOutYmd, reach)}T00:00:00`);
+  const ids = pool.map((p) => p.id);
+
+  const [blocks, seasons] =
+    ids.length === 0
+      ? [[], []]
+      : await Promise.all([
+          prisma.calendarBlock.findMany({
+            where: {
+              propertyId: { in: ids },
+              startDate: { lt: windowEnd },
+              endDate: { gt: windowStart },
+            },
+            select: { propertyId: true, startDate: true, endDate: true },
+          }),
+          prisma.seasonalPrice.findMany({
+            where: {
+              propertyId: { in: ids },
+              minNights: { gt: 1 },
+              startDate: { lt: windowEnd },
+              endDate: { gte: new Date(windowStart.getTime() - 86400000) },
+            },
+            select: { propertyId: true, startDate: true, endDate: true, minNights: true },
+          }),
+        ]);
+
+  const flexPool: FlexListing[] = pool.map((p) => ({
+    id: p.id,
+    defaultMinNights: p.defaultMinNights,
+    blocks: blocks
+      .filter((b) => b.propertyId === p.id)
+      .map((b) => ({ start: b.startDate, end: b.endDate })),
+    seasons: seasons.filter((s) => s.propertyId === p.id),
+  }));
+  const byId = new Map(flexPool.map((f) => [f.id, f]));
+
+  const listings = pool.filter((p) => {
+    const f = byId.get(p.id)!;
+    if (dateFlex === 0) return stayFit(f, checkInYmd, checkOutYmd) === "ok";
+    // Any same-length window with check-in shifted by up to ±flex
+    for (let d = -dateFlex; d <= dateFlex; d++) {
+      const ci = addDaysYmd(checkInYmd, d);
+      if (stayFit(f, ci, addDaysYmd(ci, nights)) === "ok") return true;
+    }
+    return false;
+  });
+
+  const flexibleDates = wantFlex
+    ? computeFlexibleDates({
+        pool: flexPool,
+        checkIn: checkInYmd,
+        checkOut: checkOutYmd,
+        pageSize,
+        context: {
+          where: opts?.q?.trim() || undefined,
+          guests: opts?.guests && opts.guests > 0 ? Math.floor(opts.guests) : undefined,
+          pets: opts?.pets && opts.pets > 0 ? Math.floor(opts.pets) : undefined,
+          remember: opts?.remember?.trim() || undefined,
+        },
+      })
+    : null;
+
+  return { listings: listings.slice(0, pageSize), flexibleDates };
 }
 
 /**

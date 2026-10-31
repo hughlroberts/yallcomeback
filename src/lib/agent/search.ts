@@ -1,4 +1,8 @@
-import { getMarketplaceListings } from "@/lib/host";
+import { searchMarketplace } from "@/lib/host";
+import type {
+  FlexibleDates,
+  FlexibleDateSuggestion,
+} from "@/lib/flexible-dates";
 import { calculateQuote } from "@/lib/pricing";
 import { listingHrefWithSearch } from "@/lib/listing-href";
 import { nightsBetweenYmd, isYmd } from "@/lib/search-dates";
@@ -78,6 +82,15 @@ export type AgentSearchResult = {
   count: number;
   listings: AgentListingSummary[];
   humanSearchUrl: string;
+  /**
+   * Exact dates + few results → nearby windows with more stays
+   * (same length shifted ±1–3 days, or longer to meet a minimum). Else null.
+   */
+  flexibleDates:
+    | (Omit<FlexibleDates, "suggestions"> & {
+        suggestions: (FlexibleDateSuggestion & { searchUrl: string })[];
+      })
+    | null;
   docs: string;
 };
 
@@ -103,12 +116,7 @@ export async function agentSearch(
     Math.max(0, Math.floor(params.flexibilityDays ?? 0)),
   );
   // “I’m flexible” with dates but no explicit flex → default ±3 days
-  if (
-    flexible &&
-    flexibilityDays === 0 &&
-    params.checkIn &&
-    params.checkOut
-  ) {
+  if (flexible && flexibilityDays === 0 && params.checkIn && params.checkOut) {
     flexibilityDays = 3;
   }
 
@@ -124,43 +132,77 @@ export async function agentSearch(
   const dateFlex =
     hasExactDates && (flexible || flexibilityDays > 0) ? flexibilityDays : 0;
 
-  let listings = await getMarketplaceListings({
-    q: params.location,
-    checkIn: hasExactDates ? params.checkIn : undefined,
-    checkOut: hasExactDates ? params.checkOut : undefined,
-    dateFlex: hasExactDates ? dateFlex : 0,
-    guests: params.guests,
-    pets: params.pets,
-    take: take * 3, // over-fetch for bedroom/price/amenity filters
-  });
+  const wantAmenities = (params.amenities ?? []).map((a) => a.toLowerCase());
+  const hasExtraFilters =
+    (params.bedrooms != null && params.bedrooms > 0) ||
+    (params.minNightly != null && Number.isFinite(params.minNightly)) ||
+    (params.maxNightly != null && Number.isFinite(params.maxNightly)) ||
+    wantAmenities.length > 0;
 
-  if (params.bedrooms != null && params.bedrooms > 0) {
-    listings = listings.filter((p) => p.bedrooms >= params.bedrooms!);
-  }
-  if (params.minNightly != null && Number.isFinite(params.minNightly)) {
-    listings = listings.filter((p) => p.baseNightlyRate >= params.minNightly!);
-  }
-  if (params.maxNightly != null && Number.isFinite(params.maxNightly)) {
-    listings = listings.filter((p) => p.baseNightlyRate <= params.maxNightly!);
-  }
-  if (params.amenities?.length) {
-    const want = params.amenities.map((a) => a.toLowerCase());
-    listings = listings.filter((p) => {
-      const have = parseAmenities(p.amenities).map((a) => a.toLowerCase());
-      return want.every(
-        (w) =>
-          have.includes(w) ||
-          have.some((h) => h.includes(w) || w.includes(h)),
-      );
-    });
-  }
-
-  listings = listings.slice(0, take);
+  // Bedroom / price / amenity filters run on the candidate pool (before the
+  // page slice) so flexibleDates counts honor them too.
+  const { listings: found, flexibleDates } = await searchMarketplace(
+    {
+      q: params.location,
+      checkIn: hasExactDates ? params.checkIn : undefined,
+      checkOut: hasExactDates ? params.checkOut : undefined,
+      dateFlex: hasExactDates ? dateFlex : 0,
+      guests: params.guests,
+      pets: params.pets,
+      take,
+    },
+    {
+      withFlexibleDates: true,
+      filter: hasExtraFilters
+        ? (p) => {
+            if (
+              params.bedrooms != null &&
+              params.bedrooms > 0 &&
+              p.bedrooms < params.bedrooms
+            ) {
+              return false;
+            }
+            if (
+              params.minNightly != null &&
+              Number.isFinite(params.minNightly) &&
+              p.baseNightlyRate < params.minNightly
+            ) {
+              return false;
+            }
+            if (
+              params.maxNightly != null &&
+              Number.isFinite(params.maxNightly) &&
+              p.baseNightlyRate > params.maxNightly
+            ) {
+              return false;
+            }
+            if (wantAmenities.length > 0) {
+              const have = parseAmenities(p.amenities).map((a) =>
+                a.toLowerCase(),
+              );
+              return wantAmenities.every(
+                (w) =>
+                  have.includes(w) ||
+                  have.some((h) => h.includes(w) || w.includes(h)),
+              );
+            }
+            return true;
+          }
+        : undefined,
+    },
+  );
+  const listings = found.slice(0, take);
 
   // Seasons for quotes (batch)
   const seasonsByProp = new Map<
     string,
-    { startDate: Date; endDate: Date; nightlyRate: number; minNights: number; name: string }[]
+    {
+      startDate: Date;
+      endDate: Date;
+      nightlyRate: number;
+      minNights: number;
+      name: string;
+    }[]
   >();
   if (hasExactDates && listings.length > 0) {
     const seasons = await prisma.seasonalPrice.findMany({
@@ -240,8 +282,7 @@ export async function agentSearch(
       // Price the preferred window if free, else first available
       const prefer =
         availableWindows.find(
-          (w) =>
-            w.checkIn === params.checkIn && w.checkOut === params.checkOut,
+          (w) => w.checkIn === params.checkIn && w.checkOut === params.checkOut,
         ) || availableWindows[0];
       if (prefer) {
         const seasons =
@@ -342,6 +383,15 @@ export async function agentSearch(
       origin,
       `/marketplace${humanParams.toString() ? `?${humanParams}` : ""}`,
     ),
+    flexibleDates: flexibleDates
+      ? {
+          ...flexibleDates,
+          suggestions: flexibleDates.suggestions.map((sug) => ({
+            ...sug,
+            searchUrl: absoluteUrl(origin, sug.searchPath),
+          })),
+        }
+      : null,
     docs: absoluteUrl(origin, "/llms.txt"),
   };
 }

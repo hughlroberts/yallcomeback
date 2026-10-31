@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import NextAuth from "next-auth";
-import { authConfig, isOpsPath, platformGate } from "./auth.config";
+import {
+  authConfig,
+  isOpsAdminRequest,
+  isOpsPath,
+  OPS_NOT_FOUND_HEADER,
+  platformGate,
+} from "./auth.config";
 import {
   resolveHostSlugForHostname,
   isPlatformPath,
@@ -108,6 +114,7 @@ function cleanRequestHeaders(req: NextRequest): Headers {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.delete(TENANT_SLUG_HEADER);
   requestHeaders.delete("x-tenant-mode");
+  requestHeaders.delete(OPS_NOT_FOUND_HEADER);
   return requestHeaders;
 }
 
@@ -139,9 +146,13 @@ function withTenant(
   );
 }
 
-function passthrough(req: NextRequest): NextResponse {
+function passthrough(
+  req: NextRequest,
+  opts?: { opsNotFound?: boolean },
+): NextResponse {
   const requestHeaders = cleanRequestHeaders(req);
   requestHeaders.set("x-pathname", req.nextUrl.pathname);
+  if (opts?.opsNotFound) requestHeaders.set(OPS_NOT_FOUND_HEADER, "1");
   return applyVisitorCookies(
     req,
     NextResponse.next({
@@ -175,11 +186,16 @@ export default auth(async (req) => {
   });
   if (gate !== true) return gate;
 
-  // Platform admins only reach here for /ops; keep it out of every index.
-  if (isOpsPath(req.nextUrl.pathname)) {
+  // Platform admins: keep /ops out of every index.
+  if (isOpsAdminRequest(req.nextUrl.pathname, req.auth?.user?.role)) {
     const res = passthrough(req);
     res.headers.set("X-Robots-Tag", "noindex, nofollow");
     return res;
+  }
+  // Everyone else: tag the request; next.config rewrites it to an unknown
+  // path so the response is Next's stock 404, header-for-header like /zzz.
+  if (isOpsPath(req.nextUrl.pathname)) {
+    return passthrough(req, { opsNotFound: true });
   }
 
   const hostname = requestHostname(req);

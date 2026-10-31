@@ -1,20 +1,28 @@
 import type { NextAuthConfig } from "next-auth";
-import { NextResponse } from "next/server";
-
-/**
- * Internal rewrite target that matches no route, so Next renders its normal
- * 404 page with a 404 status, byte-for-byte like any other unknown URL.
- * The browser URL stays the requested path.
- */
-export const NOT_FOUND_REWRITE_PATH = "/__not-found";
 
 /** /ops is internal: platform admins only; everyone else sees a plain 404. */
 export function isOpsPath(pathname: string): boolean {
   return pathname === "/ops" || pathname.startsWith("/ops/");
 }
 
-export function notFoundRewrite(nextUrl: URL): Response {
-  return NextResponse.rewrite(new URL(NOT_FOUND_REWRITE_PATH, nextUrl.origin));
+/**
+ * Internal request header: middleware sets it on non-admin /ops requests and
+ * next.config beforeFiles rewrites those to an unknown path, so Next serves
+ * its normal 404 with exactly the headers of any unknown URL (a config
+ * rewrite, unlike NextResponse.rewrite, adds no x-middleware-rewrite).
+ * Client-supplied copies are stripped in middleware.
+ */
+export const OPS_NOT_FOUND_HEADER = "x-ycb-ops-404";
+
+/**
+ * Middleware may only add ops-specific response headers (noindex) for a
+ * platform-admin token; everyone else must get exactly what an unknown URL gets.
+ */
+export function isOpsAdminRequest(
+  pathname: string,
+  role?: string | null,
+): boolean {
+  return isOpsPath(pathname) && role === "ADMIN";
 }
 
 /**
@@ -31,10 +39,11 @@ export function signInRedirect(nextUrl: URL): Response {
 
 export function platformGate(input: {
   isLoggedIn: boolean;
+  /** Not used for gating today (/ops checks the DB role in its pages). */
   role?: string | null;
   nextUrl: URL;
 }): true | Response {
-  const { isLoggedIn, role, nextUrl } = input;
+  const { isLoggedIn, nextUrl } = input;
   const path = nextUrl.pathname;
 
   if (path.startsWith("/admin")) {
@@ -48,8 +57,11 @@ export function platformGate(input: {
   if (isOpsPath(path)) {
     // Internal: signed out, guest, host and host admin all get a plain 404
     // (no /login redirect, no "admin only" notice) so /ops stays unknown.
-    // Pages and route handlers re-check the DB role (requirePlatformAdminOr404).
-    if (!isLoggedIn || role !== "ADMIN") return notFoundRewrite(nextUrl);
+    // No NextResponse.rewrite: it leaks x-middleware-rewrite, which an
+    // unknown URL does not have. Middleware tags the request
+    // (OPS_NOT_FOUND_HEADER) and a next.config rewrite serves the stock 404.
+    // Backstop: the ops layout, pages and route handlers also call
+    // requirePlatformAdminOr404() (DB role) → notFound().
     return true;
   }
 

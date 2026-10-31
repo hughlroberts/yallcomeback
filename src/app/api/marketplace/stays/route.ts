@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMarketplaceListings } from "@/lib/host";
+import { searchMarketplace } from "@/lib/host";
 import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 
 /**
@@ -21,26 +21,31 @@ export async function GET(req: NextRequest) {
   const take = takeRaw ? Math.min(24, Math.max(1, Number(takeRaw) || 12)) : 12;
   const dateFlex = dateFlexRaw ? Number(dateFlexRaw) : undefined;
 
-  const listings = await getMarketplaceListings({
-    q: where,
-    checkIn,
-    checkOut,
-    dateFlex:
-      dateFlex != null && Number.isFinite(dateFlex) && dateFlex > 0
-        ? Math.min(14, Math.floor(dateFlex))
-        : undefined,
-    guests:
-      guests != null && Number.isFinite(guests) && guests > 0
-        ? Math.floor(guests)
-        : undefined,
-    pets:
-      pets != null && Number.isFinite(pets) && pets > 0
-        ? Math.floor(pets)
-        : undefined,
-    take,
-  });
+  const { listings, flexibleDates } = await searchMarketplace(
+    {
+      q: where,
+      checkIn,
+      checkOut,
+      dateFlex:
+        dateFlex != null && Number.isFinite(dateFlex) && dateFlex > 0
+          ? Math.min(14, Math.floor(dateFlex))
+          : undefined,
+      guests:
+        guests != null && Number.isFinite(guests) && guests > 0
+          ? Math.floor(guests)
+          : undefined,
+      pets:
+        pets != null && Number.isFinite(pets) && pets > 0
+          ? Math.floor(pets)
+          : undefined,
+      take,
+    },
+    { withFlexibleDates: true },
+  );
 
-  const ambiguous = await ambiguousMarketplaceSlugs(listings.map((p) => p.slug));
+  const ambiguous = await ambiguousMarketplaceSlugs(
+    listings.map((p) => p.slug),
+  );
 
   return NextResponse.json({
     listings: listings.map((p) => ({
@@ -58,11 +63,15 @@ export async function GET(req: NextRequest) {
         url: img.url,
         alt: img.alt,
       })),
-      host: p.host
-        ? { name: p.host.name, slug: p.host.slug }
-        : null,
+      host: p.host ? { name: p.host.name, slug: p.host.slug } : null,
       /** Another marketplace host uses this slug → link needs ?host= */
       slugShared: ambiguous.has(p.slug),
     })),
+    /**
+     * Exact dates + limited results → nearby date windows with more stays
+     * ({ currentCount, minStay, suggestions[{checkIn, checkOut, nights,
+     * count, label, searchPath}] }). null when there is nothing better.
+     */
+    flexibleDates,
   });
 }

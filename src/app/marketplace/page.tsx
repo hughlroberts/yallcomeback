@@ -2,11 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   getMarketplaceListingCount,
-  getMarketplaceListings,
   getMarketplacePlaceSuggestions,
   marketplaceDiscoveryEnabled,
+  searchMarketplace,
   soleMarketplaceCity,
 } from "@/lib/host";
+import { FlexibleDatesPanel } from "@/components/flexible-dates-panel";
 import { PropertyCard } from "@/components/property-card";
 import { StaySearchForm } from "@/components/stay-search-form";
 import { listingHrefWithSearch } from "@/lib/listing-href";
@@ -153,23 +154,27 @@ async function StaysPanel({
   };
   const hasActiveSearch = searchIsMeaningful(currentSearch);
 
-  const [listings, showDiscovery, totalListingCount] = await Promise.all([
-    getMarketplaceListings({
-      q: where,
-      guests,
-      pets,
-      checkIn,
-      checkOut,
-      dateFlex,
-      remember,
-      take: 24,
-    }),
-    marketplaceDiscoveryEnabled(),
-    // Unfiltered browse uses the shared published-marketplace count.
-    hasActiveSearch
-      ? Promise.resolve(null)
-      : getMarketplaceListingCount(),
-  ]);
+  const [{ listings, flexibleDates }, showDiscovery, totalListingCount] =
+    await Promise.all([
+      searchMarketplace(
+        {
+          q: where,
+          guests,
+          pets,
+          checkIn,
+          checkOut,
+          dateFlex,
+          remember,
+          take: 24,
+        },
+        { withFlexibleDates: true },
+      ),
+      marketplaceDiscoveryEnabled(),
+      // Unfiltered browse uses the shared published-marketplace count.
+      hasActiveSearch
+        ? Promise.resolve(null)
+        : getMarketplaceListingCount(),
+    ]);
 
   // Card links use the clean canonical URL unless the slug is shared.
   const ambiguousSlugs = await ambiguousMarketplaceSlugs(
@@ -233,6 +238,7 @@ async function StaysPanel({
           </Link>
         ) : null}
       </div>
+      <FlexibleDatesPanel flexibleDates={flexibleDates} className="mt-4" />
       <div className="mt-6 grid gap-6 sm:mt-8 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-10">
         {listings.map((p) => (
           <PropertyCard

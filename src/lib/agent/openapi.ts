@@ -20,7 +20,7 @@ export function buildOpenApiDocument(origin: string) {
           operationId: "searchListings",
           summary: "Search marketplace listings",
           description:
-            "Search published marketplace stays by location, guests, pets, and optional dates. Use flexible=true or flexibilityDays for ± day windows (same idea as the homepage “I’m flexible” / dateFlex control). Each result.slug is the property (listing) slug; result.hostSlug is the host brand slug. url, bookUrl, and apiUrl are built from the property slug.",
+            "Search published marketplace stays by location, guests, pets, and optional dates. Use flexible=true or flexibilityDays for ± day windows (same idea as the homepage “I’m flexible” / dateFlex control). Each result.slug is the property (listing) slug; result.hostSlug is the host brand slug. url, bookUrl, and apiUrl are built from the property slug. With exact dates (no flexibility) and limited results, flexibleDates lists nearby windows with more stays; otherwise it is null.",
           parameters: [
             {
               name: "location",
@@ -104,7 +104,58 @@ export function buildOpenApiDocument(origin: string) {
               description: "Search results",
               content: {
                 "application/json": {
-                  schema: { type: "object" },
+                  schema: {
+                    type: "object",
+                    properties: {
+                      count: { type: "integer" },
+                      listings: { type: "array", items: { type: "object" } },
+                      humanSearchUrl: { type: "string" },
+                      flexibleDates: {
+                        type: "object",
+                        nullable: true,
+                        description:
+                          "Only for exact dates with limited results (fewer than 3, or stays hidden by bookings or a minimum stay). Windows shift check-in ±1–3 days (same length) or lengthen the stay to meet a minimum; only windows with more stays than the current search, best first, max 4. Counts honor your other filters.",
+                        properties: {
+                          currentCount: { type: "integer" },
+                          minStay: {
+                            type: "object",
+                            nullable: true,
+                            description:
+                              "Stays free on these dates but hidden only by a minimum stay.",
+                            properties: {
+                              count: { type: "integer" },
+                              minNights: { type: "integer" },
+                              message: {
+                                type: "string",
+                                example: "Some places need a 2-night minimum",
+                              },
+                            },
+                          },
+                          suggestions: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                checkIn: { type: "string", format: "date" },
+                                checkOut: { type: "string", format: "date" },
+                                nights: { type: "integer" },
+                                shiftDays: { type: "integer" },
+                                addedNights: { type: "integer" },
+                                count: { type: "integer" },
+                                label: {
+                                  type: "string",
+                                  example: "Nov 6–8 · 5 stays",
+                                },
+                                searchPath: { type: "string" },
+                                searchUrl: { type: "string" },
+                              },
+                            },
+                          },
+                        },
+                      },
+                      docs: { type: "string" },
+                    },
+                  },
                 },
               },
             },

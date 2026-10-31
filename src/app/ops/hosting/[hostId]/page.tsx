@@ -29,6 +29,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ hostId: string }>;
 }) {
+  // Metadata resolves alongside the page: no host lookup for non-admins.
+  await requirePlatformAdminOr404();
   const { hostId } = await params;
   const host = await prisma.host.findUnique({
     where: { id: hostId },

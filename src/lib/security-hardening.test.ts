@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isOpsPath,
-  NOT_FOUND_REWRITE_PATH,
+  isOpsAdminRequest,
   platformGate,
   signInRedirect,
 } from "@/auth.config";
@@ -43,22 +43,24 @@ describe("platformGate", () => {
   ];
 
   describe.each(nonAdmins)("/ops for $who", ({ isLoggedIn, role }) => {
-    it.each(opsPaths)("%s is a plain 404 rewrite (no login, no notice)", (path) => {
-      const gate = platformGate({
-        isLoggedIn,
-        role,
-        nextUrl: new URL(`https://www.yallcomeback.app${path}`),
-      });
-      expect(gate).toBeInstanceOf(Response);
-      const res = gate as Response;
-      // No redirect anywhere: nothing points at /login or carries admin_only.
-      expect(res.headers.get("location")).toBeNull();
-      expect(res.status).not.toBeGreaterThanOrEqual(300);
-      const rewrite = res.headers.get("x-middleware-rewrite") ?? "";
-      expect(new URL(rewrite).pathname).toBe(NOT_FOUND_REWRITE_PATH);
-      expect(rewrite).not.toContain("admin_only");
-      expect(rewrite).not.toContain("/login");
-    });
+    it.each(opsPaths)(
+      "%s passes through like an unknown URL (no login, no notice, no rewrite)",
+      (path) => {
+        const nextUrl = new URL(`https://www.yallcomeback.app${path}`);
+        // No Response at all: no redirect, no admin_only, and no
+        // x-middleware-rewrite header that a random 404 would not have.
+        // The ops layout/pages/routes notFound() non-admins themselves.
+        expect(platformGate({ isLoggedIn, role, nextUrl })).toBe(true);
+        // ...and middleware adds no ops-only header (noindex) for them.
+        expect(isOpsAdminRequest(nextUrl.pathname, role)).toBe(false);
+      },
+    );
+  });
+
+  it("marks only platform-admin /ops requests for ops-only headers", () => {
+    expect(isOpsAdminRequest("/ops/users", "ADMIN")).toBe(true);
+    expect(isOpsAdminRequest("/marketplace", "ADMIN")).toBe(false);
+    expect(isOpsAdminRequest("/ops", "HOST")).toBe(false);
   });
 
   it("lets platform admins into /ops", () => {

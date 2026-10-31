@@ -58,6 +58,23 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    // Non-admin /ops (middleware sets x-ycb-ops-404 = OPS_NOT_FOUND_HEADER in
+    // src/auth.config.ts and strips client copies) → an unknown path, so the
+    // response is Next's stock 404 with no x-middleware-rewrite header.
+    const opsNotFound = {
+      has: [{ type: "header" as const, key: "x-ycb-ops-404", value: "1" }],
+      destination: "/__ops-not-found",
+    };
+    return {
+      beforeFiles: [
+        { source: "/ops", ...opsNotFound },
+        { source: "/ops/:path*", ...opsNotFound },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async redirects() {
     // No /ops entries here: config redirects run before middleware and would
     // reveal /ops paths to non-admins. Legacy /ops aliases live as pages/routes
