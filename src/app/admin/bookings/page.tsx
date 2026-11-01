@@ -1,3 +1,4 @@
+import { hostTodayYmd } from "@/lib/host-today";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -33,12 +34,6 @@ function statusClass(status: string): string {
   }
 }
 
-/** Calendar day in the marketplace's home zone (Texas). */
-function todayYmd(): string {
-  return new Date().toLocaleDateString("en-CA", {
-    timeZone: "America/Chicago",
-  });
-}
 
 export default async function AdminBookingsPage({
   searchParams,
@@ -66,7 +61,7 @@ export default async function AdminBookingsPage({
   ]);
 
   const rows = buildAdminBookingRows(bookings, blocks);
-  const { upcoming, past } = splitUpcomingPast(rows, todayYmd());
+  const { upcoming, past } = splitUpcomingPast(rows, hostTodayYmd());
   const shown = view === "past" ? past : upcoming;
 
   const tab = (id: "upcoming" | "past", label: string, n: number) => (

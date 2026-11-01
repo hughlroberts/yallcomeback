@@ -178,6 +178,8 @@ export async function duplicateProperty(formData: FormData) {
       discountMonthlyPercent: source.discountMonthlyPercent,
       defaultMinNights: source.defaultMinNights,
       cleaningFee: source.cleaningFee,
+      extraGuestFee: source.extraGuestFee,
+      extraGuestsIncluded: source.extraGuestsIncluded,
       petFee: source.petFee,
       petFeeUnit: source.petFeeUnit,
       petsAllowed: source.petsAllowed,
@@ -828,6 +830,29 @@ export async function updatePropertyPricing(formData: FormData) {
       : 2,
   );
   const defaultMinNights = Number(formData.get("defaultMinNights") || 1);
+  // Optional: only forms that send these change them.
+  const extraGuestFeeRaw = formData.get("extraGuestFee");
+  const extraGuestsIncludedRaw = formData.get("extraGuestsIncluded");
+  const extraGuestFee =
+    extraGuestFeeRaw == null ? null : Number(extraGuestFeeRaw || 0);
+  const extraGuestsIncluded =
+    extraGuestsIncludedRaw == null
+      ? null
+      : Number(extraGuestsIncludedRaw || 2);
+  if (
+    extraGuestFee != null &&
+    (!Number.isFinite(extraGuestFee) || extraGuestFee < 0)
+  ) {
+    throw new Error("Extra guest fee must be 0 or more");
+  }
+  if (
+    extraGuestsIncluded != null &&
+    (!Number.isInteger(extraGuestsIncluded) ||
+      extraGuestsIncluded < 1 ||
+      extraGuestsIncluded > 50)
+  ) {
+    throw new Error("Guests in base price must be a whole number from 1 to 50");
+  }
 
   if (!Number.isFinite(baseNightlyRate) || baseNightlyRate < 1) {
     throw new Error("Enter a base price of at least $1");
@@ -866,6 +891,10 @@ export async function updatePropertyPricing(formData: FormData) {
       petFeeUnit,
       maxPets: Math.round(maxPets),
       defaultMinNights: Math.round(defaultMinNights),
+      ...(extraGuestFee != null
+        ? { extraGuestFee: Math.round(extraGuestFee * 100) / 100 }
+        : {}),
+      ...(extraGuestsIncluded != null ? { extraGuestsIncluded } : {}),
     },
     include: { host: true },
   });

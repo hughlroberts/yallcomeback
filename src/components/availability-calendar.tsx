@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { cn, formatDateRangeUS } from "@/lib/utils";
+import { hostTodayYmd, monthStartFromYmd } from "@/lib/host-today";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -21,11 +22,7 @@ function ymd(d: Date) {
 }
 
 function monthLabel(d: Date) {
-  return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-}
-
-function todayYmd() {
-  return ymd(new Date());
+  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 function addDaysYmd(key: string, days: number): string {
@@ -49,6 +46,46 @@ function rangeNightsFree(
   return true;
 }
 
+/**
+ * What a tap on `key` selects. Null when the tap does nothing. Never moves
+ * the calendar: the months on screen stay where they are between taps.
+ */
+export function nextDateSelection({
+  key,
+  unavailableNight,
+  checkIn,
+  checkOut,
+  blocked,
+  today,
+}: {
+  key: string;
+  unavailableNight: boolean;
+  checkIn: string;
+  checkOut: string;
+  blocked: Set<string>;
+  today: string;
+}): { checkIn: string; checkOut: string } | null {
+  // Past nights cannot be selected as check-in
+  if (key < today) return null;
+
+  // Selecting check-out: checkout morning can land on a blocked night's date
+  // as long as stay nights [checkIn, key) are free.
+  if (checkIn && !checkOut) {
+    if (key === checkIn) return { checkIn: "", checkOut: "" };
+    if (key < checkIn) {
+      // Restart with the earlier check-in if that night is free
+      return blocked.has(key) ? null : { checkIn: key, checkOut: "" };
+    }
+    return rangeNightsFree(checkIn, key, blocked)
+      ? { checkIn, checkOut: key }
+      : null;
+  }
+
+  // Start new selection (check-in must be an available night)
+  if (unavailableNight) return null;
+  return { checkIn: key, checkOut: "" };
+}
+
 type Props = {
   blockedDates: string[];
   /** Optional seasonal night markers for legend context */
@@ -63,6 +100,8 @@ type Props = {
   checkOut?: string;
   onChange?: (next: { checkIn: string; checkOut: string }) => void;
   className?: string;
+  /** Today (YYYY-MM-DD) from the server so SSR and hydration agree. */
+  todayYmd?: string;
 };
 
 export function AvailabilityCalendar({
@@ -76,66 +115,41 @@ export function AvailabilityCalendar({
   checkOut = "",
   onChange,
   className,
+  todayYmd,
 }: Props) {
+  const today = todayYmd ?? hostTodayYmd();
   const blocked = useMemo(() => new Set(blockedDates), [blockedDates]);
   const [cursor, setCursor] = useState(() => {
     if (checkIn) {
       const d = new Date(checkIn + "T12:00:00");
       if (!Number.isNaN(d.getTime())) return startOfMonth(d);
     }
-    return startOfMonth(new Date());
+    return monthStartFromYmd(today);
   });
-  // Phones: one month; tablet+: respect monthsToShow (usually 2)
-  const [wide, setWide] = useState(true);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 480px)");
-    const apply = () => setWide(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-  const visibleMonths =
-    compact && !wide ? 1 : monthsToShow;
-
-  const today = todayYmd();
+  // Always render the same months so the grid never moves under the
+  // guest's finger. Compact phones hide the second month with CSS (not
+  // matchMedia state), so SSR, hydration, and every click share one layout.
+  const visibleMonths = monthsToShow;
 
   const months = useMemo(() => {
-    return Array.from({ length: visibleMonths }, (_, i) => addMonths(cursor, i));
+    return Array.from({ length: visibleMonths }, (_, i) =>
+      addMonths(cursor, i),
+    );
   }, [cursor, visibleMonths]);
 
   function handleDayClick(key: string, unavailableNight: boolean) {
     if (!selectable || !onChange) return;
-    // Past nights cannot be selected as check-in
-    if (key < today) return;
-
-    // Selecting check-out: checkout morning can land on a blocked night's date
-    // as long as stay nights [checkIn, key) are free.
-    if (checkIn && !checkOut) {
-      if (key === checkIn) {
-        onChange({ checkIn: "", checkOut: "" });
-        return;
-      }
-      if (key < checkIn) {
-        // Restart with earlier check-in if that night is free
-        if (!blocked.has(key)) {
-          // Keep checkout month visible when picking near month end
-          const d = new Date(key + "T12:00:00");
-          setCursor(startOfMonth(d));
-          onChange({ checkIn: key, checkOut: "" });
-        }
-        return;
-      }
-      if (rangeNightsFree(checkIn, key, blocked)) {
-        onChange({ checkIn, checkOut: key });
-      }
-      return;
-    }
-
-    // Start new selection (check-in must be an available night)
-    if (unavailableNight) return;
-    const d = new Date(key + "T12:00:00");
-    setCursor(startOfMonth(d));
-    onChange({ checkIn: key, checkOut: "" });
+    const next = nextDateSelection({
+      key,
+      unavailableNight,
+      checkIn,
+      checkOut,
+      blocked,
+      today,
+    });
+    // The visible months stay put: moving the cursor here shifted the grid
+    // so the guest's next tap landed on a different date.
+    if (next) onChange(next);
   }
 
   return (
@@ -187,7 +201,7 @@ export function AvailabilityCalendar({
           {!compact ? (
             <button
               type="button"
-              onClick={() => setCursor(startOfMonth(new Date()))}
+              onClick={() => setCursor(monthStartFromYmd(hostTodayYmd()))}
               className="rounded-full border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
             >
               Today
@@ -220,9 +234,12 @@ export function AvailabilityCalendar({
               : "mt-6 gap-8",
         )}
       >
-        {months.map((month) => (
+        {months.map((month, i) => (
           <MonthGrid
             key={ymd(month)}
+            className={
+              compact && i > 0 ? "hidden min-[480px]:block" : undefined
+            }
             month={month}
             blocked={blocked}
             today={today}
@@ -280,6 +297,7 @@ export function AvailabilityCalendar({
 }
 
 function MonthGrid({
+  className,
   month,
   blocked,
   today,
@@ -289,6 +307,7 @@ function MonthGrid({
   checkOut,
   onDayClick,
 }: {
+  className?: string;
   month: Date;
   blocked: Set<string>;
   today: string;
@@ -309,7 +328,7 @@ function MonthGrid({
   }
 
   return (
-    <div>
+    <div className={className}>
       <p
         className={cn(
           "mb-2 text-center font-semibold text-stone-800",
@@ -330,7 +349,12 @@ function MonthGrid({
           </div>
         ))}
       </div>
-      <div className={cn("mt-0.5 grid grid-cols-7", compact ? "gap-y-0.5" : "gap-1")}>
+      <div
+        className={cn(
+          "mt-0.5 grid grid-cols-7",
+          compact ? "gap-y-0.5" : "gap-1",
+        )}
+      >
         {cells.map((day, i) => {
           if (!day) {
             return <div key={`e-${i}`} className="aspect-square" />;
@@ -355,7 +379,8 @@ function MonthGrid({
             rangeNightsFree(checkIn, key, blocked);
           const canClickAsCheckIn = selectable && !unavailableNight && !isPast;
           const interactive =
-            selectable && (canClickAsCheckIn || canClickAsCheckout || isCheckIn);
+            selectable &&
+            (canClickAsCheckIn || canClickAsCheckout || isCheckIn);
 
           // Softer cells: no strikethrough clutter on past days
           let cellStyle: string;
@@ -392,9 +417,7 @@ function MonthGrid({
               key={key}
               className={cn(
                 "relative flex aspect-square items-center justify-center",
-                inRange || isCheckIn || isCheckOut
-                  ? ""
-                  : "",
+                inRange || isCheckIn || isCheckOut ? "" : "",
                 // Soft range background strip (behind endpoint pills)
                 inRange ? "bg-petal" : "",
                 isCheckIn && checkOut ? "bg-petal rounded-l-full" : "",

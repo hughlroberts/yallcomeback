@@ -15,6 +15,7 @@ import {
   uploadPropertyImage,
 } from "@/app/actions/properties";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
+import { hostTodayYmd } from "@/lib/host-today";
 import { IcalSetupAgent } from "@/components/ical-setup-agent";
 import { AdminListingInsights } from "@/components/admin-listing-insights";
 import { AdminAmenitiesEditor } from "@/components/admin-amenities-editor";
@@ -1043,6 +1044,7 @@ export default async function AdminPropertyDetailPage({
   return (
     <div className="min-w-0">
       <AdminListingWorkspace
+        todayYmd={hostTodayYmd()}
         emailVerified={emailVerified}
         property={{
           id: property.id,
@@ -1060,6 +1062,8 @@ export default async function AdminPropertyDetailPage({
           baseNightlyRate: property.baseNightlyRate,
           weekendPremiumPercent: property.weekendPremiumPercent,
           cleaningFee: property.cleaningFee,
+          extraGuestFee: property.extraGuestFee,
+          extraGuestsIncluded: property.extraGuestsIncluded,
           petFee: property.petFee,
           petFeeUnit: property.petFeeUnit,
           petsAllowed: property.petsAllowed,

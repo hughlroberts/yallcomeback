@@ -44,6 +44,26 @@ function formatLabel(ymd: string) {
   });
 }
 
+/** Toast text after a save from the sheet. */
+export function blockSavedMessage(
+  blockType: string,
+  nightsLabel: string,
+  dates: string,
+  duplicate = false,
+): string {
+  const what =
+    blockType === "OFFLINE"
+      ? "Offline booking saved"
+      : blockType === "FRIENDS"
+        ? "Friends & family stay saved"
+        : blockType === "OWNER"
+          ? "Owner block saved"
+          : blockType === "MAINTENANCE"
+            ? "Maintenance block saved"
+            : "Dates blocked";
+  return `${what}${duplicate ? " (already saved)" : ""}: ${nightsLabel}, ${dates}.`;
+}
+
 /**
  * Bottom sheet to block a selected calendar range without leaving the Calendar tab.
  */
@@ -117,7 +137,12 @@ export function AdminBlockSheet({
         router.refresh();
         if (onSaved)
           onSaved(
-            `Blocked ${nightsLabel}: ${formatLabel(startDate)} → ${formatLabel(endDate)}.`,
+            blockSavedMessage(
+              String(formData.get("blockType") || ""),
+              nightsLabel,
+              `${formatLabel(startDate)} → ${formatLabel(endDate)}`,
+              Boolean(res.ok && "duplicate" in res && res.duplicate),
+            ),
           );
         else onClose();
       } catch (e) {

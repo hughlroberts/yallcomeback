@@ -340,7 +340,7 @@ function ThreadPanel({
                           : "rounded-bl-md bg-stone-100 text-stone-900",
                       )}
                     >
-                      <p className="whitespace-pre-wrap">{m.body}</p>
+                      <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{m.body}</p>
                       <p
                         className={cn(
                           "mt-1 text-right text-[11px]",

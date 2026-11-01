@@ -176,6 +176,7 @@ export async function getAgentListingDetail(
         checkIn: new Date(`${opts.checkIn}T12:00:00`),
         checkOut: new Date(`${opts.checkOut}T12:00:00`),
         pets: opts.pets ?? 0,
+        guests: opts.guests ?? 1,
       });
       quote = {
         nights: q.nights,

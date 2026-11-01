@@ -249,6 +249,7 @@ export async function agentSearch(
         checkIn: new Date(`${params.checkIn}T12:00:00`),
         checkOut: new Date(`${params.checkOut}T12:00:00`),
         pets: params.pets ?? 0,
+        guests: params.guests ?? 1,
       });
       if (!quote.error) {
         priceEstimate = {
@@ -260,6 +261,7 @@ export async function agentSearch(
           totalBeforeTax:
             quote.nightlySubtotal -
             quote.discountAmount +
+            quote.extraGuestFee +
             quote.cleaningFee +
             quote.petFee,
           currency: "USD",
@@ -289,6 +291,7 @@ export async function agentSearch(
           checkIn: new Date(`${prefer.checkIn}T12:00:00`),
           checkOut: new Date(`${prefer.checkOut}T12:00:00`),
           pets: params.pets ?? 0,
+          guests: params.guests ?? 1,
         });
         if (!quote.error) {
           priceEstimate = {
@@ -300,6 +303,7 @@ export async function agentSearch(
             totalBeforeTax:
               quote.nightlySubtotal -
               quote.discountAmount +
+              quote.extraGuestFee +
               quote.cleaningFee +
               quote.petFee,
             currency: "USD",

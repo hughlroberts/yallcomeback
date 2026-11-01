@@ -46,6 +46,11 @@ type Props = {
   discountMonthlyPercent?: number;
   defaultMinNights: number;
   cleaningFee: number;
+  /** Per night for each guest beyond extraGuestsIncluded; 0 = none */
+  extraGuestFee?: number;
+  extraGuestsIncluded?: number;
+  /** Today (YYYY-MM-DD) from the server so the calendar hydrates cleanly */
+  todayYmd?: string;
   petFee?: number;
   petFeeUnit?: PetFeeUnit | string;
   petsAllowed?: boolean;
@@ -80,6 +85,9 @@ export function BookingWidget({
   discountMonthlyPercent = 0,
   defaultMinNights,
   cleaningFee,
+  extraGuestFee = 0,
+  extraGuestsIncluded = 2,
+  todayYmd,
   petFee = 0,
   petFeeUnit = "PER_STAY",
   petsAllowed = false,
@@ -118,6 +126,9 @@ export function BookingWidget({
     checkIn,
     checkOut,
     pets,
+    guests,
+    extraGuestFee,
+    extraGuestsIncluded,
     baseNightlyRate,
     weekendPremiumPercent,
     discountNewListingPercent,
@@ -212,6 +223,9 @@ export function BookingWidget({
         {cleaningFee > 0
           ? ` · cleaning ${formatMoney(cleaningFee, currencySymbol)}`
           : ""}
+        {extraGuestFee > 0
+          ? ` · ${money(extraGuestFee)}/night per guest after ${extraGuestsIncluded}`
+          : ""}
         {petsAllowed && petFee > 0
           ? ` · pet fee ${formatPetFeeRate(petFee, petFeeUnit, money)}`
           : petsAllowed
@@ -233,6 +247,7 @@ export function BookingWidget({
           monthsToShow={2}
           compact
           selectable
+          todayYmd={todayYmd}
           checkIn={checkIn}
           checkOut={checkOut}
           onChange={({ checkIn: nextIn, checkOut: nextOut }) => {
@@ -316,6 +331,19 @@ export function BookingWidget({
                   (quote as { discountAmount: number }).discountAmount,
                   currencySymbol,
                 )}
+              </span>
+            </div>
+          ) : null}
+          {(quote as { extraGuestFee?: number }).extraGuestFee ? (
+            <div className="flex justify-between">
+              <span>
+                Extra guests (
+                {(quote as { extraGuests: number }).extraGuests} ×{" "}
+                {money(extraGuestFee)} ×{" "}
+                {(quote as { nights: number }).nights} nights)
+              </span>
+              <span>
+                {money((quote as { extraGuestFee: number }).extraGuestFee)}
               </span>
             </div>
           ) : null}

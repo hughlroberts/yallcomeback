@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BookingWidget } from "@/components/booking-widget";
+import { clampGuests } from "@/lib/extra-guests";
+import { hostTodayYmd } from "@/lib/host-today";
 import { MobileReserveBar } from "@/components/mobile-reserve-bar";
 
 import { PhotoGallery } from "@/components/photo-gallery";
@@ -313,6 +315,9 @@ export default async function MarketplacePropertyPage({
       checkIn: initialCheckIn,
       checkOut: initialCheckOut,
       pets: initialPetCount(property, initialPets),
+      guests: clampGuests(sp.guests, property.maxGuests).guests,
+      extraGuestFee: property.extraGuestFee,
+      extraGuestsIncluded: property.extraGuestsIncluded,
       baseNightlyRate: property.baseNightlyRate,
       weekendPremiumPercent: property.weekendPremiumPercent,
       discountNewListingPercent: property.discountNewListingPercent,
@@ -491,7 +496,7 @@ export default async function MarketplacePropertyPage({
                 <h3 className="text-lg font-semibold text-stone-900">
                   About this place
                 </h3>
-                <p className="mt-3 whitespace-pre-wrap leading-relaxed text-stone-600">
+                <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed text-stone-600">
                   {property.description}
                 </p>
               </div>
@@ -522,6 +527,9 @@ export default async function MarketplacePropertyPage({
               discountMonthlyPercent={property.discountMonthlyPercent}
               defaultMinNights={property.defaultMinNights}
               cleaningFee={property.cleaningFee}
+              extraGuestFee={property.extraGuestFee}
+              extraGuestsIncluded={property.extraGuestsIncluded}
+              todayYmd={hostTodayYmd()}
               petFee={property.petFee}
               petFeeUnit={property.petFeeUnit}
               petsAllowed={property.petsAllowed}
@@ -645,7 +653,7 @@ export default async function MarketplacePropertyPage({
               <h3 className="text-lg font-semibold text-stone-900">
                 Important disclaimer
               </h3>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
+              <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-stone-700">
                 {disclaimer}
               </p>
             </div>

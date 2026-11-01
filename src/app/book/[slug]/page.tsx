@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { clampGuests } from "@/lib/extra-guests";
 import { calculateQuote, resolveDisclaimer } from "@/lib/pricing";
 import { isRangeAvailable } from "@/lib/availability";
 import {
@@ -121,10 +122,8 @@ export default async function BookPage({
 
   const checkIn = sp.checkIn;
   const checkOut = sp.checkOut;
-  const guests = Math.min(
-    property.maxGuests,
-    Math.max(1, Number(sp.guests || 1) || 1)
-  );
+  const guestCount = clampGuests(sp.guests, property.maxGuests);
+  const guests = guestCount.guests;
   const pets = property.petsAllowed
     ? Math.max(
         0,
@@ -165,6 +164,7 @@ export default async function BookPage({
     checkIn: checkInDate,
     checkOut: checkOutDate,
     pets,
+    guests,
     taxLines,
     taxLiabilityAcknowledged: property.host.taxLiabilityAcknowledged,
   });
@@ -328,6 +328,15 @@ export default async function BookPage({
                 ? ` · ${pets} pet${pets === 1 ? "" : "s"}`
                 : ""}
             </p>
+            {guestCount.clamped && guestCount.requested > guests ? (
+              <p
+                role="status"
+                className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 ring-1 ring-amber-200"
+              >
+                This place sleeps up to {property.maxGuests}, so we set guests
+                to {guests}.
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-col items-end gap-3 sm:min-w-[220px]">
             <BrandSeal size={64} className="h-16 w-16" />
@@ -355,6 +364,18 @@ export default async function BookPage({
               {formatMoney(quote.nightlySubtotal)}
             </dd>
           </div>
+          {quote.extraGuestFee > 0 ? (
+            <div className="rounded-2xl border border-stone-100 bg-stone-50 px-5 py-4">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                Extra guests ({quote.extraGuests} ×{" "}
+                {formatMoney(quote.extraGuestFeePerNight)} × {quote.nights}{" "}
+                night{quote.nights === 1 ? "" : "s"})
+              </dt>
+              <dd className="mt-1 text-xl font-semibold text-stone-900">
+                {formatMoney(quote.extraGuestFee)}
+              </dd>
+            </div>
+          ) : null}
           {quote.discountAmount > 0 ? (
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4">
               <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
@@ -619,7 +640,7 @@ export default async function BookPage({
                   <p className="text-sm font-semibold text-stone-900">
                     Host disclaimer
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-stone-700">
+                  <p className="mt-2 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-stone-700">
                     {disclaimer}
                   </p>
                 </div>

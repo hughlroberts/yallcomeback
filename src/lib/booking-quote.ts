@@ -12,6 +12,7 @@ import {
   type PetFeeUnit,
   type PetPolicyInput,
 } from "@/lib/pets";
+import { extraGuestCharge } from "@/lib/extra-guests";
 
 export type BookingQuoteSeason = {
   name: string;
@@ -25,6 +26,11 @@ export type BookingQuoteInput = {
   checkIn: string;
   checkOut: string;
   pets: number;
+  /** Guests on the stay (extra-guest charge); defaults to 1 */
+  guests?: number;
+  /** Per night per guest beyond extraGuestsIncluded; 0 = none */
+  extraGuestFee?: number;
+  extraGuestsIncluded?: number;
   baseNightlyRate: number;
   weekendPremiumPercent: number;
   discountNewListingPercent: number;
@@ -52,6 +58,9 @@ export type BookingQuote = {
   discountAmount?: number;
   discountLabel?: string | null;
   cleaningFee?: number;
+  extraGuestFee?: number;
+  extraGuests?: number;
+  extraGuestFeePerNight?: number;
   petFee?: number;
   petFeeUnit?: string;
   pets?: number;
@@ -154,14 +163,16 @@ export function computeBookingQuote(input: BookingQuoteInput): BookingQuote | nu
   const afterDiscount = Math.round((subtotal - discountAmount) * 100) / 100;
 
   const appliedPetFee = petCharges.petFee;
+  const extra = extraGuestCharge(input, input.guests ?? 1, nights);
   const taxes = calculateTaxes({
-    lodgingAmount: afterDiscount,
+    lodgingAmount: afterDiscount + extra.total,
     cleaningFee: input.cleaningFee,
     petFee: appliedPetFee,
     taxLines: input.taxLines,
     liabilityAcknowledged: input.taxLiabilityAcknowledged,
   });
-  const total = afterDiscount + input.cleaningFee + appliedPetFee + taxes.taxAmount;
+  const total =
+    afterDiscount + extra.total + input.cleaningFee + appliedPetFee + taxes.taxAmount;
   const deposit = Math.round(total * (input.depositPercent / 100) * 100) / 100;
   return {
     nights,
@@ -170,6 +181,9 @@ export function computeBookingQuote(input: BookingQuoteInput): BookingQuote | nu
     discountAmount,
     discountLabel: discount?.label ?? null,
     cleaningFee: input.cleaningFee,
+    extraGuestFee: extra.total,
+    extraGuests: extra.extraGuests,
+    extraGuestFeePerNight: extra.perGuestPerNight,
     petFee: appliedPetFee,
     petFeeUnit: petCharges.unit,
     pets: petCharges.pets,

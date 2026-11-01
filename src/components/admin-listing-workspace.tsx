@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  useEffect,
+  useCallback,
   useMemo,
   useState,
   useTransition,
@@ -20,6 +20,12 @@ import {
 } from "lucide-react";
 import { Button, Card, Input, Label } from "@/components/ui";
 import { AdminBlockSheet } from "@/components/admin-block-sheet";
+import { SaveToast } from "@/components/save-toast";
+import {
+  dateFromYmd,
+  hostTodayYmd,
+  monthStartFromYmd,
+} from "@/lib/host-today";
 import {
   addSeason,
   applyPeakHolidays,
@@ -142,6 +148,9 @@ type WorkspaceProperty = {
   baseNightlyRate: number;
   weekendPremiumPercent: number;
   cleaningFee: number;
+  /** Per night for each guest beyond extraGuestsIncluded (0 = none) */
+  extraGuestFee?: number;
+  extraGuestsIncluded?: number;
   petFee: number;
   petFeeUnit: "PER_STAY" | "PER_PET" | string;
   petsAllowed: boolean;
@@ -159,9 +168,11 @@ const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 function PricingSidebar({
   property,
   seasons,
+  todayYmd,
 }: {
   property: WorkspaceProperty;
   seasons: Season[];
+  todayYmd: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -171,6 +182,12 @@ function PricingSidebar({
     String(property.weekendPremiumPercent),
   );
   const [cleaning, setCleaning] = useState(String(property.cleaningFee));
+  const [extraGuest, setExtraGuest] = useState(
+    String(property.extraGuestFee ?? 0),
+  );
+  const [extraIncluded, setExtraIncluded] = useState(
+    String(property.extraGuestsIncluded ?? 2),
+  );
   const [pet, setPet] = useState(String(property.petFee));
   const [petFeeUnit, setPetFeeUnit] = useState(
     property.petFeeUnit === "PER_PET" ? "PER_PET" : "PER_STAY",
@@ -185,6 +202,8 @@ function PricingSidebar({
     form.set("baseNightlyRate", nightly);
     form.set("weekendPremiumPercent", weekendPct);
     form.set("cleaningFee", cleaning);
+    form.set("extraGuestFee", extraGuest);
+    form.set("extraGuestsIncluded", extraIncluded);
     form.set("petFee", pet);
     form.set("petFeeUnit", petFeeUnit);
     form.set("maxPets", maxPets);
@@ -302,6 +321,49 @@ function PricingSidebar({
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="ws-extra-guest" className="text-xs text-stone-500">
+                Extra guest fee / night
+              </Label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400">
+                  $
+                </span>
+                <Input
+                  id="ws-extra-guest"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="h-11 pl-7"
+                  value={extraGuest}
+                  onChange={(e) => setExtraGuest(e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <Label
+                htmlFor="ws-extra-included"
+                className="text-xs text-stone-500"
+              >
+                Guests in base price
+              </Label>
+              <Input
+                id="ws-extra-included"
+                type="number"
+                min={1}
+                max={50}
+                step="1"
+                className="h-11"
+                value={extraIncluded}
+                onChange={(e) => setExtraIncluded(e.target.value)}
+              />
+            </div>
+            <p className="col-span-2 text-xs text-stone-500">
+              Charged per night for each guest beyond the base price&apos;s
+              guest count. Leave at $0 for no extra-guest charge.
+            </p>
+          </div>
           <div>
             <Label htmlFor="ws-pet" className="text-xs text-stone-500">
               Pet fee amount
@@ -396,6 +458,7 @@ function PricingSidebar({
         baseNightlyRate={property.baseNightlyRate}
         defaultMinNights={property.defaultMinNights}
         seasons={seasons}
+        todayYmd={todayYmd}
       />
     </aside>
   );
@@ -406,11 +469,13 @@ function SeasonOverridesCard({
   baseNightlyRate,
   defaultMinNights,
   seasons,
+  todayYmd,
 }: {
   propertyId: string;
   baseNightlyRate: number;
   defaultMinNights: number;
   seasons: Season[];
+  todayYmd: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -426,7 +491,7 @@ function SeasonOverridesCard({
   const haveKeys = new Set(
     seasons.map((s) => s.holidayKey).filter((k): k is string => Boolean(k)),
   );
-  const missingPeaks = upcomingPeakHolidays().filter((h) => !haveKeys.has(h.key));
+  const missingPeaks = upcomingPeakHolidays(dateFromYmd(todayYmd)).filter((h) => !haveKeys.has(h.key));
 
   function run(label: string, work: () => Promise<void>) {
     setError(null);
@@ -985,6 +1050,7 @@ export function AdminListingWorkspace({
   initialTab,
   calendarOnly = false,
   emailVerified = true,
+  todayYmd,
 }: {
   property: WorkspaceProperty;
   seasons: Season[];
@@ -1004,15 +1070,16 @@ export function AdminListingWorkspace({
   /** Calendar home: no listing tabs, property switcher lives outside. */
   calendarOnly?: boolean;
   emailVerified?: boolean;
+  /** Host-zone today (YYYY-MM-DD) from the server, so SSR and hydration match. */
+  todayYmd?: string;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<TabId>(
     calendarOnly ? "calendar" : initialTab || "listing",
   );
-  const [cursor, setCursor] = useState(() => {
-    const n = new Date();
-    return new Date(n.getFullYear(), n.getMonth(), 1);
-  });
+  // Same "today" on server and client (no new Date() during render).
+  const todayKey = todayYmd ?? hostTodayYmd();
+  const [cursor, setCursor] = useState(() => monthStartFromYmd(todayKey));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   /** Range for blocking: start = check-in, end = checkout (exclusive). */
   const [rangeStart, setRangeStart] = useState<string | null>(null);
@@ -1020,11 +1087,7 @@ export function AdminListingWorkspace({
   const [blockSheetOpen, setBlockSheetOpen] = useState(false);
   const [monthsShown, setMonthsShown] = useState<CalendarSpan>(1);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  useEffect(() => {
-    if (!savedMessage) return;
-    const t = window.setTimeout(() => setSavedMessage(null), 6000);
-    return () => window.clearTimeout(t);
-  }, [savedMessage]);
+  const dismissSavedMessage = useCallback(() => setSavedMessage(null), []);
 
   const blockedSet = useMemo(() => {
     const local = new Set<string>();
@@ -1087,7 +1150,7 @@ export function AdminListingWorkspace({
 
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
-  const today = startOfDay(new Date());
+  const today = dateFromYmd(todayKey);
   const monthLabel = cursor.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
@@ -1193,6 +1256,8 @@ export function AdminListingWorkspace({
     property.baseNightlyRate,
     property.weekendPremiumPercent,
     property.cleaningFee,
+    property.extraGuestFee,
+    property.extraGuestsIncluded,
     property.petFee,
     property.petFeeUnit,
     property.maxPets,
@@ -1566,8 +1631,7 @@ export function AdminListingWorkspace({
                   type="button"
                   className="rounded-full border border-stone-200 px-3 py-1 text-xs font-medium text-stone-700 hover:bg-stone-50"
                   onClick={() => {
-                    const n = new Date();
-                    setCursor(new Date(n.getFullYear(), n.getMonth(), 1));
+                    setCursor(monthStartFromYmd(hostTodayYmd()));
                     setMonthsShown(1);
                   }}
                 >
@@ -1610,15 +1674,6 @@ export function AdminListingWorkspace({
                   />
                 ))}
               </div>
-
-              {savedMessage ? (
-                <p
-                  role="status"
-                  className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900"
-                >
-                  {savedMessage}
-                </p>
-              ) : null}
 
               {rangeStart ? (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm">
@@ -1680,6 +1735,8 @@ export function AdminListingWorkspace({
             </div>
           </section>
 
+          <SaveToast message={savedMessage} onDismiss={dismissSavedMessage} />
+
           <AdminBlockSheet
             open={blockSheetOpen && Boolean(rangeStart)}
             propertyId={property.id}
@@ -1720,6 +1777,7 @@ export function AdminListingWorkspace({
               key={pricingKey}
               property={property}
               seasons={seasons}
+              todayYmd={todayKey}
             />
           )}
         </div>

@@ -516,6 +516,10 @@ model Property {
   discountMonthlyPercent    Float   @default(0)
   defaultMinNights Int              @default(1)
   cleaningFee      Float            @default(0)
+  /// Charge per night for each guest beyond extraGuestsIncluded (0 = none)
+  extraGuestFee    Float            @default(0)
+  /// Guests covered by the base nightly rate before extraGuestFee applies
+  extraGuestsIncluded Int           @default(2)
   /// Pet fee amount (see petFeeUnit for per stay vs per pet). Demo default $25 flat.
   petFee           Float            @default(25)
   petFeeUnit       PetFeeUnit       @default(PER_STAY)
@@ -697,6 +701,8 @@ model Booking {
   nights          Int
   nightlySubtotal Float
   cleaningFee     Float          @default(0)
+  /// Extra-guest charge for the whole stay (guests beyond the base rate)
+  extraGuestFee   Float          @default(0)
   petFee          Float          @default(0)
   /// Sum of host-configured taxes at booking time (USD)
   taxAmount       Float          @default(0)

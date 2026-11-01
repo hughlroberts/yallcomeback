@@ -137,7 +137,7 @@ export default async function AdminDirectBookingPage({
           </Row>
           <Row label="Notes">
             {block.notes ? (
-              <span className="whitespace-pre-wrap">{block.notes}</span>
+              <span className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{block.notes}</span>
             ) : (
               "None"
             )}

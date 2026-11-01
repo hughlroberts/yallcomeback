@@ -144,6 +144,7 @@ export async function createAgentStayCheckout(
     checkIn: checkInDate,
     checkOut: checkOutDate,
     pets,
+    guests,
     taxLines,
     taxLiabilityAcknowledged: property.host.taxLiabilityAcknowledged,
   });
@@ -182,7 +183,9 @@ export async function createAgentStayCheckout(
         guests,
         pets: quote.pets,
         nights: quote.nights,
-        nightlySubtotal: quote.nightlySubtotal,
+        // Lodging includes the extra-guest charge; extraGuestFee shows that part.
+        nightlySubtotal: quote.nightlySubtotal + quote.extraGuestFee,
+        extraGuestFee: quote.extraGuestFee,
         cleaningFee: quote.cleaningFee,
         petFee: quote.petFee,
         taxAmount: quote.taxAmount,

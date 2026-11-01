@@ -214,7 +214,7 @@ export function ThingsToKnow({
               <summary className="cursor-pointer list-none text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline [&::-webkit-details-marker]:hidden">
                 Learn more
               </summary>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-stone-600">
+              <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-stone-600">
                 {houseRules}
               </p>
             </details>

@@ -9,6 +9,7 @@ import {
 } from "@/lib/host-access";
 import { AdminListingSwitcher } from "@/components/admin-listing-switcher";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
+import { hostTodayYmd } from "@/lib/host-today";
 import { viewerCanPublishListings } from "@/lib/email-verified";
 
 export const dynamic = "force-dynamic";
@@ -131,6 +132,7 @@ export default async function AdminCalendarPage({
       </div>
       <div className="min-w-0 flex-1 bg-white px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <AdminListingWorkspace
+          todayYmd={hostTodayYmd()}
           calendarOnly
           emailVerified={emailVerified}
           property={{
@@ -149,6 +151,8 @@ export default async function AdminCalendarPage({
             baseNightlyRate: property.baseNightlyRate,
             weekendPremiumPercent: property.weekendPremiumPercent,
             cleaningFee: property.cleaningFee,
+            extraGuestFee: property.extraGuestFee,
+            extraGuestsIncluded: property.extraGuestsIncluded,
             petFee: property.petFee,
             petFeeUnit: property.petFeeUnit,
             petsAllowed: property.petsAllowed,

@@ -173,7 +173,7 @@ export function MeetYourHost({
           ) : null}
 
           {host.description ? (
-            <p className="mt-8 max-w-xl whitespace-pre-wrap text-[15px] leading-relaxed text-stone-600">
+            <p className="mt-8 max-w-xl whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed text-stone-600">
               {host.description.length > 420
                 ? `${host.description.slice(0, 420).trim()}…`
                 : host.description}

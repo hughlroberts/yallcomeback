@@ -24,7 +24,7 @@ export async function createBooking(formData: FormData) {
   const propertyId = String(formData.get("propertyId") || "");
   const checkIn = String(formData.get("checkIn") || "");
   const checkOut = String(formData.get("checkOut") || "");
-  const guests = Number(formData.get("guests") || 1);
+  const guests = Math.floor(Number(formData.get("guests") || 1));
   const pets = Number(formData.get("pets") || 0);
   const guestNotes = String(formData.get("guestNotes") || "").trim() || null;
   const acceptedDisclaimer = formData.get("acceptDisclaimer") === "on";
@@ -83,6 +83,13 @@ export async function createBooking(formData: FormData) {
     );
   }
 
+  if (!Number.isFinite(guests) || guests < 1) {
+    throw new Error("Choose at least 1 guest");
+  }
+  if (guests > property.maxGuests) {
+    throw new Error(`This place sleeps up to ${property.maxGuests}`);
+  }
+
   const tenant = await getRequestTenant();
   const channel = resolveBookingChannel({
     tenantHostSlug: tenant?.slug ?? null,
@@ -112,6 +119,7 @@ export async function createBooking(formData: FormData) {
     checkIn: checkInDate,
     checkOut: checkOutDate,
     pets,
+    guests,
     taxLines,
     taxLiabilityAcknowledged: property.host.taxLiabilityAcknowledged,
   });
@@ -201,7 +209,10 @@ export async function createBooking(formData: FormData) {
         guests,
         pets: quote.pets,
         nights: quote.nights,
-        nightlySubtotal: quote.nightlySubtotal,
+        // Lodging includes the extra-guest charge (tax records read this);
+        // extraGuestFee keeps that part visible on its own.
+        nightlySubtotal: quote.nightlySubtotal + quote.extraGuestFee,
+        extraGuestFee: quote.extraGuestFee,
         cleaningFee: quote.cleaningFee,
         petFee: quote.petFee,
         taxAmount: quote.taxAmount,
