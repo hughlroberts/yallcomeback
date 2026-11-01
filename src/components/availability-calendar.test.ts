@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   AvailabilityCalendar,
   nextDateSelection,
+  shortRangeLabel,
 } from "./availability-calendar";
 
 const blocked = new Set(["2026-11-25"]);
@@ -106,5 +107,31 @@ describe("nextDateSelection", () => {
     expect(
       nextDateSelection({ ...base, checkIn: "2026-11-20", key: "2026-11-18" }),
     ).toEqual({ checkIn: "2026-11-18", checkOut: "" });
+  });
+});
+
+describe("compact header never changes height between taps", () => {
+  const header = (html: string) =>
+    html.match(/<div[^>]*data-calendar-header[^>]*>/)?.[0] ?? "";
+
+  it.each([
+    [{}, "Select check-in"],
+    [{ checkIn: "2026-11-10" }, "Select checkout"],
+    [{ checkIn: "2026-11-10", checkOut: "2026-11-13" }, "Nov 10 → Nov 13"],
+  ])("state %j shows %s in a one-row, fixed-height header", (state, label) => {
+    const html = render(state);
+    const h = header(html);
+    expect(h).toContain("h-10");
+    expect(h).toContain("flex-nowrap");
+    expect(h).not.toContain("flex-wrap ");
+    expect(html).toContain(label);
+    expect(html).toMatch(/<p class="truncate text-\[11px\][^"]*"[^>]*>/);
+  });
+
+  it("uses a short range label, with years only across a new year", () => {
+    expect(shortRangeLabel("2026-11-10", "2026-11-13")).toBe("Nov 10 → Nov 13");
+    expect(shortRangeLabel("2026-12-30", "2027-01-02")).toBe(
+      "Dec 30, 2026 → Jan 2, 2027",
+    );
   });
 });

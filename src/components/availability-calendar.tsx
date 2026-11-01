@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { cn, formatDateRangeUS } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { hostTodayYmd, monthStartFromYmd } from "@/lib/host-today";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -50,6 +50,20 @@ function rangeNightsFree(
  * What a tap on `key` selects. Null when the tap does nothing. Never moves
  * the calendar: the months on screen stay where they are between taps.
  */
+/** "Nov 10 → Nov 13" (adds years only when they differ): short enough to sit
+ *  beside the month arrows on a phone without wrapping. */
+export function shortRangeLabel(checkIn: string, checkOut: string): string {
+  const fmt = (key: string, withYear: boolean) =>
+    new Date(`${key}T12:00:00Z`).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      ...(withYear ? { year: "numeric" } : {}),
+      timeZone: "UTC",
+    });
+  const crossYear = checkIn.slice(0, 4) !== checkOut.slice(0, 4);
+  return `${fmt(checkIn, crossYear)} → ${fmt(checkOut, crossYear)}`;
+}
+
 export function nextDateSelection({
   key,
   unavailableNight,
@@ -161,12 +175,21 @@ export function AvailabilityCalendar({
         className,
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
+      {/* Compact header: one row, fixed height, so swapping "Select checkout"
+          for the picked range never wraps the arrows and pushes the grid down
+          between taps. */}
+      <div
+        className={cn(
+          "flex justify-between gap-2",
+          compact ? "h-10 flex-nowrap items-center" : "flex-wrap items-start",
+        )}
+        data-calendar-header
+      >
+        <div className={cn("min-w-0", compact && "flex-1")}>
           <h2
             className={cn(
               "font-semibold text-stone-900",
-              compact ? "text-sm" : "text-xl",
+              compact ? "truncate text-sm leading-5" : "text-xl",
             )}
           >
             {title}
@@ -177,16 +200,19 @@ export function AvailabilityCalendar({
               day may still be free.
             </p>
           ) : selectable ? (
-            <p className="mt-0.5 text-[11px] text-stone-500">
+            <p
+              className="truncate text-[11px] leading-4 text-stone-500"
+              aria-live="polite"
+            >
               {checkIn && checkOut
-                ? formatDateRangeUS(checkIn, checkOut)
+                ? shortRangeLabel(checkIn, checkOut)
                 : checkIn
                   ? "Select checkout"
                   : "Select check-in"}
             </p>
           ) : null}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
             onClick={() => setCursor((c) => addMonths(c, -1))}

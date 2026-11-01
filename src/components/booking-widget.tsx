@@ -118,7 +118,9 @@ export function BookingWidget({
     const g = initialGuests ?? 1;
     return Math.min(maxGuests, Math.max(1, g));
   });
-  const [pets, setPets] = useState(() => initialPetCount(petPolicy, initialPets));
+  const [pets, setPets] = useState(() =>
+    initialPetCount(petPolicy, initialPets),
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Plain computation (React Compiler); shared with the server-rendered mobile bar.
@@ -194,6 +196,14 @@ export function BookingWidget({
     return () => resetBookingBarState();
   }, []);
 
+  const specialMinNights =
+    quote &&
+    "minNights" in quote &&
+    typeof quote.minNights === "number" &&
+    quote.minNights > defaultMinNights
+      ? quote.minNights
+      : null;
+
   return (
     <div
       id="reserve"
@@ -204,22 +214,10 @@ export function BookingWidget({
         <span className="text-base font-normal text-stone-500"> night</span>
       </p>
       <p className="mt-1 text-xs text-stone-500">
-        Min{" "}
-        {quote && "minNights" in quote && typeof quote.minNights === "number"
-          ? quote.minNights
-          : defaultMinNights}{" "}
-        night
-        {(quote && "minNights" in quote && typeof quote.minNights === "number"
-          ? quote.minNights
-          : defaultMinNights) === 1
-          ? ""
-          : "s"}
-        {quote &&
-        "minNights" in quote &&
-        typeof quote.minNights === "number" &&
-        quote.minNights > defaultMinNights
-          ? " (holiday / special dates)"
-          : ""}
+        {/* Static per listing: this line sits above the calendar, so it must
+            not change length (and wrap) as dates are tapped. A longer holiday
+            minimum is shown under the calendar instead. */}
+        Min {defaultMinNights} night{defaultMinNights === 1 ? "" : "s"}
         {cleaningFee > 0
           ? ` · cleaning ${formatMoney(cleaningFee, currencySymbol)}`
           : ""}
@@ -256,7 +254,12 @@ export function BookingWidget({
             setError(null);
           }}
         />
-
+        {specialMinNights ? (
+          <p className="mt-2 text-xs text-amber-800">
+            These dates need at least {specialMinNights} nights (holiday /
+            special dates).
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-3 overflow-hidden rounded-xl border border-stone-300">
@@ -312,11 +315,12 @@ export function BookingWidget({
       {quote && !("error" in quote && quote.error) && (
         <div className="mt-4 space-y-2 text-sm text-stone-600">
           <div className="flex justify-between">
+            <span>Lodging × {(quote as { nights: number }).nights} nights</span>
             <span>
-              Lodging × {(quote as { nights: number }).nights} nights
-            </span>
-            <span>
-              {formatMoney((quote as { subtotal: number }).subtotal, currencySymbol)}
+              {formatMoney(
+                (quote as { subtotal: number }).subtotal,
+                currencySymbol,
+              )}
             </span>
           </div>
           {(quote as { discountAmount?: number }).discountAmount ? (
@@ -337,10 +341,9 @@ export function BookingWidget({
           {(quote as { extraGuestFee?: number }).extraGuestFee ? (
             <div className="flex justify-between">
               <span>
-                Extra guests (
-                {(quote as { extraGuests: number }).extraGuests} ×{" "}
-                {money(extraGuestFee)} ×{" "}
-                {(quote as { nights: number }).nights} nights)
+                Extra guests ({(quote as { extraGuests: number }).extraGuests} ×{" "}
+                {money(extraGuestFee)} × {(quote as { nights: number }).nights}{" "}
+                nights)
               </span>
               <span>
                 {money((quote as { extraGuestFee: number }).extraGuestFee)}
@@ -365,13 +368,20 @@ export function BookingWidget({
                     : ""}
               </span>
               <span>
-                {formatMoney((quote as { petFee: number }).petFee, currencySymbol)}
+                {formatMoney(
+                  (quote as { petFee: number }).petFee,
+                  currencySymbol,
+                )}
               </span>
             </div>
           ) : null}
           {(
             quote as {
-              taxLines?: { name: string; ratePercent: number; amount: number }[];
+              taxLines?: {
+                name: string;
+                ratePercent: number;
+                amount: number;
+              }[];
             }
           ).taxLines?.map((t) => (
             <div
@@ -397,7 +407,10 @@ export function BookingWidget({
                 : "Deposit after host approval · nothing charged now"}
             </span>
             <span>
-              {formatMoney((quote as { deposit: number }).deposit, currencySymbol)}
+              {formatMoney(
+                (quote as { deposit: number }).deposit,
+                currencySymbol,
+              )}
             </span>
           </div>
         </div>
