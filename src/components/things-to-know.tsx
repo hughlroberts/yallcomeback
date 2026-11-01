@@ -1,9 +1,5 @@
 import Link from "next/link";
-import {
-  CalendarDays,
-  Search,
-  Shield,
-} from "lucide-react";
+import { CalendarDays, Search, Shield } from "lucide-react";
 import { AMENITY_SAFETY } from "@/lib/listing-amenities";
 import {
   HELP_CANCELLATION_POLICIES_PATH,
@@ -11,6 +7,7 @@ import {
   getShortStayPolicy,
   guestFacingBullets,
 } from "@/lib/cancellation-policies";
+import { onlineCancelLines } from "@/lib/guest-cancel-window";
 import { petRuleLine } from "@/lib/pets";
 import { formatTime12h } from "@/lib/utils";
 
@@ -41,15 +38,15 @@ function safetyItemsFromAmenities(amenities: string[]): string[] {
   const lower = amenities.map((a) => a.trim().toLowerCase());
   const found: string[] = [];
   for (const opt of AMENITY_SAFETY) {
-    if (
-      lower.includes(opt.id) ||
-      lower.includes(opt.label.toLowerCase())
-    ) {
+    if (lower.includes(opt.id) || lower.includes(opt.label.toLowerCase())) {
       found.push(opt.label);
     }
   }
   const extras: [RegExp, string][] = [
-    [/security\s*camera|exterior\s*camera|cctv/i, "Exterior security cameras on property"],
+    [
+      /security\s*camera|exterior\s*camera|cctv/i,
+      "Exterior security cameras on property",
+    ],
     [/smoke/i, "Smoke alarm"],
     [/carbon|co\s*alarm|monoxide/i, "Carbon monoxide alarm"],
   ];
@@ -137,10 +134,7 @@ export function ThingsToKnow({
   const cancelBullets = guestFacingBullets(shortPolicy, 3);
 
   return (
-    <section
-      className={className}
-      aria-labelledby="things-to-know-heading"
-    >
+    <section className={className} aria-labelledby="things-to-know-heading">
       <h2
         id="things-to-know-heading"
         className="text-2xl font-semibold tracking-tight text-stone-900"
@@ -173,6 +167,12 @@ export function ThingsToKnow({
               <li key={line}>{line}</li>
             ))}
           </ul>
+          <p
+            data-online-cancel
+            className="mt-2 text-sm leading-relaxed text-stone-600"
+          >
+            {onlineCancelLines("short", shortPolicy.id).join(" ")}
+          </p>
           <p className="mt-2 text-sm text-stone-500">
             Monthly stays (28+ nights): {longPolicy.name}.
           </p>

@@ -15,6 +15,11 @@ import {
   type LongStayPolicyId,
   type ShortStayPolicyId,
 } from "@/lib/cancellation-policies";
+import {
+  longRuleText,
+  REFUND_PROCESS_TEXT,
+  shortRuleText,
+} from "@/lib/guest-cancel-window";
 
 type Props = {
   propertyId: string;
@@ -90,6 +95,12 @@ export function AdminCancellationPolicy({
         <p className="mt-1">
           Monthly stays: <strong>{long.name}</strong> - {long.summary}
         </p>
+        <p className="mt-2 text-xs text-stone-500" data-online-cancel>
+          What guests see: short stays: {shortRuleText(short.id)} Monthly stays:{" "}
+          {longRuleText(long.id)} {REFUND_PROCESS_TEXT} When a guest with a paid
+          deposit cancels, the booking is flagged “Refund review needed” and you
+          and your co-hosts get an email.
+        </p>
       </div>
 
       <form action={savePropertyCancellationPolicy} className="space-y-5">
@@ -164,8 +175,9 @@ export function AdminCancellationPolicy({
               Offer a non-refundable discounted rate (short stays)
             </span>
             <span className="mt-0.5 block text-sm text-stone-500">
-              Guests may book a lower rate that generally is not refundable after
-              the 24-hour free window. Details are in the full policy article.
+              Guests may book a lower rate that generally is not refundable
+              after the 24-hour free window. Details are in the full policy
+              article.
             </span>
           </span>
         </label>

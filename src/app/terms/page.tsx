@@ -9,7 +9,11 @@ import {
   LegalUl,
 } from "@/components/legal-layout";
 import { PRODUCT_DOMAIN, PRODUCT_NAME } from "@/lib/features";
-import { LEGAL_EFFECTIVE_DATE, LEGAL_OPERATOR, PRIVACY_PATH } from "@/lib/legal";
+import {
+  LEGAL_EFFECTIVE_DATE,
+  LEGAL_OPERATOR,
+  PRIVACY_PATH,
+} from "@/lib/legal";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -29,18 +33,17 @@ export default function TermsPage() {
         platform. We do not own, operate, inspect, or manage the stays on this
         site. A booking is a contract between the guest and the host only. We
         are not a party to that contract. We are not an innkeeper, hotel,
-        property manager, real-estate broker, travel agent, payment processor
-        of the stay, or insurer. If something goes wrong with a stay, your
-        claim is against the host or guest involved — not against {PRODUCT_NAME}
-        — except where Texas law does not allow us to say that.
+        property manager, real-estate broker, travel agent, payment processor of
+        the stay, or insurer. If something goes wrong with a stay, your claim is
+        against the host or guest involved — not against {PRODUCT_NAME}— except
+        where Texas law does not allow us to say that.
       </LegalCallout>
 
       <LegalP>
-        These Terms of Service (“Terms”) are a binding agreement between you
-        and {LEGAL_OPERATOR} (“{PRODUCT_NAME},” “we,” “us,” or the “Platform”).
-        They apply to {PRODUCT_DOMAIN}, host websites we operate, the
-        marketplace, APIs, and related services. They are effective{" "}
-        {LEGAL_EFFECTIVE_DATE}.
+        These Terms of Service (“Terms”) are a binding agreement between you and{" "}
+        {LEGAL_OPERATOR} (“{PRODUCT_NAME},” “we,” “us,” or the “Platform”). They
+        apply to {PRODUCT_DOMAIN}, host websites we operate, the marketplace,
+        APIs, and related services. They are effective {LEGAL_EFFECTIVE_DATE}.
       </LegalP>
       <LegalP>
         Related: our{" "}
@@ -82,10 +85,9 @@ export default function TermsPage() {
       <LegalH2 id="eligibility">2. Eligibility</LegalH2>
       <LegalP>
         You must be at least 18 years old and able to form a contract. You may
-        not use the Platform if we have banned you, or if applicable law
-        forbids it. If you use the Platform for an organization, you represent
-        that you have authority to bind it, and “you” includes that
-        organization.
+        not use the Platform if we have banned you, or if applicable law forbids
+        it. If you use the Platform for an organization, you represent that you
+        have authority to bind it, and “you” includes that organization.
       </LegalP>
 
       <LegalH2 id="accounts">3. Accounts</LegalH2>
@@ -101,26 +103,26 @@ export default function TermsPage() {
       <LegalH3>4.1 The stay contract</LegalH3>
       <LegalP>
         When a booking is requested, accepted, or confirmed through the
-        Platform, a contract for the stay is formed solely between the guest
-        and the host. That contract includes the listing, dates, price, fees
-        the host charges, the host’s cancellation policy, house rules, and any
-        host disclaimer shown at checkout. {PRODUCT_NAME} is not a party to
-        that contract and has no obligation to provide the stay or to make the
-        guest pay the host.
+        Platform, a contract for the stay is formed solely between the guest and
+        the host. That contract includes the listing, dates, price, fees the
+        host charges, the host’s cancellation policy, house rules, and any host
+        disclaimer shown at checkout. {PRODUCT_NAME} is not a party to that
+        contract and has no obligation to provide the stay or to make the guest
+        pay the host.
       </LegalP>
       <LegalH3>4.2 Our role</LegalH3>
       <LegalP>
         We may pass along messages, calendar holds, and payment status the
         parties report to us. That is a software function, not an obligation to
-        complete, refund, or guarantee the stay. We are not required to
-        mediate disputes. If we choose to help, that does not make us a party
-        or waive any limit on our liability.
+        complete, refund, or guarantee the stay. We are not required to mediate
+        disputes. If we choose to help, that does not make us a party or waive
+        any limit on our liability.
       </LegalP>
       <LegalH3>4.3 Holds and confirmation</LegalH3>
       <LegalP>
-        A request may place a soft hold on dates. A hold is not a confirmed
-        stay until the host confirms it under their process (including marking
-        a deposit paid). Hosts may decline requests. We are not liable if dates
+        A request may place a soft hold on dates. A hold is not a confirmed stay
+        until the host confirms it under their process (including marking a
+        deposit paid). Hosts may decline requests. We are not liable if dates
         are lost, double-booked, or released.
       </LegalP>
 
@@ -140,8 +142,8 @@ export default function TermsPage() {
           responsible for everyone in your party;
         </li>
         <li>
-          claims about the property, access, safety, refunds, or the stay
-          itself are between you and the host;
+          claims about the property, access, safety, refunds, or the stay itself
+          are between you and the host;
         </li>
         <li>
           travel, weather, road conditions, and third-party activities are your
@@ -182,14 +184,12 @@ export default function TermsPage() {
           you will not offer illegal lodging, unlicensed hotel activity, or
           listings that violate housing, zoning, or health rules;
         </li>
-        <li>
-          you are an independent business, not our employee or agent.
-        </li>
+        <li>you are an independent business, not our employee or agent.</li>
       </LegalUl>
       <LegalP>
-        We may hide, unpublish, or remove a listing or host site that we
-        believe violates these Terms, the law, or other users’ safety. We have
-        no duty to do so, and no duty to check listings before they go live.
+        We may hide, unpublish, or remove a listing or host site that we believe
+        violates these Terms, the law, or other users’ safety. We have no duty
+        to do so, and no duty to check listings before they go live.
       </LegalP>
 
       <LegalH2 id="fees">7. Platform fees (not a cut of the stay)</LegalH2>
@@ -197,14 +197,13 @@ export default function TermsPage() {
         If we host your website or marketplace listing, you pay the published
         hosting plan (for example $25 / month for a branded website with
         unlimited listings, marketplace included, or $12 per listing on
-        marketplace only) and any
-        optional setup or add-on you request. That fee is for access to the
-        Platform. It is not a commission, brokerage fee, or share of the guest’s
-        stay price. Stay money is between host and guest.
+        marketplace only) and any optional setup or add-on you request. That fee
+        is for access to the Platform. It is not a commission, brokerage fee, or
+        share of the guest’s stay price. Stay money is between host and guest.
       </LegalP>
       <LegalP>
-        Free self-host and open-source use may have $0 Platform hosting fee.
-        You still agree to these Terms if you use our marketplace, APIs, or
+        Free self-host and open-source use may have $0 Platform hosting fee. You
+        still agree to these Terms if you use our marketplace, APIs, or
         branding.
       </LegalP>
       <LegalP>
@@ -229,9 +228,9 @@ export default function TermsPage() {
       </LegalP>
       <LegalP>
         Bitcoin and other non-card methods are voluntary and high risk. Exchange
-        rates, network fees, and irreversible transfers are your problem. A
-        host marking a deposit “paid” is the host’s decision, not our
-        certification of a blockchain payment.
+        rates, network fees, and irreversible transfers are your problem. A host
+        marking a deposit “paid” is the host’s decision, not our certification
+        of a blockchain payment.
       </LegalP>
       <LegalP>
         Chargebacks, failed transfers, and collection of unpaid balances are
@@ -244,16 +243,25 @@ export default function TermsPage() {
         The host’s cancellation policy on the listing, as shown at checkout,
         controls refunds of the stay. We do not operate a platform refund
         guarantee. If you want a refund, you work it out with the host. We are
-        not required to reverse a calendar hold, force a payout, or pay you
-        from our pocket.
+        not required to reverse a calendar hold, force a payout, or pay you from
+        our pocket.
+      </LegalP>
+      <LegalP>
+        Guests can cancel a request or booking online, from the private link in
+        their booking email, until the online deadline of the listing’s policy.
+        After that, the guest must contact the host to cancel. An online
+        cancellation releases the dates and emails the guest and the host. It
+        does not refund anything automatically: any refund the policy allows is
+        processed by the host (or by us for card deposits taken through the
+        platform), not instantly by the cancel button.
       </LegalP>
 
       <LegalH2 id="taxes">10. Taxes — you file, not us</LegalH2>
       <LegalCallout>
-        <strong>Tax disclaimer.</strong> {PRODUCT_NAME} and this software do
-        not collect, withhold, remit, or file taxes on anyone’s behalf. We are
-        not a tax advisor, CPA, or government agency. Hosts alone determine
-        which taxes apply (including hotel occupancy and sales tax), set rates,
+        <strong>Tax disclaimer.</strong> {PRODUCT_NAME} and this software do not
+        collect, withhold, remit, or file taxes on anyone’s behalf. We are not a
+        tax advisor, CPA, or government agency. Hosts alone determine which
+        taxes apply (including hotel occupancy and sales tax), set rates,
         collect from guests, file, and remit on time. We are not liable for
         wrong rates, missed filings, penalties, interest, or tax claims. If you
         are unsure, ask a qualified tax professional or your taxing authority.
@@ -275,14 +283,13 @@ export default function TermsPage() {
       </LegalP>
       <LegalP>
         Do not post content that is illegal, infringing, deceptive, hateful, or
-        that reveals another person’s private information. We may remove
-        content at our discretion. We are not obligated to store your content
-        forever.
+        that reveals another person’s private information. We may remove content
+        at our discretion. We are not obligated to store your content forever.
       </LegalP>
       <LegalP>
-        Messages between hosts and guests may be stored to provide the inbox
-        and for safety, fraud, and legal reasons. Do not use messages to evade
-        these Terms.
+        Messages between hosts and guests may be stored to provide the inbox and
+        for safety, fraud, and legal reasons. Do not use messages to evade these
+        Terms.
       </LegalP>
 
       <LegalH2 id="prohibited">12. Prohibited uses</LegalH2>
@@ -293,8 +300,8 @@ export default function TermsPage() {
         <li>interfere with security, rate limits, or other users;</li>
         <li>impersonate anyone or misstate affiliation with us;</li>
         <li>
-          use the Platform to discriminate in violation of fair-housing or
-          other law;
+          use the Platform to discriminate in violation of fair-housing or other
+          law;
         </li>
         <li>
           upload malware, or attempt to access another account or our systems;
@@ -312,13 +319,15 @@ export default function TermsPage() {
         inaction is not permission.
       </LegalP>
 
-      <LegalH2 id="safety">14. Safety, assumption of risk, no inspection</LegalH2>
+      <LegalH2 id="safety">
+        14. Safety, assumption of risk, no inspection
+      </LegalH2>
       <LegalP>
         Stays occur on third-party property. Pools, docks, boats, wildlife,
         weather, roads, and other guests are inherent risks. You assume those
         risks. We do not inspect properties, verify photos, run background
-        checks unless we say we did in a specific case, or guarantee that a
-        host or guest is who they claim to be.
+        checks unless we say we did in a specific case, or guarantee that a host
+        or guest is who they claim to be.
       </LegalP>
       <LegalP>
         If you have an emergency, contact local emergency services first, then
@@ -329,10 +338,10 @@ export default function TermsPage() {
       <LegalP>
         We do not sell, provide, or broker insurance. We do not offer host
         damage protection, guest travel insurance, or liability coverage. Hosts
-        should maintain property, liability, and any short-term rental
-        insurance their carrier requires. Guests should consider their own
-        travel or renter coverage. Any insurance you buy is a contract with
-        that insurer, not with us.
+        should maintain property, liability, and any short-term rental insurance
+        their carrier requires. Guests should consider their own travel or
+        renter coverage. Any insurance you buy is a contract with that insurer,
+        not with us.
       </LegalP>
 
       <LegalH2 id="ip">16. Our intellectual property</LegalH2>
@@ -344,8 +353,8 @@ export default function TermsPage() {
       </LegalP>
       <LegalP>
         If you believe content infringes copyright, send a notice with the
-        information 17 U.S.C. § 512 requires via the Contact page. We may
-        remove content and repeat infringers.
+        information 17 U.S.C. § 512 requires via the Contact page. We may remove
+        content and repeat infringers.
       </LegalP>
 
       <LegalH2 id="opensource">17. Open source and self-host</LegalH2>
@@ -367,13 +376,13 @@ export default function TermsPage() {
       <LegalH2 id="warranty">19. Disclaimer of warranties</LegalH2>
       <LegalP>
         <strong>
-          TO THE MAXIMUM EXTENT PERMITTED BY TEXAS LAW, THE PLATFORM IS
-          PROVIDED “AS IS” AND “AS AVAILABLE.” WE DISCLAIM ALL WARRANTIES,
-          EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A
-          PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. WE DO NOT WARRANT
-          THAT LISTINGS ARE ACCURATE, THAT STAYS ARE SAFE OR LAWFUL, THAT THE
-          SERVICE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT CALENDAR OR ICAL
-          SYNC WILL BE COMPLETE.
+          TO THE MAXIMUM EXTENT PERMITTED BY TEXAS LAW, THE PLATFORM IS PROVIDED
+          “AS IS” AND “AS AVAILABLE.” WE DISCLAIM ALL WARRANTIES, EXPRESS OR
+          IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+          TITLE, AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT LISTINGS ARE
+          ACCURATE, THAT STAYS ARE SAFE OR LAWFUL, THAT THE SERVICE WILL BE
+          UNINTERRUPTED OR ERROR-FREE, OR THAT CALENDAR OR ICAL SYNC WILL BE
+          COMPLETE.
         </strong>
       </LegalP>
       <LegalP>
@@ -388,16 +397,16 @@ export default function TermsPage() {
           WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
           CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES; LOST PROFITS; LOST
           DATA; LOST BOOKINGS; BUSINESS INTERRUPTION; OR PERSONAL INJURY,
-          PROPERTY DAMAGE, OR EMOTIONAL DISTRESS ARISING FROM A STAY, A
-          LISTING, A HOST, A GUEST, OR YOUR USE OF THE PLATFORM — EVEN IF WE
-          WERE TOLD SUCH DAMAGES WERE POSSIBLE.
+          PROPERTY DAMAGE, OR EMOTIONAL DISTRESS ARISING FROM A STAY, A LISTING,
+          A HOST, A GUEST, OR YOUR USE OF THE PLATFORM — EVEN IF WE WERE TOLD
+          SUCH DAMAGES WERE POSSIBLE.
         </strong>
       </LegalP>
       <LegalP>
         <strong>
-          WE ARE NOT LIABLE FOR THE ACTS OR OMISSIONS OF HOSTS, GUESTS, OR
-          OTHER THIRD PARTIES. YOUR REMEDY FOR A PROBLEM WITH A STAY IS AGAINST
-          THE HOST OR GUEST WHO CAUSED IT.
+          WE ARE NOT LIABLE FOR THE ACTS OR OMISSIONS OF HOSTS, GUESTS, OR OTHER
+          THIRD PARTIES. YOUR REMEDY FOR A PROBLEM WITH A STAY IS AGAINST THE
+          HOST OR GUEST WHO CAUSED IT.
         </strong>
       </LegalP>
       <LegalP>
@@ -411,9 +420,9 @@ export default function TermsPage() {
       </LegalP>
       <LegalP>
         These limits are a core part of the bargain. They apply to the fullest
-        extent Texas law allows. They do not limit liability that Texas law
-        says cannot be limited, including (if applicable) our own fraud or
-        willful misconduct.
+        extent Texas law allows. They do not limit liability that Texas law says
+        cannot be limited, including (if applicable) our own fraud or willful
+        misconduct.
       </LegalP>
 
       <LegalH2 id="release">21. Release</LegalH2>
@@ -438,9 +447,9 @@ export default function TermsPage() {
       <LegalH2 id="termination">23. Termination</LegalH2>
       <LegalP>
         You may stop using the Platform at any time. We may suspend or end
-        access at any time. Sections that should survive (including 4, 7–10,
-        and 16–28) survive termination. We have no duty to export your data
-        except as the product already allows or law requires.
+        access at any time. Sections that should survive (including 4, 7–10, and
+        16–28) survive termination. We have no duty to export your data except
+        as the product already allows or law requires.
       </LegalP>
 
       <LegalH2 id="disputes">24. Disputes; Texas law; arbitration</LegalH2>
@@ -460,10 +469,13 @@ export default function TermsPage() {
         individual arbitration administered by the American Arbitration
         Association under its applicable rules. The seat is Henderson County,
         Texas. English is the language. The arbitrator may award the same
-        individual relief a court could. <strong>You and we waive class,
-        collective, and representative actions</strong> to the extent the law
-        allows. If a court finds the class waiver unenforceable for a claim,
-        that claim proceeds in court, not arbitration.
+        individual relief a court could.{" "}
+        <strong>
+          You and we waive class, collective, and representative actions
+        </strong>{" "}
+        to the extent the law allows. If a court finds the class waiver
+        unenforceable for a claim, that claim proceeds in court, not
+        arbitration.
       </LegalP>
       <LegalP>
         If arbitration does not apply, exclusive venue is the state courts in
@@ -486,7 +498,10 @@ export default function TermsPage() {
         </li>
         <li>If a clause is invalid, the rest stays in force.</li>
         <li>Our failure to enforce a clause is not a waiver.</li>
-        <li>You may not assign these Terms without our consent. We may assign them.</li>
+        <li>
+          You may not assign these Terms without our consent. We may assign
+          them.
+        </li>
         <li>There are no third-party beneficiaries except as § 22 requires.</li>
         <li>Headings are for convenience only.</li>
       </LegalUl>

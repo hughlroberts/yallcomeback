@@ -11,7 +11,15 @@ import {
   getBitcoinLabel,
   getBitcoinNetworkLabel,
 } from "@/lib/bitcoin";
-import { verifyBookingAccessToken } from "@/lib/booking-access";
+import {
+  bookingAccessToken,
+  verifyBookingAccessToken,
+} from "@/lib/booking-access";
+import {
+  guestCancelWindow,
+  REFUND_PROCESS_TEXT,
+} from "@/lib/guest-cancel-window";
+import { GuestCancelPanel } from "@/components/guest-cancel-panel";
 
 import { pageMetadata } from "@/lib/seo";
 
@@ -32,6 +40,9 @@ export default async function ConfirmationPage({
     pendingStripe?: string;
     inbox?: string;
     t?: string;
+    cancel?: string;
+    cancelled?: string;
+    cancelError?: string;
   }>;
 }) {
   const { id } = await params;
@@ -40,8 +51,18 @@ export default async function ConfirmationPage({
   const booking = await prisma.booking.findUnique({
     where: { id },
     include: {
-      property: { select: { title: true, slug: true, hostId: true, host: { select: { slug: true } } } },
-      payments: { orderBy: { createdAt: "desc" }, take: 1 },
+      property: {
+        select: {
+          title: true,
+          slug: true,
+          hostId: true,
+          checkInTime: true,
+          cancellationPolicy: true,
+          longTermCancellationPolicy: true,
+          host: { select: { slug: true } },
+        },
+      },
+      payments: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!booking) notFound();
@@ -60,8 +81,8 @@ export default async function ConfirmationPage({
     Boolean(session?.user?.id && booking.userId === session.user.id) ||
     Boolean(
       email &&
-        email === booking.guestEmail.toLowerCase() &&
-        viewer?.emailVerifiedAt,
+      email === booking.guestEmail.toLowerCase() &&
+      viewer?.emailVerifiedAt,
     );
   const isHost =
     session?.user?.role === "ADMIN" ||
@@ -78,9 +99,40 @@ export default async function ConfirmationPage({
   }
 
   const payment = booking.payments[0];
+  const isCancelled = booking.status === "CANCELLED";
   const isBitcoin =
-    payment?.method === "BITCOIN" && payment.status === "PENDING";
-  const isStripePending = sp.pendingStripe === "1" || payment?.method === "STRIPE";
+    !isCancelled &&
+    payment?.method === "BITCOIN" &&
+    payment.status === "PENDING";
+  const isStripePending =
+    !isCancelled &&
+    (sp.pendingStripe === "1" || payment?.method === "STRIPE") &&
+    payment?.status !== "PAID";
+  const depositPaid = booking.payments.some(
+    (p) => p.status === "PAID" || p.status === "REFUNDED",
+  );
+  const refundedTotal = booking.payments.reduce(
+    (sum, p) => sum + (p.refundedAmount ?? 0),
+    0,
+  );
+  const canManage = tokenOk || isGuest;
+  const manageToken = canManage ? bookingAccessToken(booking.id) : "";
+  const cancelWin = guestCancelWindow({
+    nights: booking.nights,
+    checkIn: booking.checkIn,
+    createdAt: booking.createdAt,
+    checkInTime: booking.property.checkInTime,
+    cancellationPolicy: booking.property.cancellationPolicy,
+    longTermCancellationPolicy: booking.property.longTermCancellationPolicy,
+  });
+  const deadlineLabel = cancelWin.deadline.toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const isRequest =
     payment?.method === "MANUAL" &&
     Boolean(payment.notes?.startsWith("Request to book"));
@@ -100,16 +152,20 @@ export default async function ConfirmationPage({
       <div className="text-center">
         <BrandSeal size={88} className="mx-auto h-[5.5rem] w-[5.5rem]" />
         <h1 className="mt-6 text-2xl font-semibold text-stone-900">
-          {isBitcoin
-            ? "Send your Bitcoin deposit"
-            : "You're back. The light's on."}
+          {isCancelled
+            ? "This booking is cancelled"
+            : isBitcoin
+              ? "Send your Bitcoin deposit"
+              : "You're back. The light's on."}
         </h1>
         <p className="mt-2 text-stone-500">
-          {isBitcoin
-            ? `We've reserved ${booking.property.title}. Send the deposit in Bitcoin to confirm.`
-            : isRequest
-              ? `Your request for ${booking.property.title} is in. Nothing was charged. The host will review it and arrange the deposit with you after they approve.`
-              : `We've reserved ${booking.property.title} for your dates. A host will confirm your deposit shortly.`}
+          {isCancelled
+            ? `Your ${isRequest ? "request" : "booking"} for ${booking.property.title} was cancelled and the dates were released.`
+            : isBitcoin
+              ? `We've reserved ${booking.property.title}. Send the deposit in Bitcoin to confirm.`
+              : isRequest
+                ? `Your request for ${booking.property.title} is in. Nothing was charged. The host will review it and arrange the deposit with you after they approve.`
+                : `We've reserved ${booking.property.title} for your dates. A host will confirm your deposit shortly.`}
         </p>
       </div>
 
@@ -142,13 +198,13 @@ export default async function ConfirmationPage({
             {payment.bitcoinAmountBtc != null ? (
               <>
                 {" "}
- - about{" "}
+                - about{" "}
                 <strong className="font-mono">
                   {formatBtc(payment.bitcoinAmountBtc)}
                 </strong>
               </>
             ) : null}{" "}
- - for <strong>{formatMoney(booking.depositAmount)} USD</strong>.
+            - for <strong>{formatMoney(booking.depositAmount)} USD</strong>.
             {payment.bitcoinRateUsd != null ? (
               <span className="mt-1 block text-xs text-orange-900/80">
                 Rate used: {formatMoney(payment.bitcoinRateUsd)} USD per BTC
@@ -201,6 +257,86 @@ export default async function ConfirmationPage({
         </div>
       ) : null}
 
+      {canManage && isCancelled ? (
+        <div
+          data-guest-cancelled
+          className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-left text-sm text-red-950"
+        >
+          <p className="font-semibold">
+            Cancelled
+            {booking.cancelledAt
+              ? ` on ${booking.cancelledAt.toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", year: "numeric" })}`
+              : ""}
+            {booking.cancelledBy === "GUEST"
+              ? " by you"
+              : booking.cancelledBy === "HOST"
+                ? " by the host"
+                : booking.cancelledBy === "SYSTEM"
+                  ? " automatically"
+                  : ""}
+            .
+          </p>
+          <p className="mt-1 text-red-900/90">
+            {refundedTotal > 0
+              ? `A refund of ${formatMoney(refundedTotal)} was issued to your original payment method.`
+              : depositPaid
+                ? `You paid a deposit. The host or Yall Come Back will process any refund your ${cancelWin.policyName} policy allows. Refunds are not automatic, and the host has been notified.`
+                : "No payment was taken, so there is nothing to refund."}
+          </p>
+          {sp.cancelled === "1" ? (
+            <p className="mt-1 text-red-900/90">
+              We emailed you and the host a cancellation notice.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {canManage &&
+      !isCancelled &&
+      (booking.status === "PENDING_PAYMENT" ||
+        booking.status === "CONFIRMED") ? (
+        <div
+          id="cancel"
+          data-guest-cancel
+          className="mt-6 rounded-xl border border-stone-200 bg-white p-4 text-left text-sm"
+        >
+          <p className="font-semibold text-stone-900">Need to cancel?</p>
+          <p className="mt-1 text-stone-600">
+            Cancellation policy: {cancelWin.policyName}. {cancelWin.ruleText}
+          </p>
+          {sp.cancelError === "deadline" ? (
+            <p className="mt-2 rounded-lg bg-amber-50 p-2 text-amber-900">
+              The online cancel window has passed.
+            </p>
+          ) : null}
+          <div className="mt-3">
+            {cancelWin.canCancelOnline ? (
+              <GuestCancelPanel
+                bookingId={booking.id}
+                token={manageToken}
+                noun={isRequest || !depositPaid ? "request" : "booking"}
+                startOpen={sp.cancel === "1"}
+                deadlineText={`You can cancel online until ${deadlineLabel} (Central). The dates go back on the calendar right away.`}
+                moneyText={
+                  depositPaid
+                    ? `You paid a deposit. Nothing is refunded automatically: the host or Yall Come Back will process any refund the ${cancelWin.policyName} policy allows${cancelWin.refundTier === "full" ? " (you are in its full-refund window)" : cancelWin.refundTier === "partial" ? " (you are in its partial-refund window)" : ""}.`
+                    : "No payment has been taken, so nothing is charged or refunded."
+                }
+              />
+            ) : (
+              <p
+                data-contact-host-to-cancel
+                className="rounded-lg bg-amber-50 p-3 font-medium text-amber-950"
+              >
+                Contact host to cancel. The online cancel window ended{" "}
+                {deadlineLabel} (Central). Use “Message host” below.
+              </p>
+            )}
+          </div>
+          <p className="mt-3 text-xs text-stone-500">{REFUND_PROCESS_TEXT}</p>
+        </div>
+      ) : null}
+
       {isStripePending && !isBitcoin ? (
         <p className="mt-6 rounded-lg bg-amber-50 p-3 text-center text-sm text-amber-900">
           Card checkout will open here when card payments are live. Your hold is
@@ -231,8 +367,8 @@ export default async function ConfirmationPage({
           Message the host?
         </h2>
         <p className="mt-1 text-sm text-stone-600">
-          Questions about arrival, parking, or your stay? You can message now
-          or skip - never required.
+          Questions about arrival, parking, or your stay? You can message now or
+          skip - never required.
         </p>
         <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
           <MessageHostButton

@@ -7,10 +7,7 @@ import { auth } from "@/lib/auth";
 import { calculateQuote } from "@/lib/pricing";
 import { isRangeAvailable, lockPropertyBookings } from "@/lib/availability";
 import { revalidatePath } from "next/cache";
-import {
-  getBitcoinAddress,
-  quoteBtcFromUsd,
-} from "@/lib/bitcoin";
+import { getBitcoinAddress, quoteBtcFromUsd } from "@/lib/bitcoin";
 import {
   defaultGuestPayMethod,
   guestPaymentOptions,
@@ -28,7 +25,9 @@ export async function createBooking(formData: FormData) {
   const pets = Number(formData.get("pets") || 0);
   const guestNotes = String(formData.get("guestNotes") || "").trim() || null;
   const acceptedDisclaimer = formData.get("acceptDisclaimer") === "on";
-  const payMethodRaw = String(formData.get("paymentMethod") || "").toLowerCase();
+  const payMethodRaw = String(
+    formData.get("paymentMethod") || "",
+  ).toLowerCase();
 
   if (!propertyId || !checkIn || !checkOut) {
     throw new Error("Missing required fields");
@@ -53,9 +52,7 @@ export async function createBooking(formData: FormData) {
     if (profile?.email) {
       guestEmail = profile.email;
       guestName =
-        profile.preferredName?.trim() ||
-        profile.name?.trim() ||
-        profile.email;
+        profile.preferredName?.trim() || profile.name?.trim() || profile.email;
       guestPhone = profile.phone?.trim() || guestPhone;
     }
   }
@@ -143,7 +140,9 @@ export async function createBooking(formData: FormData) {
     .join("\n\n");
 
   const payOptions = guestPaymentOptions(property.host, channel, property);
-  const allowed = new Set(payOptions.filter((o) => o.ready).map((o) => o.value));
+  const allowed = new Set(
+    payOptions.filter((o) => o.ready).map((o) => o.value),
+  );
   // No payment method ready (e.g. host has not finished card onboarding):
   // take a request to book. Nothing is charged; the host approves and
   // arranges the deposit with the guest directly (recorded as MANUAL).
@@ -269,15 +268,22 @@ export async function createBooking(formData: FormData) {
   // Host “on booking” template → guest inbox (if enabled on this listing)
   let autoMsgConversationId: string | undefined;
   try {
-    const { deliverBookingAutoMessage } = await import(
-      "@/lib/booking-messages"
-    );
+    const { deliverBookingAutoMessage } =
+      await import("@/lib/booking-messages");
     const delivered = await deliverBookingAutoMessage(booking.id, "ON_BOOKING");
     if (delivered.conversationId) {
       autoMsgConversationId = delivered.conversationId;
     }
   } catch (e) {
     console.error("[booking-messages:on-booking]", e);
+  }
+
+  // Guest "request received" + host "new request" emails. Card checkouts
+  // send these from the Stripe webhook once the deposit is paid, so an
+  // abandoned checkout never emails anyone. Never throws.
+  if (!(method === "STRIPE" && property.host.stripeAccountId)) {
+    const { sendBookingCreatedEmails } = await import("@/lib/booking-emails");
+    await sendBookingCreatedEmails(booking.id);
   }
 
   revalidatePath(`/properties/${property.slug}`);
@@ -294,9 +300,8 @@ export async function createBooking(formData: FormData) {
   }
 
   if (method === "STRIPE" && property.host.stripeAccountId) {
-    const { createDirectChargeCheckout, depositCheckoutName } = await import(
-      "@/lib/stripe-connect"
-    );
+    const { createDirectChargeCheckout, depositCheckoutName } =
+      await import("@/lib/stripe-connect");
     const { toStripeAmount } = await import("@/lib/stripe");
     const session = await createDirectChargeCheckout({
       accountId: property.host.stripeAccountId,
@@ -312,7 +317,9 @@ export async function createBooking(formData: FormData) {
       },
     });
     if (!session.url) {
-      throw new Error("Card checkout did not start. Try again or pay another way.");
+      throw new Error(
+        "Card checkout did not start. Try again or pay another way.",
+      );
     }
     redirect(session.url);
   }
@@ -327,8 +334,7 @@ export async function markDepositPaid(formData: FormData) {
 
   const bookingId = String(formData.get("bookingId") || "");
   const notes = String(formData.get("notes") || "").trim() || null;
-  const bitcoinTxId =
-    String(formData.get("bitcoinTxId") || "").trim() || null;
+  const bitcoinTxId = String(formData.get("bitcoinTxId") || "").trim() || null;
   const methodOverride = String(formData.get("paymentMethod") || "")
     .trim()
     .toUpperCase();
@@ -363,9 +369,7 @@ export async function markDepositPaid(formData: FormData) {
             method,
             paidAt: new Date(),
             notes,
-            ...(method === "BITCOIN" && bitcoinTxId
-              ? { bitcoinTxId }
-              : {}),
+            ...(method === "BITCOIN" && bitcoinTxId ? { bitcoinTxId } : {}),
           },
         });
       }),
@@ -399,23 +403,45 @@ export async function cancelBooking(formData: FormData) {
   });
   if (!booking) throw new Error("Booking not found");
 
-  await prisma.$transaction([
-    prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: "CANCELLED" },
-    }),
-    prisma.calendarBlock.deleteMany({
-      where: { bookingId },
-    }),
-  ]);
+  // Marks CANCELLED, frees the calendar, flags paid deposits for a manual
+  // refund review, and emails the guest + every host. No Stripe refund.
+  const { cancelBookingRecord } = await import("@/lib/booking-cancel");
+  const session = await auth();
+  await cancelBookingRecord({
+    bookingId,
+    by: "HOST",
+    actorLabel: session?.user?.email || session?.user?.id || "host",
+    reason: String(formData.get("reason") || "").trim() || null,
+  });
 
   revalidatePath("/admin/bookings");
+  revalidatePath(`/admin/bookings/${bookingId}`);
+}
 
-  const { trackAnalyticsEvent } = await import("@/lib/analytics");
-  trackAnalyticsEvent({
-    name: "booking_cancelled",
-    listingId: booking.propertyId,
-    bookingId: booking.id,
-    value: booking.totalAmount,
+/** Host marks the "refund review" flag on a cancelled booking as handled. */
+export async function clearRefundReview(formData: FormData) {
+  const { ensureHostAccess, bookingScopeWhere } = await import("@/lib/scope");
+  const access = await ensureHostAccess();
+  const bookingId = String(formData.get("bookingId") || "");
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, ...bookingScopeWhere(access) },
+    select: { id: true, adminNotes: true },
   });
+  if (!booking) throw new Error("Booking not found");
+  const session = await auth();
+  const who = session?.user?.email || session?.user?.id || "host";
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: {
+      refundReviewNeeded: false,
+      adminNotes: [
+        booking.adminNotes,
+        `[${new Date().toISOString()}] Refund review marked handled by ${who}`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    },
+  });
+  revalidatePath("/admin/bookings");
+  revalidatePath(`/admin/bookings/${bookingId}`);
 }

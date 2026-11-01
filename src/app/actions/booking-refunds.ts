@@ -29,7 +29,10 @@ export async function adminRefundBookingDeposit(formData: FormData) {
   const bookingId = String(formData.get("bookingId") || "").trim();
   if (!bookingId) throw new Error("Missing booking id");
   const rawAmount = String(formData.get("amount") || "");
-  const reason = String(formData.get("reason") || "").trim().slice(0, 450) || null;
+  const reason =
+    String(formData.get("reason") || "")
+      .trim()
+      .slice(0, 450) || null;
   const cancel = formData.get("cancelBooking") === "on";
 
   const payment = await prisma.payment.findFirst({
@@ -54,6 +57,12 @@ export async function adminRefundBookingDeposit(formData: FormData) {
       cancelBooking: cancel,
     });
     ok = result.ok;
+    if (result.ok && cancel) {
+      const { sendCancellationEmails } = await import("@/lib/booking-emails");
+      await sendCancellationEmails(bookingId, "HOST", {
+        refundedAmount: result.amount,
+      });
+    }
     message = result.ok
       ? `Refunded $${result.amount.toFixed(2)} (${result.refundId}).`
       : result.error;

@@ -1,7 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/utils";
-import { markDepositPaid, cancelBooking } from "@/app/actions/bookings";
+import {
+  markDepositPaid,
+  cancelBooking,
+  clearRefundReview,
+} from "@/app/actions/bookings";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { adminRefundBookingDeposit } from "@/app/actions/booking-refunds";
 import { refundableRemaining } from "@/lib/booking-refunds";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
@@ -59,6 +64,41 @@ export default async function AdminBookingDetailPage({
         </div>
       </Card>
 
+      {booking.status === "CANCELLED" && booking.cancelledAt ? (
+        <Card className="space-y-1 border-red-200 bg-red-50 text-sm text-red-950">
+          <p className="font-semibold">
+            Cancelled{" "}
+            {booking.cancelledBy === "GUEST"
+              ? "by the guest"
+              : booking.cancelledBy === "HOST"
+                ? "by a host"
+                : "automatically"}{" "}
+            on {booking.cancelledAt.toISOString().slice(0, 10)}
+          </p>
+          {booking.cancelReason ? <p>Reason: {booking.cancelReason}</p> : null}
+        </Card>
+      ) : null}
+
+      {booking.refundReviewNeeded ? (
+        <Card
+          data-refund-review
+          className="space-y-2 border-amber-300 bg-amber-50 text-sm text-amber-950"
+        >
+          <p className="font-semibold">Refund review needed</p>
+          <p>
+            This booking was cancelled after a deposit was paid. Nothing was
+            refunded automatically. Check the listing&apos;s cancellation policy
+            and send any refund it allows, then mark this handled.
+          </p>
+          <form action={clearRefundReview}>
+            <input type="hidden" name="bookingId" value={booking.id} />
+            <Button type="submit" variant="secondary">
+              Mark refund handled
+            </Button>
+          </form>
+        </Card>
+      ) : null}
+
       <Card className="space-y-2 text-sm">
         <p>
           <span className="text-stone-500">Status:</span>{" "}
@@ -71,7 +111,8 @@ export default async function AdminBookingDetailPage({
         <p>
           <span className="text-stone-500">Dates:</span>{" "}
           {booking.checkIn.toISOString().slice(0, 10)} →{" "}
-          {booking.checkOut.toISOString().slice(0, 10)} ({booking.nights} nights)
+          {booking.checkOut.toISOString().slice(0, 10)} ({booking.nights}{" "}
+          nights)
         </p>
         <p>
           <span className="text-stone-500">Guests:</span> {booking.guests}
@@ -130,10 +171,7 @@ export default async function AdminBookingDetailPage({
         <h2 className="font-semibold">Payments</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {booking.payments.map((p) => (
-            <li
-              key={p.id}
-              className="space-y-1 border-b border-stone-100 py-2"
-            >
+            <li key={p.id} className="space-y-1 border-b border-stone-100 py-2">
               <div className="flex justify-between gap-2">
                 <span>
                   {p.method} · {p.status}
@@ -249,7 +287,9 @@ export default async function AdminBookingDetailPage({
               />
             </div>
             <div>
-              <Label htmlFor="refundReason">Reason (saved on the booking)</Label>
+              <Label htmlFor="refundReason">
+                Reason (saved on the booking)
+              </Label>
               <Textarea id="refundReason" name="reason" rows={2} />
             </div>
             <label className="flex items-center gap-2 text-sm">
@@ -264,11 +304,20 @@ export default async function AdminBookingDetailPage({
       ) : null}
 
       {booking.status !== "CANCELLED" && (
-        <form action={cancelBooking}>
+        <form action={cancelBooking} className="max-w-md">
           <input type="hidden" name="bookingId" value={booking.id} />
-          <Button type="submit" variant="danger">
-            Cancel booking (frees calendar)
-          </Button>
+          <ConfirmSubmitButton
+            label="Cancel booking (frees calendar)"
+            question={`Cancel ${booking.guestName}'s booking?`}
+            detail={
+              booking.payments.some((p) => p.status === "PAID")
+                ? "The dates open on your calendar, and the guest and all hosts get an email. A deposit was paid: nothing is refunded automatically, so the booking will be flagged for a refund review."
+                : "The dates open on your calendar, and the guest and all hosts get an email. This can't be undone."
+            }
+            confirmLabel="Yes, cancel booking"
+            pendingLabel="Cancelling…"
+            keepLabel="Keep booking"
+          />
         </form>
       )}
     </div>

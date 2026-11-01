@@ -9,6 +9,7 @@ import {
   guestFacingBullets,
   policyForNights,
 } from "@/lib/cancellation-policies";
+import { onlineCancelLines } from "@/lib/guest-cancel-window";
 import { formatDateRangeUS, formatMoney } from "@/lib/utils";
 import { createBooking } from "@/app/actions/bookings";
 import { Button, Input, Label, Textarea } from "@/components/ui";
@@ -151,7 +152,7 @@ export default async function BookPage({
   const available = await isRangeAvailable(
     property.id,
     checkInDate,
-    checkOutDate
+    checkOutDate,
   );
   const taxLines = await prisma.hostTaxLine.findMany({
     where: { hostId: property.hostId, active: true },
@@ -171,7 +172,7 @@ export default async function BookPage({
 
   const disclaimer = resolveDisclaimer(
     property.disclaimer,
-    property.host.defaultDisclaimer
+    property.host.defaultDisclaimer,
   );
 
   const { kind: cancelKind, policy: cancelPolicy } = policyForNights(
@@ -197,8 +198,12 @@ export default async function BookPage({
   const isSignedIn = Boolean(signedInUser?.email);
   const payOptions = guestPaymentOptions(property.host, channel, property);
   const defaultPay = defaultGuestPayMethod(payOptions);
-  const bitcoinOffered = payOptions.some((o) => o.value === "bitcoin" && o.ready);
-  const onlineCardOffered = payOptions.some((o) => o.value === "card" && o.ready);
+  const bitcoinOffered = payOptions.some(
+    (o) => o.value === "bitcoin" && o.ready,
+  );
+  const onlineCardOffered = payOptions.some(
+    (o) => o.value === "card" && o.ready,
+  );
   const payReady = payOptions.some((o) => o.ready);
   const { canHostAddFutureWork } = await import("@/lib/hosting");
   const hostTakesNewStays = canHostAddFutureWork(property.host);
@@ -289,9 +294,7 @@ export default async function BookPage({
                 </dt>
                 <dd className="mt-0.5 font-medium text-stone-900">
                   {guests} guest{guests === 1 ? "" : "s"}
-                  {pets > 0
-                    ? ` · ${pets} pet${pets === 1 ? "" : "s"}`
-                    : ""}
+                  {pets > 0 ? ` · ${pets} pet${pets === 1 ? "" : "s"}` : ""}
                 </dd>
               </div>
               <div>
@@ -324,9 +327,7 @@ export default async function BookPage({
             <p className="mt-2 text-base text-stone-600">
               {quote.nights} night{quote.nights === 1 ? "" : "s"} · {guests}{" "}
               guest{guests === 1 ? "" : "s"}
-              {pets > 0
-                ? ` · ${pets} pet${pets === 1 ? "" : "s"}`
-                : ""}
+              {pets > 0 ? ` · ${pets} pet${pets === 1 ? "" : "s"}` : ""}
             </p>
             {guestCount.clamped && guestCount.requested > guests ? (
               <p
@@ -500,9 +501,7 @@ export default async function BookPage({
             variant="primary"
             className="shrink-0"
             defaultName={
-              signedInUser?.preferredName ||
-              signedInUser?.name ||
-              ""
+              signedInUser?.preferredName || signedInUser?.name || ""
             }
             defaultEmail={signedInUser?.email || ""}
             defaultPhone={signedInUser?.phone || ""}
@@ -525,40 +524,42 @@ export default async function BookPage({
           <input type="hidden" name="sourceChannel" value={channel} />
 
           {requestOnly ? null : (
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-stone-800">
-              How will you pay the deposit?
-            </legend>
-            {payOptions.map((opt) => (
-              <label
-                key={opt.value}
-                className={`flex min-h-11 items-start gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-base ${
-                  opt.ready
-                    ? "cursor-pointer hover:bg-stone-50"
-                    : "cursor-not-allowed opacity-60"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value={opt.value}
-                  defaultChecked={defaultPay === opt.value}
-                  disabled={!opt.ready}
-                  className="mt-1 size-5 shrink-0"
-                />
-                <span>
-                  <span className="font-medium text-stone-900">{opt.label}</span>
-                  <span className="mt-0.5 block text-xs text-stone-500">
-                    {opt.ready && opt.value === "card"
-                      ? `Pay ${formatMoney(quote.depositAmount)} USD by card now.`
-                      : opt.ready && opt.value === "bitcoin"
-                        ? `Pay ~${btcQuote ? formatBtc(btcQuote.btcAmount) : "BTC"} for ${formatMoney(quote.depositAmount)} USD.`
-                        : opt.hint}
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium text-stone-800">
+                How will you pay the deposit?
+              </legend>
+              {payOptions.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`flex min-h-11 items-start gap-3 rounded-xl border border-stone-200 px-3 py-2.5 text-base ${
+                    opt.ready
+                      ? "cursor-pointer hover:bg-stone-50"
+                      : "cursor-not-allowed opacity-60"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={opt.value}
+                    defaultChecked={defaultPay === opt.value}
+                    disabled={!opt.ready}
+                    className="mt-1 size-5 shrink-0"
+                  />
+                  <span>
+                    <span className="font-medium text-stone-900">
+                      {opt.label}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-stone-500">
+                      {opt.ready && opt.value === "card"
+                        ? `Pay ${formatMoney(quote.depositAmount)} USD by card now.`
+                        : opt.ready && opt.value === "bitcoin"
+                          ? `Pay ~${btcQuote ? formatBtc(btcQuote.btcAmount) : "BTC"} for ${formatMoney(quote.depositAmount)} USD.`
+                          : opt.hint}
+                    </span>
                   </span>
-                </span>
-              </label>
-            ))}
-          </fieldset>
+                </label>
+              ))}
+            </fieldset>
           )}
 
           {isSignedIn && signedInUser ? (
@@ -633,6 +634,16 @@ export default async function BookPage({
                     ))}
                   </ul>
                 ) : null}
+                <ul
+                  data-online-cancel
+                  className="mt-2 space-y-1 text-sm text-stone-600"
+                >
+                  {onlineCancelLines(cancelKind, cancelPolicy.id).map(
+                    (line) => (
+                      <li key={line}>{line}</li>
+                    ),
+                  )}
+                </ul>
               </div>
 
               {disclaimer ? (
@@ -661,7 +672,10 @@ export default async function BookPage({
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="/privacy" className="font-medium text-bonnet underline">
+                <a
+                  href="/privacy"
+                  className="font-medium text-bonnet underline"
+                >
                   Privacy Policy
                 </a>
                 . The stay is a contract with the host, not Yall Come Back.

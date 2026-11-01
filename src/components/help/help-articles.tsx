@@ -84,8 +84,8 @@ function GettingStarted({ article }: { article: HelpArticle }) {
       ]}
     >
       <HelpLead>
-        Yall Come Back connects vacation rental hosts with guests. You can find a
-        place, message hosts, and book a stay. Hosts can run a branded website
+        Yall Come Back connects vacation rental hosts with guests. You can find
+        a place, message hosts, and book a stay. Hosts can run a branded website
         (and optional marketplace listing) so guests book them, not a middleman.
       </HelpLead>
 
@@ -114,8 +114,8 @@ function GettingStarted({ article }: { article: HelpArticle }) {
             </Link>{" "}
             (or the header button with the same name). After you create the
             account, we sign you in. Then add a listing. Open{" "}
-            <strong className="font-semibold text-stone-800">Admin</strong>{" "}
-            for Calendar, Listings, and the rest of host tools.
+            <strong className="font-semibold text-stone-800">Admin</strong> for
+            Calendar, Listings, and the rest of host tools.
           </li>
         </HelpUl>
       </HelpSection>
@@ -151,9 +151,9 @@ function GettingStarted({ article }: { article: HelpArticle }) {
       <HelpSection title="If you are a host">
         <HelpUl>
           <li>
-            Choose <strong>platform hosting</strong> (monthly fee; Yall Come Back
-            runs the website) or <strong>free self-host</strong> (you run the
-            software on your domain).
+            Choose <strong>platform hosting</strong> (monthly fee; Yall Come
+            Back runs the website) or <strong>free self-host</strong> (you run
+            the software on your domain).
           </li>
           <li>
             Use{" "}
@@ -161,7 +161,10 @@ function GettingStarted({ article }: { article: HelpArticle }) {
               Calendar
             </Link>{" "}
             for nights, prices, and Airbnb or VRBO sync. Use{" "}
-            <Link href="/admin/properties" className="font-semibold text-bonnet">
+            <Link
+              href="/admin/properties"
+              className="font-semibold text-bonnet"
+            >
               Listings
             </Link>{" "}
             to turn stays on or off, edit photos and amenities, and print fridge
@@ -170,7 +173,8 @@ function GettingStarted({ article }: { article: HelpArticle }) {
           <li>
             Confirm your email before you turn bookings on. Marketplace-only
             hosts skip brand-site fields until they upgrade. Branded hosts set
-            logo, name, colors, and domain under Dashboard → Brand &amp; website.
+            logo, name, colors, and domain under Dashboard → Brand &amp;
+            website.
           </li>
         </HelpUl>
       </HelpSection>
@@ -196,18 +200,20 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
   return (
     <HelpArticleLayout article={article}>
       <HelpLead>
-        Yall Come Back is built so <strong>hosts own the guest relationship</strong>.
-        The hosted marketplace and branded websites are paid products. Open-source
-        software is free when you run it. Yall Come Back does not take a cut of
-        every booking.
+        Yall Come Back is built so{" "}
+        <strong>hosts own the guest relationship</strong>. The hosted
+        marketplace and branded websites are paid products. Open-source software
+        is free when you run it. Yall Come Back does not take a cut of every
+        booking.
       </HelpLead>
 
       <HelpSection title="Two ways guests find a stay">
         <HelpUl>
           <li>
-            <strong>Host website</strong> — Your brand, logo, colors, about page,
-            and contact. On a custom domain (for example cherokeelanding.net) or
-            on a host page on Yall Come Back. Guests book <em>you</em>.
+            <strong>Host website</strong> — Your brand, logo, colors, about
+            page, and contact. On a custom domain (for example
+            cherokeelanding.net) or on a host page on Yall Come Back. Guests
+            book <em>you</em>.
           </li>
           <li>
             <strong>Shared marketplace</strong> — Guests use{" "}
@@ -223,8 +229,8 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting vs self-host">
         <HelpUl>
           <li>
-            <strong>Platform hosting (paid)</strong> — Marketplace only at $12 per
-            published listing / month, or branded website at $25 / month for
+            <strong>Platform hosting (paid)</strong> — Marketplace only at $12
+            per published listing / month, or branded website at $25 / month for
             the whole site (marketplace included). Full brand-domain guide:{" "}
             <Link
               href="/help/branded-website"
@@ -286,8 +292,8 @@ function SearchAndBook({ article }: { article: HelpArticle }) {
       ]}
     >
       <HelpLead>
-        Find a place on Yall Come Back. Search the marketplace or a host website.
-        Read the listing. Check the calendar. Then request your dates.
+        Find a place on Yall Come Back. Search the marketplace or a host
+        website. Read the listing. Check the calendar. Then request your dates.
       </HelpLead>
 
       <HelpSection title="Search the marketplace">
@@ -350,7 +356,9 @@ function SearchAndBook({ article }: { article: HelpArticle }) {
 
       <HelpSection title="Before you book — checklist">
         <HelpUl>
-          <li>Read house rules, check-in and check-out times, and max guests.</li>
+          <li>
+            Read house rules, check-in and check-out times, and max guests.
+          </li>
           <li>
             Open the cancellation policy under Things to know. Read the full{" "}
             <Link
@@ -418,10 +426,7 @@ function Payments({ article }: { article: HelpArticle }) {
           </li>
           <li>
             Hosts track paid deposits and upcoming balances under{" "}
-            <Link
-              href="/admin/earnings"
-              className="font-semibold text-bonnet"
-            >
+            <Link href="/admin/earnings" className="font-semibold text-bonnet">
               Admin → Earnings
             </Link>
             .
@@ -431,9 +436,12 @@ function Payments({ article }: { article: HelpArticle }) {
 
       <HelpSection title="Refunds and cancellations">
         <HelpP>
-          Refund rules follow the listing cancellation policy and any Yall Come Back
-          override guidelines. Examples include major disruptions or host
-          cancellations. See{" "}
+          Refund rules follow the listing cancellation policy and any Yall Come
+          Back override guidelines. Examples include major disruptions or host
+          cancellations. You can cancel online from the link in your booking
+          email until the policy&apos;s online deadline; after that, contact the
+          host to cancel. Refunds are not automatic: the host (or Yall Come Back
+          for card deposits) sends any refund the policy allows. See{" "}
           <Link
             href="/help/cancellation-policies"
             className="font-semibold text-bonnet"
@@ -466,8 +474,8 @@ function Messaging({ article }: { article: HelpArticle }) {
     <HelpArticleLayout article={article}>
       <HelpLead>
         Message hosts in the app from a listing or after you book. Keep
-        communication on Yall Come Back. This helps protect your payment. It also
-        keeps a record of agreements.
+        communication on Yall Come Back. This helps protect your payment. It
+        also keeps a record of agreements.
       </HelpLead>
 
       <HelpSection title="Start a conversation">
@@ -515,8 +523,8 @@ function Messaging({ article }: { article: HelpArticle }) {
       <HelpSection title="Safety tips">
         <HelpUl>
           <li>
-            Prefer Yall Come Back messaging and booking. Avoid off-platform payments
-            that bypass the deposit flow.
+            Prefer Yall Come Back messaging and booking. Avoid off-platform
+            payments that bypass the deposit flow.
           </li>
           <li>
             Never share passwords or one-time codes. Report suspicious requests
@@ -577,12 +585,12 @@ function SavedStays({ article }: { article: HelpArticle }) {
       <HelpSection title="Continue searching">
         <HelpUl>
           <li>
-            Yall Come Back can remember your last marketplace search and recently
-            viewed listings so you can continue your search.
+            Yall Come Back can remember your last marketplace search and
+            recently viewed listings so you can continue your search.
           </li>
           <li>
-            Suggestions based on your search use that local history. Yall Come Back
-            does not share them as a public profile.
+            Suggestions based on your search use that local history. Yall Come
+            Back does not share them as a public profile.
           </li>
         </HelpUl>
       </HelpSection>
@@ -649,8 +657,8 @@ function Account({ article }: { article: HelpArticle }) {
             search engine indexing where available.
           </li>
           <li>
-            <strong>Messages</strong> — Inbox plus email alert preferences
-            for new messages.
+            <strong>Messages</strong> — Inbox plus email alert preferences for
+            new messages.
           </li>
           <li>
             <strong>Payments</strong> — Links to payment methods, Bitcoin
@@ -716,8 +724,8 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             in the header. Select a plan for the paid path, or free self-host.
           </li>
           <li>
-            Hosting starts as soon as you create the account. We sign you in.
-            We send a confirmation email. Confirm the email before you turn
+            Hosting starts as soon as you create the account. We sign you in. We
+            send a confirmation email. Confirm the email before you turn
             bookings on.
           </li>
           <li>
@@ -759,13 +767,13 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
       <HelpSection title="Free self-host">
         <HelpUl>
           <li>
-            Deploy the open-source app on your domain. There is no Yall Come Back
-            hosting invoice.
+            Deploy the open-source app on your domain. There is no Yall Come
+            Back hosting invoice.
           </li>
           <li>
-            You may list on the hosted Yall Come Back marketplace ($12 per listing
-            / month), or keep stays only on your site. Marketplace listing on this
-            site is a paid product.
+            You may list on the hosted Yall Come Back marketplace ($12 per
+            listing / month), or keep stays only on your site. Marketplace
+            listing on this site is a paid product.
           </li>
           <li>
             Full steps:{" "}
@@ -783,11 +791,13 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
 
       <HelpSection title="First week checklist">
         <HelpUl>
-          <li>Add at least one listing with photos and an accurate location.</li>
+          <li>
+            Add at least one listing with photos and an accurate location.
+          </li>
           <li>Set base rate, cleaning fee, deposit percent, and seasons.</li>
           <li>
-            Confirm your email. Then turn <strong>Taking bookings</strong> on
-            in Listings.
+            Confirm your email. Then turn <strong>Taking bookings</strong> on in
+            Listings.
           </li>
           <li>
             Open Calendar. Block unavailable dates. Connect Airbnb or VRBO if
@@ -799,7 +809,9 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             under Dashboard → Brand &amp; website.
           </li>
           <li>Set cancellation policies and booking auto messages.</li>
-          <li>Add tax lines if you collect lodging tax through Yall Come Back.</li>
+          <li>
+            Add tax lines if you collect lodging tax through Yall Come Back.
+          </li>
           <li>Test a booking quote as a guest.</li>
           <li>
             Print a fridge magnet from Listings if you want a QR for return
@@ -819,8 +831,8 @@ function Listings({ article }: { article: HelpArticle }) {
         <strong className="font-semibold text-stone-800">
           Admin → Listings
         </strong>
-        . This page is for photos, amenities, on or off, and fridge magnets.
-        Use Calendar for nights and prices.
+        . This page is for photos, amenities, on or off, and fridge magnets. Use
+        Calendar for nights and prices.
       </HelpLead>
 
       <HelpSection title="Create a listing">
@@ -891,9 +903,9 @@ function Listings({ article }: { article: HelpArticle }) {
           <strong className="font-semibold text-stone-800">Cancellation</strong>{" "}
           tab, set short-stay and long-stay cancellation policies and any
           optional non-refundable discount. Under the{" "}
-          <strong className="font-semibold text-stone-800">Messages</strong> tab,
-          set auto message templates. See the dedicated help articles for those
-          topics.
+          <strong className="font-semibold text-stone-800">Messages</strong>{" "}
+          tab, set auto message templates. See the dedicated help articles for
+          those topics.
         </HelpP>
       </HelpSection>
 
@@ -980,14 +992,14 @@ function Calendar({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             Open <strong>Admin → Calendar</strong>, pick a stay, then{" "}
-            <strong>Edit listing</strong> and open <strong>Sync</strong>. Connect
-            every calendar you use — Airbnb, VRBO, and any other .ics feed. A
-            booked night is then booked everywhere.
+            <strong>Edit listing</strong> and open <strong>Sync</strong>.
+            Connect every calendar you use — Airbnb, VRBO, and any other .ics
+            feed. A booked night is then booked everywhere.
           </li>
           <li>
             <strong>Step 1 — Export</strong> — Copy the Yall Come Back calendar
-            URL once. Paste it into each site as an import calendar. Those
-            sites then show Yall Come Back bookings as busy.
+            URL once. Paste it into each site as an import calendar. Those sites
+            then show Yall Come Back bookings as busy.
           </li>
           <li>
             <strong>Step 2 — Import</strong> — In each site’s host settings,
@@ -1004,7 +1016,9 @@ function Calendar({ article }: { article: HelpArticle }) {
 
       <HelpSection title="Tips to avoid conflicts">
         <HelpUl>
-          <li>Update Yall Come Back first when you take a direct phone booking.</li>
+          <li>
+            Update Yall Come Back first when you take a direct phone booking.
+          </li>
           <li>
             Leave buffer nights if you need turnaround time between guests.
           </li>
@@ -1023,8 +1037,8 @@ function Pricing({ article }: { article: HelpArticle }) {
     <HelpArticleLayout article={article}>
       <HelpLead>
         Set pricing per listing: base nightly rate, fees, deposit percent, and
-        optional seasonal windows. The booking widget uses the same quote
-        engine that guests see.
+        optional seasonal windows. The booking widget uses the same quote engine
+        that guests see.
       </HelpLead>
 
       <HelpSection title="Base rate and fees">
@@ -1037,9 +1051,8 @@ function Pricing({ article }: { article: HelpArticle }) {
             <strong>Cleaning fee</strong> — Usually a flat amount per stay.
           </li>
           <li>
-            <strong>Pet fee</strong> — Choose per stay (flat) or per pet
-            (amount × pet count). Set a max number of dogs/pets when pets are
-            allowed.
+            <strong>Pet fee</strong> — Choose per stay (flat) or per pet (amount
+            × pet count). Set a max number of dogs/pets when pets are allowed.
           </li>
           <li>
             <strong>Deposit percent</strong> — Share of the stay total collected
@@ -1101,7 +1114,8 @@ function Taxes({ article }: { article: HelpArticle }) {
         {
           href: "/admin/taxes",
           title: "Admin → Earnings → Tax records",
-          description: "Year summaries and CSV exports for federal and state records.",
+          description:
+            "Year summaries and CSV exports for federal and state records.",
         },
         {
           href: "/account/settings/taxes",
@@ -1116,10 +1130,10 @@ function Taxes({ article }: { article: HelpArticle }) {
       ]}
     >
       <HelpLead>
-        Taxes on Yall Come Back are always <strong>host-level</strong>. One set of
-        rules applies to every listing under your brand. Yall Come Back can show tax
-        on guest quotes. <strong>You</strong> remain responsible for collecting,
-        filing, and remitting to the correct authorities.
+        Taxes on Yall Come Back are always <strong>host-level</strong>. One set
+        of rules applies to every listing under your brand. Yall Come Back can
+        show tax on guest quotes. <strong>You</strong> remain responsible for
+        collecting, filing, and remitting to the correct authorities.
       </HelpLead>
 
       <HelpSection title="Important things to know">
@@ -1217,8 +1231,8 @@ function Taxes({ article }: { article: HelpArticle }) {
             host brand.
           </li>
           <li>
-            Guests: you do not set tax. Download a stay CSV from Account →
-            Taxes for your own records.
+            Guests: you do not set tax. Download a stay CSV from Account → Taxes
+            for your own records.
           </li>
         </HelpUl>
       </HelpSection>
@@ -1460,8 +1474,8 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         Platform hosting puts <strong>your brand</strong> on{" "}
         <strong>your domain</strong>. Yall Come Back runs the website and
         booking tools. Guests see your name and look. You manage the site in
-        Admin on yallcomeback.app. Use Calendar for nights. Use Listings to
-        turn stays on or off.
+        Admin on yallcomeback.app. Use Calendar for nights. Use Listings to turn
+        stays on or off.
       </HelpLead>
 
       <HelpSection title="Example: Cherokee Landing">
@@ -1506,17 +1520,17 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             not keep a separate brand website. This is a paid product.
           </li>
           <li>
-            <strong>2 · Branded website — $25 / month total</strong> — Yall
-            Come Back hosts a site that looks like your brand. Point your domain
-            with DNS. One $25 fee covers the whole website, no matter how many
+            <strong>2 · Branded website — $25 / month total</strong> — Yall Come
+            Back hosts a site that looks like your brand. Point your domain with
+            DNS. One $25 fee covers the whole website, no matter how many
             cabins, boats, or campsites you publish. This plan{" "}
             <strong>includes marketplace listing</strong> for the same stays —
-            you do not pay $12 again on top. Guests can book on your domain or on
-            Find a Place. This is a paid product.
+            you do not pay $12 again on top. Guests can book on your domain or
+            on Find a Place. This is a paid product.
           </li>
           <li>
-            <strong>3 · Free self-host / open source — $0 platform fee</strong> —
-            You run the MIT code on your own servers (or free self-host mode).
+            <strong>3 · Free self-host / open source — $0 platform fee</strong>{" "}
+            — You run the MIT code on your own servers (or free self-host mode).
             Different setup. See{" "}
             <Link href="/help/self-host" className="font-semibold text-bonnet">
               Free self-host website
@@ -1561,9 +1575,9 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         <HelpP>
           Open Admin → Brand &amp; website and select{" "}
           <strong>Create my branded website</strong>. That switches you to the
-          $25 / month website plan (marketplace stays included), unlocks logo and domain fields,
-          and keeps your listings. Then buy a domain at your registrar and enter
-          it under Domain &amp; guest site.
+          $25 / month website plan (marketplace stays included), unlocks logo
+          and domain fields, and keeps your listings. Then buy a domain at your
+          registrar and enter it under Domain &amp; guest site.
         </HelpP>
       </HelpSection>
 
@@ -1578,8 +1592,8 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               /h/[your-slug]
             </code>{" "}
-            on yallcomeback.app (Demo publish). Fix content before you point
-            the domain.
+            on yallcomeback.app (Demo publish). Fix content before you point the
+            domain.
           </li>
           <li>
             Keep your old website online until the new site looks correct.
@@ -1602,8 +1616,8 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             .
           </li>
           <li>
-            Set <strong>Domain name to connect</strong> to the bare hostname only
-            (example:{" "}
+            Set <strong>Domain name to connect</strong> to the bare hostname
+            only (example:{" "}
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
               cherokeelanding.net
             </code>
@@ -1625,7 +1639,9 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         <HelpH3>2. Yall Come Back prepares HTTPS</HelpH3>
         <HelpP>
           When you save your domain in Brand, Yall Come Back usually registers{" "}
-          <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">www</code>{" "}
+          <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
+            www
+          </code>{" "}
           for HTTPS and shows the DNS values on that same page. Point DNS only
           after you save the domain here.
         </HelpP>
@@ -1659,7 +1675,9 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
 
         <HelpH3>4. Verify</HelpH3>
         <HelpUl>
-          <li>Wait for DNS to update (often minutes; sometimes up to 24–48 hours).</li>
+          <li>
+            Wait for DNS to update (often minutes; sometimes up to 24–48 hours).
+          </li>
           <li>
             Open{" "}
             <code className="rounded bg-stone-100 px-1.5 py-0.5 text-sm">
@@ -1681,8 +1699,8 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
       <HelpSection title="Who does each DNS step">
         <HelpUl>
           <li>
-            <strong>You (or your web person)</strong> — Save the domain in Brand.
-            Then paste the CNAME and TXT values from that page into your
+            <strong>You (or your web person)</strong> — Save the domain in
+            Brand. Then paste the CNAME and TXT values from that page into your
             registrar.
           </li>
           <li>
@@ -1741,7 +1759,10 @@ function SelfHost({ article }: { article: HelpArticle }) {
         website hosting, not a separate app-store product. Keep your brand. The
         software is free. Listing on the hosted marketplace is a paid product.
         This path is different from{" "}
-        <Link href="/help/branded-website" className="font-semibold text-bonnet">
+        <Link
+          href="/help/branded-website"
+          className="font-semibold text-bonnet"
+        >
           platform branded hosting
         </Link>
         , where Yall Come Back runs the site for you.
@@ -1901,6 +1922,44 @@ function CancellationPolicies({ article }: { article: HelpArticle }) {
         </HelpUl>
       </HelpSection>
 
+      <HelpSection title="How guests cancel">
+        <HelpUl>
+          <li>
+            Guests cancel online from the private link in their booking email
+            (the booking confirmation page). They tap{" "}
+            <strong>Cancel request</strong> or <strong>Cancel booking</strong>,
+            then confirm.
+          </li>
+          <li>
+            Online cancelling is open until the last refund step of the
+            listing&apos;s policy: 24 hours before check-in (Flexible), 5 days
+            (Moderate), 7 days (Limited, Firm, Strict), 30 days (Super Strict
+            30), or 60 days (Super Strict 60). Monthly stays: 30 days (Firm), or
+            within 48 hours of booking if check-in is at least 28 days away
+            (Strict). Bookings made at least 7 days ahead can also be cancelled
+            online for 24 hours after booking.
+          </li>
+          <li>
+            After that, the page says <strong>Contact host to cancel</strong>,
+            and the guest messages the host.
+          </li>
+          <li>
+            Cancelling frees the dates on the calendar right away, and the guest
+            and every host on the listing (including co-hosts) get an email.
+          </li>
+          <li>
+            <strong>Refunds are not automatic.</strong> If a deposit was paid,
+            the booking is flagged <strong>Refund review needed</strong> in
+            Admin → Bookings. The host (or Yall Come Back for card deposits)
+            sends any refund the policy allows.
+          </li>
+          <li>
+            Hosts can also cancel from the booking page in Admin. It asks for a
+            second tap first, and sends the same emails.
+          </li>
+        </HelpUl>
+      </HelpSection>
+
       <HelpSection title="Standard cancellation policies for shorter stays">
         <HelpP>
           Your short-stay policy applies to all bookings of{" "}
@@ -1925,9 +1984,9 @@ function CancellationPolicies({ article }: { article: HelpArticle }) {
 
       <HelpSection title="Stricter short-stay policies">
         <HelpP>
-          These options are available to every Yall Come Back host. They are much less
-          guest-friendly. Use them only when your property type or market
-          requires tighter rules.
+          These options are available to every Yall Come Back host. They are
+          much less guest-friendly. Use them only when your property type or
+          market requires tighter rules.
         </HelpP>
         <div className="mt-6 space-y-8">
           {restricted.map((policy) => (
@@ -1976,16 +2035,17 @@ function CancellationPolicies({ article }: { article: HelpArticle }) {
 
       <HelpSection title="When your cancellation policy may be overridden">
         <HelpP>
-          Yall Come Back or applicable law may require a different outcome in limited
-          situations. A guest may get a full or partial refund outside your
-          listed policy if:
+          Yall Come Back or applicable law may require a different outcome in
+          limited situations. A guest may get a full or partial refund outside
+          your listed policy if:
         </HelpP>
         <HelpUl>
           <li>
             They need to cancel because of a{" "}
             <strong>major disruptive event</strong> (for example a declared
             emergency, widespread travel shutdown, or other event that makes the
-            stay impossible or unsafe under published Yall Come Back guidelines).
+            stay impossible or unsafe under published Yall Come Back
+            guidelines).
           </li>
           <li>
             The cancellation is covered by Yall Come Back{" "}
@@ -1995,8 +2055,8 @@ function CancellationPolicies({ article }: { article: HelpArticle }) {
           </li>
         </HelpUl>
         <HelpP>
-          If a host was already paid and a policy is overridden, Yall Come Back may
-          recover amounts owed under the host payment terms (for example by
+          If a host was already paid and a policy is overridden, Yall Come Back
+          may recover amounts owed under the host payment terms (for example by
           adjusting a future payout).
         </HelpP>
       </HelpSection>

@@ -20,7 +20,10 @@ import { prisma } from "@/lib/db";
 export async function POST(req: Request) {
   const stripeClient = getStripe();
   if (!stripeClient) {
-    return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Stripe not configured" },
+      { status: 503 },
+    );
   }
 
   const body = await req.text();
@@ -60,7 +63,10 @@ export async function POST(req: Request) {
     };
     if (invoice.metadata?.kind === "hosting" && invoice.metadata.hostId) {
       await markHostingPastDue(invoice.metadata.hostId);
-    } else if (invoice.metadata?.kind === "hosting_subscription" && invoice.metadata.hostId) {
+    } else if (
+      invoice.metadata?.kind === "hosting_subscription" &&
+      invoice.metadata.hostId
+    ) {
       await markHostingPastDue(invoice.metadata.hostId);
     }
   }
@@ -100,9 +106,8 @@ export async function POST(req: Request) {
       session.metadata?.kind === "pricing_intelligence_addon" &&
       session.metadata.hostId
     ) {
-      const {
-        PRICING_INTELLIGENCE_ADDON_USD,
-      } = await import("@/lib/platform-features");
+      const { PRICING_INTELLIGENCE_ADDON_USD } =
+        await import("@/lib/platform-features");
       await prisma.host.update({
         where: { id: session.metadata.hostId },
         data: {
@@ -115,14 +120,28 @@ export async function POST(req: Request) {
     }
     if (session.metadata?.kind === "booking_deposit") {
       // Direct Charges live on the host's connected account (event.account).
-      const { settleBookingDepositSession } = await import(
-        "@/lib/booking-deposit-webhook"
-      );
+      const { settleBookingDepositSession } =
+        await import("@/lib/booking-deposit-webhook");
       try {
-        await settleBookingDepositSession(
-          event.data.object as Parameters<typeof settleBookingDepositSession>[0],
+        const outcome = await settleBookingDepositSession(
+          event.data.object as Parameters<
+            typeof settleBookingDepositSession
+          >[0],
           (event as { account?: string | null }).account ?? null,
         );
+        // Paid → guest "booking confirmed" + host "new booking" emails.
+        // Dates lost the race → refunded + cancelled → cancellation emails.
+        // Both claim-once and never throw.
+        const bookingId = session.metadata.bookingId;
+        if (bookingId && outcome === "confirmed") {
+          const { sendBookingCreatedEmails } =
+            await import("@/lib/booking-emails");
+          await sendBookingCreatedEmails(bookingId);
+        } else if (bookingId && outcome === "refunded") {
+          const { sendCancellationEmails } =
+            await import("@/lib/booking-emails");
+          await sendCancellationEmails(bookingId, "SYSTEM");
+        }
       } catch (e) {
         console.error(
           "[stripe] booking deposit settle failed",
@@ -172,9 +191,16 @@ export async function POST(req: Request) {
         },
       });
       if (booking && booking.status === "PENDING_PAYMENT") {
+        // Abandoned card checkout: no booking email was ever sent for it
+        // (those go out on payment), so no cancellation email either.
         await prisma.booking.update({
           where: { id: booking.id },
-          data: { status: "CANCELLED" },
+          data: {
+            status: "CANCELLED",
+            cancelledAt: new Date(),
+            cancelledBy: "SYSTEM",
+            cancelReason: "Card checkout expired before payment.",
+          },
         });
         if (booking.sourceChannel !== "agent") {
           await prisma.calendarBlock.deleteMany({
@@ -227,7 +253,11 @@ export async function POST(req: Request) {
         sub.metadata.hostId
       ) {
         const status = sub.status;
-        if (status === "canceled" || status === "unpaid" || event.type === "customer.subscription.deleted") {
+        if (
+          status === "canceled" ||
+          status === "unpaid" ||
+          event.type === "customer.subscription.deleted"
+        ) {
           await prisma.host.update({
             where: { id: sub.metadata.hostId },
             data: {

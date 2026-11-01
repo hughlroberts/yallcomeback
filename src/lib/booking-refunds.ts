@@ -82,7 +82,10 @@ export async function resolveDepositPaymentIntent(opts: {
   }
   try {
     const found = await stripe.paymentIntents.search(
-      { query: `metadata['bookingId']:'${bookingId.replace(/'/g, "")}'`, limit: 5 },
+      {
+        query: `metadata['bookingId']:'${bookingId.replace(/'/g, "")}'`,
+        limit: 5,
+      },
       req,
     );
     const paid = found.data.find((p) => p.status === "succeeded");
@@ -151,7 +154,10 @@ export async function refundBookingDeposit(opts: {
         (p.status === "PENDING" && Boolean(opts.allowPending))),
   );
   if (!payment) {
-    return { ok: false, error: "No paid card deposit on this booking to refund." };
+    return {
+      ok: false,
+      error: "No paid card deposit on this booking to refund.",
+    };
   }
 
   const remaining = refundableRemaining(payment);
@@ -166,7 +172,10 @@ export async function refundBookingDeposit(opts: {
     payment.stripeAccountId ||
     booking.property.host.stripeAccountId;
   if (!accountId) {
-    return { ok: false, error: "Host has no Stripe connected account on file." };
+    return {
+      ok: false,
+      error: "Host has no Stripe connected account on file.",
+    };
   }
 
   const stripe = opts.stripe ?? requireStripeClient();
@@ -180,7 +189,8 @@ export async function refundBookingDeposit(opts: {
   if (!pi) {
     return {
       ok: false,
-      error: "Could not find the Stripe charge for this booking. Refund it in the host's Stripe Dashboard.",
+      error:
+        "Could not find the Stripe charge for this booking. Refund it in the host's Stripe Dashboard.",
     };
   }
 
@@ -229,7 +239,15 @@ export async function refundBookingDeposit(opts: {
     prisma.booking.update({
       where: { id: booking.id },
       data: {
-        ...(cancel ? { status: "CANCELLED" as const } : {}),
+        ...(cancel
+          ? {
+              status: "CANCELLED" as const,
+              cancelledAt: now,
+              cancelledBy:
+                opts.actor.label === SYSTEM_WEBHOOK_ACTOR ? "SYSTEM" : "HOST",
+              cancelReason: opts.reason ?? null,
+            }
+          : {}),
         adminNotes: [booking.adminNotes, stamp].filter(Boolean).join("\n"),
       },
     }),

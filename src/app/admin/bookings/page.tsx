@@ -34,7 +34,6 @@ function statusClass(status: string): string {
   }
 }
 
-
 export default async function AdminBookingsPage({
   searchParams,
 }: {
@@ -63,6 +62,7 @@ export default async function AdminBookingsPage({
   const rows = buildAdminBookingRows(bookings, blocks);
   const { upcoming, past } = splitUpcomingPast(rows, hostTodayYmd());
   const shown = view === "past" ? past : upcoming;
+  const refundDue = bookings.filter((b) => b.refundReviewNeeded);
 
   const tab = (id: "upcoming" | "past", label: string, n: number) => (
     <Link
@@ -92,6 +92,34 @@ export default async function AdminBookingsPage({
         title="Bookings"
         subtitle={`${rows.length} total · online and direct bookings`}
       />
+
+      {refundDue.length > 0 ? (
+        <div
+          data-refund-review
+          className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"
+        >
+          <p className="font-semibold">
+            Refund review needed ({refundDue.length})
+          </p>
+          <p className="mt-1 text-amber-900/90">
+            These were cancelled after a deposit was paid. Nothing is refunded
+            automatically. Send any refund the policy allows, then mark it
+            handled on the booking.
+          </p>
+          <ul className="mt-2 space-y-1">
+            {refundDue.map((b) => (
+              <li key={b.id}>
+                <Link
+                  href={`/admin/bookings/${b.id}`}
+                  className="font-medium text-bonnet hover:underline"
+                >
+                  {b.guestName} · {b.property.title} · {formatDateUS(b.checkIn)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <nav className="mb-4 flex gap-2" aria-label="Booking views">
         {tab("upcoming", "Upcoming", upcoming.length)}

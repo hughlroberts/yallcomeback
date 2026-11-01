@@ -721,6 +721,17 @@ model Booking {
   autoMsgOnBookingSentAt   DateTime?
   autoMsgWeekBeforeSentAt  DateTime?
   autoMsgDayBeforeSentAt   DateTime?
+  /// When the booking was cancelled, and by whom: GUEST | HOST | SYSTEM
+  cancelledAt     DateTime?
+  cancelledBy     String?
+  cancelReason    String?
+  /// Set when a booking with a paid deposit is cancelled: host/platform must
+  /// process any refund the policy allows (never automatic). Cleared by host.
+  refundReviewNeeded Boolean   @default(false)
+  /// Booking-time emails (guest request/confirmation + host new request), once
+  bookingEmailsSentAt     DateTime?
+  /// Cancellation emails to guest + hosts, once
+  cancellationEmailsSentAt DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   payments        Payment[]
