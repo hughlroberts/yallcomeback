@@ -98,7 +98,7 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "integer", minimum: 1, maximum: 50, default: 20 },
               description:
-                "Max results (default 20, max 50; larger values are clamped; 0, negative or non-numeric values get the default 20). Alias: limit.",
+                "Max results (default 20, max 50; larger values are clamped; 0, negative, non-numeric or non-integer values such as 2.5 get the default 20). Alias: limit.",
             },
             {
               name: "limit",
@@ -349,7 +349,7 @@ export function buildOpenApiDocument(origin: string) {
             "404": { description: "Listing not on marketplace" },
             "409": {
               description:
-                "Dates unavailable, or host not ready to take a card deposit (Stripe card onboarding not finished)",
+                "Dates unavailable, or host not ready to take a card deposit (Stripe card onboarding not finished). Body: { ok: false, error, bookUrl } — send the guest to bookUrl (the human booking page for this stay) or have them message the host.",
             },
             "429": { description: "Too many checkout attempts" },
           },
@@ -360,7 +360,7 @@ export function buildOpenApiDocument(origin: string) {
           operationId: "askHostQuestion",
           summary: "Ask a host a question before booking",
           description:
-            "Sends a pre-booking question to the host of a marketplace listing, on behalf of a real person who wants the reply. No token required; AI agents are welcome. The host replies by email to guestEmail. Limits: per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day. Repeating the same (or nearly the same) question from the same email within 24 hours returns the existing inquiry with duplicate:true and nothing is re-sent. Messages with more than one link, links in the name or subject, HTML, link shorteners, or spam wording are rejected. Hosts get the first question by email right away; later ones are grouped into a digest (at most one email per 15 minutes).",
+            "Sends a pre-booking question to the host of a marketplace listing, on behalf of a real person who wants the reply. No token required; AI agents are welcome. The host replies by email to guestEmail. Limits: per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day. Repeating the same (or nearly the same) question from the same email within 24 hours returns the existing inquiry with duplicate:true and nothing is re-sent. Messages with more than one link, links in the name or subject, HTML, link shorteners, or spam wording are rejected. Hosts and co-hosts get an email for every question right away; only during a flood (more than 10 emails to one host in 10 minutes) are later messages grouped into one email when that window ends.",
           requestBody: {
             required: true,
             content: {

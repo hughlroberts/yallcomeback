@@ -9,6 +9,7 @@ import {
 import { HOSTING_PUBLIC_STATUSES } from "@/lib/hosting";
 import { isAgentApiEnabled } from "@/lib/platform-features";
 import { listingCanonicalPath } from "@/lib/site-url";
+import { hostSitemapEntries } from "@/lib/host-meta";
 
 export const dynamic = "force-dynamic";
 
@@ -29,13 +30,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/terms`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${base}/contact`, changeFrequency: "yearly", priority: 0.3 },
-    ...HELP_ARTICLES.map(
-      (article): MetadataRoute.Sitemap[number] => ({
-        url: `${base}${helpPath(article.slug)}`,
-        changeFrequency: "monthly",
-        priority: 0.45,
-      }),
-    ),
+    ...HELP_ARTICLES.map((article): MetadataRoute.Sitemap[number] => ({
+      url: `${base}${helpPath(article.slug)}`,
+      changeFrequency: "monthly",
+      priority: 0.45,
+    })),
     ...(isAgentApiEnabled()
       ? ([
           {
@@ -95,16 +94,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
         ],
       },
-      select: { slug: true, updatedAt: true },
+      select: { slug: true, updatedAt: true, sitePageAbout: true },
       take: 2000,
       orderBy: { updatedAt: "desc" },
     });
-    hostPages = hosts.map((h) => ({
-      url: `${base}/h/${encodeURIComponent(h.slug)}`,
-      lastModified: h.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    }));
+    hostPages = hosts.flatMap((h) => hostSitemapEntries(base, h));
   } catch {
     // Build/DB unavailable
   }

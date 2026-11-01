@@ -10,6 +10,7 @@ import {
   flushHostInquiryEmails,
   type NotifyOutcome,
 } from "@/lib/inquiries/notify";
+import { sendGuestInquiryConfirmation } from "@/lib/inquiries/guest-confirm";
 
 /**
  * One path for every pre-booking question, from the listing page form or
@@ -127,6 +128,7 @@ export async function submitInquiry(
   let hostId: string;
   let propertyId: string | null = null;
   let propertyTitle: string | null = null;
+  let propertySlug: string | null = null;
   let hostName: string;
   if (input.propertyId || input.propertySlug) {
     const property = await prisma.property.findFirst({
@@ -135,6 +137,7 @@ export async function submitInquiry(
         : { slug: input.propertySlug!, ...marketplacePropertyWhere() },
       select: {
         id: true,
+        slug: true,
         title: true,
         hostId: true,
         host: { select: { name: true } },
@@ -151,6 +154,7 @@ export async function submitInquiry(
     hostId = property.hostId;
     propertyId = property.id;
     propertyTitle = property.title;
+    propertySlug = property.slug;
     hostName = property.host.name;
   } else if (input.hostId) {
     const host = await prisma.host.findUnique({
@@ -330,6 +334,20 @@ export async function submitInquiry(
   } catch (e) {
     // The question is saved; the cron runner retries the email.
     console.error("[inquiry:notify]", e);
+  }
+
+  // Short receipt to the guest (capped per address; see guest-confirm.ts).
+  try {
+    await sendGuestInquiryConfirmation({
+      conversationId: conversation.id,
+      guestEmail,
+      hostName,
+      propertyTitle,
+      propertySlug,
+      now,
+    });
+  } catch (e) {
+    console.error("[inquiry:guest-confirm]", e);
   }
 
   return {

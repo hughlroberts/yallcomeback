@@ -7,6 +7,7 @@ import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { hostSocialLinks } from "@/lib/host-site";
 import { pageMetadata } from "@/lib/seo";
+import { hostAboutDescription } from "@/lib/host-meta";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +28,7 @@ export async function generateMetadata({
   }
   return pageMetadata({
     title: "About",
-    description:
-      host.tagline ||
-      host.description?.slice(0, 160) ||
-      `About ${host.name}`,
+    description: hostAboutDescription(host),
     path: `/h/${encodeURIComponent(host.slug)}/about`,
     absoluteTitle: false,
     siteName: host.name,
@@ -91,9 +89,9 @@ export default async function HostAboutPage({
                 </div>
               ) : (
                 <p className="text-stone-600 leading-relaxed">
-                  Welcome to {host.name}. Come back to a stay you already love
-                  — book directly with us. Reach out anytime; we&apos;re happy
-                  to help plan your trip.
+                  Welcome to {host.name}. Come back to a stay you already love —
+                  book directly with us. Reach out anytime; we&apos;re happy to
+                  help plan your trip.
                 </p>
               )}
               <div className="mt-8 flex flex-wrap gap-3">
@@ -174,8 +172,8 @@ export default async function HostAboutPage({
               defaultSubject={`Question for ${host.name}`}
             />
             <p className="text-sm text-stone-500">
-              Optional alternative to phone or email. Opens a thread you can both
-              use in Messages.
+              Optional alternative to phone or email. Opens a thread you can
+              both use in Messages.
             </p>
           </div>
 

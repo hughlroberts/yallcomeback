@@ -73,3 +73,44 @@ describe("Resend delivery", () => {
     expect(resendRetryDelayMs(new Headers(), 2)).toBe(2000);
   });
 });
+
+describe("per-thread reply-to (reply by email)", () => {
+  function enableInbound() {
+    process.env.INBOUND_EMAIL_DOMAIN = "reply.example.test";
+    process.env.INBOUND_EMAIL_TOKEN_SECRET = "test-secret-0123456789abcdef";
+    process.env.RESEND_INBOUND_WEBHOOK_SECRET = "whsec_dGVzdA==";
+  }
+  const sentBody = (f: ReturnType<typeof vi.fn>) =>
+    JSON.parse((f.mock.calls[0]![1] as RequestInit).body as string);
+
+  it("booking mail keeps 'do not reply' when inbound is off", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(resp(200, { id: "e1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    await dispatchPlatformEmail({
+      to: "guest@example.test",
+      subject: "Booked",
+      text: "hi",
+      replyTo: null,
+    });
+    const b = sentBody(fetchMock);
+    expect(b.reply_to).toBeUndefined();
+    expect(b.text).not.toContain("You can reply to this email");
+  });
+
+  it("booking mail invites a reply when given a thread address", async () => {
+    enableInbound();
+    const fetchMock = vi.fn().mockResolvedValue(resp(200, { id: "e1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { replyAddressFor } = await import("@/lib/inbound/reply-address");
+    const addr = replyAddressFor("b", "cmbook12345", "GUEST")!;
+    await dispatchPlatformEmail({
+      to: "guest@example.test",
+      subject: "Booked",
+      text: "hi",
+      replyTo: addr,
+    });
+    const b = sentBody(fetchMock);
+    expect(b.reply_to).toEqual([addr]);
+    expect(b.text).toContain("You can reply to this email");
+  });
+});

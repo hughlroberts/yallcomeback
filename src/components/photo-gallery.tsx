@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
+import { useModalOpen } from "@/lib/modal-open";
 
 function useIsClient() {
   return useSyncExternalStore(
@@ -36,10 +37,13 @@ export function PhotoGallery({
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
-  const openAt = useCallback((i: number) => {
-    setIndex(Math.max(0, Math.min(i, photos.length - 1)));
-    setOpen(true);
-  }, [photos.length]);
+  const openAt = useCallback(
+    (i: number) => {
+      setIndex(Math.max(0, Math.min(i, photos.length - 1)));
+      setOpen(true);
+    },
+    [photos.length],
+  );
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -185,6 +189,8 @@ function PhotoLightbox({
   const titleId = useId();
   const mounted = useIsClient();
   const current = photos[index] ?? photos[0];
+  // Hides the mobile reserve bar while the lightbox is open.
+  useModalOpen(true);
 
   const goPrev = useCallback(() => {
     onIndexChange((index - 1 + photos.length) % photos.length);
@@ -216,7 +222,9 @@ function PhotoLightbox({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex flex-col"
+      data-testid="photo-gallery-dialog"
+      // Above the sticky header (z-200) and mobile reserve bar (z-150).
+      className="fixed inset-0 z-[250] flex flex-col"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -233,7 +241,7 @@ function PhotoLightbox({
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-3 top-3 z-20 inline-flex size-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-lg ring-1 ring-black/10 hover:bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-5 sm:top-5"
+        className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top,0px))] z-20 inline-flex size-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-lg ring-1 ring-black/10 hover:bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-5 sm:top-5"
         aria-label="Close photo gallery"
       >
         <X className="size-5" strokeWidth={2.5} />
@@ -241,7 +249,7 @@ function PhotoLightbox({
 
       <p
         id={titleId}
-        className="pointer-events-none absolute left-3 top-4 z-20 max-w-[calc(100%-5rem)] truncate rounded-full bg-black/40 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm sm:left-5 sm:top-6"
+        className="pointer-events-none absolute left-3 top-[max(1rem,env(safe-area-inset-top,0px))] z-20 max-w-[calc(100%-5rem)] truncate rounded-full bg-black/40 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm sm:left-5 sm:top-6"
       >
         {title}
         <span className="ml-2 font-normal text-white/80">
@@ -296,40 +304,43 @@ function PhotoLightbox({
 
       {photos.length > 1 ? (
         <div
-          className="absolute inset-x-0 bottom-0 z-20 border-t border-white/10 bg-stone-950/50 px-3 py-3 backdrop-blur-md sm:px-6"
+          className="absolute inset-x-0 bottom-0 z-20 border-t border-white/10 bg-stone-950/50 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md sm:px-6"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mx-auto flex max-w-5xl gap-2 overflow-x-auto pb-1">
             {photos
               .map((img, i) => ({ img, i }))
               .filter(({ i }) => {
-                const start = Math.max(0, Math.min(index - 6, photos.length - 12));
+                const start = Math.max(
+                  0,
+                  Math.min(index - 6, photos.length - 12),
+                );
                 return i >= start && i < start + 12;
               })
               .map(({ img, i }) => (
-              <button
-                key={img.id}
-                type="button"
-                onClick={() => onIndexChange(i)}
-                className={cn(
-                  "relative h-14 w-20 shrink-0 overflow-hidden rounded-lg ring-2 transition sm:h-16 sm:w-24",
-                  i === index
-                    ? "ring-white"
-                    : "ring-transparent opacity-70 hover:opacity-100",
-                )}
-                aria-label={`Go to photo ${i + 1}: ${listingPhotoAlt(title, img.alt, i)}`}
-                aria-current={i === index ? "true" : undefined}
-              >
-                <Image
-                  src={img.url}
-                  alt={listingPhotoAlt(title, img.alt, i)}
-                  fill
-                  className="object-cover"
-                  sizes="96px"
-                  loading="lazy"
-                />
-              </button>
-            ))}
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => onIndexChange(i)}
+                  className={cn(
+                    "relative h-14 w-20 shrink-0 overflow-hidden rounded-lg ring-2 transition sm:h-16 sm:w-24",
+                    i === index
+                      ? "ring-white"
+                      : "ring-transparent opacity-70 hover:opacity-100",
+                  )}
+                  aria-label={`Go to photo ${i + 1}: ${listingPhotoAlt(title, img.alt, i)}`}
+                  aria-current={i === index ? "true" : undefined}
+                >
+                  <Image
+                    src={img.url}
+                    alt={listingPhotoAlt(title, img.alt, i)}
+                    fill
+                    className="object-cover"
+                    sizes="96px"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
           </div>
         </div>
       ) : null}

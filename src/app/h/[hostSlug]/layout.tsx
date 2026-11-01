@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getHostForGuestSite } from "@/lib/host";
 import { pageMetadata } from "@/lib/seo";
+import { hostHomeDescription } from "@/lib/host-meta";
 
 type Props = {
   children: React.ReactNode;
@@ -36,13 +37,10 @@ export async function generateMetadata({
   }
 
   const title = host.name;
-  const description =
-    host.tagline ||
-    host.description?.slice(0, 160) ||
-    `Stay again with ${host.name}`;
+  // Home page text; /about and /stays set their own (see host-meta.ts).
+  const description = hostHomeDescription(host);
 
-  const faviconUrl =
-    HOST_FAVICONS[host.slug] || host.logoUrl || undefined;
+  const faviconUrl = HOST_FAVICONS[host.slug] || host.logoUrl || undefined;
   const ogImage = host.logoUrl || faviconUrl || undefined;
 
   const base = pageMetadata({

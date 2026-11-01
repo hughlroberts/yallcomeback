@@ -13,6 +13,7 @@
  */
 import { prisma } from "@/lib/db";
 import { bookingAccessToken } from "@/lib/booking-access";
+import { replyAddressFor } from "@/lib/inbound/reply-address";
 import { dispatchPlatformEmail, messagingSiteOrigin } from "@/lib/messaging";
 import { formatDateRangeUS, formatMoney } from "@/lib/utils";
 import {
@@ -336,11 +337,19 @@ async function sendAll(
   emails: OutgoingEmail[],
   tag: string,
   bookingId: string,
+  guestEmail: string,
 ) {
   const results: string[] = [];
+  const guest = guestEmail.trim().toLowerCase();
   for (const e of emails) {
     try {
-      const r = await dispatchPlatformEmail(e);
+      // Reply-by-email (when configured): replies land in the booking's
+      // message thread instead of bouncing off a no-reply address.
+      const role = e.to.trim().toLowerCase() === guest ? "GUEST" : "HOST";
+      const r = await dispatchPlatformEmail({
+        ...e,
+        replyTo: replyAddressFor("b", bookingId, role),
+      });
       results.push(`${maskEmail(e.to)}=${r.status}`);
       if (r.status !== "sent") {
         console.warn(
@@ -376,7 +385,12 @@ export async function sendBookingCreatedEmails(
     })) as BookingEmailData | null;
     if (!b || b.status === "CANCELLED") return;
     const hosts = await bookingHostRecipients(b.property.hostId);
-    await sendAll(composeBookingCreatedEmails(b, hosts), "created", bookingId);
+    await sendAll(
+      composeBookingCreatedEmails(b, hosts),
+      "created",
+      bookingId,
+      b.guestEmail,
+    );
   } catch (err) {
     console.error("[booking-email:created] failed", bookingId, err);
   }
@@ -404,6 +418,7 @@ export async function sendCancellationEmails(
       composeCancellationEmails(b, hosts, by, opts),
       "cancelled",
       bookingId,
+      b.guestEmail,
     );
   } catch (err) {
     console.error("[booking-email:cancelled] failed", bookingId, err);

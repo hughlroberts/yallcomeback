@@ -13,6 +13,7 @@
  */
 
 import { canonicalSiteOrigin, PRODUCT_NAME } from "@/lib/features";
+import { replyAddressFor, type ReplyRole } from "@/lib/inbound/reply-address";
 
 export type ExternalMessageChannel = "SMS" | "EMAIL";
 
@@ -97,15 +98,24 @@ export function platformDoNotReplyLine(): string {
   return `This is an automated message from ${PRODUCT_NAME}. Do not reply to this email — this mailbox is not monitored.`;
 }
 
-function withPlatformFooter(text: string): string {
-  return `${text.trim()}\n\n${platformDoNotReplyLine()}`;
+function withPlatformFooter(text: string, replyable = false): string {
+  return `${text.trim()}\n\n${
+    replyable
+      ? "You can reply to this email. Your reply is added to your message thread on Yall Come Back."
+      : platformDoNotReplyLine()
+  }`;
 }
 
-/** Ops / billing mail (no conversation thread). */
+/**
+ * Ops / billing mail. Booking emails may pass a per-thread `replyTo`
+ * (reply+…@inbound domain); then the footer invites a reply instead of
+ * "do not reply".
+ */
 export async function dispatchPlatformEmail(opts: {
   to: string;
   subject: string;
   text: string;
+  replyTo?: string | null;
 }): Promise<DispatchResult> {
   const to = opts.to.trim().toLowerCase();
   if (!isUsableEmail(to)) {
@@ -133,7 +143,9 @@ export async function dispatchPlatformEmail(opts: {
       detail: "MESSAGING_EMAIL_FROM missing",
     };
   }
-  const text = withPlatformFooter(opts.text);
+  const platformReplyTo =
+    opts.replyTo && isUsableEmail(opts.replyTo) ? opts.replyTo.trim() : null;
+  const text = withPlatformFooter(opts.text, Boolean(platformReplyTo));
   const html = `<p style="font:16px/1.5 system-ui,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</p>`;
   if (process.env.MESSAGING_EMAIL_DRY_RUN === "true") {
     console.info("[messaging:email:dry-run:platform]", {
@@ -156,6 +168,7 @@ export async function dispatchPlatformEmail(opts: {
       text,
       html,
       apiKey,
+      replyTo: platformReplyTo,
     });
   }
   if (smtpConfigured()) {
@@ -165,6 +178,7 @@ export async function dispatchPlatformEmail(opts: {
       subject: opts.subject,
       text,
       html,
+      replyTo: platformReplyTo,
     });
   }
   return {
@@ -234,6 +248,8 @@ function buildEmailBodies(opts: {
   replyPath?: string;
   /** One-click unsubscribe (always included for marketing compliance) */
   unsubscribeUrl?: string | null;
+  /** Reply-To is this thread's inbound address: say replies are welcome. */
+  replyByEmail?: boolean;
 }): { text: string; html: string } {
   const origin = messagingSiteOrigin();
   const path = opts.replyPath || `/messages/${opts.conversationId}`;
@@ -244,7 +260,9 @@ function buildEmailBodies(opts: {
     opts.body,
     "",
     "—",
-    `Reply in your inbox: ${url}`,
+    opts.replyByEmail
+      ? `You can reply to this email, or reply in your inbox: ${url}`
+      : `Reply in your inbox: ${url}`,
     unsub ? `Stop message emails: ${unsub}` : null,
     `Notification settings: ${prefsUrl}`,
   ]
@@ -254,7 +272,7 @@ function buildEmailBodies(opts: {
 <html><body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.5;color:#1c1917">
   <div style="white-space:pre-wrap;font-size:15px">${escapeHtml(opts.body)}</div>
   <p style="margin-top:24px">
-    <a href="${escapeHtml(url)}" style="color:#3a4a86;font-weight:600">Reply in your inbox →</a>
+    ${opts.replyByEmail ? "You can reply to this email, or " : ""}<a href="${escapeHtml(url)}" style="color:#3a4a86;font-weight:600">${opts.replyByEmail ? "reply in your inbox" : "Reply in your inbox"} →</a>
   </p>
   <p style="margin-top:28px;padding-top:16px;border-top:1px solid #e7e5e4;font-size:12px;color:#78716c">
     You received this because someone messaged you on ${escapeHtml(
@@ -475,6 +493,11 @@ export async function dispatchEmail(opts: {
   fromPartyName?: string | null;
   /** Reply-To: host contact (guest mail) or guest email (host mail). */
   replyTo?: string | null;
+  /**
+   * Who this email goes to in the thread. When reply-by-email is on, Reply-To
+   * becomes the thread's own address so the reply lands in /admin/messages.
+   */
+  threadRole?: ReplyRole;
 }): Promise<DispatchResult> {
   const to = opts.to.trim().toLowerCase();
   if (!to || !to.includes("@")) {
@@ -524,7 +547,11 @@ export async function dispatchEmail(opts: {
     };
   }
 
-  const replyToRaw = opts.replyTo?.trim().toLowerCase() || null;
+  const threadReplyTo = opts.threadRole
+    ? replyAddressFor("c", opts.conversationId, opts.threadRole)
+    : null;
+  const replyToRaw =
+    threadReplyTo || opts.replyTo?.trim().toLowerCase() || null;
   const replyTo =
     isUsableEmail(replyToRaw) && replyToRaw !== to ? replyToRaw : null;
 
@@ -532,6 +559,7 @@ export async function dispatchEmail(opts: {
   const { text, html } = buildEmailBodies({
     ...opts,
     unsubscribeUrl: unsubscribeUrl(to, "email"),
+    replyByEmail: Boolean(threadReplyTo && replyTo === threadReplyTo),
   });
 
   // Explicit dry-run for staging (default off when a real transport exists)

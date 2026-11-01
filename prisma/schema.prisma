@@ -775,6 +775,8 @@ model Conversation {
   inquiryAgent  String?
   /// sha256 of the normalized first message, used to dedupe repeats
   inquiryHash   String?
+  /// When the guest got the "We sent your question" receipt (capped per address)
+  guestConfirmSentAt DateTime?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   messages      Message[]
@@ -801,21 +803,26 @@ model Message {
   /// Provider status when SMS/email hook fires (queued, sent, failed, skipped)
   externalStatus String?
   externalId     String?
-  /// Guest inquiry not yet included in a host email (immediate or digest)
+  /// Guest message not yet emailed to hosts (sent at once; bundled only in a flood)
   hostNotifyPending Boolean     @default(false)
+  /// Resend received-email id for replies that came in by email (webhook retry dedupe)
+  inboundEmailId String?        @unique
   createdAt      DateTime       @default(now())
 
   @@index([conversationId, createdAt])
   @@index([hostNotifyPending])
 }
 
-/// Per-host throttle for pre-booking question emails: the first one goes out
-/// right away, then at most one digest per window, with a daily cap.
+/// Per-host guard for guest-message emails: each goes out right away; after
+/// 10 in a 10-minute window the rest wait for one digest; daily safety cap.
 model InquiryNotifyState {
   hostId       String    @id
   lastEmailAt  DateTime?
   dayStartedAt DateTime?
   emailsToday  Int       @default(0)
+  /// Flood guard: start of the current 10-minute window and emails sent in it
+  windowStartedAt DateTime?
+  windowCount     Int       @default(0)
   updatedAt    DateTime  @updatedAt
 }
 

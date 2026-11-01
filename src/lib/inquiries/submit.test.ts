@@ -14,6 +14,10 @@ vi.mock("@/lib/host", () => ({
   marketplacePropertyWhere: () => ({ published: true, onMarketplace: true }),
 }));
 vi.mock("@/lib/inquiries/notify", () => notify);
+const guestConfirm = vi.hoisted(() => ({
+  sendGuestInquiryConfirmation: vi.fn(async () => "sent"),
+}));
+vi.mock("@/lib/inquiries/guest-confirm", () => guestConfirm);
 
 import { INQUIRY_RATE_LIMITS, submitInquiry, tripContextLine } from "./submit";
 
@@ -35,6 +39,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   db.property.findFirst.mockResolvedValue({
     id: "p1",
+    slug: "lakefront",
     title: "Lakefront",
     hostId: "h1",
     host: { name: "Hugh" },
@@ -53,6 +58,15 @@ describe("submitInquiry", () => {
       duplicate: false,
       hostNotification: "emailed",
     });
+    expect(guestConfirm.sendGuestInquiryConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "conv1",
+        guestEmail: "jo@example.com",
+        hostName: "Hugh",
+        propertyTitle: "Lakefront",
+        propertySlug: "lakefront",
+      }),
+    );
     const data = db.conversation.create.mock.calls[0]![0].data;
     expect(data).toMatchObject({
       hostId: "h1",
@@ -109,6 +123,7 @@ describe("submitInquiry", () => {
     });
     expect(db.conversation.create).not.toHaveBeenCalled();
     expect(notify.flushHostInquiryEmails).not.toHaveBeenCalled();
+    expect(guestConfirm.sendGuestInquiryConfirmation).not.toHaveBeenCalled();
   });
 
   it("enforces per-email / listing / host limits", async () => {

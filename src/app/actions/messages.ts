@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { dispatchEmail, dispatchSms } from "@/lib/messaging";
-import { canSendEmailTo, canSendSmsTo } from "@/lib/notification-prefs";
 import { ensureHostAccess } from "@/lib/scope";
 import { incomingIp } from "@/lib/rate-limit";
 import { submitInquiry } from "@/lib/inquiries/submit";
-import { hostNotifyEmails } from "@/lib/inquiries/notify";
+import {
+  deliverGuestMessageToHosts,
+  deliverHostMessageToGuest,
+} from "@/lib/conversation-delivery";
 import {
   HONEYPOT_FIELD,
   STAMP_FIELD,
@@ -18,15 +19,6 @@ import {
   honeypotTripped,
   verifyTurnstile,
 } from "@/lib/inquiries/human-checks";
-
-function mergeExternalStatus(
-  existing: string | null | undefined,
-  next: string,
-): string {
-  if (!existing) return next;
-  if (existing.includes(next)) return existing;
-  return `${existing},${next}`;
-}
 
 export type GuestInquiryState = {
   ok?: boolean;
@@ -40,7 +32,7 @@ export type GuestInquiryState = {
  * - Listing / booking: pass propertyId (optional bookingId)
  * - Host website contact: pass hostId only (no listing required)
  * Web-only bot checks: honeypot, minimum fill time, optional Turnstile.
- * Shared checks (content, rate limits, dedupe, host email digest) live in
+ * Shared checks (content, rate limits, dedupe, instant host email with flood bundling) live in
  * submitInquiry, which the /api/v1 agent endpoint also uses.
  */
 export async function startGuestConversation(
@@ -137,6 +129,9 @@ export async function replyToConversation(formData: FormData) {
       senderUserId: session.user.id,
       body,
       channel: "IN_APP",
+      // Guest messages go through the host email queue (instant, bundled
+      // only during a flood).
+      hostNotifyPending: senderRole === "GUEST",
     },
   });
 
@@ -145,84 +140,10 @@ export async function replyToConversation(formData: FormData) {
     data: { lastMessageAt: new Date() },
   });
 
-  let externalStatus: string | null = null;
-  let externalId: string | null = null;
-
   if (senderRole === "HOST") {
-    // Host → guest: email the customer's address (respects profile + list opt-out)
-    if (await canSendEmailTo(conversation.guestEmail)) {
-      const email = await dispatchEmail({
-        to: conversation.guestEmail,
-        subject: `Message from ${conversation.host.name}`,
-        body: `${conversation.host.name} wrote:\n\n${body}`,
-        conversationId,
-        replyPath: `/messages/${conversationId}`,
-        fromPartyName: conversation.host.name,
-        replyTo: conversation.host.contactEmail,
-      });
-      if (email.attempted) {
-        externalStatus = mergeExternalStatus(
-          externalStatus,
-          `email:${email.status}`,
-        );
-        if (email.externalId) externalId = email.externalId;
-      }
-    }
-
-    // SMS when guest opted in + platform SMS enabled (prefs ready before launch)
-    if (
-      conversation.guestPhone &&
-      (await canSendSmsTo({
-        phone: conversation.guestPhone,
-        email: conversation.guestEmail,
-        userId: conversation.guestUserId,
-      }))
-    ) {
-      const sms = await dispatchSms({
-        to: conversation.guestPhone,
-        body: `${conversation.host.name}: ${body.slice(0, 140)}`,
-        conversationId,
-      });
-      if (sms.attempted) {
-        externalStatus = mergeExternalStatus(
-          externalStatus,
-          `sms:${sms.status}`,
-        );
-        if (sms.externalId) externalId = sms.externalId;
-      }
-    }
+    await deliverHostMessageToGuest(conversation, message.id, body);
   } else {
-    // Guest → host: email host contact + host users
-    const hostEmails = await hostNotifyEmails(conversation.hostId);
-    const title = conversation.property?.title || "your stay";
-    for (const to of hostEmails) {
-      const email = await dispatchEmail({
-        to,
-        subject: `Guest reply · ${title}`,
-        body: `${conversation.guestName} wrote:\n\n${body}`,
-        conversationId,
-        replyPath: `/admin/messages/${conversationId}`,
-        fromPartyName: conversation.guestName,
-        replyTo: conversation.guestEmail,
-      });
-      if (email.attempted) {
-        externalStatus = mergeExternalStatus(
-          externalStatus,
-          `email:${email.status}`,
-        );
-        if (email.externalId) externalId = email.externalId;
-      }
-    }
-  }
-
-  if (externalStatus) {
-    await prisma.message.update({
-      where: { id: message.id },
-      data: {
-        externalStatus,
-        externalId,
-      },
-    });
+    await deliverGuestMessageToHosts(conversation.hostId);
   }
 
   revalidatePath(`/messages/${conversationId}`);

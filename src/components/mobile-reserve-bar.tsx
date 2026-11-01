@@ -12,6 +12,11 @@ import {
   runBookingBarAction,
   subscribeBookingBar,
 } from "@/lib/booking-bar-state";
+import {
+  isAnyModalOpen,
+  isAnyModalOpenServer,
+  subscribeModalOpen,
+} from "@/lib/modal-open";
 
 type Props = {
   nightlyRate: number;
@@ -45,6 +50,12 @@ export function MobileReserveBar({
     subscribeBookingBar,
     getPublishedBookingBarState,
     getServerPublishedBookingBarState,
+  );
+  // Step aside while any dialog is open so it never covers a dialog's buttons.
+  const modalOpen = useSyncExternalStore(
+    subscribeModalOpen,
+    isAnyModalOpen,
+    isAnyModalOpenServer,
   );
   const bar = live ?? initialState ?? getServerBookingBarState();
   const dateLabel = bookingBarDateLabel(bar.checkIn, bar.checkOut);
@@ -81,12 +92,15 @@ export function MobileReserveBar({
     }
   }
 
-  if (!show) return null;
+  if (!show || modalOpen) return null;
 
   return (
     <div
+      data-testid="mobile-reserve-bar"
       className="fixed inset-x-0 bottom-0 z-[150] border-t border-stone-200/90 bg-white/95 shadow-[0_-8px_30px_rgba(42,53,102,0.12)] backdrop-blur-md lg:hidden"
-      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))" }}
+      style={{
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+      }}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="min-w-0">

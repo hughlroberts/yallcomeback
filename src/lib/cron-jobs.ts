@@ -62,7 +62,7 @@ export async function runAllCronJobs(): Promise<{
     console.error("[cron:agent-checkout-expiry]", e);
   }
   try {
-    // Pre-booking question digests whose window has passed.
+    // Guest messages held by the host email flood guard or daily cap.
     const { flushAllPendingInquiryEmails } =
       await import("@/lib/inquiries/notify");
     await flushAllPendingInquiryEmails();

@@ -74,7 +74,7 @@ Homepage-style flexibility:
 - flexibilityDays (aliases: dateFlex, flex) is ± days on check-in, same night count.
 - When flexible without dates, each listing includes availableWindows (next free stays).
 - Use amenities=lake_view,wifi for amenity filters (comma-separated ids).
-- limit (alias take): default 20, max 50 (larger values are clamped; 0, negative or non-numeric values get the default 20).
+- limit (alias take): default 20, max 50 (larger values are clamped; 0, negative, non-numeric or non-integer values such as 2.5 get the default 20).
 - count is every matching stay (not limited by limit; returned is how many are in this response; currentCount equals count). It matches flexibleDates.currentCount for exact dates; both are counted over at most 200 candidate stays.
 - GET ${origin}/api/marketplace/stays takes the same where, checkIn, checkOut, guests, pets, filters and limit/take (default 20, max 50) and returns the same count, returned and currentCount.
 - Past dates (checkIn before today) or checkOut on/before checkIn return HTTP 400 with {ok:false, code, error}; code is past_dates, checkout_not_after_checkin or invalid_date. Same on GET /api/marketplace/stays.
@@ -112,7 +112,7 @@ Content-Type: application/json
 - Returns checkoutUrl. Send the human there to pay with a card.
 - Dates are not held. Calendar is not written until Stripe confirms the deposit is paid.
 - If another guest pays for overlapping nights first, this payment is refunded in full automatically and the booking is cancelled. Tell the guest this can happen.
-- 409 means the dates are taken or the host is not ready to take a card deposit yet; send the guest to bookUrl instead.
+- 409 means the dates are taken or the host is not ready to take a card deposit yet; the response includes \`bookUrl\`; send the guest there instead.
 - Checkout expires in 30 minutes. Abandoned sessions never hold nights.
 - Never send paid: true. Agents cannot mark a stay paid.
 
@@ -136,7 +136,7 @@ Content-Type: application/json
 - 201 {ok, inquiryId, duplicate:false, hostNotification}. Sending the same question again from the same email within 24 hours returns 200 with duplicate:true and is not re-sent.
 - Limits (HTTP 429): per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day.
 - Rejected with 422: more than one link, links in the name or subject, HTML, link shorteners, or spam wording. message is 5 to 2000 characters.
-- Hosts get the first question by email right away; later questions are grouped into one digest email (at most one per 15 minutes).
+- Hosts and co-hosts get an email for every question right away. Only during a flood (more than 10 emails to one host in 10 minutes) are later messages grouped into one email when that 10-minute window ends.
 
 ## Deep links for humans
 

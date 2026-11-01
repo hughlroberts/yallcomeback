@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { createAgentStayCheckout } from "@/lib/agent/checkout";
+import { agentCheckoutBookPath } from "@/lib/agent/book-path";
+import { absoluteUrl, publicOrigin } from "@/lib/agent/origin";
 import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -86,6 +88,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // A 409 tells the agent to send the guest to bookUrl, so include it.
+  const bookPath = agentCheckoutBookPath(
+    String(body.slug || ""),
+    String(body.checkIn || ""),
+    String(body.checkOut || ""),
+  );
+  const conflictExtras = (status: number) =>
+    status === 409 && bookPath
+      ? { bookUrl: absoluteUrl(publicOrigin(req), bookPath) }
+      : {};
+
   try {
     const result = await createAgentStayCheckout({
       slug: String(body.slug || ""),
@@ -95,14 +108,13 @@ export async function POST(req: NextRequest) {
       pets: body.pets != null ? Number(body.pets) : undefined,
       guestName: String(body.guestName || ""),
       guestEmail: String(body.guestEmail || ""),
-      guestPhone:
-        body.guestPhone != null ? String(body.guestPhone) : undefined,
+      guestPhone: body.guestPhone != null ? String(body.guestPhone) : undefined,
       acceptTerms: body.acceptTerms === true,
       paid: body.paid,
     });
     if (!result.ok) {
       return NextResponse.json(
-        { ok: false, error: result.error },
+        { ok: false, error: result.error, ...conflictExtras(result.status) },
         { status: result.status, headers: CORS },
       );
     }
@@ -121,7 +133,7 @@ export async function POST(req: NextRequest) {
     const message = e instanceof Error ? e.message : "Checkout failed";
     const status = message === "Dates not available" ? 409 : 500;
     return NextResponse.json(
-      { ok: false, error: message },
+      { ok: false, error: message, ...conflictExtras(status) },
       { status, headers: CORS },
     );
   }

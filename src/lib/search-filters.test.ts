@@ -141,7 +141,10 @@ describe("searchLimit", () => {
     expect(searchLimit(undefined)).toBe(20);
     expect(searchLimit("")).toBe(20);
     expect(searchLimit("x")).toBe(20);
-    expect(searchLimit("8.9")).toBe(8);
+    expect(searchLimit("8.9")).toBe(20);
+    expect(searchLimit("2.5")).toBe(20);
+    expect(searchLimit(2.5)).toBe(20);
+    expect(searchLimit("8.0")).toBe(8);
     expect(searchLimit("0")).toBe(20);
     expect(searchLimit(0)).toBe(20);
     expect(searchLimit("-1")).toBe(20);

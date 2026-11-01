@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
+import { useModalOpen } from "@/lib/modal-open";
 import { X } from "lucide-react";
 import {
   startGuestConversation,
@@ -317,6 +318,8 @@ export function MessageHostButton({
   const [config, setConfig] = useState<InquiryFormConfig | null>(null);
   const mounted = useIsClient();
   const aboutLabel = propertyTitle?.trim() || hostName?.trim() || "host";
+  // Hides the mobile "Request to book" bar while this dialog is open.
+  useModalOpen(open);
 
   useEffect(() => {
     if (!open) return;
@@ -363,7 +366,10 @@ export function MessageHostButton({
       {mounted && open
         ? createPortal(
             <div
-              className="fixed inset-0 z-[100] flex items-end justify-center bg-stone-950/50 p-4 sm:items-center"
+              data-testid="message-host-overlay"
+              // z-[250]: above the sticky header (z-200) and mobile reserve bar
+              // (z-150); below the date picker (z-280) and toasts (z-300).
+              className="fixed inset-0 z-[250] flex items-end justify-center bg-stone-950/50 px-3 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] sm:items-center sm:p-4"
               role="presentation"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setOpen(false);
@@ -373,7 +379,10 @@ export function MessageHostButton({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
-                className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200 bg-white p-5 shadow-xl sm:p-6"
+                data-testid="message-host-dialog"
+                // Scrolls inside the visible viewport (dvh tracks the iOS
+                // toolbar and keyboard) so the Send button is always reachable.
+                className="max-h-[calc(100dvh-2rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-stone-200 bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] shadow-xl sm:max-h-[90vh] sm:p-6"
               >
                 <div className="mb-1 flex justify-end">
                   <button

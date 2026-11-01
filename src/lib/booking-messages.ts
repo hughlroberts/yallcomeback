@@ -153,9 +153,7 @@ export function interpolateBookingMessage(
     year: "numeric",
   });
   // Always 12-hour clock in guest messages (never "15:00")
-  const checkInTime12 = vars.checkInTime
-    ? formatTime12h(vars.checkInTime)
-    : "";
+  const checkInTime12 = vars.checkInTime ? formatTime12h(vars.checkInTime) : "";
 
   return template
     .replaceAll("{{guestName}}", vars.guestName)
@@ -164,10 +162,7 @@ export function interpolateBookingMessage(
     .replaceAll("{{checkIn}}", checkInStr)
     .replaceAll("{{checkOut}}", checkOutStr)
     .replaceAll("{{checkInTime}}", checkInTime12)
-    .replaceAll(
-      "{{guests}}",
-      vars.guests != null ? String(vars.guests) : "",
-    );
+    .replaceAll("{{guests}}", vars.guests != null ? String(vars.guests) : "");
 }
 
 /**
@@ -286,6 +281,7 @@ export async function deliverBookingAutoMessage(
     replyPath: `/messages/${conversationId}`,
     fromPartyName: host.name,
     replyTo: host.contactEmail,
+    threadRole: "GUEST",
   });
 
   if (email.attempted) {
@@ -323,10 +319,7 @@ export async function processScheduledBookingMessages(now = new Date()) {
     where: {
       status: "CONFIRMED",
       checkIn: { gte: pastGrace, lte: horizon },
-      OR: [
-        { autoMsgWeekBeforeSentAt: null },
-        { autoMsgDayBeforeSentAt: null },
-      ],
+      OR: [{ autoMsgWeekBeforeSentAt: null }, { autoMsgDayBeforeSentAt: null }],
     },
     include: {
       property: {

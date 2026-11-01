@@ -6,6 +6,7 @@ import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { PropertyCard } from "@/components/property-card";
 import { pageMetadata } from "@/lib/seo";
+import { hostStaysDescription } from "@/lib/host-meta";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +27,7 @@ export async function generateMetadata({
   }
   return pageMetadata({
     title: "Stays",
-    description:
-      host.tagline ||
-      `Browse stays from ${host.name} and book direct.`,
+    description: hostStaysDescription(host),
     path: `/h/${encodeURIComponent(host.slug)}/stays`,
     siteName: host.name,
     image: host.logoUrl,

@@ -1,15 +1,24 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/db", () => ({ prisma: {} }));
-vi.mock("@/lib/messaging", () => ({ dispatchEmail: vi.fn() }));
-vi.mock("@/lib/host-recipients", () => ({ hostEmailRecipients: vi.fn() }));
+const db = vi.hoisted(() => ({
+  message: { count: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
+  host: { findUnique: vi.fn() },
+  inquiryNotifyState: { upsert: vi.fn(), updateMany: vi.fn() },
+  conversation: { findMany: vi.fn() },
+}));
+const dispatchEmail = vi.hoisted(() => vi.fn());
+const hostEmailRecipients = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/db", () => ({ prisma: db }));
+vi.mock("@/lib/messaging", () => ({ dispatchEmail }));
+vi.mock("@/lib/host-recipients", () => ({ hostEmailRecipients }));
 
 import {
   DAILY_EMAIL_CAP,
-  DIGEST_MINUTES,
-  HEAVY_DIGEST_MINUTES,
-  HEAVY_VOLUME_PER_HOUR,
+  FLOOD_INSTANT_MAX,
+  FLOOD_WINDOW_MINUTES,
   composeInquiryEmail,
+  flushHostInquiryEmails,
   notifyDecision,
 } from "./notify";
 
@@ -17,78 +26,80 @@ const now = new Date("2026-11-01T15:00:00Z");
 const ago = (min: number) => new Date(now.getTime() - min * 60_000);
 
 describe("notifyDecision", () => {
-  it("emails the first question right away", () => {
+  it("emails every message right away while under the flood limit", () => {
     expect(
       notifyDecision({
         now,
-        lastEmailAt: null,
+        windowStartedAt: null,
+        windowCount: 0,
         dayStartedAt: null,
         emailsToday: 0,
-        recentQuestions: 1,
       }),
-    ).toMatchObject({ send: true, resetDay: true });
+    ).toMatchObject({ send: true, resetDay: true, resetWindow: true });
+    for (let n = 1; n < FLOOD_INSTANT_MAX; n++) {
+      expect(
+        notifyDecision({
+          now,
+          windowStartedAt: ago(1),
+          windowCount: n,
+          dayStartedAt: ago(60),
+          emailsToday: n,
+        }),
+      ).toMatchObject({ send: true, resetWindow: false });
+    }
   });
 
-  it("holds later questions for the digest window", () => {
+  it("holds messages after 10 emails in 10 minutes until the window ends", () => {
     const d = notifyDecision({
       now,
-      lastEmailAt: ago(5),
+      windowStartedAt: ago(4),
+      windowCount: FLOOD_INSTANT_MAX,
       dayStartedAt: ago(60),
-      emailsToday: 1,
-      recentQuestions: 2,
+      emailsToday: 12,
     });
-    expect(d.send).toBe(false);
-    expect(d.waitMs).toBe((DIGEST_MINUTES - 5) * 60_000);
+    expect(d).toMatchObject({ send: false, reason: "flood" });
+    expect(d.waitMs).toBe((FLOOD_WINDOW_MINUTES - 4) * 60_000);
+    // Window over: the digest goes out and starts a fresh window.
     expect(
       notifyDecision({
         now,
-        lastEmailAt: ago(DIGEST_MINUTES),
+        windowStartedAt: ago(FLOOD_WINDOW_MINUTES),
+        windowCount: FLOOD_INSTANT_MAX + 5,
         dayStartedAt: ago(60),
-        emailsToday: 1,
-        recentQuestions: 2,
-      }).send,
-    ).toBe(true);
+        emailsToday: 12,
+      }),
+    ).toMatchObject({ send: true, resetWindow: true });
   });
 
-  it("slows down under heavy volume", () => {
-    const d = notifyDecision({
-      now,
-      lastEmailAt: ago(20),
-      dayStartedAt: ago(60),
-      emailsToday: 3,
-      recentQuestions: HEAVY_VOLUME_PER_HOUR,
-    });
-    expect(d.send).toBe(false);
-    expect(d.intervalMs).toBe(HEAVY_DIGEST_MINUTES * 60_000);
-  });
-
-  it("caps emails per day and resets after 24 hours", () => {
+  it("holds at the daily safety cap and resets after 24 hours", () => {
     expect(
       notifyDecision({
         now,
-        lastEmailAt: ago(120),
+        windowStartedAt: ago(120),
+        windowCount: 1,
         dayStartedAt: ago(600),
         emailsToday: DAILY_EMAIL_CAP,
-        recentQuestions: 0,
-      }).send,
-    ).toBe(false);
+      }),
+    ).toMatchObject({ send: false, reason: "daily_cap" });
     expect(
       notifyDecision({
         now,
-        lastEmailAt: ago(120),
+        windowStartedAt: ago(120),
+        windowCount: 1,
         dayStartedAt: ago(25 * 60),
         emailsToday: DAILY_EMAIL_CAP,
-        recentQuestions: 0,
       }),
     ).toMatchObject({ send: true, resetDay: true });
+    expect(DAILY_EMAIL_CAP).toBe(200);
   });
 });
 
-function msg(i: number, agent = false) {
+function msg(i: number, agent = false, isReply = false) {
   return {
     id: `m${i}`,
     body: `Question number ${i}?`,
     createdAt: now,
+    isReply,
     conversation: {
       id: `c${i}`,
       guestName: `Guest ${i}`,
@@ -101,20 +112,132 @@ function msg(i: number, agent = false) {
 }
 
 describe("composeInquiryEmail", () => {
-  it("sends one question with a direct reply link", () => {
+  it("sends one new question with a direct reply link", () => {
     const e = composeInquiryEmail("Hugh", [msg(1)], 1);
     expect(e.single).toBe(true);
     expect(e.subject).toBe("New question · Lakefront");
     expect(e.replyPath).toBe("/admin/messages/c1");
     expect(e.body).toContain("Question number 1?");
+    expect(e.body).not.toMatch(/minutes/);
   });
 
-  it("groups several into a digest and labels AI-sent questions", () => {
+  it("labels a guest reply in an existing thread", () => {
+    const e = composeInquiryEmail("Hugh", [msg(1, false, true)], 1);
+    expect(e.subject).toBe("Guest reply · Lakefront");
+    expect(e.body).toBe("Guest 1 wrote:\n\nQuestion number 1?");
+  });
+
+  it("groups a flood into one digest and labels AI-sent questions", () => {
     const e = composeInquiryEmail("Hugh", [msg(1), msg(2, true)], 5);
     expect(e.single).toBe(false);
-    expect(e.subject).toBe("5 new guest questions · Hugh");
+    expect(e.subject).toBe("5 new guest messages · Hugh");
     expect(e.replyPath).toBe("/admin/messages");
     expect(e.body).toContain("sent by an AI assistant: TripBot");
     expect(e.body).toContain("…and 3 more in your inbox.");
+    expect(e.body).toContain("grouped into one email");
+  });
+});
+
+function row(i: number, firstId: string) {
+  const m = msg(i);
+  return {
+    id: m.id,
+    body: m.body,
+    createdAt: now,
+    conversation: { ...m.conversation, messages: [{ id: firstId }] },
+  };
+}
+
+describe("flushHostInquiryEmails", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.host.findUnique.mockResolvedValue({ id: "h1", name: "Hugh" });
+    db.message.count.mockResolvedValue(1);
+    db.message.updateMany.mockResolvedValue({ count: 1 });
+    db.inquiryNotifyState.updateMany.mockResolvedValue({ count: 1 });
+    hostEmailRecipients.mockResolvedValue(["host@x.com", "cohost@x.com"]);
+    dispatchEmail.mockResolvedValue({ attempted: true, status: "sent" });
+  });
+
+  it("emails hosts and co-hosts at once for a guest reply", async () => {
+    db.inquiryNotifyState.upsert.mockResolvedValue({
+      hostId: "h1",
+      windowStartedAt: ago(2),
+      windowCount: 3,
+      dayStartedAt: ago(60),
+      emailsToday: 3,
+    });
+    db.message.findMany.mockResolvedValue([row(1, "first-msg")]);
+    await expect(flushHostInquiryEmails("h1", now)).resolves.toBe("emailed");
+    expect(dispatchEmail).toHaveBeenCalledTimes(2);
+    expect(dispatchEmail.mock.calls[0][0]).toMatchObject({
+      to: "host@x.com",
+      subject: "Guest reply · Lakefront",
+      threadRole: "HOST",
+      replyTo: "g1@example.com",
+    });
+    expect(db.inquiryNotifyState.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ windowCount: { increment: 1 } }),
+      }),
+    );
+  });
+
+  it("queues during a flood and does not email", async () => {
+    db.inquiryNotifyState.upsert.mockResolvedValue({
+      hostId: "h1",
+      windowStartedAt: ago(3),
+      windowCount: FLOOD_INSTANT_MAX,
+      dayStartedAt: ago(60),
+      emailsToday: FLOOD_INSTANT_MAX,
+    });
+    await expect(flushHostInquiryEmails("h1", now)).resolves.toBe("queued");
+    expect(dispatchEmail).not.toHaveBeenCalled();
+  });
+
+  it("logs and holds over the daily cap", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    db.inquiryNotifyState.upsert.mockResolvedValue({
+      hostId: "h1",
+      windowStartedAt: ago(30),
+      windowCount: 1,
+      dayStartedAt: ago(600),
+      emailsToday: DAILY_EMAIL_CAP,
+    });
+    await expect(flushHostInquiryEmails("h1", now)).resolves.toBe("queued");
+    expect(warn).toHaveBeenCalledWith(
+      "[inquiry-notify:daily-cap]",
+      expect.objectContaining({ hostId: "h1", cap: DAILY_EMAIL_CAP }),
+    );
+    expect(dispatchEmail).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("sends a held flood as one digest without a thread reply-to", async () => {
+    db.message.count.mockResolvedValue(3);
+    db.inquiryNotifyState.upsert.mockResolvedValue({
+      hostId: "h1",
+      windowStartedAt: ago(FLOOD_WINDOW_MINUTES + 1),
+      windowCount: FLOOD_INSTANT_MAX,
+      dayStartedAt: ago(60),
+      emailsToday: FLOOD_INSTANT_MAX,
+    });
+    db.message.findMany.mockResolvedValue([
+      row(1, "m1"),
+      row(2, "m2"),
+      row(3, "m3"),
+    ]);
+    db.message.updateMany.mockResolvedValue({ count: 3 });
+    await flushHostInquiryEmails("h1", now);
+    expect(dispatchEmail.mock.calls[0][0]).toMatchObject({
+      subject: "3 new guest messages · Hugh",
+      threadRole: undefined,
+      replyTo: null,
+    });
+    expect(db.inquiryNotifyState.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ windowCount: 1 }),
+      }),
+    );
   });
 });

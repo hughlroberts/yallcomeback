@@ -143,12 +143,14 @@ export const SEARCH_MAX_LIMIT = 50;
  */
 export function searchLimit(raw: string | number | null | undefined): number {
   const n = typeof raw === "number" ? raw : raw?.trim() ? Number(raw) : NaN;
-  if (!Number.isFinite(n)) return SEARCH_DEFAULT_LIMIT;
-  const whole = Math.floor(n);
-  if (whole < 1) return SEARCH_DEFAULT_LIMIT;
-  return Math.min(SEARCH_MAX_LIMIT, whole);
+  // Anything that isn't a whole number ≥ 1 (abc, 0, -3, 2.5) gets the
+  // default, so odd input is treated one way instead of being truncated.
+  if (!Number.isInteger(n) || n < 1) return SEARCH_DEFAULT_LIMIT;
+  return Math.min(SEARCH_MAX_LIMIT, n);
 }
 
-export function searchLimitFromParams(get: (key: string) => string | null | undefined): number {
+export function searchLimitFromParams(
+  get: (key: string) => string | null | undefined,
+): number {
   return searchLimit(get("take") || get("limit"));
 }
