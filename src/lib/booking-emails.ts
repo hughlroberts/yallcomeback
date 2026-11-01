@@ -16,6 +16,11 @@ import { bookingAccessToken } from "@/lib/booking-access";
 import { dispatchPlatformEmail, messagingSiteOrigin } from "@/lib/messaging";
 import { formatDateRangeUS, formatMoney } from "@/lib/utils";
 import {
+  dedupeEmails,
+  hostEmailRecipients,
+  maskEmail,
+} from "@/lib/host-recipients";
+import {
   guestCancelWindow,
   REFUND_PROCESS_TEXT,
 } from "@/lib/guest-cancel-window";
@@ -69,32 +74,12 @@ export function adminBookingUrl(bookingId: string): string {
   return `${messagingSiteOrigin()}/admin/bookings/${bookingId}`;
 }
 
-/** Owner contact email + co-host users (role HOST on the brand), deduped. */
+/** Every host on the brand (see host-recipients.ts). */
 export async function bookingHostRecipients(hostId: string): Promise<string[]> {
-  const [host, users] = await Promise.all([
-    prisma.host.findUnique({
-      where: { id: hostId },
-      select: { contactEmail: true },
-    }),
-    prisma.user.findMany({
-      where: { hostId, role: "HOST", emailNotifications: true },
-      select: { email: true },
-    }),
-  ]);
-  return dedupeEmails([host?.contactEmail, ...users.map((u) => u.email)]);
+  return hostEmailRecipients(hostId);
 }
 
-export function dedupeEmails(list: (string | null | undefined)[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of list) {
-    const e = (raw ?? "").trim().toLowerCase();
-    if (!e || !e.includes("@") || seen.has(e)) continue;
-    seen.add(e);
-    out.push(e);
-  }
-  return out;
-}
+export { dedupeEmails };
 
 const bookingSelect = {
   id: true,
@@ -209,7 +194,20 @@ function cancelRuleLine(b: BookingEmailData, now: Date): string {
     hour: "numeric",
     minute: "2-digit",
   });
-  return `Cancellation policy: ${w.policyName}. You can cancel online until ${until} (Central). After that, contact the host to cancel.`;
+  const free =
+    w.freeCancelUntil && now < w.freeCancelUntil
+      ? ` 24-hour free cancellation: cancel by ${w.freeCancelUntil.toLocaleString(
+          "en-US",
+          {
+            timeZone: "America/Chicago",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          },
+        )} (Central) for a full refund of anything you paid.`
+      : "";
+  return `Cancellation policy: ${w.policyName}. You can cancel online until ${until} (Central). After that, contact the host to cancel.${free}`;
 }
 
 /** Guest + host emails right after a booking or request is made. */
@@ -339,16 +337,27 @@ async function sendAll(
   tag: string,
   bookingId: string,
 ) {
+  const results: string[] = [];
   for (const e of emails) {
     try {
       const r = await dispatchPlatformEmail(e);
+      results.push(`${maskEmail(e.to)}=${r.status}`);
       if (r.status !== "sent") {
-        console.warn(`[booking-email:${tag}]`, bookingId, r.status, r.detail);
+        console.warn(
+          `[booking-email:${tag}]`,
+          bookingId,
+          maskEmail(e.to),
+          r.status,
+          r.detail,
+        );
       }
     } catch (err) {
+      results.push(`${maskEmail(e.to)}=error`);
       console.error(`[booking-email:${tag}] failed`, bookingId, err);
     }
   }
+  // One line per booking email batch so Railway logs show who was emailed.
+  console.info(`[booking-email:${tag}]`, bookingId, results.join(" "));
 }
 
 /** Claim-once then send the booking-time emails. Never throws. */

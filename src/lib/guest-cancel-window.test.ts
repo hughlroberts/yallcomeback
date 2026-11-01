@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   guestCancelWindow,
+  FREE_CANCEL_24H_TEXT,
   onlineCancelLines,
   shortRuleText,
   zonedTime,
@@ -156,7 +157,61 @@ describe("policy text", () => {
     expect(shortRuleText("FLEXIBLE")).toContain("24 hours before check-in");
     const lines = onlineCancelLines("short", "FIRM");
     expect(lines[0]).toContain("7 days before check-in");
-    expect(lines[1]).toMatch(/Refunds are not automatic/);
+    expect(lines[1]).toBe(FREE_CANCEL_24H_TEXT);
+    expect(lines[2]).toMatch(/Refunds are not automatic/);
     expect(onlineCancelLines("long", "FIRM")[0]).toContain("30 days");
+  });
+});
+
+describe("24-hour free cancellation", () => {
+  const checkIn = new Date(2026, 11, 20);
+  it("applies to every short-stay policy booked 7+ days ahead", () => {
+    for (const policy of ["FLEXIBLE", "MODERATE", "FIRM", "STRICT"]) {
+      const created = new Date("2026-12-01T15:00:00Z");
+      const w = guestCancelWindow({
+        nights: 2,
+        checkIn,
+        createdAt: created,
+        cancellationPolicy: policy,
+        now: new Date(created.getTime() + 60 * 60 * 1000),
+      });
+      expect(w.freeCancelUntil?.getTime()).toBe(
+        created.getTime() + 24 * 60 * 60 * 1000,
+      );
+      expect(w.refundTier).toBe("full");
+      expect(w.freeCancelText).toBe(FREE_CANCEL_24H_TEXT);
+      expect(w.inFreeCancelWindow).toBe(true);
+    }
+  });
+  it("closes the free window after 24 hours", () => {
+    const created = new Date("2026-12-01T15:00:00Z");
+    const w = guestCancelWindow({
+      nights: 2,
+      checkIn,
+      createdAt: created,
+      cancellationPolicy: "STRICT",
+      now: new Date(created.getTime() + 25 * 60 * 60 * 1000),
+    });
+    expect(w.inFreeCancelWindow).toBe(false);
+    expect(w.freeCancelUntil).not.toBeNull();
+  });
+  it("does not apply when booked less than 7 days ahead or for monthly stays", () => {
+    const late = guestCancelWindow({
+      nights: 2,
+      checkIn,
+      createdAt: new Date("2026-12-16T15:00:00Z"),
+      cancellationPolicy: "STRICT",
+      now: new Date("2026-12-16T16:00:00Z"),
+    });
+    expect(late.freeCancelUntil).toBeNull();
+    expect(late.inFreeCancelWindow).toBe(false);
+    const monthly = guestCancelWindow({
+      nights: 30,
+      checkIn: new Date(2027, 1, 20),
+      createdAt: new Date("2026-12-01T15:00:00Z"),
+      now: new Date("2026-12-01T16:00:00Z"),
+    });
+    expect(monthly.freeCancelUntil).toBeNull();
+    expect(monthly.freeCancelText).toBeNull();
   });
 });

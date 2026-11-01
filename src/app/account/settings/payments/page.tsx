@@ -32,8 +32,9 @@ export default async function AccountPaymentsPage() {
   return (
     <AccountSettingsShell active="payments" isHost={isHost} title="Payments">
       <p className="text-sm leading-relaxed text-stone-600">
-        Manage how you pay deposits or how you receive payouts. Yall Come Back opens
-        the provider or setup page - we don&apos;t store full card numbers here.
+        Manage how you pay deposits or how you receive payouts. Yall Come Back
+        opens the provider or setup page - we don&apos;t store full card numbers
+        here.
       </p>
 
       <div className="mt-8 space-y-3">
@@ -83,13 +84,13 @@ export default async function AccountPaymentsPage() {
         {isPlatform ? (
           <>
             <PaymentLink
-              title="Ops · website hosting"
+              title="Platform admin · website hosting"
               description="Approve hosts, invoices, and hosting plans ($12/listing marketplace / $25/mo branded website, unlimited listings)."
               href="/ops/hosting"
               badge="Admin"
             />
             <PaymentLink
-              title="Ops · platform payment settings"
+              title="Platform admin · payment settings"
               description="Stripe, Bitcoin, and remaining launch placeholders."
               href="/ops/settings"
               badge="Admin"

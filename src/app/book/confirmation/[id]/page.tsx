@@ -133,6 +133,16 @@ export default async function ConfirmationPage({
     hour: "numeric",
     minute: "2-digit",
   });
+  const inFreeCancel = cancelWin.inFreeCancelWindow;
+  const freeCancelLabel = cancelWin.freeCancelUntil
+    ? cancelWin.freeCancelUntil.toLocaleString("en-US", {
+        timeZone: "America/Chicago",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : null;
   const isRequest =
     payment?.method === "MANUAL" &&
     Boolean(payment.notes?.startsWith("Request to book"));
@@ -303,7 +313,18 @@ export default async function ConfirmationPage({
           <p className="font-semibold text-stone-900">Need to cancel?</p>
           <p className="mt-1 text-stone-600">
             Cancellation policy: {cancelWin.policyName}. {cancelWin.ruleText}
+            {cancelWin.freeCancelText ? ` ${cancelWin.freeCancelText}` : ""}
           </p>
+          {inFreeCancel && freeCancelLabel ? (
+            <p
+              data-free-cancel-window
+              className="mt-2 rounded-lg bg-emerald-50 p-2 text-emerald-900"
+            >
+              You&apos;re in the 24-hour free-cancel window until{" "}
+              {freeCancelLabel} (Central). Cancelling before then means a full
+              refund of anything you paid.
+            </p>
+          ) : null}
           {sp.cancelError === "deadline" ? (
             <p className="mt-2 rounded-lg bg-amber-50 p-2 text-amber-900">
               The online cancel window has passed.
@@ -316,7 +337,7 @@ export default async function ConfirmationPage({
                 token={manageToken}
                 noun={isRequest || !depositPaid ? "request" : "booking"}
                 startOpen={sp.cancel === "1"}
-                deadlineText={`You can cancel online until ${deadlineLabel} (Central). The dates go back on the calendar right away.`}
+                deadlineText={`${inFreeCancel && freeCancelLabel ? `You're in the 24-hour free-cancel window until ${freeCancelLabel} (Central), so cancelling now means a full refund of anything you paid. ` : ""}You can cancel online until ${deadlineLabel} (Central). The dates go back on the calendar right away.`}
                 moneyText={
                   depositPaid
                     ? `You paid a deposit. Nothing is refunded automatically: the host or Yall Come Back will process any refund the ${cancelWin.policyName} policy allows${cancelWin.refundTier === "full" ? " (you are in its full-refund window)" : cancelWin.refundTier === "partial" ? " (you are in its partial-refund window)" : ""}.`

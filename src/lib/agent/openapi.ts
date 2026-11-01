@@ -90,7 +90,8 @@ export function buildOpenApiDocument(origin: string) {
               name: "amenities",
               in: "query",
               schema: { type: "string" },
-              description: "Comma-separated amenity ids (e.g. lake_view,wifi,pets)",
+              description:
+                "Comma-separated amenity ids (e.g. lake_view,wifi,pets)",
             },
             {
               name: "take",
@@ -121,7 +122,8 @@ export function buildOpenApiDocument(origin: string) {
                       },
                       returned: {
                         type: "integer",
-                        description: "Listings in this response (at most take).",
+                        description:
+                          "Listings in this response (at most take).",
                       },
                       currentCount: {
                         type: "integer",
@@ -345,8 +347,65 @@ export function buildOpenApiDocument(origin: string) {
             },
             "400": { description: "Invalid request" },
             "404": { description: "Listing not on marketplace" },
-            "409": { description: "Dates unavailable, or host not ready to take a card deposit (Stripe card onboarding not finished)" },
+            "409": {
+              description:
+                "Dates unavailable, or host not ready to take a card deposit (Stripe card onboarding not finished)",
+            },
             "429": { description: "Too many checkout attempts" },
+          },
+        },
+      },
+      "/api/v1/inquiries": {
+        post: {
+          operationId: "askHostQuestion",
+          summary: "Ask a host a question before booking",
+          description:
+            "Sends a pre-booking question to the host of a marketplace listing, on behalf of a real person who wants the reply. No token required; AI agents are welcome. The host replies by email to guestEmail. Limits: per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day. Repeating the same (or nearly the same) question from the same email within 24 hours returns the existing inquiry with duplicate:true and nothing is re-sent. Messages with more than one link, links in the name or subject, HTML, link shorteners, or spam wording are rejected. Hosts get the first question by email right away; later ones are grouped into a digest (at most one email per 15 minutes).",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["slug", "guestName", "guestEmail", "message"],
+                  properties: {
+                    slug: { type: "string", description: "Listing slug" },
+                    guestName: { type: "string", maxLength: 80 },
+                    guestEmail: {
+                      type: "string",
+                      format: "email",
+                      description: "Where the host's reply goes",
+                    },
+                    guestPhone: { type: "string", maxLength: 40 },
+                    subject: { type: "string", maxLength: 150 },
+                    message: { type: "string", minLength: 5, maxLength: 2000 },
+                    checkIn: { type: "string", format: "date" },
+                    checkOut: { type: "string", format: "date" },
+                    guests: { type: "integer", minimum: 1 },
+                    agentName: {
+                      type: "string",
+                      maxLength: 80,
+                      description:
+                        "Name of the assistant sending this (shown to the host)",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": {
+              description:
+                "Sent: { ok, inquiryId, duplicate:false, hostNotification: emailed|queued|none }",
+            },
+            "200": {
+              description:
+                "Duplicate of a question this email already sent in the last 24 hours (duplicate:true, nothing re-sent)",
+            },
+            "400": { description: "Invalid request (missing or bad fields)" },
+            "404": { description: "Listing not on marketplace" },
+            "422": { description: "Rejected as spam or too many links" },
+            "429": { description: "Rate limited (try again later)" },
           },
         },
       },

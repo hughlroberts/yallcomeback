@@ -1927,8 +1927,11 @@ function CancellationPolicies({ article }: { article: HelpArticle }) {
           <li>
             Guests cancel online from the private link in their booking email
             (the booking confirmation page). They tap{" "}
-            <strong>Cancel request</strong> or <strong>Cancel booking</strong>,
-            then confirm.
+            <strong>Cancel request</strong> or <strong>Cancel booking</strong>.
+            A confirm box opens; they tap <strong>Yes, cancel request</strong>{" "}
+            or <strong>Yes, cancel booking</strong> to finish, or{" "}
+            <strong>Keep my request</strong> / <strong>Keep my booking</strong>{" "}
+            to back out.
           </li>
           <li>
             Online cancelling is open until the last refund step of the
@@ -1936,8 +1939,10 @@ function CancellationPolicies({ article }: { article: HelpArticle }) {
             (Moderate), 7 days (Limited, Firm, Strict), 30 days (Super Strict
             30), or 60 days (Super Strict 60). Monthly stays: 30 days (Firm), or
             within 48 hours of booking if check-in is at least 28 days away
-            (Strict). Bookings made at least 7 days ahead can also be cancelled
-            online for 24 hours after booking.
+            (Strict). Short stays booked at least 7 days ahead can also be
+            cancelled online for a full refund for 24 hours after booking (the
+            24-hour free-cancel window). The cancel box tells the guest when
+            they are inside that window.
           </li>
           <li>
             After that, the page says <strong>Contact host to cancel</strong>,

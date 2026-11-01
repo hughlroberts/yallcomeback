@@ -25,8 +25,8 @@ async function main() {
     data: {
       name: "Hugh Roberts",
       tagline: "Private lake stays on Cedar Creek",
-      description:
-        "Independent host on Cedar Creek Lake. Direct booking — not part of Cherokee Landing resort inventory.",
+      // No description here on purpose: re-running must never overwrite the
+      // host's own About text or add resort wording to it.
       sitePresence: "STAYLOCAL",
       hostingMode: "PLATFORM",
       listOnMarketplace: true,

@@ -47,7 +47,11 @@ function parseMailbox(raw: string): { name: string | null; address: string } {
 }
 
 function sanitizeDisplayName(name: string): string {
-  return name.replace(/[\r\n<>"]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  return name
+    .replace(/[\r\n<>"]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
 }
 
 function formatMailbox(name: string, address: string): string {
@@ -66,7 +70,9 @@ function isUsableEmail(value: string | null | undefined): value is string {
  * Stay mail shows "Host Name via Yall Come Back"; Reply-To is the other party.
  * Never send from a host's Gmail/iCloud.
  */
-export function stayFromHeader(partyName: string | null | undefined): string | null {
+export function stayFromHeader(
+  partyName: string | null | undefined,
+): string | null {
   const raw = emailFromAddress();
   if (!raw) return null;
   const { address } = parseMailbox(raw);
@@ -209,7 +215,7 @@ export function isSmsMessagingEnabled(): boolean {
     Boolean(process.env.MESSAGING_SMS_PROVIDER_KEY?.trim()) &&
     Boolean(
       process.env.MESSAGING_SMS_ACCOUNT_SID?.trim() ||
-        process.env.TWILIO_ACCOUNT_SID?.trim(),
+      process.env.TWILIO_ACCOUNT_SID?.trim(),
     )
   );
 }
@@ -230,9 +236,7 @@ function buildEmailBodies(opts: {
   unsubscribeUrl?: string | null;
 }): { text: string; html: string } {
   const origin = messagingSiteOrigin();
-  const path =
-    opts.replyPath ||
-    `/messages/${opts.conversationId}`;
+  const path = opts.replyPath || `/messages/${opts.conversationId}`;
   const url = `${origin}${path.startsWith("/") ? path : `/${path}`}`;
   const unsub = opts.unsubscribeUrl?.trim() || null;
   const prefsUrl = `${origin}/account/settings/notifications`;
@@ -267,6 +271,48 @@ function buildEmailBodies(opts: {
   return { text, html };
 }
 
+const RESEND_MAX_ATTEMPTS = 3;
+
+/** Seconds from Retry-After / ratelimit-reset, capped (default 1s). */
+export function resendRetryDelayMs(headers: Headers, attempt: number): number {
+  const raw =
+    headers.get("retry-after") ?? headers.get("ratelimit-reset") ?? "";
+  const secs = Number(raw);
+  const base = Number.isFinite(secs) && secs > 0 ? secs * 1000 : 1000 * attempt;
+  return Math.min(base, 5_000);
+}
+
+/**
+ * POST to Resend, retrying rate limits (429) and server errors (5xx) a
+ * couple of times. Several emails go out back to back for one booking (guest
+ * + every host), and Resend's per-second limit is shared by the whole team.
+ */
+async function resendPostWithRetry(
+  apiKey: string,
+  payload: Record<string, unknown>,
+  sleep: (ms: number) => Promise<void> = (ms) =>
+    new Promise((r) => setTimeout(r, ms)),
+): Promise<Response> {
+  let res: Response | null = null;
+  for (let attempt = 1; attempt <= RESEND_MAX_ATTEMPTS; attempt++) {
+    res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "User-Agent": "yallcomeback-app/1.0",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (res.status !== 429 && res.status < 500) return res;
+    if (attempt < RESEND_MAX_ATTEMPTS) {
+      console.warn("[messaging:email:resend] retrying", res.status, attempt);
+      await sleep(resendRetryDelayMs(res.headers, attempt));
+    }
+  }
+  return res!;
+}
+
 async function sendViaResend(opts: {
   from: string;
   to: string;
@@ -285,14 +331,7 @@ async function sendViaResend(opts: {
       html: opts.html,
     };
     if (opts.replyTo) payload.reply_to = [opts.replyTo];
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${opts.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const res = await resendPostWithRetry(opts.apiKey, payload);
     const data = (await res.json().catch(() => ({}))) as {
       id?: string;
       message?: string;
@@ -372,8 +411,7 @@ async function sendViaSmtp(opts: {
       };
     }>;
     const mod = await load("nodemailer");
-    const createTransport =
-      mod.createTransport || mod.default?.createTransport;
+    const createTransport = mod.createTransport || mod.default?.createTransport;
     if (!createTransport) {
       return {
         attempted: false,
@@ -449,9 +487,8 @@ export async function dispatchEmail(opts: {
   }
 
   if (!opts.force) {
-    const { canSendEmailTo, unsubscribeUrl } = await import(
-      "@/lib/notification-prefs"
-    );
+    const { canSendEmailTo, unsubscribeUrl } =
+      await import("@/lib/notification-prefs");
     const allowed = await canSendEmailTo(to);
     if (!allowed) {
       return {
@@ -637,7 +674,8 @@ export async function dispatchSms(opts: {
         attempted: true,
         status: "failed",
         channel: "SMS",
-        detail: data.error_message || data.message || `Twilio HTTP ${res.status}`,
+        detail:
+          data.error_message || data.message || `Twilio HTTP ${res.status}`,
       };
     }
     return {
@@ -712,7 +750,7 @@ export function smsMessagingStatus(): {
     dryRun: process.env.MESSAGING_SMS_DRY_RUN !== "false",
     accountSidSet: Boolean(
       process.env.MESSAGING_SMS_ACCOUNT_SID?.trim() ||
-        process.env.TWILIO_ACCOUNT_SID?.trim(),
+      process.env.TWILIO_ACCOUNT_SID?.trim(),
     ),
   };
 }

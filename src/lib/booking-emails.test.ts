@@ -11,7 +11,11 @@ const mail = vi.hoisted(() => ({
     status: "sent",
   })),
 }));
+const prefs = vi.hoisted(() => ({
+  canSendEmailTo: vi.fn<(email: string) => Promise<boolean>>(async () => true),
+}));
 vi.mock("@/lib/db", () => ({ prisma: db }));
+vi.mock("@/lib/notification-prefs", () => prefs);
 vi.mock("@/lib/messaging", () => ({
   ...mail,
   messagingSiteOrigin: () => "https://www.yallcomeback.app",
@@ -72,21 +76,42 @@ beforeEach(() => {
 });
 
 describe("host recipients", () => {
-  it("includes the owner contact email and co-hosts, deduped", async () => {
-    db.host.findUnique.mockResolvedValue({ contactEmail: "Owner@Motel.com" });
+  it("includes the contact email, billing email, owner and co-hosts, deduped", async () => {
+    db.host.findUnique.mockResolvedValue({
+      contactEmail: "Owner@Motel.com",
+      billingEmail: "billing@motel.com",
+    });
     db.user.findMany.mockResolvedValue([
       { email: "owner@motel.com" },
       { email: "cohost@motel.com" },
     ]);
     expect(await bookingHostRecipients("host_1")).toEqual([
       "owner@motel.com",
+      "billing@motel.com",
       "cohost@motel.com",
     ]);
     expect(db.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { hostId: "host_1", role: "HOST", emailNotifications: true },
+        where: {
+          hostId: "host_1",
+          role: { in: ["HOST", "ADMIN"] },
+          emailNotifications: true,
+        },
       }),
     );
+  });
+
+  it("skips addresses that unsubscribed", async () => {
+    db.host.findUnique.mockResolvedValue({
+      contactEmail: "owner@motel.com",
+      billingEmail: null,
+    });
+    db.user.findMany.mockResolvedValue([{ email: "cohost@motel.com" }]);
+    prefs.canSendEmailTo.mockImplementation(
+      async (e: string) => e !== "owner@motel.com",
+    );
+    expect(await bookingHostRecipients("host_1")).toEqual(["cohost@motel.com"]);
+    prefs.canSendEmailTo.mockImplementation(async () => true);
   });
 });
 

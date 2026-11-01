@@ -34,6 +34,15 @@ const VISIBLE_TO_PUBLIC_OR_HOSTS = [
   "src/lib/platform-domains.ts",
   "src/lib/pricing-intelligence/run.ts",
   "src/lib/features.ts",
+  "src/components/user-menu.tsx",
+  "src/components/site-header-nav.tsx",
+  "src/components/admin-nav.tsx",
+  "src/components/message-host-form.tsx",
+  "src/components/help",
+  "src/lib/inquiries",
+  "src/lib/host-recipients.ts",
+  "src/app/api/v1/inquiries",
+  "src/app/marketplace",
 ];
 
 const OPS = /\bops\b/i;

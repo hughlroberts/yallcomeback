@@ -17,16 +17,18 @@ function pathOnly(path: string): string {
 
 /**
  * Where to send someone after sign-in.
- * Hosts land on Calendar unless they were headed into admin/ops/account.
+ * Hosts land on Calendar unless they were headed to a specific page
+ * (admin, account, a listing, checkout, messages...).
  * Guests land on Find a Place unless they were already on a real page.
  */
 export function homeAfterLogin(
   role: string | null | undefined,
   callback?: unknown,
 ): string {
-  const next = typeof callback === "string" && callback.trim()
-    ? safeInternalPath(callback, "")
-    : "";
+  const next =
+    typeof callback === "string" && callback.trim()
+      ? safeInternalPath(callback, "")
+      : "";
   const path = pathOnly(next);
   const isHost = role === "ADMIN" || role === "HOST";
 
@@ -34,11 +36,10 @@ export function homeAfterLogin(
     if (path === "/admin") {
       return "/admin/calendar";
     }
-    if (
-      path.startsWith("/admin") ||
-      path.startsWith("/ops") ||
-      path.startsWith("/account")
-    ) {
+    // A host who signed in from a listing, checkout, message, or wishlist
+    // was traveling: keep them there (hosts can book stays too). Only bare
+    // landings (home, login, the host pitch, the search page) go to Calendar.
+    if (next && !GENERIC_LANDING.has(path) && path !== "/marketplace") {
       return next;
     }
     return "/admin/calendar";

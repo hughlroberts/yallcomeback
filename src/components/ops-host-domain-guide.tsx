@@ -64,17 +64,22 @@ export function OpsHostDomainGuide({ host }: Props) {
             {previewPath}
           </Link>
           . Pointing a real domain here needs <strong>three</strong> pieces —
-          none of them alone is enough. DNS values below stay saved until cutover.
+          none of them alone is enough. DNS values below stay saved until
+          cutover.
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs">
-            <p className="font-semibold text-sky-900">You (Ops / Brand)</p>
+            <p className="font-semibold text-sky-900">
+              You (Platform admin / Brand)
+            </p>
             <p className="mt-0.5 text-stone-600">
               Save custom domain + publish state in the app
             </p>
           </div>
           <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-2 text-xs">
-            <p className="font-semibold text-sky-900">Platform (auto + alert)</p>
+            <p className="font-semibold text-sky-900">
+              Platform (auto + alert)
+            </p>
             <p className="mt-0.5 text-stone-600">
               Save Brand auto-registers SSL when possible; you always get a
               Messages alert
@@ -145,8 +150,8 @@ export function OpsHostDomainGuide({ host }: Props) {
             <code className="rounded bg-white px-1">cherokeelanding.net</code>
             ), keep publish on <strong>Demo</strong> while testing or switch to{" "}
             <strong>Live</strong> at cutover, then Save. That only teaches the
-            app which brand owns the Host header — it does{" "}
-            <em>not</em> change DNS by itself.
+            app which brand owns the Host header — it does <em>not</em> change
+            DNS by itself.
           </p>
           {bare ? (
             <p className="mt-2 rounded-lg bg-white/90 px-3 py-2 font-mono text-[11px] text-stone-600">
@@ -194,7 +199,9 @@ export function OpsHostDomainGuide({ host }: Props) {
         </li>
 
         <li>
-          <p className="font-semibold text-stone-900">4. Either of you — verify</p>
+          <p className="font-semibold text-stone-900">
+            4. Either of you — verify
+          </p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-stone-600">
             <li>
               Platform shows the domain as verified with a valid certificate

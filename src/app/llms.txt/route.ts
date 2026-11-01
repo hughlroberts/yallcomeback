@@ -47,6 +47,7 @@ Help: ${origin}/help/become-a-host and ${origin}/help/branded-website
 - Search: ${origin}/api/v1/search
 - Listing detail: ${origin}/api/v1/listings/{slug}
 - Pay-first checkout: POST ${origin}/api/v1/stays/checkout (public, no token, rate limited per IP)
+- Ask the host a question before booking: POST ${origin}/api/v1/inquiries (public, no token, rate limited)
 - Human marketplace: ${origin}/marketplace
 - Human docs page: ${origin}/agents.md
 - Terms of Service: ${origin}/terms
@@ -114,6 +115,28 @@ Content-Type: application/json
 - 409 means the dates are taken or the host is not ready to take a card deposit yet; send the guest to bookUrl instead.
 - Checkout expires in 30 minutes. Abandoned sessions never hold nights.
 - Never send paid: true. Agents cannot mark a stay paid.
+
+## Ask the host a question (before booking)
+
+POST ${origin}/api/v1/inquiries
+Content-Type: application/json
+
+{
+  "slug": "listing-slug",
+  "guestName": "Guest Name",
+  "guestEmail": "guest@example.com",
+  "message": "Is the dock deep enough for a pontoon? Are dogs OK?",
+  "checkIn": "${checkIn}",
+  "checkOut": "${checkOut}",
+  "guests": 4,
+  "agentName": "Your assistant name"
+}
+
+- AI agents are welcome. Send only on behalf of a real person who wants the answer; the host replies by email to guestEmail.
+- 201 {ok, inquiryId, duplicate:false, hostNotification}. Sending the same question again from the same email within 24 hours returns 200 with duplicate:true and is not re-sent.
+- Limits (HTTP 429): per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day.
+- Rejected with 422: more than one link, links in the name or subject, HTML, link shorteners, or spam wording. message is 5 to 2000 characters.
+- Hosts get the first question by email right away; later questions are grouped into one digest email (at most one per 15 minutes).
 
 ## Deep links for humans
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import {
   Building2,
@@ -12,6 +13,7 @@ import {
   Menu,
   MessageCircle,
   Plane,
+  Repeat,
   Search,
   Settings,
   Star,
@@ -95,7 +97,10 @@ function MenuRow({
       onClick={onNavigate}
       className="flex items-center gap-3 px-4 py-3 text-[15px] text-stone-800 transition hover:bg-stone-50"
     >
-      <Icon className="size-[18px] shrink-0 text-stone-700" strokeWidth={1.75} />
+      <Icon
+        className="size-[18px] shrink-0 text-stone-700"
+        strokeWidth={1.75}
+      />
       <span className="flex-1 font-medium">{label}</span>
       {badge != null && badge > 0 ? (
         <span className="flex h-5 min-w-5 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-1.5 text-[11px] font-semibold text-white">
@@ -106,9 +111,22 @@ function MenuRow({
   );
 }
 
+/** Host tools live under /admin; everything else is the traveling side. */
+export function hostModeSwitch(
+  pathname: string,
+  isHostOrAdmin: boolean,
+): { href: string; label: string } {
+  if (!isHostOrAdmin) return { href: "/for-hosts", label: "Start hosting" };
+  const inHostTools = pathname === "/admin" || pathname.startsWith("/admin/");
+  return inHostTools
+    ? { href: "/marketplace", label: "Switch to traveling" }
+    : { href: "/admin/calendar", label: "Switch to hosting" };
+}
+
 /**
- * One account menu for everyone. Hosts see the same items as guests, plus
- * ordinary links to listings tools - no "travel mode" vs "host mode".
+ * One account menu for everyone. Hosts see the same items as guests (they
+ * can book stays with the same account), plus a switch between hosting and
+ * traveling. Guests get a "Start hosting" entry.
  */
 export function UserMenu({
   isSignedIn,
@@ -139,6 +157,8 @@ export function UserMenu({
     };
   }, [open]);
 
+  const pathname = usePathname() || "/";
+  const modeSwitch = hostModeSwitch(pathname, isHostOrAdmin);
   const close = () => setOpen(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -248,6 +268,18 @@ export function UserMenu({
             </div>
           )}
 
+          <div
+            className="border-b border-stone-100 py-1"
+            data-testid="mode-switch"
+          >
+            <MenuRow
+              href={modeSwitch.href}
+              icon={isHostOrAdmin ? Repeat : Building2}
+              label={modeSwitch.label}
+              onNavigate={close}
+            />
+          </div>
+
           <div className="py-1">
             <p className="px-4 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400">
               Find a place
@@ -304,7 +336,7 @@ export function UserMenu({
               <MenuRow
                 href="/for-hosts"
                 icon={Building2}
-                label="Start hosting"
+                label="List your place"
                 onNavigate={close}
               />
             )}

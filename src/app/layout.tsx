@@ -1,12 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Geist_Mono } from "next/font/google";
 import { SiteShell } from "@/components/site-shell";
+import { RouteScrollReset } from "@/components/route-scroll-reset";
 import { PRODUCT_NAME, PRODUCT_ORIGIN, PRODUCT_TAGLINE } from "@/lib/features";
-import {
-  DEFAULT_OG_IMAGE,
-  DEFAULT_TWITTER_IMAGE,
-  seoOrigin,
-} from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, DEFAULT_TWITTER_IMAGE, seoOrigin } from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({
@@ -98,6 +95,7 @@ export default function RootLayout({
         className="flex min-h-full flex-col bg-buttermilk text-ink"
         suppressHydrationWarning
       >
+        <RouteScrollReset />
         <SiteShell>{children}</SiteShell>
       </body>
     </html>

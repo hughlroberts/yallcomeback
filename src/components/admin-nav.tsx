@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Plane } from "lucide-react";
 import { NavLink } from "@/components/nav-link";
 
 type LinkItem = {
@@ -35,6 +37,27 @@ export function AdminNav({
             {l.label}
           </NavLink>
         ))}
+      </div>
+      {/* Hosts can travel too: same account, no second sign-up. */}
+      <div
+        className="flex shrink-0 items-center gap-1 sm:ml-auto"
+        data-testid="admin-travel-switch"
+      >
+        <Link
+          href="/marketplace"
+          prefetch={false}
+          className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 shadow-sm transition hover:border-bonnet/40 hover:text-bonnet"
+        >
+          <Plane className="size-4" strokeWidth={1.75} aria-hidden />
+          Book a stay
+        </Link>
+        <Link
+          href="/account/bookings"
+          prefetch={false}
+          className="rounded-full px-3 py-1.5 text-sm font-medium text-stone-600 transition hover:text-bonnet"
+        >
+          My trips
+        </Link>
       </div>
     </div>
   );

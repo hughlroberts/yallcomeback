@@ -32,7 +32,7 @@ export async function SiteHeader() {
           isHostOrAdmin={isHostOrAdmin}
           staffLink={
             session?.user?.role === "ADMIN"
-              ? { href: "/ops", label: "Ops portal" }
+              ? { href: "/ops", label: "Platform admin" }
               : null
           }
           userName={session?.user?.name}

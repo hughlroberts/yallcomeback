@@ -52,15 +52,22 @@ export async function runAllCronJobs(): Promise<{
   const ical = await runIcalSync();
   const messages = await runBookingMessages();
   try {
-    const { expireAbandonedAgentCheckouts } = await import(
-      "@/lib/agent/checkout"
-    );
+    const { expireAbandonedAgentCheckouts } =
+      await import("@/lib/agent/checkout");
     const expired = await expireAbandonedAgentCheckouts();
     if (expired.cancelled > 0) {
       console.log(`[cron] expired ${expired.cancelled} unpaid agent checkouts`);
     }
   } catch (e) {
     console.error("[cron:agent-checkout-expiry]", e);
+  }
+  try {
+    // Pre-booking question digests whose window has passed.
+    const { flushAllPendingInquiryEmails } =
+      await import("@/lib/inquiries/notify");
+    await flushAllPendingInquiryEmails();
+  } catch (e) {
+    console.error("[cron:inquiry-digests]", e);
   }
   let hostingPayments: import("@/lib/hosting-payment-check").HostingPaymentCheckResult =
     {
@@ -74,9 +81,8 @@ export async function runAllCronJobs(): Promise<{
       errors: [],
     };
   try {
-    const { maybeRunDailyHostingPaymentCheck } = await import(
-      "@/lib/hosting-payment-check"
-    );
+    const { maybeRunDailyHostingPaymentCheck } =
+      await import("@/lib/hosting-payment-check");
     hostingPayments = await maybeRunDailyHostingPaymentCheck();
   } catch (e) {
     console.error("[cron:hosting-payments]", e);
@@ -106,9 +112,8 @@ export async function runAllCronJobs(): Promise<{
   let pricing: { skipped: boolean; hostsProcessed: number; errors: string[] } =
     { skipped: true, hostsProcessed: 0, errors: [] };
   try {
-    const { runMonthlyPricingIntelligence } = await import(
-      "@/lib/pricing-intelligence/run"
-    );
+    const { runMonthlyPricingIntelligence } =
+      await import("@/lib/pricing-intelligence/run");
     pricing = await runMonthlyPricingIntelligence();
   } catch (e) {
     console.error("[cron:pricing]", e);

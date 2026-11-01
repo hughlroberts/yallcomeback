@@ -190,27 +190,28 @@ export default async function MarketplacePropertyPage({
     },
   };
 
-  let property = viaHostSite && sp.host
-    ? await prisma.property.findFirst({
-        where: {
-          slug,
-          published: true,
-          host: { slug: sp.host, active: true },
-        },
-        include,
-      })
-    : await prisma.property.findFirst({
-        where: {
-          slug,
-          published: marketplaceWhere.published,
-          listOnMarketplace: marketplaceWhere.listOnMarketplace,
-          host: {
-            ...marketplaceWhere.host,
-            ...(sp.host ? { slug: sp.host } : {}),
+  let property =
+    viaHostSite && sp.host
+      ? await prisma.property.findFirst({
+          where: {
+            slug,
+            published: true,
+            host: { slug: sp.host, active: true },
           },
-        },
-        include,
-      });
+          include,
+        })
+      : await prisma.property.findFirst({
+          where: {
+            slug,
+            published: marketplaceWhere.published,
+            listOnMarketplace: marketplaceWhere.listOnMarketplace,
+            host: {
+              ...marketplaceWhere.host,
+              ...(sp.host ? { slug: sp.host } : {}),
+            },
+          },
+          include,
+        });
 
   // Wrong ?host= (e.g. personal listing linked as Cherokee) → correct URL
   if (!property && sp.host) {
@@ -377,12 +378,8 @@ export default async function MarketplacePropertyPage({
         region={property.region}
         country={property.country}
         postalCode={property.postalCode}
-        latitude={
-          property.showPreciseLocation ? property.latitude : null
-        }
-        longitude={
-          property.showPreciseLocation ? property.longitude : null
-        }
+        latitude={property.showPreciseLocation ? property.latitude : null}
+        longitude={property.showPreciseLocation ? property.longitude : null}
         guests={property.maxGuests}
         bedrooms={property.bedrooms}
         bathrooms={property.bathrooms}
@@ -471,10 +468,21 @@ export default async function MarketplacePropertyPage({
           />
         </div>
 
-        {/* Tablet+: side-by-side reserve; phone stacks with sticky bottom bar */}
-        <div className="mt-8 grid gap-8 md:grid-cols-[1fr_min(340px,42%)] md:items-start md:gap-8 lg:mt-10 lg:grid-cols-[1fr_380px] lg:gap-10">
-          <div className="min-w-0 space-y-8 sm:space-y-10">
-            <div className="border-b border-stone-200 pb-5 sm:pb-6">
+        {/*
+          Desktop (lg+): details on the left, sticky reserve sidebar on the right.
+          Under lg the details wrapper is display:contents, so the summary,
+          the reserve widget, and "About this place" stack in that order.
+          The widget renders once (one #reserve, one form) at every width.
+        */}
+        <div
+          data-testid="listing-detail-grid"
+          className="mt-8 grid grid-cols-1 gap-8 lg:mt-10 lg:grid-cols-[1fr_380px] lg:items-start lg:gap-10"
+        >
+          <div className="contents lg:block lg:min-w-0 lg:space-y-10">
+            <div
+              data-testid="listing-summary"
+              className="order-1 min-w-0 border-b border-stone-200 pb-5 sm:pb-6 lg:order-none"
+            >
               <h2 className="text-lg font-semibold text-stone-900 sm:text-xl">
                 Entire home · {property.maxGuests} guests · {property.bedrooms}{" "}
                 bedroom{property.bedrooms === 1 ? "" : "s"} ·{" "}
@@ -491,28 +499,35 @@ export default async function MarketplacePropertyPage({
               </p>
             </div>
 
-            {property.description ? (
-              <div>
-                <h3 className="text-lg font-semibold text-stone-900">
-                  About this place
-                </h3>
-                <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed text-stone-600">
-                  {property.description}
-                </p>
-              </div>
-            ) : null}
+            <div
+              data-testid="listing-details"
+              className="order-3 min-w-0 space-y-8 sm:space-y-10 lg:order-none"
+            >
+              {property.description ? (
+                <div>
+                  <h3 className="text-lg font-semibold text-stone-900">
+                    About this place
+                  </h3>
+                  <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed text-stone-600">
+                    {property.description}
+                  </p>
+                </div>
+              ) : null}
 
-            <SleepingArrangementsDisplay
-              rawJson={property.sleepingArrangements}
-              bedrooms={property.bedrooms}
-              beds={property.beds}
-            />
+              <SleepingArrangementsDisplay
+                rawJson={property.sleepingArrangements}
+                bedrooms={property.bedrooms}
+                beds={property.beds}
+              />
 
-            <AmenitiesDisplay amenities={amenities} />
-
+              <AmenitiesDisplay amenities={amenities} />
+            </div>
           </div>
 
-          <div className="md:sticky md:top-28 md:self-start lg:top-28">
+          <div
+            data-testid="listing-reserve-column"
+            className="order-2 min-w-0 lg:order-none lg:sticky lg:top-28 lg:self-start"
+          >
             <BookingWidget
               propertySlug={property.slug}
               hostSlug={property.host.slug}
@@ -544,9 +559,7 @@ export default async function MarketplacePropertyPage({
                 sp.guests ? Number(sp.guests) || undefined : undefined
               }
               initialPets={initialPets}
-              taxLiabilityAcknowledged={
-                property.host.taxLiabilityAcknowledged
-              }
+              taxLiabilityAcknowledged={property.host.taxLiabilityAcknowledged}
               taxLines={widgetTaxLines}
             />
           </div>

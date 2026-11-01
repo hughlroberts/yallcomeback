@@ -25,8 +25,7 @@ export function DomainDnsPanel({ host, variant = "brand" }: Props) {
   const bare = host.customDomain?.replace(/^www\./, "") || null;
   if (!bare) return null;
 
-  const wwwHost =
-    host.domainSslHostname || `www.${bare}`;
+  const wwwHost = host.domainSslHostname || `www.${bare}`;
   const ready = Boolean(host.domainDnsCnameTarget);
   const status = (host.domainProvisionStatus || "PENDING").toUpperCase();
 
@@ -39,7 +38,7 @@ export function DomainDnsPanel({ host, variant = "brand" }: Props) {
           </p>
           <p className="mt-0.5 text-xs text-stone-600">
             {variant === "ops"
-              ? "Host and Ops can both use these. Pasting at the registrar is what moves the live site — leave them until listings are ready."
+              ? "Host and platform admins can both use these. Pasting at the registrar is what moves the live site — leave them until listings are ready."
               : "Keep these for when you are ready. Your current website stays unchanged until you paste them at your registrar."}
           </p>
         </div>

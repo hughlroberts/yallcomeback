@@ -19,6 +19,7 @@ import {
   longRuleText,
   REFUND_PROCESS_TEXT,
   shortRuleText,
+  FREE_CANCEL_24H_TEXT,
 } from "@/lib/guest-cancel-window";
 
 type Props = {
@@ -96,10 +97,11 @@ export function AdminCancellationPolicy({
           Monthly stays: <strong>{long.name}</strong> - {long.summary}
         </p>
         <p className="mt-2 text-xs text-stone-500" data-online-cancel>
-          What guests see: short stays: {shortRuleText(short.id)} Monthly stays:{" "}
-          {longRuleText(long.id)} {REFUND_PROCESS_TEXT} When a guest with a paid
-          deposit cancels, the booking is flagged “Refund review needed” and you
-          and your co-hosts get an email.
+          What guests see: short stays: {shortRuleText(short.id)}{" "}
+          {FREE_CANCEL_24H_TEXT} Monthly stays: {longRuleText(long.id)}{" "}
+          {REFUND_PROCESS_TEXT} When a guest with a paid deposit cancels, the
+          booking is flagged “Refund review needed” and you and your co-hosts
+          get an email.
         </p>
       </div>
 

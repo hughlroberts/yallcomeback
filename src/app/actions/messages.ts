@@ -5,33 +5,19 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { dispatchEmail, dispatchSms } from "@/lib/messaging";
-import {
-  canSendEmailTo,
-  canSendSmsTo,
-} from "@/lib/notification-prefs";
+import { canSendEmailTo, canSendSmsTo } from "@/lib/notification-prefs";
 import { ensureHostAccess } from "@/lib/scope";
-
-async function hostNotifyEmails(hostId: string, contactEmail: string | null) {
-  const emails = new Set<string>();
-  if (contactEmail?.includes("@")) {
-    const e = contactEmail.trim().toLowerCase();
-    if (await canSendEmailTo(e)) emails.add(e);
-  }
-  const users = await prisma.user.findMany({
-    where: {
-      hostId,
-      role: { in: ["HOST", "ADMIN"] },
-      emailNotifications: true,
-    },
-    select: { email: true },
-  });
-  for (const u of users) {
-    if (u.email?.includes("@") && (await canSendEmailTo(u.email))) {
-      emails.add(u.email.trim().toLowerCase());
-    }
-  }
-  return [...emails];
-}
+import { incomingIp } from "@/lib/rate-limit";
+import { submitInquiry } from "@/lib/inquiries/submit";
+import { hostNotifyEmails } from "@/lib/inquiries/notify";
+import {
+  HONEYPOT_FIELD,
+  STAMP_FIELD,
+  TURNSTILE_FIELD,
+  checkFormStamp,
+  honeypotTripped,
+  verifyTurnstile,
+} from "@/lib/inquiries/human-checks";
 
 function mergeExternalStatus(
   existing: string | null | undefined,
@@ -42,154 +28,74 @@ function mergeExternalStatus(
   return `${existing},${next}`;
 }
 
+export type GuestInquiryState = {
+  ok?: boolean;
+  error?: string;
+  /** Email the host will reply to (shown on the success screen) */
+  sentTo?: string;
+};
+
 /**
- * Start a guest → host conversation.
+ * Pre-booking question from the listing page / host site (signed in or not).
  * - Listing / booking: pass propertyId (optional bookingId)
  * - Host website contact: pass hostId only (no listing required)
+ * Web-only bot checks: honeypot, minimum fill time, optional Turnstile.
+ * Shared checks (content, rate limits, dedupe, host email digest) live in
+ * submitInquiry, which the /api/v1 agent endpoint also uses.
  */
-export async function startGuestConversation(formData: FormData) {
-  const propertyId = String(formData.get("propertyId") || "").trim();
-  const hostIdRaw = String(formData.get("hostId") || "").trim();
-  const bookingId = String(formData.get("bookingId") || "") || null;
-  const guestName = String(formData.get("guestName") || "").trim();
+export async function startGuestConversation(
+  _prev: GuestInquiryState | undefined,
+  formData: FormData,
+): Promise<GuestInquiryState> {
+  const ip = await incomingIp();
   const guestEmail = String(formData.get("guestEmail") || "").trim();
-  const guestPhone = String(formData.get("guestPhone") || "").trim() || null;
-  const subject = String(formData.get("subject") || "").trim() || null;
-  const body = String(formData.get("body") || "").trim();
 
-  if (!guestName || !guestEmail || !body) {
-    throw new Error("Name, email, and message are required");
+  // Bots that fill the hidden field get a quiet "sent" and nothing is saved.
+  if (honeypotTripped(formData.get(HONEYPOT_FIELD))) {
+    return { ok: true, sentTo: guestEmail };
   }
-  if (!propertyId && !hostIdRaw) {
-    throw new Error("Host or listing is required");
+  const stamp = checkFormStamp(String(formData.get(STAMP_FIELD) || ""));
+  if (!stamp.ok) {
+    return {
+      error:
+        stamp.reason === "too_fast"
+          ? "That was quick! Take a second to check your message, then send again."
+          : "This form expired. Close it, open it again, and resend.",
+    };
   }
-
-  let hostId: string;
-  let propertyTitle: string | null = null;
-  let resolvedPropertyId: string | null = null;
-  let hostContactEmail: string | null = null;
-  let hostName = "your host";
-
-  if (propertyId) {
-    const property = await prisma.property.findUnique({
-      where: { id: propertyId },
-      include: { host: true },
-    });
-    if (!property || !property.published) throw new Error("Property not found");
-    hostId = property.hostId;
-    propertyTitle = property.title;
-    resolvedPropertyId = property.id;
-    hostContactEmail = property.host.contactEmail;
-    hostName = property.host.name;
-  } else {
-    const host = await prisma.host.findUnique({ where: { id: hostIdRaw } });
-    if (!host || !host.active) throw new Error("Host not found");
-    hostId = host.id;
-    hostContactEmail = host.contactEmail;
-    hostName = host.name;
+  const turnstile = await verifyTurnstile(formData.get(TURNSTILE_FIELD), ip);
+  if (!turnstile.ok) {
+    return {
+      error:
+        "Please complete the quick check above the Send button and try again.",
+    };
   }
 
   const session = await auth();
-
-  let safeBookingId: string | null = null;
-  if (bookingId) {
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      select: {
-        id: true,
-        userId: true,
-        guestEmail: true,
-        propertyId: true,
-        property: { select: { hostId: true } },
-      },
-    });
-    const email = guestEmail.toLowerCase();
-    const sessionUser = session?.user?.id;
-    const ownsBooking = Boolean(
-      booking &&
-        booking.property.hostId === hostId &&
-        (!resolvedPropertyId || booking.propertyId === resolvedPropertyId) &&
-        ((sessionUser && booking.userId === sessionUser) ||
-          booking.guestEmail.toLowerCase() === email),
-    );
-    if (ownsBooking && booking) safeBookingId = booking.id;
-  }
-
-  const conversation = await prisma.conversation.create({
-    data: {
-      hostId,
-      propertyId: resolvedPropertyId,
-      bookingId: safeBookingId,
-      guestUserId: session?.user?.id,
-      guestName,
+  const result = await submitInquiry(
+    {
+      propertyId: String(formData.get("propertyId") || "").trim() || null,
+      hostId: String(formData.get("hostId") || "").trim() || null,
+      bookingId: String(formData.get("bookingId") || "").trim() || null,
+      guestName: String(formData.get("guestName") || ""),
       guestEmail,
-      guestPhone,
-      subject:
-        subject ||
-        (propertyTitle
-          ? `Question about ${propertyTitle}`
-          : `Message for ${hostName}`),
-      lastMessageAt: new Date(),
-      messages: {
-        create: {
-          senderRole: "GUEST",
-          senderUserId: session?.user?.id,
-          body,
-          channel: "IN_APP",
-        },
-      },
+      guestPhone: String(formData.get("guestPhone") || ""),
+      subject: String(formData.get("subject") || ""),
+      body: String(formData.get("body") || ""),
     },
-  });
-
-  // Email host(s) about the new guest message
-  const hostEmails = await hostNotifyEmails(hostId, hostContactEmail);
-  const emailSubject =
-    subject ||
-    (propertyTitle
-      ? `New message · ${propertyTitle}`
-      : `New message · ${hostName}`);
-  const emailBody = propertyTitle
-    ? `${guestName} (${guestEmail}) wrote about ${propertyTitle}:\n\n${body}`
-    : `${guestName} (${guestEmail}) messaged ${hostName} from the website contact form:\n\n${body}`;
-
-  let externalStatus: string | null = null;
-  let externalId: string | null = null;
-  for (const to of hostEmails) {
-    const result = await dispatchEmail({
-      to,
-      subject: emailSubject,
-      body: emailBody,
-      conversationId: conversation.id,
-      replyPath: `/admin/messages/${conversation.id}`,
-      fromPartyName: guestName,
-      replyTo: guestEmail,
-    });
-    if (result.attempted) {
-      externalStatus = mergeExternalStatus(
-        externalStatus,
-        `email:${result.status}`,
-      );
-      if (result.externalId) externalId = result.externalId;
-    }
-  }
-
-  if (externalStatus) {
-    const firstMsg = await prisma.message.findFirst({
-      where: { conversationId: conversation.id },
-      orderBy: { createdAt: "asc" },
-    });
-    if (firstMsg) {
-      await prisma.message.update({
-        where: { id: firstMsg.id },
-        data: { externalStatus, externalId },
-      });
-    }
-  }
+    { source: "WEB", ip, sessionUserId: session?.user?.id ?? null },
+  );
+  if (!result.ok) return { error: result.error };
 
   revalidatePath("/messages");
   revalidatePath("/admin/messages");
-  revalidatePath(`/messages/${conversation.id}`);
-  redirect(`/messages/${conversation.id}?sent=1`);
+  revalidatePath(`/messages/${result.conversationId}`);
+  // Signed-in guests land in their thread; others see a success screen
+  // (Messages needs a login).
+  if (session?.user?.id) {
+    redirect(`/messages/${result.conversationId}?sent=1`);
+  }
+  return { ok: true, sentTo: guestEmail.toLowerCase() };
 }
 
 export async function replyToConversation(formData: FormData) {
@@ -287,10 +193,7 @@ export async function replyToConversation(formData: FormData) {
     }
   } else {
     // Guest → host: email host contact + host users
-    const hostEmails = await hostNotifyEmails(
-      conversation.hostId,
-      conversation.host.contactEmail,
-    );
+    const hostEmails = await hostNotifyEmails(conversation.hostId);
     const title = conversation.property?.title || "your stay";
     for (const to of hostEmails) {
       const email = await dispatchEmail({

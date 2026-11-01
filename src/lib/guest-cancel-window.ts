@@ -21,17 +21,15 @@ const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
 /**
- * Policies where the 24-hour free window after booking (Help: booked at least
- * 7 days before check-in) can move the online deadline. Flexible and
- * Moderate already allow cancelling later than that window ends.
+ * 24-hour free cancellation (Help → Cancellation policies): every short-stay
+ * policy gives a full refund for 24 hours after booking when the booking was
+ * made at least 7 days before check-in. For stricter policies this can move
+ * the online deadline later; Flexible and Moderate already allow more.
  */
-const FREE_24H_AFTER_BOOKING = new Set([
-  "LIMITED",
-  "FIRM",
-  "STRICT",
-  "SUPER_FIRM_30",
-  "SUPER_FIRM_60",
-]);
+export const FREE_CANCEL_HOURS = 24;
+export const FREE_CANCEL_MIN_LEAD_DAYS = 7;
+export const FREE_CANCEL_24H_TEXT =
+  "24-hour free cancellation: if you book at least 7 days before check-in, you can cancel for a full refund within 24 hours of booking.";
 
 type Tiers = {
   /** Full refund until this many days before check-in (null = none). */
@@ -63,6 +61,15 @@ export type GuestCancelWindow = {
   refundTier: RefundTier;
   /** Guest-facing one-liner about the online cancel deadline. */
   ruleText: string;
+  /**
+   * End of the 24-hour free-cancel window when this booking qualifies
+   * (short stay booked 7+ days ahead), else null.
+   */
+  freeCancelUntil: Date | null;
+  /** Guest-facing 24-hour free-cancel line (short stays), else null. */
+  freeCancelText: string | null;
+  /** True while `now` is inside the 24-hour free-cancel window. */
+  inFreeCancelWindow: boolean;
 };
 
 /** UTC instant for a wall-clock time in `timeZone`. */
@@ -140,6 +147,9 @@ export function guestCancelWindow(opts: {
         refundTier: ok ? "full" : "none",
         ruleText:
           "You can cancel online within 48 hours of booking, if check-in is at least 28 days away. After that, contact the host to cancel.",
+        freeCancelUntil: null,
+        freeCancelText: null,
+        inFreeCancelWindow: false,
       };
     }
     const deadline = ci - 30 * DAY;
@@ -152,6 +162,9 @@ export function guestCancelWindow(opts: {
       refundTier: ok ? "full" : "none",
       ruleText:
         "You can cancel online until 30 days before check-in. After that, contact the host to cancel.",
+      freeCancelUntil: null,
+      freeCancelText: null,
+      inFreeCancelWindow: false,
     };
   }
 
@@ -160,8 +173,8 @@ export function guestCancelWindow(opts: {
   const lastDays = (tiers.partialDays ?? tiers.fullDays)!;
   let deadline = ci - lastDays * DAY;
   const graceEnd =
-    FREE_24H_AFTER_BOOKING.has(policy.id) && created <= ci - 7 * DAY
-      ? created + DAY
+    created <= ci - FREE_CANCEL_MIN_LEAD_DAYS * DAY
+      ? created + FREE_CANCEL_HOURS * HOUR
       : null;
   if (graceEnd != null) deadline = Math.max(deadline, graceEnd);
 
@@ -180,6 +193,9 @@ export function guestCancelWindow(opts: {
     canCancelOnline: ok,
     refundTier: ok ? refundTier : "none",
     ruleText: shortRuleText(policy.id),
+    freeCancelUntil: graceEnd != null ? new Date(graceEnd) : null,
+    freeCancelText: FREE_CANCEL_24H_TEXT,
+    inFreeCancelWindow: graceEnd != null && now < graceEnd,
   };
 }
 
@@ -187,10 +203,7 @@ export function guestCancelWindow(opts: {
 export function shortRuleText(policyId: string): string {
   const tiers = SHORT_TIERS[policyId] ?? SHORT_TIERS.MODERATE!;
   const lastDays = (tiers.partialDays ?? tiers.fullDays)!;
-  const grace = FREE_24H_AFTER_BOOKING.has(policyId)
-    ? " (or within 24 hours of booking, if you booked at least 7 days ahead)"
-    : "";
-  return `You can cancel online until ${daysText(lastDays)} before check-in${grace}. After that, contact the host to cancel.`;
+  return `You can cancel online until ${daysText(lastDays)} before check-in. After that, contact the host to cancel.`;
 }
 
 /** Guest-facing online-cancel rule for a long-stay policy id. */
@@ -209,8 +222,6 @@ export function onlineCancelLines(
   kind: "short" | "long",
   policyId: string,
 ): string[] {
-  return [
-    kind === "long" ? longRuleText(policyId) : shortRuleText(policyId),
-    REFUND_PROCESS_TEXT,
-  ];
+  if (kind === "long") return [longRuleText(policyId), REFUND_PROCESS_TEXT];
+  return [shortRuleText(policyId), FREE_CANCEL_24H_TEXT, REFUND_PROCESS_TEXT];
 }

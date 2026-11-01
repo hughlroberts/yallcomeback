@@ -769,6 +769,12 @@ model Conversation {
   /// When true, platform Ops sees this thread even without a brand cookie
   opsAlert      Boolean            @default(false)
   lastMessageAt DateTime?
+  /// Pre-booking question origin: WEB (site form) | AGENT (/api/v1). Null for older threads.
+  inquirySource String?
+  /// Optional name of the AI agent / app that sent an AGENT inquiry
+  inquiryAgent  String?
+  /// sha256 of the normalized first message, used to dedupe repeats
+  inquiryHash   String?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   messages      Message[]
@@ -777,6 +783,9 @@ model Conversation {
   @@index([guestEmail])
   @@index([bookingId])
   @@index([opsAlert, status])
+  @@index([hostId, createdAt])
+  @@index([propertyId, createdAt])
+  @@index([hostId, inquiryHash])
 }
 
 model Message {
@@ -792,9 +801,22 @@ model Message {
   /// Provider status when SMS/email hook fires (queued, sent, failed, skipped)
   externalStatus String?
   externalId     String?
+  /// Guest inquiry not yet included in a host email (immediate or digest)
+  hostNotifyPending Boolean     @default(false)
   createdAt      DateTime       @default(now())
 
   @@index([conversationId, createdAt])
+  @@index([hostNotifyPending])
+}
+
+/// Per-host throttle for pre-booking question emails: the first one goes out
+/// right away, then at most one digest per window, with a daily cap.
+model InquiryNotifyState {
+  hostId       String    @id
+  lastEmailAt  DateTime?
+  dayStartedAt DateTime?
+  emailsToday  Int       @default(0)
+  updatedAt    DateTime  @updatedAt
 }
 
 model Payment {

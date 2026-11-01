@@ -1,9 +1,25 @@
 "use client";
 
-import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { startGuestConversation } from "@/app/actions/messages";
+import {
+  startGuestConversation,
+  type GuestInquiryState,
+} from "@/app/actions/messages";
+import {
+  HONEYPOT_FIELD,
+  STAMP_FIELD,
+  TURNSTILE_ACTION,
+} from "@/lib/inquiries/fields";
 import { Button, Input, Label, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +30,48 @@ function useIsClient() {
     () => true,
     () => false,
   );
+}
+
+/** Fill-time stamp + optional Turnstile site key from /api/inquiries/form-config */
+export type InquiryFormConfig = {
+  stamp: string;
+  turnstileSiteKey: string | null;
+};
+
+type TurnstileApi = {
+  render: (
+    el: HTMLElement,
+    opts: { sitekey: string; action: string; appearance?: string },
+  ) => string;
+  reset: (id?: string) => void;
+  remove: (id?: string) => void;
+};
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
+const TURNSTILE_SRC =
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+function loadTurnstile(): Promise<TurnstileApi | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  return new Promise((resolve) => {
+    let script = document.querySelector<HTMLScriptElement>(
+      `script[src="${TURNSTILE_SRC}"]`,
+    );
+    if (!script) {
+      script = document.createElement("script");
+      script.src = TURNSTILE_SRC;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+    script.addEventListener("load", () => resolve(window.turnstile ?? null));
+    script.addEventListener("error", () => resolve(null));
+  });
 }
 
 type FormProps = {
@@ -45,23 +103,77 @@ function MessageHostFields({
   defaultPhone = "",
   defaultSubject = "",
   hideContactFields = false,
+  config,
   onCancel,
-}: FormProps & { onCancel?: () => void }) {
+}: FormProps & { config: InquiryFormConfig | null; onCancel?: () => void }) {
   const hideContact =
     hideContactFields && Boolean(defaultName.trim() && defaultEmail.trim());
-  const aboutLabel =
-    propertyTitle?.trim() ||
-    hostName?.trim() ||
-    "this host";
+  const aboutLabel = propertyTitle?.trim() || hostName?.trim() || "this host";
+  const widgetId = useRef<string | null>(null);
+
+  const submit = useCallback(
+    async (prev: GuestInquiryState | undefined, formData: FormData) => {
+      const result = await startGuestConversation(prev, formData);
+      // Turnstile tokens are single-use; get a fresh one for the retry.
+      if (result.error && widgetId.current && window.turnstile) {
+        window.turnstile.reset(widgetId.current);
+      }
+      return result;
+    },
+    [],
+  );
+  const [state, formAction, pending] = useActionState<
+    GuestInquiryState | undefined,
+    FormData
+  >(submit, undefined);
+
+  const siteKey = config?.turnstileSiteKey ?? null;
+  const turnstileRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (!el || !siteKey) return;
+      void loadTurnstile().then((api) => {
+        if (!api || !el.isConnected || el.childElementCount > 0) return;
+        widgetId.current = api.render(el, {
+          sitekey: siteKey,
+          action: TURNSTILE_ACTION,
+          appearance: "interaction-only",
+        });
+      });
+    },
+    [siteKey],
+  );
+
+  if (state?.ok) {
+    return (
+      <div className="space-y-3" role="status">
+        <h3 className="text-lg font-semibold text-stone-900">Message sent</h3>
+        <p className="text-sm text-stone-600">
+          {aboutLabel === "this host"
+            ? "The host"
+            : `The host of ${aboutLabel}`}{" "}
+          has your question and will reply by email
+          {state.sentTo ? ` to ${state.sentTo}` : ""}. Sign in with that email
+          to see the thread under Messages.
+        </p>
+        {onCancel ? (
+          <div className="flex justify-end">
+            <Button type="button" onClick={onCancel}>
+              Done
+            </Button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
-    <form action={startGuestConversation} className="space-y-4">
+    <form action={formAction} className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold text-stone-900">Message host</h3>
         <p className="mt-1 text-sm text-stone-500">
           {propertyTitle
-            ? `About ${propertyTitle}. Optional — your thread opens in Messages after you send.`
-            : `Message ${aboutLabel} through Yall Come Back. Prefer this if you don’t want to call or email. Your thread opens in Messages after you send.`}
+            ? `Ask about ${propertyTitle} before you book. The host replies by email and in Messages.`
+            : `Message ${aboutLabel} through Yall Come Back. Prefer this if you don’t want to call or email. The host replies by email and in Messages.`}
         </p>
       </div>
       {propertyId ? (
@@ -73,6 +185,23 @@ function MessageHostFields({
       {bookingId ? (
         <input type="hidden" name="bookingId" value={bookingId} />
       ) : null}
+      <input type="hidden" name={STAMP_FIELD} value={config?.stamp ?? ""} />
+      {/* Honeypot: hidden from people and screen readers; bots fill it. */}
+      <div
+        aria-hidden="true"
+        className="absolute -left-[10000px] h-px w-px overflow-hidden"
+      >
+        <label>
+          Company website
+          <input
+            type="text"
+            name={HONEYPOT_FIELD}
+            tabIndex={-1}
+            autoComplete="off"
+            defaultValue=""
+          />
+        </label>
+      </div>
       {hideContact ? (
         <>
           <input type="hidden" name="guestName" value={defaultName} />
@@ -91,6 +220,7 @@ function MessageHostFields({
                 id="guestName"
                 name="guestName"
                 required
+                maxLength={80}
                 defaultValue={defaultName}
               />
             </div>
@@ -101,6 +231,7 @@ function MessageHostFields({
                 name="guestEmail"
                 type="email"
                 required
+                maxLength={254}
                 defaultValue={defaultEmail}
               />
             </div>
@@ -110,6 +241,7 @@ function MessageHostFields({
                 id="guestPhone"
                 name="guestPhone"
                 type="tel"
+                maxLength={40}
                 defaultValue={defaultPhone}
               />
             </div>
@@ -120,22 +252,38 @@ function MessageHostFields({
           <Input
             id="subject"
             name="subject"
+            maxLength={150}
             placeholder="Dates, boats, arrival…"
             defaultValue={defaultSubject}
           />
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="body">Message</Label>
-          <Textarea id="body" name="body" rows={4} required />
+          <Textarea
+            id="body"
+            name="body"
+            rows={4}
+            required
+            minLength={5}
+            maxLength={2000}
+          />
         </div>
       </div>
+      {siteKey ? <div ref={turnstileRef} className="min-h-0" /> : null}
+      {state?.error ? (
+        <p className="text-sm text-red-700" role="alert">
+          {state.error}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
         {onCancel ? (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Not now
           </Button>
         ) : null}
-        <Button type="submit">Send message</Button>
+        <Button type="submit" disabled={pending || !config}>
+          {pending ? "Sending…" : config ? "Send message" : "Loading…"}
+        </Button>
       </div>
     </form>
   );
@@ -166,6 +314,7 @@ export function MessageHostButton({
 }) {
   const titleId = useId();
   const [open, setOpen] = useState(false);
+  const [config, setConfig] = useState<InquiryFormConfig | null>(null);
   const mounted = useIsClient();
   const aboutLabel = propertyTitle?.trim() || hostName?.trim() || "host";
 
@@ -187,7 +336,17 @@ export function MessageHostButton({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          // Fresh stamp each time the form opens (fill-time check).
+          setConfig(null);
+          void fetch("/api/inquiries/form-config", { cache: "no-store" })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((c: InquiryFormConfig | null) =>
+              setConfig(c ?? { stamp: "", turnstileSiteKey: null }),
+            )
+            .catch(() => setConfig({ stamp: "", turnstileSiteKey: null }));
+        }}
         className={cn(
           "inline-flex items-center justify-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet",
           variant === "link"
@@ -240,6 +399,7 @@ export function MessageHostButton({
                   defaultPhone={defaultPhone}
                   defaultSubject={defaultSubject}
                   hideContactFields={hideContactFields}
+                  config={config}
                   onCancel={() => setOpen(false)}
                 />
               </div>
@@ -248,14 +408,5 @@ export function MessageHostButton({
           )
         : null}
     </>
-  );
-}
-
-/** @deprecated Prefer MessageHostButton — kept for rare inline embeds */
-export function MessageHostForm(props: FormProps) {
-  return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-      <MessageHostFields {...props} />
-    </div>
   );
 }

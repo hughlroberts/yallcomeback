@@ -25,6 +25,20 @@ describe("homeAfterLogin", () => {
     ).toBe("/account/settings/subscription?welcome=1");
   });
 
+  it("keeps a host on a traveling deep link (hosts can book too)", () => {
+    expect(
+      homeAfterLogin("HOST", "/marketplace/properties/eagles-nest-suite"),
+    ).toBe("/marketplace/properties/eagles-nest-suite");
+    expect(homeAfterLogin("HOST", "/book/abc123?checkIn=2026-12-01")).toBe(
+      "/book/abc123?checkIn=2026-12-01",
+    );
+    expect(homeAfterLogin("HOST", "/messages")).toBe("/messages");
+    expect(homeAfterLogin("ADMIN", "/saved")).toBe("/saved");
+    expect(homeAfterLogin("HOST", "/account/bookings")).toBe(
+      "/account/bookings",
+    );
+  });
+
   it("sends guests to Find a Place from generic landings", () => {
     expect(homeAfterLogin("GUEST", "/")).toBe("/marketplace");
     expect(homeAfterLogin("GUEST")).toBe("/marketplace");
