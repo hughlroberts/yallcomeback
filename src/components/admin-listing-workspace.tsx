@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  useEffect,
   useMemo,
   useState,
   useTransition,
@@ -32,6 +33,7 @@ import {
   upcomingPeakHolidays,
 } from "@/lib/peak-holidays";
 import { rateWithWeekend } from "@/lib/listing-discounts";
+import { pickSeasonForNight } from "@/lib/season-pick";
 import {
   visibilityBadgeClass,
   visibilityFromFlags,
@@ -700,11 +702,10 @@ function priceForDate(
   seasons: Season[],
 ) {
   const day = startOfDay(date);
-  const season = seasons.find((s) => {
-    const a = startOfDay(parseYmd(s.startDate));
-    const b = startOfDay(parseYmd(s.endDate));
-    return day >= a && day <= b;
-  });
+  const season = pickSeasonForNight(day.getTime(), seasons, (s) => ({
+    start: startOfDay(parseYmd(s.startDate)).getTime(),
+    end: startOfDay(parseYmd(s.endDate)).getTime(),
+  }));
   const base = season?.nightlyRate ?? baseNightlyRate;
   return rateWithWeekend(base, day, weekendPremiumPercent);
 }
@@ -1018,6 +1019,12 @@ export function AdminListingWorkspace({
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [blockSheetOpen, setBlockSheetOpen] = useState(false);
   const [monthsShown, setMonthsShown] = useState<CalendarSpan>(1);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  useEffect(() => {
+    if (!savedMessage) return;
+    const t = window.setTimeout(() => setSavedMessage(null), 6000);
+    return () => window.clearTimeout(t);
+  }, [savedMessage]);
 
   const blockedSet = useMemo(() => {
     const local = new Set<string>();
@@ -1135,6 +1142,7 @@ export function AdminListingWorkspace({
 
   function onDayClick(key: string) {
     setSelectedDay(key);
+    setSavedMessage(null);
 
     // Past and future nights are both selectable so hosts can log
     // leftover stays and edit history. Range: 1st click = start, 2nd = checkout.
@@ -1603,6 +1611,15 @@ export function AdminListingWorkspace({
                 ))}
               </div>
 
+              {savedMessage ? (
+                <p
+                  role="status"
+                  className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900"
+                >
+                  {savedMessage}
+                </p>
+              ) : null}
+
               {rangeStart ? (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm">
                   <div>
@@ -1629,7 +1646,7 @@ export function AdminListingWorkspace({
                         : selectedBlocked
                           ? "This night is blocked or booked. Tap another day for checkout, or open block sheet for 1 night."
                           : selectedPrice != null
-                            ? `${formatMoney(selectedPrice)} / night · tap a second day for checkout, or Block 1 night`
+                            ? `${formatMoney(selectedPrice)} / night · tap a second day for checkout, or block or price this night`
                             : "Tap a second day (checkout) to finish the range."}
                     </p>
                   </div>
@@ -1647,7 +1664,7 @@ export function AdminListingWorkspace({
                       className="!px-3 !py-1.5 text-xs"
                       onClick={openSheetForSelection}
                     >
-                      {rangeEnd ? "Manage blocks" : "Block 1 night"}
+                      {rangeEnd ? "Block or set price" : "Block or price 1 night"}
                     </Button>
                   </div>
                 </div>
@@ -1655,7 +1672,7 @@ export function AdminListingWorkspace({
                 <p className="mt-4 text-center text-sm text-stone-400">
                   Tap a start date, then a checkout day — or one day and{" "}
                   <strong className="font-medium text-stone-600">
-                    Block 1 night
+                    Block or price 1 night
                   </strong>
                   .
                 </p>
@@ -1672,7 +1689,22 @@ export function AdminListingWorkspace({
               rangeEnd ||
               (rangeStart ? addDaysYmd(rangeStart, 1) : ymd(today))
             }
+            currentNightlyPrice={
+              rangeStart
+                ? priceForDate(
+                    parseYmd(rangeStart),
+                    property.baseNightlyRate,
+                    property.weekendPremiumPercent,
+                    seasons,
+                  )
+                : null
+            }
             onClose={closeBlockSheet}
+            onSaved={(message) => {
+              clearRange();
+              setSelectedDay(null);
+              setSavedMessage(message);
+            }}
             onOpenFullBlocks={() => {
               closeBlockSheet();
               if (calendarOnly) {

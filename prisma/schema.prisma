@@ -650,6 +650,8 @@ model CalendarBlock {
   stripeHostedInvoiceUrl String?
   invoiceSentAt DateTime?
   invoicePaidAt DateTime?
+  /// Client idempotency key for one save from the calendar sheet (dedupes double taps)
+  clientRequestId String? @unique
   bookingId    String?         @unique
   booking      Booking?        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   connectionId String?

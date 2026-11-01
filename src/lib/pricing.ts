@@ -11,6 +11,7 @@ import {
   type TaxLineResult,
 } from "./tax";
 import { resolvePetCharges, type PetFeeUnit } from "./pets";
+import { pickSeasonForNight } from "./season-pick";
 
 export type QuoteInput = {
   property: Pick<
@@ -96,13 +97,10 @@ function seasonForNight(
   night: Date,
   seasons: QuoteInput["seasons"],
 ): QuoteInput["seasons"][number] | null {
-  const n = startOfDay(night).getTime();
-  for (const s of seasons) {
-    const start = startOfDay(s.startDate).getTime();
-    const end = startOfDay(s.endDate).getTime();
-    if (n >= start && n <= end) return s;
-  }
-  return null;
+  return pickSeasonForNight(startOfDay(night).getTime(), seasons, (s) => ({
+    start: startOfDay(s.startDate).getTime(),
+    end: startOfDay(s.endDate).getTime(),
+  }));
 }
 
 export function calculateQuote(input: QuoteInput): QuoteResult {

@@ -93,6 +93,33 @@ const nextConfig: NextConfig = {
         destination: "/admin/taxes",
         permanent: false,
       },
+      // Host shortcuts people type or old prefetches still hit (all were 404s).
+      // Plan and billing live in account settings; domain and website in Brand.
+      {
+        source: "/admin/subscription",
+        destination: "/account/settings/subscription",
+        permanent: false,
+      },
+      {
+        source: "/admin/billing",
+        destination: "/account/settings/subscription",
+        permanent: false,
+      },
+      {
+        source: "/admin/domain",
+        destination: "/admin/brand",
+        permanent: false,
+      },
+      {
+        source: "/admin/domains",
+        destination: "/admin/brand",
+        permanent: false,
+      },
+      {
+        source: "/admin/website",
+        destination: "/admin/brand",
+        permanent: false,
+      },
       {
         source: "/admin/business",
         destination: "/admin",

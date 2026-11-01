@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shortStayTitle } from "@/lib/stay-title";
+import { shortStayTitle, switcherStayLabels } from "@/lib/stay-title";
 
 describe("shortStayTitle", () => {
   it("drops a brand @ suffix", () => {
@@ -22,5 +22,36 @@ describe("shortStayTitle", () => {
 
   it("keeps a short name as-is", () => {
     expect(shortStayTitle("Upper Eagles Nest", 22)).toBe("Upper Eagles Nest");
+  });
+});
+
+describe("switcherStayLabels", () => {
+  it("keeps similar names distinct instead of cutting them off", () => {
+    const labels = switcherStayLabels([
+      "Cherokee Landing's Lower Eagles Nest",
+      "Cherokee Landing's Upper Eagles Nest",
+    ]);
+    expect(labels[0]).not.toBe(labels[1]);
+    expect(labels[0]).toContain("Lower Eagles Nest");
+    expect(labels[1]).toContain("Upper Eagles Nest");
+  });
+
+  it("does not add an ellipsis to long names", () => {
+    const [label] = switcherStayLabels([
+      "Kitchenette Suite With Lake View 2 @ Cherokee Landing",
+    ]);
+    expect(label).toBe("Kitchenette Suite With Lake View 2");
+    expect(label).not.toContain("…");
+  });
+
+  it("falls back to the full title when short labels collide", () => {
+    const labels = switcherStayLabels([
+      "Cabin 1 @ Cherokee Landing",
+      "Cabin 1 @ Pine Ridge",
+    ]);
+    expect(labels).toEqual([
+      "Cabin 1 @ Cherokee Landing",
+      "Cabin 1 @ Pine Ridge",
+    ]);
   });
 });

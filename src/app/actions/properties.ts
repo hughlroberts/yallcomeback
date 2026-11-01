@@ -21,6 +21,10 @@ import {
 import { assertSafeOutboundUrl } from "@/lib/safe-url";
 import { parsePaymentMethod } from "@/lib/host-payments";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
+import {
+  DUPLICATE_BLOCK_WINDOW_MS,
+  normalizeClientRequestId,
+} from "@/lib/block-dedupe";
 
 function canWriteListingDepositMethod(access: HostAccess): boolean {
   return canManageBrand(
@@ -1189,9 +1193,78 @@ export async function deleteSeason(formData: FormData) {
   revalidatePath("/admin/calendar");
 }
 
-export async function addCalendarBlock(
+/**
+ * Set a nightly price for [startDate, checkout) from the calendar sheet.
+ * Saved as a season (inclusive last night). Re-saving the same nights
+ * updates that price instead of stacking another row.
+ */
+export async function setNightlyPriceForRange(
   formData: FormData,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const access = await ensureHostAccess();
+    const propertyId = String(formData.get("propertyId") || "");
+    await assertPropertyAccess(propertyId, access);
+    const startRaw = String(formData.get("startDate") || "").trim();
+    const endRaw = String(formData.get("endDate") || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startRaw) || !/^\d{4}-\d{2}-\d{2}$/.test(endRaw)) {
+      return { ok: false, error: "Pick the nights first." };
+    }
+    const startDate = new Date(`${startRaw}T00:00:00`);
+    const checkout = new Date(`${endRaw}T00:00:00`);
+    if (!(checkout > startDate)) {
+      return { ok: false, error: "Checkout must be after the first night." };
+    }
+    const lastNight = new Date(checkout);
+    lastNight.setDate(lastNight.getDate() - 1);
+    const rate = Number(String(formData.get("nightlyRate") || "").trim());
+    if (!Number.isFinite(rate) || rate <= 0) {
+      return { ok: false, error: "Enter a nightly price above $0." };
+    }
+    const nightlyRate = Math.round(rate * 100) / 100;
+    const existing = await prisma.seasonalPrice.findFirst({
+      where: { propertyId, startDate, endDate: lastNight, holidayKey: null },
+      select: { id: true },
+    });
+    if (existing) {
+      await prisma.seasonalPrice.update({
+        where: { id: existing.id },
+        data: { nightlyRate },
+      });
+    } else {
+      await prisma.seasonalPrice.create({
+        data: {
+          propertyId,
+          name: "Custom price",
+          startDate,
+          endDate: lastNight,
+          nightlyRate,
+          minNights: 1,
+        },
+      });
+    }
+    revalidatePath(`/admin/properties/${propertyId}`);
+    revalidatePath("/admin/calendar");
+    return { ok: true };
+  } catch (err) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "digest" in err &&
+      String((err as { digest?: unknown }).digest).startsWith("NEXT_")
+    ) {
+      throw err;
+    }
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Could not set that price.",
+    };
+  }
+}
+
+export async function addCalendarBlock(
+  formData: FormData,
+): Promise<{ ok: true; duplicate?: boolean } | { ok: false; error: string }> {
   try {
     const access = await ensureHostAccess();
     const propertyId = String(formData.get("propertyId") || "");
@@ -1242,23 +1315,54 @@ export async function addCalendarBlock(
       };
     }
 
-    const block = await prisma.calendarBlock.create({
+    const safeBlockType = (
+      ["OWNER", "FRIENDS", "MAINTENANCE", "OFFLINE", "OTHER"].includes(blockType)
+        ? blockType
+        : "OWNER"
+    ) as "OWNER" | "FRIENDS" | "MAINTENANCE" | "OFFLINE" | "OTHER";
+    const occupantName =
+      String(formData.get("occupantName") || "").trim() || null;
+    const clientRequestId = normalizeClientRequestId(
+      formData.get("clientRequestId"),
+    );
+    const markPaid = formData.get("markPaid") === "on";
+
+    // Idempotency: the same sheet submit (double tap / retry) saves once.
+    if (clientRequestId) {
+      const seen = await prisma.calendarBlock.findUnique({
+        where: { clientRequestId },
+        select: { id: true },
+      });
+      if (seen) return { ok: true, duplicate: true };
+    }
+    // Dedupe: an identical manual block saved moments ago (forms without a key).
+    const recent = await prisma.calendarBlock.findFirst({
+      where: {
+        propertyId,
+        source: "MANUAL",
+        startDate,
+        endDate,
+        blockType: safeBlockType,
+        occupantName,
+        guestEmail,
+        createdAt: { gte: new Date(Date.now() - DUPLICATE_BLOCK_WINDOW_MS) },
+      },
+      select: { id: true },
+    });
+    if (recent) return { ok: true, duplicate: true };
+
+    let block: { id: string };
+    try {
+      block = await prisma.calendarBlock.create({
       data: {
         propertyId,
         source: "MANUAL",
         startDate,
         endDate,
-        blockType: (["OWNER", "FRIENDS", "MAINTENANCE", "OFFLINE", "OTHER"].includes(
-          blockType,
-        )
-          ? blockType
-          : "OWNER") as
-          | "OWNER"
-          | "FRIENDS"
-          | "MAINTENANCE"
-          | "OFFLINE"
-          | "OTHER",
-        occupantName: String(formData.get("occupantName") || "").trim() || null,
+        blockType: safeBlockType,
+        clientRequestId,
+        ...(markPaid ? { invoiceStatus: "PAID" as const, invoicePaidAt: new Date() } : {}),
+        occupantName,
         guestCount: (() => {
           const raw = String(formData.get("guestCount") || "").trim();
           const n = Number(raw);
@@ -1270,9 +1374,22 @@ export async function addCalendarBlock(
         invoiceAmount,
         paymentMethod,
       },
+      select: { id: true },
     });
+    } catch (err) {
+      // Lost a race with the same clientRequestId — first save wins.
+      if (
+        clientRequestId &&
+        typeof err === "object" &&
+        err !== null &&
+        (err as { code?: string }).code === "P2002"
+      ) {
+        return { ok: true, duplicate: true };
+      }
+      throw err;
+    }
 
-    const sendInvoice = formData.get("sendInvoice") === "on";
+    const sendInvoice = formData.get("sendInvoice") === "on" && !markPaid;
     if (sendInvoice && guestEmail && invoiceAmount) {
       try {
         const { sendStripeInvoiceForBlock } = await import("@/lib/block-invoice");
@@ -1297,6 +1414,7 @@ export async function addCalendarBlock(
 
     revalidatePath(`/admin/properties/${propertyId}`);
     revalidatePath("/admin/calendar");
+    revalidatePath("/admin/bookings");
     return { ok: true };
   } catch (err) {
     if (
@@ -1351,6 +1469,8 @@ export async function sendCalendarBlockInvoice(formData: FormData) {
   });
 
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/bookings");
+  revalidatePath(`/admin/bookings/direct/${id}`);
 }
 
 export async function markCalendarBlockInvoicePaid(formData: FormData) {
@@ -1382,6 +1502,8 @@ export async function markCalendarBlockInvoicePaid(formData: FormData) {
   const { markBlockInvoicePaid } = await import("@/lib/block-invoice");
   await markBlockInvoicePaid(id);
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/bookings");
+  revalidatePath(`/admin/bookings/direct/${id}`);
 }
 
 export async function deleteCalendarBlock(formData: FormData) {
@@ -1396,6 +1518,8 @@ export async function deleteCalendarBlock(formData: FormData) {
   if (!block) throw new Error("Block not found");
   await prisma.calendarBlock.delete({ where: { id: block.id } });
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/bookings");
+  revalidatePath(`/admin/bookings/direct/${id}`);
 }
 
 export async function addIcalImport(formData: FormData) {

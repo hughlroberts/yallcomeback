@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { shortStayTitle } from "@/lib/stay-title";
+import { switcherStayLabels } from "@/lib/stay-title";
 import {
   visibilityFromFlags,
   visibilityLabel,
@@ -28,6 +28,7 @@ export function AdminListingSwitcher({
   stackFrom?: "sm" | "lg";
 }) {
   const atLg = stackFrom === "lg";
+  const labels = switcherStayLabels(listings.map((l) => l.title));
 
   return (
     <aside className={cn("w-full shrink-0", atLg ? "lg:w-60" : "sm:w-60")}>
@@ -42,7 +43,7 @@ export function AdminListingSwitcher({
             : "sm:flex-col sm:gap-1 sm:overflow-visible",
         )}
       >
-        {listings.map((p) => {
+        {listings.map((p, i) => {
           const active = p.id === activeId;
           const vis = visibilityFromFlags(p.published, p.listOnMarketplace);
           const on = vis !== "off";
@@ -50,8 +51,10 @@ export function AdminListingSwitcher({
             <Link
               key={p.id}
               href={hrefFor(p.id)}
+              title={p.title}
+              aria-label={p.title}
               className={cn(
-                "flex w-[4.75rem] shrink-0 flex-col items-center gap-1 rounded-xl border px-1 py-1 text-center",
+                "flex w-[6.5rem] shrink-0 flex-col items-center gap-1 rounded-xl border px-1 py-1 text-center",
                 atLg
                   ? "lg:w-auto lg:min-w-0 lg:flex-row lg:items-center lg:gap-2 lg:px-1.5 lg:py-1 lg:text-left"
                   : "sm:w-auto sm:min-w-0 sm:flex-row sm:items-center sm:gap-2 sm:px-1.5 sm:py-1 sm:text-left",
@@ -84,18 +87,19 @@ export function AdminListingSwitcher({
               >
                 <span
                   className={cn(
-                    "block w-full text-[11px] font-medium leading-tight text-stone-900",
-                    atLg
-                      ? "line-clamp-2 lg:hidden"
-                      : "line-clamp-2 sm:hidden",
+                    "block w-full break-words text-[11px] font-medium leading-tight text-stone-900 [overflow-wrap:anywhere]",
+                    // Two lines; a name that only differs from a sibling's
+                    // late in the title shows in full.
+                    labels[i] === p.title.trim() ? "" : "line-clamp-2",
+                    atLg ? "lg:hidden" : "sm:hidden",
                   )}
                 >
-                  {shortStayTitle(p.title)}
+                  {labels[i]}
                 </span>
                 <span
                   className={cn(
-                    "hidden truncate text-sm font-medium text-stone-900",
-                    atLg ? "lg:block" : "sm:block",
+                    "hidden break-words text-sm font-medium leading-snug text-stone-900",
+                    atLg ? "lg:line-clamp-2" : "sm:line-clamp-2",
                   )}
                 >
                   {p.title}
