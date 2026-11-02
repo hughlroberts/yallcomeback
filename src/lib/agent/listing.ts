@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { marketplacePropertyWhere } from "@/lib/host";
 import { calculateQuote } from "@/lib/pricing";
+import { clampGuests } from "@/lib/extra-guests";
 import { listingHrefWithSearch } from "@/lib/listing-href";
 import { amenityLabelById } from "@/lib/listing-amenities";
 import { parseAmenities } from "@/lib/utils";
@@ -58,6 +59,10 @@ export type AgentListingDetail = {
   maxGuests: number;
   baseNightlyRate: number;
   cleaningFee: number;
+  /** Per night for each guest beyond extraGuestsIncluded; 0 = none */
+  extraGuestFee: number;
+  /** Guests the base nightly rate covers */
+  extraGuestsIncluded: number;
   weekendPremiumPercent: number;
   defaultMinNights: number;
   petsAllowed: boolean;
@@ -94,7 +99,13 @@ export type AgentListingDetail = {
     }[];
     quote: null | {
       nights: number;
+      /** Guests the quote is priced for */
+      guests: number;
       nightlySubtotal: number;
+      /** Guests charged the extra-guest fee */
+      extraGuests: number;
+      /** Extra-guest charge for the stay (included in totalAmount) */
+      extraGuestFee: number;
       cleaningFee: number;
       petFee: number;
       discountAmount: number;
@@ -110,7 +121,12 @@ export type AgentListingDetail = {
 export async function getAgentListingDetail(
   origin: string,
   slug: string,
-  opts?: { checkIn?: string; checkOut?: string; guests?: number; pets?: number },
+  opts?: {
+    checkIn?: string;
+    checkOut?: string;
+    guests?: number;
+    pets?: number;
+  },
 ): Promise<AgentListingDetail | null> {
   const property = await prisma.property.findFirst({
     where: {
@@ -170,17 +186,21 @@ export async function getAgentListingDetail(
       nights,
     };
     if (nights >= 1) {
+      const quoteGuests = clampGuests(opts.guests, property.maxGuests).guests;
       const q = calculateQuote({
         property,
         seasons: property.seasons,
         checkIn: new Date(`${opts.checkIn}T12:00:00`),
         checkOut: new Date(`${opts.checkOut}T12:00:00`),
         pets: opts.pets ?? 0,
-        guests: opts.guests ?? 1,
+        guests: quoteGuests,
       });
       quote = {
         nights: q.nights,
+        guests: quoteGuests,
         nightlySubtotal: q.nightlySubtotal,
+        extraGuests: q.extraGuests,
+        extraGuestFee: q.extraGuestFee,
         cleaningFee: q.cleaningFee,
         petFee: q.petFee,
         discountAmount: q.discountAmount,
@@ -220,6 +240,8 @@ export async function getAgentListingDetail(
     maxGuests: property.maxGuests,
     baseNightlyRate: property.baseNightlyRate,
     cleaningFee: property.cleaningFee,
+    extraGuestFee: property.extraGuestFee,
+    extraGuestsIncluded: property.extraGuestsIncluded,
     weekendPremiumPercent: property.weekendPremiumPercent,
     defaultMinNights: property.defaultMinNights,
     petsAllowed: property.petsAllowed,

@@ -63,6 +63,10 @@ export type AgentListingSummary = {
   propertyType: string;
   baseNightlyRate: number;
   cleaningFee: number;
+  /** Per night for each guest beyond extraGuestsIncluded; 0 = none */
+  extraGuestFee: number;
+  /** Guests the base nightly rate covers */
+  extraGuestsIncluded: number;
   maxGuests: number;
   bedrooms: number;
   bathrooms: number;
@@ -82,6 +86,8 @@ export type AgentListingSummary = {
     checkIn: string;
     checkOut: string;
     nightlySubtotal: number;
+    /** Extra-guest charge for the stay (included in totalBeforeTax) */
+    extraGuestFee: number;
     cleaningFee: number;
     totalBeforeTax: number;
     currency: "USD";
@@ -257,6 +263,7 @@ export async function agentSearch(
           checkIn: params.checkIn!,
           checkOut: params.checkOut!,
           nightlySubtotal: quote.nightlySubtotal,
+          extraGuestFee: quote.extraGuestFee,
           cleaningFee: quote.cleaningFee,
           totalBeforeTax:
             quote.nightlySubtotal -
@@ -299,6 +306,7 @@ export async function agentSearch(
             checkIn: prefer.checkIn,
             checkOut: prefer.checkOut,
             nightlySubtotal: quote.nightlySubtotal,
+            extraGuestFee: quote.extraGuestFee,
             cleaningFee: quote.cleaningFee,
             totalBeforeTax:
               quote.nightlySubtotal -
@@ -334,6 +342,8 @@ export async function agentSearch(
       propertyType: p.propertyType,
       baseNightlyRate: p.baseNightlyRate,
       cleaningFee: p.cleaningFee,
+      extraGuestFee: p.extraGuestFee,
+      extraGuestsIncluded: p.extraGuestsIncluded,
       maxGuests: p.maxGuests,
       bedrooms: p.bedrooms,
       bathrooms: p.bathrooms,

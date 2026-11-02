@@ -5,6 +5,7 @@ import {
   type BookingQuoteInput,
 } from "@/lib/booking-quote";
 import { calculateQuote } from "@/lib/pricing";
+import { toStripeAmount } from "@/lib/stripe";
 
 // Shaped like live motel-room-2: $75 for 2 guests, $10/night per extra
 // guest, sleeps 4, $35 cleaning.
@@ -69,6 +70,14 @@ describe("extra-guest charge ($10/night beyond 2)", () => {
     expect(w.total).toBe(total);
     expect(b.totalAmount).toBe(total);
     expect(b.depositAmount).toBe(w.deposit);
+  });
+
+  it("the Stripe deposit amount includes the extra-guest charge", () => {
+    // 3 nights × $75 + 2 extra × $10 × 3 + $35 cleaning = 320; 30% deposit
+    const b = bookQuote(4);
+    expect(b.depositAmount).toBe(96);
+    expect(toStripeAmount(b.depositAmount)).toBe(9600);
+    expect(toStripeAmount(bookQuote(2).depositAmount)).toBe(7800);
   });
 
   it("charges nothing when the listing has no extra-guest fee", () => {

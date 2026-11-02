@@ -7,7 +7,7 @@ import { guestCancelBooking } from "@/app/actions/guest-cancel";
 /**
  * Guest "Cancel request/booking" on the confirmation page. First tap opens
  * the confirm box (also opened directly by the email's cancel link); the
- * guest must tap "Yes, cancel" to submit.
+ * guest must tap "Yes, cancel request" / "Yes, cancel booking" to submit.
  */
 export function GuestCancelPanel({
   bookingId,
