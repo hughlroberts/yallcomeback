@@ -132,12 +132,29 @@ describe("API listing bookUrl keeps the party", () => {
   it("keeps guests and pets without dates, and drops junk values", async () => {
     db.prisma.property.findFirst.mockResolvedValue(motel(10));
     const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
-      checkIn: "2030-03-04",
-      checkOut: "soon",
       guests: 3,
       pets: Number("x"),
     });
     expect(d!.bookUrl).toBe("https://x.test/book/motel-room-2?guests=3");
+  });
+
+  it("caps guests at the listing max, matching the quoted party", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(motel(10));
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
+      ...dates,
+      guests: 9,
+    });
+    expect(d!.availability.quote).toMatchObject({ guests: 4 });
+    expect(new URL(d!.bookUrl).searchParams.get("guests")).toBe("4");
+    expect(new URL(d!.url).searchParams.get("guests")).toBe("4");
+  });
+
+  it("leaves guests out when the value is junk", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(motel(10));
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
+      guests: Number("x"),
+    });
+    expect(d!.bookUrl).toBe("https://x.test/book/motel-room-2");
   });
 
   it("is the bare book page with nothing requested", async () => {
@@ -154,5 +171,31 @@ describe("API listing bookUrl keeps the party", () => {
     });
     const d = await getAgentListingDetail("https://x.test", "motel-room-2");
     expect(d!.description).toBe("Lake house.");
+  });
+});
+
+describe("API listing dates follow the search rules", () => {
+  beforeEach(() => {
+    db.prisma.property.findFirst.mockReset();
+    db.prisma.property.findFirst.mockResolvedValue(motel(10));
+  });
+
+  it.each([
+    [{ checkIn: "2030-03-04", checkOut: "soon" }, "invalid_date"],
+    [{ checkIn: "2030-02-30", checkOut: "2030-03-02" }, "invalid_date"],
+    [
+      { checkIn: "2030-03-06", checkOut: "2030-03-04" },
+      "checkout_not_after_checkin",
+    ],
+    [
+      { checkIn: "2030-03-04", checkOut: "2030-03-04" },
+      "checkout_not_after_checkin",
+    ],
+    [{ checkIn: "2020-03-04", checkOut: "2020-03-06" }, "past_dates"],
+  ])("%o -> %s, before any lookup", async (opts, code) => {
+    await expect(
+      getAgentListingDetail("https://x.test", "motel-room-2", opts),
+    ).rejects.toMatchObject({ name: "SearchInputError", code });
+    expect(db.prisma.property.findFirst).not.toHaveBeenCalled();
   });
 });

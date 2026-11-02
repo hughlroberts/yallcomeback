@@ -1,5 +1,26 @@
 /** OpenAPI 3.1 document for the public agent API (served at /api/v1/openapi.json). */
 
+/** 400 for bad dates, shared by search and listing detail. */
+const badDatesResponse = {
+  description:
+    "Bad dates: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn) or invalid_date (not YYYY-MM-DD).",
+  content: {
+    "application/json": {
+      schema: {
+        type: "object",
+        properties: {
+          ok: { type: "boolean", const: false },
+          code: {
+            type: "string",
+            enum: ["past_dates", "checkout_not_after_checkin", "invalid_date"],
+          },
+          error: { type: "string" },
+        },
+      },
+    },
+  },
+};
+
 export function buildOpenApiDocument(origin: string) {
   return {
     openapi: "3.1.0",
@@ -241,29 +262,7 @@ export function buildOpenApiDocument(origin: string) {
                 },
               },
             },
-            "400": {
-              description:
-                "Bad dates: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn) or invalid_date (not YYYY-MM-DD).",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      ok: { type: "boolean", const: false },
-                      code: {
-                        type: "string",
-                        enum: [
-                          "past_dates",
-                          "checkout_not_after_checkin",
-                          "invalid_date",
-                        ],
-                      },
-                      error: { type: "string" },
-                    },
-                  },
-                },
-              },
-            },
+            "400": badDatesResponse,
           },
         },
       },
@@ -295,7 +294,7 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "integer" },
               description:
-                "Party size for the quote (capped at maxGuests; default 1). Kept in bookUrl.",
+                "Party size for the quote (capped at maxGuests; default 1). Kept in bookUrl, capped the same way.",
             },
             {
               name: "pets",
@@ -383,6 +382,7 @@ export function buildOpenApiDocument(origin: string) {
                 },
               },
             },
+            "400": badDatesResponse,
             "404": { description: "Not found" },
           },
         },

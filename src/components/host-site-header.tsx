@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HeaderHeightVar } from "@/components/header-height-var";
 import type { Host } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { hostSiteNavItems } from "@/lib/host-site";
@@ -43,6 +44,7 @@ export function HostSiteHeader({
 
   return (
     <header className="sticky top-0 z-[200] border-b border-stone-200/80 bg-white/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
+      <HeaderHeightVar />
       <div className="mx-auto flex min-h-14 w-full max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:min-h-16 sm:gap-3 sm:px-6 sm:py-2.5 md:min-h-[4.5rem]">
         <Link
           href={home}

@@ -15,7 +15,9 @@ const classOf = (testId: string) => {
 describe("desktop booking card fits the viewport", () => {
   it("caps the card at the viewport below the sticky offset (lg only)", () => {
     const c = classOf("booking-card");
-    expect(c).toContain("lg:max-h-[calc(100vh-8.5rem)]");
+    expect(c).toContain(
+      "lg:max-h-[calc(100vh-var(--site-header-h,calc(5.5rem+1px))-3rem)]",
+    );
     expect(c).toContain("lg:flex");
     expect(c).toContain("lg:flex-col");
     // Mobile keeps its normal padding and no height cap.
@@ -41,13 +43,28 @@ describe("desktop booking card fits the viewport", () => {
     expect(button).toBeGreaterThan(footer);
   });
 
-  it("listing page keeps the column sticky under the header", () => {
+  it("listing page sticks the column 1.5rem below the measured header", () => {
     const page = readFileSync(
       path.resolve(__dirname, "../app/marketplace/properties/[slug]/page.tsx"),
       "utf8",
     );
-    expect(page).toMatch(
-      /listing-reserve-column"[\s\S]{0,80}lg:sticky lg:top-28/,
+    expect(page).toContain(
+      "lg:sticky lg:top-[calc(var(--site-header-h,calc(5.5rem+1px))+1.5rem)]",
     );
+  });
+});
+
+describe("site headers publish their height for sticky offsets", () => {
+  const read = (p: string) => readFileSync(path.resolve(__dirname, p), "utf8");
+  it.each(["site-header.tsx", "host-site-header.tsx"])("%s", (p) => {
+    expect(read(p)).toMatch(/<header[^>]*>\s*<HeaderHeightVar \/>/);
+  });
+
+  it("card offset and max-height use the same header variable and gaps", () => {
+    // top = header + 1.5rem; max-height = 100vh - header - 1.5rem top - 1.5rem bottom
+    const card = classOf("booking-card").find((x) =>
+      x.startsWith("lg:max-h-"),
+    )!;
+    expect(card).toContain("var(--site-header-h,calc(5.5rem+1px))-3rem");
   });
 });

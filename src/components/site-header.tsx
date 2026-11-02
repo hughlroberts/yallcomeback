@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand-logo";
+import { HeaderHeightVar } from "@/components/header-height-var";
 import { SiteHeaderNav } from "@/components/site-header-nav";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -24,6 +25,7 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-[200] overflow-visible border-b border-hairline/80 bg-buttermilk/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
+      <HeaderHeightVar />
       {/* min-height (not fixed h) + py so a taller cannon never gets cut top/bottom */}
       <div className="mx-auto flex min-h-14 w-full max-w-6xl items-center justify-between gap-2 overflow-visible px-3 py-2 sm:min-h-[4.75rem] sm:gap-4 sm:px-6 sm:py-2.5 md:min-h-[5.5rem] md:py-3">
         <BrandLogo />

@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import { getAgentListingDetail } from "@/lib/agent/listing";
+import { SearchInputError } from "@/lib/agent/search";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Public listing detail + availability for agents.
- * GET /api/v1/listings/{slug}?checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD&pets=1
+ * GET /api/v1/listings/{slug}?checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD&guests=2&pets=1
+ * Dates follow the search rules: invalid, past or reversed dates get a 400
+ * { ok: false, code, error }.
  */
 export async function GET(
   req: NextRequest,
@@ -52,6 +55,13 @@ export async function GET(
       },
     );
   } catch (e) {
+    // Bad, past or reversed dates: same 400 shape and codes as /api/v1/search.
+    if (e instanceof SearchInputError) {
+      return NextResponse.json(
+        { ok: false, code: e.code, error: e.message },
+        { status: 400, headers: { "Access-Control-Allow-Origin": "*" } },
+      );
+    }
     return NextResponse.json(
       {
         ok: false,

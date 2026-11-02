@@ -205,14 +205,15 @@ export function BookingWidget({
       : null;
 
   return (
-    // Desktop (lg): the card sits in a sticky column under the header (top-28),
-    // so cap it at the viewport: price stays on top, the calendar / guests /
+    // Desktop (lg): the card sits in a sticky column 1.5rem under the header
+    // (its measured height, --site-header-h) and is capped at the viewport
+    // minus that offset and a bottom gap: price stays on top, the calendar / guests /
     // quote scroll inside, and the book button stays pinned at the bottom.
     // Mobile keeps the plain full-height card.
     <div
       id="reserve"
       data-testid="booking-card"
-      className="scroll-mt-24 min-w-0 overflow-x-clip rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5 lg:flex lg:max-h-[calc(100vh-8.5rem)] lg:flex-col lg:overflow-hidden lg:p-0"
+      className="scroll-mt-24 min-w-0 overflow-x-clip rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5 lg:flex lg:max-h-[calc(100vh-var(--site-header-h,calc(5.5rem+1px))-3rem)] lg:flex-col lg:overflow-hidden lg:p-0"
     >
       <div className="lg:shrink-0 lg:border-b lg:border-stone-100 lg:px-5 lg:pb-3 lg:pt-4">
         <p className="text-xl font-semibold text-stone-900">

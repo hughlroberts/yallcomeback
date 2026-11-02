@@ -530,7 +530,7 @@ export default async function MarketplacePropertyPage({
 
           <div
             data-testid="listing-reserve-column"
-            className="order-2 min-w-0 lg:order-none lg:sticky lg:top-28 lg:self-start"
+            className="order-2 min-w-0 lg:order-none lg:sticky lg:top-[calc(var(--site-header-h,calc(5.5rem+1px))+1.5rem)] lg:self-start"
           >
             <BookingWidget
               propertySlug={property.slug}

@@ -7,7 +7,8 @@ import { publicListingText } from "@/lib/listing-public-text";
 import { listingHrefWithSearch } from "@/lib/listing-href";
 import { amenityLabelById } from "@/lib/listing-amenities";
 import { parseAmenities } from "@/lib/utils";
-import { isYmd, nightsBetweenYmd } from "@/lib/search-dates";
+import { checkSearchDates, isYmd, nightsBetweenYmd } from "@/lib/search-dates";
+import { SearchInputError } from "@/lib/agent/search";
 import {
   findAvailableWindows,
   isStayAvailable,
@@ -130,6 +131,11 @@ export async function getAgentListingDetail(
     pets?: number;
   },
 ): Promise<AgentListingDetail | null> {
+  // Same date rules (and error codes) as search: bad, past or reversed dates
+  // throw SearchInputError, which the API answers with a 400.
+  const dates = checkSearchDates(opts?.checkIn, opts?.checkOut);
+  if (!dates.ok) throw new SearchInputError(dates.code, dates.error);
+
   const property = await prisma.property.findFirst({
     where: {
       slug,
@@ -160,10 +166,17 @@ export async function getAgentListingDetail(
     label: amenityLabelById(id) || id,
   }));
 
+  // A party bigger than the listing allows is capped at its max, the same
+  // way the quote is, so the links open on the party that was priced.
+  const partyGuests =
+    opts?.guests != null && Number.isFinite(opts.guests) && opts.guests >= 1
+      ? clampGuests(opts.guests, property.maxGuests).guests
+      : undefined;
+
   const path = listingHrefWithSearch(property.slug, property.host.slug, {
     checkIn: opts?.checkIn,
     checkOut: opts?.checkOut,
-    guests: opts?.guests,
+    guests: partyGuests,
     pets: opts?.pets,
   });
 
@@ -275,7 +288,7 @@ export async function getAgentListingDetail(
       agentCheckoutBookPath(property.slug, {
         checkIn: opts?.checkIn,
         checkOut: opts?.checkOut,
-        guests: opts?.guests,
+        guests: partyGuests,
         pets: opts?.pets,
       }) ?? `/book/${encodeURIComponent(property.slug)}`,
     ),

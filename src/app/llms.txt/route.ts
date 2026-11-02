@@ -91,7 +91,8 @@ Returns description, amenities, house rules, photos, host name, nextWindows, and
 - listing.extraGuestFee: per night for each guest beyond listing.extraGuestsIncluded (0 = none).
 - availability.quote.guests: guests the quote is priced for (your guests, capped at maxGuests; 1 if not sent).
 - availability.quote.extraGuests: guests charged the extra-guest fee. availability.quote.extraGuestFee: that charge for the whole stay, already in totalAmount.
-- bookUrl keeps checkIn, checkOut, guests and pets, so the booking page opens on the same stay.
+- bookUrl keeps checkIn, checkOut, guests (capped at maxGuests, like the quote) and pets, so the booking page opens on the same stay.
+- Dates follow the search rules: past, reversed or invalid dates return HTTP 400 with {ok:false, code, error} (past_dates, checkout_not_after_checkin or invalid_date).
 
 ## Calendar / next free windows
 
