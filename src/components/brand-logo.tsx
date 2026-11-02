@@ -30,38 +30,6 @@ export function BrandMark({
 }
 
 /**
- * Vertical cannon for the header.
- * Height-driven + w-auto so the full silhouette shows (no forced narrow box).
- * Padded SVG keeps muzzle/wheels inside the paint box.
- */
-export function BrandCannon({
-  className,
-  tone = "bonnet",
-  priority = false,
-}: {
-  className?: string;
-  tone?: "bonnet" | "honey" | "dusk" | "cream" | "currentcolor";
-  priority?: boolean;
-}) {
-  const src = `/brand/ycb-cannon-v-${tone}.svg`;
-  return (
-    // eslint-disable-next-line @next/next/no-img-element -- w-auto + overflow-visible; next/image wraps and can clip tall SVGs
-    <img
-      src={src}
-      alt=""
-      width={24}
-      height={104}
-      className={cn(
-        "ycb-logo__cannon block h-full w-auto max-w-none shrink-0 object-contain object-center",
-        className,
-      )}
-      decoding="async"
-      {...(priority ? { fetchPriority: "high" as const } : {})}
-    />
-  );
-}
-
-/**
  * Header lockup: YCB circular seal + Yall Come Back wordmark.
  * shrink-0 so flex never squishes/truncates the wordmark; overflow-visible for Fraunces glyphs.
  */

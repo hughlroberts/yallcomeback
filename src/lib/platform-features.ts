@@ -14,9 +14,6 @@ export const PRICING_INTELLIGENCE_ADDON_USD = 35;
 export const PRICING_INTELLIGENCE_ADDON_LABEL =
   "Market pricing intelligence";
 
-export const PRICING_INTELLIGENCE_ADDON_BLURB =
-  "Monthly AI market research and rate suggestions for your stays (capacity-matched comps). Optional add-on — not included in website hosting.";
-
 /**
  * Hosted YCB marketplace product (not a vanilla open-source self-host).
  * Set PLATFORM_PRODUCT_MODE=true on main product deploys.
@@ -128,41 +125,6 @@ export function canRunPricingIntelligence(host: {
     hostHasPricingIntelligenceAccess(host) &&
     hostHasPricingIntelligenceAddon(host)
   );
-}
-
-/**
- * Who can open pricing intelligence (Ops → Pricing intelligence for now).
- * - Platform ADMIN: always (secret ops tool — not in host Admin yet)
- * - HOST: only if ops enabled access for their brand, once published there
- */
-export function canSeePricingIntelligenceNav(opts: {
-  isPlatformAdmin: boolean;
-  host?: {
-    pricingIntelligenceEnabled?: boolean | null;
-  } | null;
-}): boolean {
-  if (!isPricingIntelligenceEnabled()) return false;
-  if (opts.isPlatformAdmin) return true;
-  return hostHasPricingIntelligenceAccess(opts.host ?? {});
-}
-
-export function pricingAddonStatusLabel(
-  status: PricingAddonStatus | string,
-): string {
-  switch (status) {
-    case "NONE":
-      return "Not subscribed";
-    case "REQUESTED":
-      return "Requested — awaiting payment";
-    case "ACTIVE":
-      return "Active (+$35/mo)";
-    case "PAST_DUE":
-      return "Past due";
-    case "CANCELLED":
-      return "Cancelled";
-    default:
-      return String(status);
-  }
 }
 
 /** Optional xAI / Grok key for richer competitor research narratives. */

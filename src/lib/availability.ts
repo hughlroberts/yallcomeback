@@ -4,24 +4,6 @@ import { datesOverlap, startOfDay } from "./utils";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
-export async function getUnavailableRanges(propertyId: string) {
-  const blocks = await prisma.calendarBlock.findMany({
-    where: { propertyId },
-    select: {
-      id: true,
-      startDate: true,
-      endDate: true,
-      source: true,
-      blockType: true,
-      occupantName: true,
-      notes: true,
-    },
-    orderBy: { startDate: "asc" },
-  });
-
-  return blocks;
-}
-
 /** Public-safe ranges - no notes or occupant names. Next 18 months only. */
 export async function getPublicUnavailableRanges(propertyId: string) {
   const from = startOfDay(new Date());

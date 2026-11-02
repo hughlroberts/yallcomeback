@@ -20,6 +20,36 @@ import {
 } from "@/lib/platform-billing";
 import type { HostingInvoiceStatus } from "@prisma/client";
 
+/**
+ * Billing period a successful hosting payment buys.
+ *
+ * - Uses the invoice's service period when it is still current.
+ * - An invoice with no real period (start >= end), or one whose period was
+ *   already over when it was paid (a late payment on an invoice that started
+ *   from an old period end), covers one month from the payment date.
+ * - Never moves the host's period end backwards (replayed or older webhooks).
+ */
+export function hostingPeriodAfterPayment(opts: {
+  currentPeriodStart?: Date | null;
+  currentPeriodEnd?: Date | null;
+  invoicePeriodStart?: Date | null;
+  invoicePeriodEnd?: Date | null;
+  paidAt?: Date | null;
+}): { start: Date; end: Date } {
+  const paidAt = opts.paidAt ?? new Date();
+  let start = opts.invoicePeriodStart ?? null;
+  let end = opts.invoicePeriodEnd ?? null;
+  if (!start || !end || start.getTime() >= end.getTime() || end.getTime() <= paidAt.getTime()) {
+    start = paidAt;
+    end = addMonths(paidAt, 1);
+  }
+  const current = opts.currentPeriodEnd ?? null;
+  if (current && current.getTime() >= end.getTime()) {
+    return { start: opts.currentPeriodStart ?? start, end: current };
+  }
+  return { start, end };
+}
+
 export async function createHostingInvoiceForHost(opts: {
   hostId: string;
   planId?: string | null;
@@ -52,9 +82,13 @@ export async function createHostingInvoiceForHost(opts: {
     : 0;
   const amount = hostingAmount + addonAmount;
 
-  const periodStart = host.currentPeriodEnd
-    ? new Date(host.currentPeriodEnd)
-    : new Date();
+  // Next period starts at the current period end, but never in the past
+  // (a lapsed host is billed from today, not for months already gone).
+  const now = new Date();
+  const periodStart =
+    host.currentPeriodEnd && host.currentPeriodEnd.getTime() > now.getTime()
+      ? new Date(host.currentPeriodEnd)
+      : now;
   const periodEnd = addMonths(periodStart, 1);
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + 7);
@@ -214,6 +248,19 @@ export async function createHostingInvoiceForHost(opts: {
     },
   });
 
+  // Card on file charged at once: the paid webhook then finds the invoice
+  // already PAID, so advance the billing period here too.
+  const paidPeriod =
+    status === "PAID"
+      ? hostingPeriodAfterPayment({
+          currentPeriodStart: host.currentPeriodStart,
+          currentPeriodEnd: host.currentPeriodEnd,
+          invoicePeriodStart: periodStart,
+          invoicePeriodEnd: periodEnd,
+          paidAt: record.paidAt,
+        })
+      : null;
+
   await prisma.host.update({
     where: { id: host.id },
     data: {
@@ -223,6 +270,14 @@ export async function createHostingInvoiceForHost(opts: {
           ? "ACTIVE"
           : "PENDING_PAYMENT",
       billingEmail: billingEmail || host.billingEmail,
+      ...(paidPeriod
+        ? {
+            currentPeriodStart: paidPeriod.start,
+            currentPeriodEnd: paidPeriod.end,
+            hostingPastDueAt: null,
+            hostingDunningReminderSentAt: null,
+          }
+        : {}),
     },
   });
 
@@ -237,26 +292,43 @@ export async function markHostingInvoicePaid(
     where: { id: invoiceId },
   });
   if (!invoice) throw new Error("Invoice not found");
-  if (invoice.status === "PAID") return invoice;
+  const alreadyPaid = invoice.status === "PAID";
+  const paidAt = invoice.paidAt ?? new Date();
 
   const paid = await prisma.$transaction(async (tx) => {
-    const updated = await tx.hostingInvoice.update({
-      where: { id: invoiceId },
-      data: {
-        status: "PAID",
-        paidAt: new Date(),
-        ...(opts?.stripeInvoiceId
-          ? { stripeInvoiceId: opts.stripeInvoiceId }
-          : {}),
-      },
+    const updated = alreadyPaid
+      ? invoice
+      : await tx.hostingInvoice.update({
+          where: { id: invoiceId },
+          data: {
+            status: "PAID",
+            paidAt,
+            ...(opts?.stripeInvoiceId
+              ? { stripeInvoiceId: opts.stripeInvoiceId }
+              : {}),
+          },
+        });
+
+    // Always (re)apply: an invoice can already be PAID (card charged at
+    // creation, or synced first) before its period was applied to the host.
+    const host = await tx.host.findUnique({
+      where: { id: invoice.hostId },
+      select: { currentPeriodStart: true, currentPeriodEnd: true },
+    });
+    const period = hostingPeriodAfterPayment({
+      currentPeriodStart: host?.currentPeriodStart,
+      currentPeriodEnd: host?.currentPeriodEnd,
+      invoicePeriodStart: invoice.periodStart,
+      invoicePeriodEnd: invoice.periodEnd,
+      paidAt,
     });
 
     await tx.host.update({
       where: { id: invoice.hostId },
       data: {
         subscriptionStatus: "ACTIVE",
-        currentPeriodStart: invoice.periodStart,
-        currentPeriodEnd: invoice.periodEnd,
+        currentPeriodStart: period.start,
+        currentPeriodEnd: period.end,
         active: true,
         hostingPastDueAt: null,
         hostingDunningReminderSentAt: null,
@@ -418,18 +490,22 @@ export async function recordStripePlatformInvoice(inv: StripeInvoiceLike) {
     const promoted = await promoteComplimentaryHostIfPaid(host.id);
     if (promoted) host = promoted;
   }
-  const line = inv.lines?.data?.[0];
-  const periodStart = inv.period_start
-    ? new Date(inv.period_start * 1000)
-    : line?.period?.start
-      ? new Date(line.period.start * 1000)
+  // Service period: prefer the line item period. On subscription renewals
+  // the invoice-level period_start/period_end is the PREVIOUS period.
+  const line = [...(inv.lines?.data || [])]
+    .filter((l) => l.period?.end)
+    .sort((a, b) => (b.period?.end ?? 0) - (a.period?.end ?? 0))[0];
+  const periodStart = line?.period?.start
+    ? new Date(line.period.start * 1000)
+    : inv.period_start
+      ? new Date(inv.period_start * 1000)
       : inv.created
         ? new Date(inv.created * 1000)
         : new Date();
-  const periodEnd = inv.period_end
-    ? new Date(inv.period_end * 1000)
-    : line?.period?.end
-      ? new Date(line.period.end * 1000)
+  const periodEnd = line?.period?.end
+    ? new Date(line.period.end * 1000)
+    : inv.period_end
+      ? new Date(inv.period_end * 1000)
       : addMonths(periodStart, 1);
   const publishedCount = await prisma.property.count({
     where: { hostId: host.id, published: true },
@@ -487,12 +563,19 @@ export async function recordStripePlatformInvoice(inv: StripeInvoiceLike) {
     : await prisma.hostingInvoice.create({ data: payload });
 
   if (status === "PAID" && amount > 0) {
+    const period = hostingPeriodAfterPayment({
+      currentPeriodStart: host.currentPeriodStart,
+      currentPeriodEnd: host.currentPeriodEnd,
+      invoicePeriodStart: periodStart,
+      invoicePeriodEnd: periodEnd,
+      paidAt: record.paidAt ?? payload.paidAt,
+    });
     await prisma.host.update({
       where: { id: host.id },
       data: {
         subscriptionStatus: "ACTIVE",
-        currentPeriodStart: periodStart,
-        currentPeriodEnd: periodEnd,
+        currentPeriodStart: period.start,
+        currentPeriodEnd: period.end,
         hostingPastDueAt: null,
         hostingDunningReminderSentAt: null,
         stripeCustomerId: customerId || host.stripeCustomerId,

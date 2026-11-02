@@ -53,11 +53,15 @@ export default async function OpsEarningsPage() {
           </p>
         </Card>
         <Card>
-          <p className="text-sm text-stone-500">Active paying hosts</p>
+          <p className="text-sm text-stone-500">Active paid brands</p>
           <p className="mt-1 text-3xl font-semibold">{data.payingCount}</p>
           <p className="mt-1 text-xs text-stone-400">
-            {data.customerCount} billed brand
+            {data.payingCount} of {data.customerCount} brand
             {data.customerCount === 1 ? "" : "s"} on a paid plan
+            {data.customerCount === 1 ? " is" : " are"} active
+            {data.customerCount > data.payingCount
+              ? ` (${data.customerCount - data.payingCount} not active yet)`
+              : ""}
           </p>
         </Card>
         <Card>
@@ -166,7 +170,7 @@ export default async function OpsEarningsPage() {
                     colSpan={8}
                     className="px-4 py-6 text-sm text-stone-500"
                   >
-                    No paying hosts yet. Checkout charges show under Recent
+                    No active paid brands yet. Checkout charges show under Recent
                     payments once Stripe invoices sync.
                   </td>
                 </tr>

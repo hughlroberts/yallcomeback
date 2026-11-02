@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import type { Host, Property } from "@prisma/client";
 
@@ -205,8 +205,4 @@ export function marketplacePublicUrl(
 ): string {
   const base = origin.replace(/\/$/, "");
   return `${base}/marketplace/properties/${encodeURIComponent(propertySlug)}?host=${encodeURIComponent(hostSlug)}`;
-}
-
-export function fingerprintPayload(body: unknown): string {
-  return createHash("sha256").update(JSON.stringify(body)).digest("hex").slice(0, 16);
 }

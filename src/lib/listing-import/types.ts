@@ -21,12 +21,3 @@ export type ImportedListingDraft = {
   imageUrls: string[];
   rawNotes: string[];
 };
-
-export type ImportProgressStep =
-  | "parse_url"
-  | "fetch_page"
-  | "extract"
-  | "download_photos"
-  | "create_listing"
-  | "done"
-  | "error";

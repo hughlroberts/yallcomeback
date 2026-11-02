@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { getHostForGuestSite } from "@/lib/host";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, seoAbsoluteUrl, seoOrigin } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
+import { hostOrganizationJsonLd } from "@/lib/json-ld";
+import { hostSocialLinks } from "@/lib/host-site";
+import { publicListingText } from "@/lib/listing-public-text";
 import { hostHomeDescription } from "@/lib/host-meta";
 
 type Props = {
@@ -71,6 +75,22 @@ export async function generateMetadata({
   };
 }
 
-export default async function HostSiteLayout({ children }: Props) {
-  return children;
+export default async function HostSiteLayout({ children, params }: Props) {
+  const { hostSlug } = await params;
+  const host = await getHostForGuestSite(hostSlug);
+  if (!host) return children;
+  // Organization from the brand's public profile (same fields as About).
+  // No ratings or reviews.
+  const data = hostOrganizationJsonLd({
+    origin: seoOrigin(),
+    url: seoAbsoluteUrl(`/h/${encodeURIComponent(host.slug)}`),
+    host: { ...host, description: publicListingText(host.description) },
+    sameAs: hostSocialLinks(host).map((l) => l.href),
+  });
+  return (
+    <>
+      <JsonLd data={data} />
+      {children}
+    </>
+  );
 }

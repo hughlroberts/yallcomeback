@@ -7,9 +7,13 @@
  *   + co-host users) gets a new-request email.
  * - On cancel (guest, host, or system): guest and every host get an email.
  *
+ * - When a host marks a manual deposit paid: guest gets the same
+ *   "booking confirmed" email the card (webhook) path sends.
+ *
  * Each send is claimed once per booking (bookingEmailsSentAt /
- * cancellationEmailsSentAt) so webhook retries do not double-send. Email
- * failures are logged and never break the booking or cancel.
+ * confirmationEmailSentAt / cancellationEmailsSentAt) so webhook retries and
+ * double clicks do not double-send. Email failures are logged and never break
+ * the booking or cancel.
  */
 import { prisma } from "@/lib/db";
 import { bookingAccessToken } from "@/lib/booking-access";
@@ -385,14 +389,65 @@ export async function sendBookingCreatedEmails(
     })) as BookingEmailData | null;
     if (!b || b.status === "CANCELLED") return;
     const hosts = await bookingHostRecipients(b.property.hostId);
+    let emails = composeBookingCreatedEmails(b, hosts);
+    // A confirmed booking's guest email is the "booking confirmed" email.
+    // Claim it too, so the mark-paid path never sends a second one.
+    if (b.status === "CONFIRMED" && !(await claimConfirmationEmail(bookingId))) {
+      emails = emails.slice(1);
+    }
+    await sendAll(emails, "created", bookingId, b.guestEmail);
+  } catch (err) {
+    console.error("[booking-email:created] failed", bookingId, err);
+  }
+}
+
+/** Claim the guest "booking confirmed" email for a confirmed booking. */
+async function claimConfirmationEmail(bookingId: string): Promise<boolean> {
+  const claimed = await prisma.booking.updateMany({
+    where: {
+      id: bookingId,
+      status: "CONFIRMED",
+      confirmationEmailSentAt: null,
+    },
+    data: { confirmationEmailSentAt: new Date() },
+  });
+  return claimed.count > 0;
+}
+
+/**
+ * Host or admin marked the deposit paid: send the guest the same
+ * "booking confirmed" email the card path sends. Claim-once, so a repeat
+ * click or an earlier card confirmation never sends a duplicate. If the
+ * booking-time emails never went out (for example an unpaid card checkout
+ * the host settled by hand), hosts get the "new booking" email as well.
+ * Never throws.
+ */
+export async function sendBookingConfirmedEmails(
+  bookingId: string,
+): Promise<void> {
+  try {
+    if (!(await claimConfirmationEmail(bookingId))) return;
+    const createdClaim = await prisma.booking.updateMany({
+      where: { id: bookingId, bookingEmailsSentAt: null },
+      data: { bookingEmailsSentAt: new Date() },
+    });
+    const b = (await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: bookingSelect,
+    })) as BookingEmailData | null;
+    if (!b || b.status !== "CONFIRMED") return;
+    const hosts =
+      createdClaim.count > 0
+        ? await bookingHostRecipients(b.property.hostId)
+        : [];
     await sendAll(
       composeBookingCreatedEmails(b, hosts),
-      "created",
+      "confirmed",
       bookingId,
       b.guestEmail,
     );
   } catch (err) {
-    console.error("[booking-email:created] failed", bookingId, err);
+    console.error("[booking-email:confirmed] failed", bookingId, err);
   }
 }
 

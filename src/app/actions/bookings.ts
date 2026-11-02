@@ -344,6 +344,7 @@ export async function markDepositPaid(formData: FormData) {
     include: { payments: true },
   });
   if (!booking) throw new Error("Booking not found");
+  const wasPending = booking.status === "PENDING_PAYMENT";
 
   await prisma.$transaction([
     prisma.booking.update({
@@ -380,6 +381,13 @@ export async function markDepositPaid(formData: FormData) {
       },
     }),
   ]);
+
+  // Guest "booking confirmed" email, same as the card (webhook) path.
+  // Claim-once and never throws.
+  if (wasPending) {
+    const { sendBookingConfirmedEmails } = await import("@/lib/booking-emails");
+    await sendBookingConfirmedEmails(bookingId);
+  }
 
   revalidatePath("/admin/bookings");
   revalidatePath(`/admin/bookings/${bookingId}`);

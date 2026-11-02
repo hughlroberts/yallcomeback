@@ -88,36 +88,6 @@ export async function marketplaceDiscoveryEnabled(): Promise<boolean> {
   return count > DISCOVERY_MIN_LISTINGS;
 }
 
-/** Properties on a single host's branded site */
-export function hostSitePropertyWhere(hostId: string) {
-  return {
-    hostId,
-    published: true,
-  } as const;
-}
-
-/**
- * Public host brand for guest-facing site.
- * Requires live host (approved + paid/self) AND site publish state DEMO or LIVE.
- * Pass `allowUnpublishedPreview: true` when the viewer is the host admin building the site.
- */
-export async function getHostBySlug(
-  slug: string,
-  opts?: { allowUnpublishedPreview?: boolean },
-) {
-  const host = await prisma.host.findFirst({
-    where: { slug, active: true },
-  });
-  if (!host || !isHostPublicLive(host)) return null;
-  if (
-    host.sitePublishState === "UNPUBLISHED" &&
-    !opts?.allowUnpublishedPreview
-  ) {
-    return null;
-  }
-  return host;
-}
-
 /** Host row for admin preview even when not public yet */
 export async function getHostBySlugAny(slug: string) {
   return prisma.host.findFirst({ where: { slug } });
@@ -553,17 +523,3 @@ export function hostSiteUrl(hostSlug: string, path = "") {
 
 /** Alias used by host-site pages */
 export const hostSiteHref = hostSiteUrl;
-
-export function propertyPublicPath(
-  property: { slug: string; host?: { slug: string } | null },
-  via: "marketplace" | "host" = "marketplace",
-) {
-  const hostQ = property.host?.slug
-    ? `?host=${property.host.slug}`
-    : "";
-  if (via === "host" && property.host?.slug) {
-    // Legacy path - still redirects to marketplace
-    return `/h/${property.host.slug}/properties/${property.slug}`;
-  }
-  return `/marketplace/properties/${property.slug}${hostQ}`;
-}

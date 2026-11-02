@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getListingInsights } from "@/lib/listing-insights";
+import { propertyScopeWhere } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +24,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "missing_ids" }, { status: 400 });
   }
 
-  // Scope: platform admin any; host only own properties
+  // Scope: active brand only (platform admin must pick a brand first)
   const allowed = await prisma.property.findMany({
     where: {
       id: { in: ids },
-      ...(access.isPlatform ? {} : { hostId: access.hostId || "__none__" }),
+      ...propertyScopeWhere(access),
     },
     select: { id: true },
   });

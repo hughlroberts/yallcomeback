@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { HELP_ARTICLES, HELP_CATEGORIES, helpPath } from "@/lib/help";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, seoAbsoluteUrl } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
+import { helpFaqJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Help center",
@@ -13,6 +15,15 @@ export const metadata: Metadata = pageMetadata({
 export default function HelpIndexPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <JsonLd
+        data={helpFaqJsonLd({
+          // Same articles, in the same order, as the list on this page.
+          articles: HELP_CATEGORIES.flatMap((cat) =>
+            HELP_ARTICLES.filter((a) => a.categoryId === cat.id),
+          ),
+          urlFor: (slug) => seoAbsoluteUrl(helpPath(slug)),
+        })}
+      />
       <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
         Help center
       </h1>

@@ -36,8 +36,6 @@ const NAV = [
   },
 ] as const;
 
-export type EarningsNavId = (typeof NAV)[number]["href"];
-
 /**
  * Airbnb-style Earnings layout: left sidebar + main panel.
  */

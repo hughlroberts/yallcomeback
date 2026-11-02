@@ -52,41 +52,6 @@ export function AccountSettingsShell({
   );
 }
 
-/** Row for personal-info style lists */
-export function SettingsRow({
-  label,
-  value,
-  hint,
-  actionLabel = "Edit",
-  actionHref,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  actionLabel?: string;
-  actionHref?: string;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-stone-100 py-5 first:pt-0 last:border-b-0">
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-stone-900">{label}</p>
-        <p className="mt-0.5 text-sm text-stone-600">{value}</p>
-        {hint ? (
-          <p className="mt-1 text-xs leading-relaxed text-stone-400">{hint}</p>
-        ) : null}
-      </div>
-      {actionHref ? (
-        <Link
-          href={actionHref}
-          className="shrink-0 text-sm font-medium text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline"
-        >
-          {actionLabel}
-        </Link>
-      ) : null}
-    </div>
-  );
-}
-
 export function SavedBanner({ show }: { show?: boolean }) {
   if (!show) return null;
   return (

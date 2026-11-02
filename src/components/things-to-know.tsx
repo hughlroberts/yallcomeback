@@ -29,11 +29,6 @@ type Props = {
   nonRefundableOption?: boolean;
 };
 
-/** @deprecated Use formatTime12h from @/lib/utils */
-export function formatListingClock(raw: string): string {
-  return formatTime12h(raw);
-}
-
 function safetyItemsFromAmenities(amenities: string[]): string[] {
   const lower = amenities.map((a) => a.trim().toLowerCase());
   const found: string[] = [];

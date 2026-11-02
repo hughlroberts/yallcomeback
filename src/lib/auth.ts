@@ -244,13 +244,6 @@ export async function requireHostAdmin(hostId?: string) {
   return null;
 }
 
-/** @deprecated use requireHostAdmin or requirePlatformAdmin */
-export async function requireAdmin() {
-  const access = await requireHostAdmin();
-  if (!access) return null;
-  return access.session;
-}
-
 export async function requireUser() {
   const session = await auth();
   if (!session?.user) return null;

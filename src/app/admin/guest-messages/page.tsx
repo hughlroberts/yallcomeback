@@ -28,24 +28,19 @@ export default async function AdminGuestMessagesPage({
   let hostId = session.user.hostId ?? null;
 
   if (session.user.role === "ADMIN") {
-    if (sp.hostId) {
-      hostId = sp.hostId;
-    } else if (!hostId) {
-      const first = await prisma.host.findFirst({
-        orderBy: { name: "asc" },
-        select: { id: true },
-      });
-      hostId = first?.id ?? null;
-    }
+    // Active brand only (query param or brand switcher). No fallback to
+    // another brand when none is picked.
+    const { getAdminBrandHostId } = await import("@/lib/admin-brand-context");
+    hostId = sp.hostId || (await getAdminBrandHostId());
   }
 
   if (!hostId) {
     return (
       <div className="max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-950">
-        <p className="font-semibold">No host account found</p>
+        <p className="font-semibold">Pick a brand</p>
         <p className="mt-1">
-          Guest message defaults are set per host brand. Create or approve a host
-          first.
+          Guest message defaults are set per host brand. Use Switch brand to
+          pick one.
         </p>
       </div>
     );

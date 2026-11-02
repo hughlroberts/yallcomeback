@@ -6,6 +6,7 @@ import { KpiCard, PageHeader } from "@/components/ui";
 import { requireHostAdmin } from "@/lib/auth";
 import {
   bookingScopeWhere,
+  calendarBlockScopeWhere,
   propertyScopeWhere,
 } from "@/lib/scope";
 import { redirect } from "next/navigation";
@@ -133,9 +134,7 @@ export default async function AdminDashboard({
       prisma.calendarBlock.findMany({
         where: {
           startDate: { gte: new Date() },
-          ...(access.isPlatform
-            ? {}
-            : { property: { hostId: access.hostId! } }),
+          ...calendarBlockScopeWhere(access),
         },
         include: {
           property: true,

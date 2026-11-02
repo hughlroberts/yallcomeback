@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { setAdminBrandContext } from "@/app/actions/admin-brand";
+import { AdminBrandSwitchForm } from "@/components/admin-brand-switch-form";
 
 type HostOption = {
   id: string;
@@ -39,34 +39,11 @@ export function AdminBrandSwitcher({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <form
-            action={setAdminBrandContext}
-            className="flex flex-wrap items-center gap-2"
-          >
-            <input type="hidden" name="returnTo" value={returnTo} />
-            <label className="sr-only" htmlFor="admin-brand-select">
-              Host brand
-            </label>
-            <select
-              id="admin-brand-select"
-              name="hostId"
-              defaultValue={activeHostId || ""}
-              className="max-w-[16rem] rounded-lg border border-amber-300/80 bg-white px-2.5 py-1.5 text-sm font-medium text-stone-900"
-            >
-              <option value="">Choose brand…</option>
-              {hosts.map((h) => (
-                <option key={h.id} value={h.id}>
-                  {h.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="rounded-lg bg-amber-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-950"
-            >
-              Switch brand
-            </button>
-          </form>
+          <AdminBrandSwitchForm
+            hosts={hosts}
+            activeHostId={activeHostId}
+            returnTo={returnTo}
+          />
           {active ? (
             <Link
               href={`/h/${active.slug}`}

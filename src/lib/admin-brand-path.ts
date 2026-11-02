@@ -13,3 +13,14 @@ export function adminBrandSwitchPath(returnTo: string): string {
   if (/^\/admin\/messages\/[^/]+/.test(path)) return "/admin/messages";
   return path;
 }
+
+/**
+ * Platform admin with no brand picked sees only the brand chooser in /admin
+ * (no listings, stays, bookings, or messages from any brand).
+ */
+export function shouldShowPickBrandOnly(input: {
+  isPlatform: boolean;
+  activeBrandId: string | null | undefined;
+}): boolean {
+  return input.isPlatform && !input.activeBrandId;
+}

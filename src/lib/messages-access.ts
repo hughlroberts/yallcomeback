@@ -31,9 +31,9 @@ export async function getMessagesViewer(): Promise<MessagesViewer | null> {
   if (viewer.isPlatform) {
     const { getAdminBrandHostId } = await import("@/lib/admin-brand-context");
     const brandId = await getAdminBrandHostId();
-    if (brandId) {
-      return { ...viewer, hostId: brandId };
-    }
+    // Only the picked brand — never the account's own home brand, so a
+    // co-host of two brands never sees one brand's inbox under the other.
+    return { ...viewer, hostId: brandId ?? null };
   }
   return viewer;
 }

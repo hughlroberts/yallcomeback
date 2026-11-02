@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getStripe, isStripeConfigured, toStripeAmount } from "@/lib/stripe";
+import { getStripe, toStripeAmount } from "@/lib/stripe";
 import { nightsBetween } from "@/lib/utils";
 
 /**
@@ -180,10 +180,4 @@ export async function markBlockInvoicePaidByStripeId(stripeInvoiceId: string) {
   });
   if (!block) return null;
   return markBlockInvoicePaid(block.id, { stripeInvoiceId });
-}
-
-export function stripeConfiguredLabel() {
-  return isStripeConfigured()
-    ? "Stripe invoices enabled"
-    : "Stripe not configured - enable in .env to email pay links";
 }

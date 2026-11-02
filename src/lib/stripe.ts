@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-import { STRIPE_LIVE_READY } from "@/lib/features";
 
 /**
  * Stripe Connect client for Yall Come Back.
@@ -34,11 +33,6 @@ export function isStripeConfigured(): boolean {
     process.env.STRIPE_ENABLED === "true" &&
     Boolean(process.env.STRIPE_SECRET_KEY?.trim())
   );
-}
-
-/** Go-live checklist: env keys plus STRIPE_LIVE_READY in features.ts. */
-export function isStripeLive(): boolean {
-  return STRIPE_LIVE_READY && isStripeConfigured();
 }
 
 /**

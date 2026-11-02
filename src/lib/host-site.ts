@@ -1,39 +1,6 @@
 import type { Host, HostSitePublishState } from "@prisma/client";
 import { slugify } from "@/lib/utils";
 
-/**
- * Hosted websites are NOT a freeform CMS.
- * Hosts only choose palette, logos, and which fixed pages are on:
- *   1. Booking (always on — home + stays)
- *   2. About (optional — includes phone, address, contact)
- *   3. Other services (optional — boats, tours, etc.)
- * Plus outbound social links (Facebook, X, Instagram, TikTok).
- */
-
-export type HostSiteConfig = Pick<
-  Host,
-  | "sitePageAbout"
-  | "sitePageServices"
-  | "siteServicesTitle"
-  | "siteServicesPath"
-  | "siteServicesBody"
-  | "siteAddress"
-  | "contactEmail"
-  | "contactPhone"
-  | "socialFacebook"
-  | "socialX"
-  | "socialInstagram"
-  | "socialTiktok"
-  | "sitePublishState"
-  | "description"
-  | "tagline"
-  | "name"
-  | "logoUrl"
-  | "primaryColor"
-  | "slug"
-  | "websiteUrl"
->;
-
 export type HostSiteNavItem = {
   href: string;
   label: string;
@@ -197,21 +164,6 @@ export function sitePublishStateLabel(state: HostSitePublishState): string {
     default:
       return state;
   }
-}
-
-/** Guest-visible when DEMO or LIVE (not UNPUBLISHED). */
-export function isHostSiteGuestVisible(
-  host: Pick<Host, "sitePublishState">,
-): boolean {
-  return (
-    host.sitePublishState === "DEMO" || host.sitePublishState === "LIVE"
-  );
-}
-
-export function isHostSiteDemo(
-  host: Pick<Host, "sitePublishState">,
-): boolean {
-  return host.sitePublishState === "DEMO";
 }
 
 export function parseSitePublishState(

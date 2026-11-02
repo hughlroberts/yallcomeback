@@ -3,7 +3,6 @@
  */
 
 import type { HostAccessLevel } from "@prisma/client";
-import type { HostAccess } from "@/lib/scope";
 
 export type HostAccessInfo = {
   /** Effective level for UI gates; platform admin acts as OWNER of selected brand */
@@ -64,11 +63,6 @@ export function resolveHostAccessInfo(access: {
   };
 }
 
-/** Listings, calendar, photos, amenities, bookings, messages, insights */
-export function canManageDayToDayHosting(info: HostAccessInfo): boolean {
-  return info.level !== undefined;
-}
-
 /** Create new listings, duplicate, setup wizard */
 export function canCreateListings(info: HostAccessInfo): boolean {
   return (
@@ -100,34 +94,4 @@ export function canManageTeam(info: HostAccessInfo): boolean {
 /** Hosting plan / subscription (platform-facing) — owner only among hosts */
 export function canManageHostingBilling(info: HostAccessInfo): boolean {
   return info.isPlatform || info.level === "OWNER";
-}
-
-/** True for any resolved host-access level (caller already gated HOST/ADMIN). */
-export function canAccessAdmin(info: HostAccessInfo): boolean {
-  return (
-    info.isPlatform ||
-    info.level === "OWNER" ||
-    info.level === "FULL" ||
-    info.level === "LIMITED"
-  );
-}
-
-/** Extend HostAccess with permission flags for pages */
-export function withHostPermissions(access: HostAccess & { hostAccess?: HostAccessLevel | null }) {
-  const info = resolveHostAccessInfo({
-    isPlatform: access.isPlatform,
-    hostId: access.hostId,
-    hostAccess: access.hostAccess,
-  });
-  return {
-    ...access,
-    hostAccess: info.level === "PLATFORM" ? null : info.level,
-    accessInfo: info,
-    canCreateListings: canCreateListings(info),
-    canDeleteListings: canDeleteListings(info),
-    canManageBrand: canManageBrand(info),
-    canViewEarnings: canViewEarnings(info),
-    canManageTeam: canManageTeam(info),
-    canManageHostingBilling: canManageHostingBilling(info),
-  };
 }

@@ -23,16 +23,6 @@ export function haversineMiles(
   return 2 * EARTH_MI * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
-/** @deprecated Use haversineMiles - kept for any external callers */
-export function haversineKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
-  return haversineMiles(lat1, lon1, lat2, lon2) * 1.609344;
-}
-
 export function hasCoordinates(
   lat: number | null | undefined,
   lng: number | null | undefined,
@@ -61,14 +51,6 @@ export function formatDistanceMiles(
     return `${rounded} mi away`;
   }
   return `${Math.round(miles)} mi away`;
-}
-
-/** @deprecated Use formatDistanceMiles */
-export function formatDistanceKm(
-  km: number | null | undefined,
-): string | null {
-  if (km == null || !Number.isFinite(km)) return null;
-  return formatDistanceMiles(km * 0.621371);
 }
 
 function normalizePlace(s: string | null | undefined) {

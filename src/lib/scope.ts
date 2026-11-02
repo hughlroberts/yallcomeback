@@ -18,27 +18,25 @@ export async function ensureHostAccess(): Promise<HostAccess> {
  * - Platform ADMIN with no brand selected: empty scope (no rows) so personal
  *   and other brands never mix by accident — pick a brand first.
  */
-export function propertyScopeWhere(access: HostAccess) {
-  if (access.hostId) return { hostId: access.hostId };
-  if (access.isPlatform) {
-    // Unscoped platform view disabled — force brand picker
-    return { hostId: "__pick_a_brand__" };
-  }
-  return { hostId: access.hostId! };
+/** Matches no host: used when no brand is picked (or a host row has no brand). */
+export const NO_BRAND_HOST_ID = "__pick_a_brand__";
+
+/** Brand id that every admin query must filter on; never null/undefined. */
+export function scopedHostId(access: Pick<HostAccess, "hostId">): string {
+  return access.hostId || NO_BRAND_HOST_ID;
 }
 
-export function locationScopeWhere(access: HostAccess) {
-  if (access.hostId) return { hostId: access.hostId };
-  if (access.isPlatform) return { hostId: "__pick_a_brand__" };
-  return { hostId: access.hostId! };
+export function propertyScopeWhere(access: Pick<HostAccess, "hostId">) {
+  return { hostId: scopedHostId(access) };
 }
 
-export function bookingScopeWhere(access: HostAccess) {
-  if (access.hostId) return { property: { hostId: access.hostId } };
-  if (access.isPlatform) {
-    return { property: { hostId: "__pick_a_brand__" } };
-  }
-  return { property: { hostId: access.hostId! } };
+export function bookingScopeWhere(access: Pick<HostAccess, "hostId">) {
+  return { property: propertyScopeWhere(access) };
+}
+
+/** Calendar blocks (bookings, manual holds, iCal busy) for the active brand. */
+export function calendarBlockScopeWhere(access: Pick<HostAccess, "hostId">) {
+  return { property: propertyScopeWhere(access) };
 }
 
 export async function assertPropertyAccess(
@@ -54,21 +52,6 @@ export async function assertPropertyAccess(
   });
   if (!property) throw new Error("Unauthorized");
   return property;
-}
-
-export async function assertLocationAccess(
-  locationId: string,
-  access?: HostAccess
-) {
-  const a = access ?? (await ensureHostAccess());
-  const location = await prisma.location.findFirst({
-    where: {
-      id: locationId,
-      ...locationScopeWhere(a),
-    },
-  });
-  if (!location) throw new Error("Unauthorized");
-  return location;
 }
 
 export async function resolveHostIdForCreate(

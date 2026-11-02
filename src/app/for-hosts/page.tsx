@@ -11,13 +11,17 @@ import {
 } from "@/lib/hosting";
 import { formatMoney } from "@/lib/utils";
 
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, seoAbsoluteUrl, seoOrigin } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
+import { forHostsServiceJsonLd } from "@/lib/json-ld";
 
 export const dynamic = "force-dynamic";
+const FOR_HOSTS_DESCRIPTION =
+  "Built by hosts at Cherokee Landing. Automate return-guest bookings, keep the familiar stay, and skip the giant platform bill.";
+
 export const metadata = pageMetadata({
   title: "Host a Place",
-  description:
-    "Built by hosts at Cherokee Landing. Automate return-guest bookings, keep the familiar stay, and skip the giant platform bill.",
+  description: FOR_HOSTS_DESCRIPTION,
   path: "/for-hosts",
 });
 
@@ -129,6 +133,13 @@ export default async function ForHostsPage({
 
   return (
     <div>
+      <JsonLd
+        data={forHostsServiceJsonLd({
+          origin: seoOrigin(),
+          url: seoAbsoluteUrl("/for-hosts"),
+          description: FOR_HOSTS_DESCRIPTION,
+        })}
+      />
       <div className="relative overflow-hidden bg-stone-900">
         <Image
           src="/seed/hero/for-hosts.jpg"

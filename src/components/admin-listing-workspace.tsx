@@ -1295,19 +1295,11 @@ export function AdminListingWorkspace({
         <>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
-                {property.title}
-              </h1>
-              <span
-                className={cn(
-                  "rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                  visibilityBadgeClass(visibility),
-                )}
-              >
-                {visibilityLabel(visibility)}
-              </span>
-            </div>
+            {/* The stay switcher beside this already shows the listing
+                title and its On / Off status; do not repeat them here. */}
+            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+              Calendar
+            </h1>
             <p className="mt-1 text-sm text-stone-500">
               Prices, availability, and busy nights from other sites.
             </p>

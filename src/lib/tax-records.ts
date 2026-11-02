@@ -14,8 +14,6 @@ export const TAX_EXPORT_DISCLAIMER =
 
 const BOOKING_STATUSES = ["CONFIRMED", "COMPLETED"] as const;
 
-export type TaxYearKind = "stay" | "payment";
-
 export type StayTaxRow = {
   bookingId: string;
   status: string;

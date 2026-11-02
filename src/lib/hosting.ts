@@ -110,24 +110,6 @@ export async function assertHostAllowsFutureWork(
   }
 }
 
-/**
- * @deprecated Marketplace is always optional for every host (paid and self-host).
- * Kept as a no-op false so older call sites that forced marketplace stop doing so.
- */
-export function hostMustListOnMarketplace(
-  host: Pick<Host, "hostingMode">,
-): boolean {
-  void host;
-  return false;
-}
-
-/** Effective marketplace switch — host flag only (optional for self-host too). */
-export function hostListsOnMarketplace(
-  host: Pick<Host, "hostingMode" | "listOnMarketplace">,
-): boolean {
-  return host.listOnMarketplace;
-}
-
 export function sitePresenceLabel(mode: HostSitePresence): string {
   switch (mode) {
     case "STAYLOCAL":
@@ -220,28 +202,6 @@ export function hostBrandWebsite(
   return url;
 }
 
-/** Whether Yall Come Back marketplace listing pages are a public surface for this host. */
-export function hostUsesPlatformListings(
-  host: Pick<Host, "sitePresence" | "hostingMode" | "listOnMarketplace">,
-): boolean {
-  // Marketplace opt-in is host-controlled for both paid and free self-host
-  if (!host.listOnMarketplace) return false;
-  if (host.sitePresence === "CUSTOM" && host.hostingMode === "PLATFORM") {
-    // Custom-only paid hosts may still opt in via listOnMarketplace
-    return true;
-  }
-  return true;
-}
-
-export function canHostEditAdmin(host: HostLiveFields): boolean {
-  // Hosts can build their site while pending review / awaiting payment
-  return (
-    host.active &&
-    host.approvalStatus !== "REJECTED" &&
-    host.approvalStatus !== "SUSPENDED"
-  );
-}
-
 export function approvalLabel(status: HostApprovalStatus): string {
   switch (status) {
     case "PENDING_REVIEW":
@@ -324,18 +284,6 @@ export function formatPlanPrice(
   return plan.pricingModel === "PER_PROPERTY"
     ? `${money}/listing/mo`
     : `${money}/mo total (whole website)`;
-}
-
-/** Guest- and host-facing sentence for the monthly fee. */
-export function formatPlanPriceLong(
-  plan: Pick<HostingPlan, "monthlyPrice" | "pricingModel">,
-  formatMoney: (n: number, symbol?: string) => string,
-): string {
-  if (plan.monthlyPrice <= 0) return "No monthly fee";
-  const money = formatMoney(plan.monthlyPrice);
-  return plan.pricingModel === "PER_PROPERTY"
-    ? `${money} per published listing / month`
-    : `${money} / month for the whole website (any number of listings)`;
 }
 
 export function isComplimentaryPlan(

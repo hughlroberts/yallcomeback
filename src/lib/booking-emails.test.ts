@@ -25,6 +25,7 @@ import {
   bookingHostRecipients,
   composeBookingCreatedEmails,
   composeCancellationEmails,
+  sendBookingConfirmedEmails,
   sendBookingCreatedEmails,
   sendCancellationEmails,
   type BookingEmailData,
@@ -261,5 +262,128 @@ describe("cancellation emails", () => {
     await sendCancellationEmails("b1", "GUEST");
     expect(db.booking.findUnique).not.toHaveBeenCalled();
     expect(mail.dispatchPlatformEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("booking confirmed emails (host marks deposit paid)", () => {
+  const paidManual = {
+    method: "MANUAL",
+    status: "PAID",
+    amount: 150,
+    notes: "Cash at the door",
+    refundedAmount: null,
+  };
+
+  function hostsFound() {
+    db.host.findUnique.mockResolvedValue({ contactEmail: "owner@motel.com" });
+    db.user.findMany.mockResolvedValue([]);
+  }
+
+  it("sends the guest the same confirmed email as the card path", async () => {
+    // confirmation claim ok; booking-time emails already went out
+    db.booking.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
+    db.booking.findUnique.mockResolvedValue(
+      booking({ status: "CONFIRMED", payments: [paidManual] }),
+    );
+    hostsFound();
+    await sendBookingConfirmedEmails("cmvxw92p0000test");
+
+    expect(db.booking.updateMany).toHaveBeenNthCalledWith(1, {
+      where: {
+        id: "cmvxw92p0000test",
+        status: "CONFIRMED",
+        confirmationEmailSentAt: null,
+      },
+      data: { confirmationEmailSentAt: expect.any(Date) },
+    });
+    expect(mail.dispatchPlatformEmail).toHaveBeenCalledTimes(1);
+    const sent = mail.dispatchPlatformEmail.mock.calls[0] as unknown as [
+      { to: string; subject: string; text: string },
+    ];
+    const cardPath = composeBookingCreatedEmails(
+      booking({ status: "CONFIRMED", payments: [paidManual] }),
+      [],
+    )[0]!;
+    expect(sent[0].to).toBe("ycb@mail.grokbot.com");
+    expect(sent[0].subject).toBe("Booking confirmed: Motel Room 2");
+    expect(sent[0].subject).toBe(cardPath.subject);
+    expect(sent[0].text).toContain("Your deposit is paid.");
+    expect(sent[0].text).toContain("Payment: Deposit $150");
+  });
+
+  it("does nothing when the confirmation was already sent", async () => {
+    db.booking.updateMany.mockResolvedValueOnce({ count: 0 });
+    await sendBookingConfirmedEmails("cmvxw92p0000test");
+    expect(db.booking.updateMany).toHaveBeenCalledTimes(1);
+    expect(db.booking.findUnique).not.toHaveBeenCalled();
+    expect(mail.dispatchPlatformEmail).not.toHaveBeenCalled();
+  });
+
+  it("also emails hosts when the booking-time emails never went out", async () => {
+    db.booking.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 1 });
+    db.booking.findUnique.mockResolvedValue(
+      booking({ status: "CONFIRMED", payments: [paidManual] }),
+    );
+    hostsFound();
+    await sendBookingConfirmedEmails("cmvxw92p0000test");
+    const subjects = mail.dispatchPlatformEmail.mock.calls.map(
+      (c) => (c as unknown as [{ subject: string }])[0].subject,
+    );
+    expect(subjects[0]).toBe("Booking confirmed: Motel Room 2");
+    expect(subjects[1]).toMatch(/^New booking: /);
+    expect(subjects).toHaveLength(2);
+  });
+
+  it("card webhook confirmation claims it, so mark-paid never duplicates", async () => {
+    // Webhook: booking-time claim ok, then confirmation claim ok.
+    db.booking.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 1 });
+    db.booking.findUnique.mockResolvedValue(
+      booking({
+        status: "CONFIRMED",
+        payments: [{ ...paidManual, method: "STRIPE", notes: null }],
+      }),
+    );
+    hostsFound();
+    await sendBookingCreatedEmails("cmvxw92p0000test");
+    expect(db.booking.updateMany).toHaveBeenNthCalledWith(2, {
+      where: {
+        id: "cmvxw92p0000test",
+        status: "CONFIRMED",
+        confirmationEmailSentAt: null,
+      },
+      data: { confirmationEmailSentAt: expect.any(Date) },
+    });
+    expect(mail.dispatchPlatformEmail).toHaveBeenCalledTimes(2);
+
+    // Later mark-paid: confirmation claim fails → nothing sent.
+    db.booking.updateMany.mockResolvedValueOnce({ count: 0 });
+    await sendBookingConfirmedEmails("cmvxw92p0000test");
+    expect(mail.dispatchPlatformEmail).toHaveBeenCalledTimes(2);
+  });
+
+  it("booking-time send skips the guest when mark-paid already confirmed", async () => {
+    db.booking.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
+    db.booking.findUnique.mockResolvedValue(
+      booking({ status: "CONFIRMED", payments: [paidManual] }),
+    );
+    hostsFound();
+    await sendBookingCreatedEmails("cmvxw92p0000test");
+    const to = mail.dispatchPlatformEmail.mock.calls.map(
+      (c) => (c as unknown as [{ to: string }])[0].to,
+    );
+    expect(to).toEqual(["owner@motel.com"]);
+  });
+
+  it("never throws", async () => {
+    db.booking.updateMany.mockRejectedValueOnce(new Error("db down"));
+    await expect(sendBookingConfirmedEmails("x")).resolves.toBeUndefined();
   });
 });

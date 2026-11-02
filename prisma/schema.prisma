@@ -730,6 +730,8 @@ model Booking {
   refundReviewNeeded Boolean   @default(false)
   /// Booking-time emails (guest request/confirmation + host new request), once
   bookingEmailsSentAt     DateTime?
+  /// Guest "booking confirmed" email (card webhook or host marks deposit paid), once
+  confirmationEmailSentAt DateTime?
   /// Cancellation emails to guest + hosts, once
   cancellationEmailsSentAt DateTime?
   createdAt       DateTime       @default(now())

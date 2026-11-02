@@ -92,15 +92,4 @@ export type AnalystSuggestion = {
   hitlPrompt?: string;
 };
 
-export type FeedbackTag =
-  | "accepted_as_is"
-  | "wrong_comps"
-  | "location_mismatch"
-  | "amenity_mismatch"
-  | "too_aggressive"
-  | "too_conservative"
-  | "capacity_ok_location_wrong"
-  | "unclear_want_hold"
-  | "other";
-
 export { type LocationTier, type QualitySignals };

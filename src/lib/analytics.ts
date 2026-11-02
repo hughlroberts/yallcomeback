@@ -185,8 +185,4 @@ export async function recordSignupStartedOnce(
   await recordAnalyticsEvent({ name, path });
 }
 
-export async function recordHostSignupStartedOnce(path: string): Promise<void> {
-  await recordSignupStartedOnce("host_signup_started", path);
-}
-
 export { ANALYTICS_EVENT_NAMES };

@@ -923,7 +923,8 @@ export async function updateProperty(formData: FormData) {
     const loc = await prisma.location.findFirst({
       where: {
         id: locationId,
-        ...(access.isPlatform ? {} : { hostId: access.hostId! }),
+        // Location must belong to the listing's own brand
+        hostId: existing.hostId,
       },
     });
     if (!loc) throw new Error("Invalid location");

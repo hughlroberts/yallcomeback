@@ -17,7 +17,10 @@ import {
   resolveHostAccessInfo,
 } from "@/lib/host-access";
 import { DASHBOARD_NEST_PREFIXES } from "@/lib/dashboard-nest";
-import { adminBrandSwitchPath } from "@/lib/admin-brand-path";
+import {
+  adminBrandSwitchPath,
+  shouldShowPickBrandOnly,
+} from "@/lib/admin-brand-path";
 import Link from "next/link";
 
 export default async function AdminLayout({
@@ -89,6 +92,10 @@ export default async function AdminLayout({
       billingHost = row;
     }
   }
+
+  // Platform admin with no brand picked: show only the brand chooser, never
+  // any brand's listings, stays, bookings, or messages.
+  const pickBrand = shouldShowPickBrandOnly({ isPlatform, activeBrandId });
 
   const accessInfo = resolveHostAccessInfo({
     isPlatform,
@@ -174,13 +181,31 @@ export default async function AdminLayout({
             .
           </p>
         ) : null}
-        <DashboardNestNav
-          canBrand={canManageBrand(accessInfo)}
-          canEarnings={canViewEarnings(accessInfo)}
-          canTeam={canManageTeam(accessInfo)}
-        />
-        {children}
+        {pickBrand ? (
+          <AdminPickBrandPanel />
+        ) : (
+          <>
+            <DashboardNestNav
+              canBrand={canManageBrand(accessInfo)}
+              canEarnings={canViewEarnings(accessInfo)}
+              canTeam={canManageTeam(accessInfo)}
+            />
+            {children}
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function AdminPickBrandPanel() {
+  return (
+    <div className="mx-auto max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-950">
+      <p className="font-semibold">Pick a brand</p>
+      <p className="mt-1">
+        Use Switch brand at the top to pick a host brand. Listings, stays,
+        bookings, and messages show for that brand only.
+      </p>
     </div>
   );
 }

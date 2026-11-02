@@ -260,10 +260,6 @@ export function getHelpArticle(slug: string): HelpArticle | undefined {
   return HELP_ARTICLES.find((a) => a.slug === slug);
 }
 
-export function articlesInCategory(categoryId: HelpCategoryId): HelpArticle[] {
-  return HELP_ARTICLES.filter((a) => a.categoryId === categoryId);
-}
-
 /** Permalink used across listing UI and footer */
 export const HELP_CANCELLATION_POLICIES_PATH = helpPath(
   "cancellation-policies"

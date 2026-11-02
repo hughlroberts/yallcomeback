@@ -267,20 +267,6 @@ export async function createProductOnConnectedAccount(opts: {
   );
 }
 
-export async function listProductsOnConnectedAccount(accountId: string) {
-  const stripeClient = requireStripeClient();
-  return stripeClient.products.list(
-    {
-      limit: 20,
-      active: true,
-      expand: ["data.default_price"],
-    },
-    {
-      stripeAccount: accountId,
-    },
-  );
-}
-
 /**
  * Direct Charge Checkout on the connected account.
  * Stripe's card fee is billed to that account — never to Yall Come Back.

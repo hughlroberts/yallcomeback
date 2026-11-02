@@ -175,12 +175,6 @@ export function upcomingPeakHolidays(from = new Date()): PeakHolidayDef[] {
 
 export const DEFAULT_PEAK_MIN_NIGHTS = 2;
 
-export function seasonHolidayKey(name: string): string | null {
-  // seasons stored as "Peak · Memorial Day 2026" or with holidayKey field
-  const m = name.match(/^Peak · (.+)$/);
-  return m ? m[1] : null;
-}
-
 export function peakSeasonName(holiday: PeakHolidayDef) {
   return `Peak · ${holiday.name}`;
 }
