@@ -62,14 +62,12 @@ export function conversationAccessWhere(
     emailVerifiedAt: viewer.emailVerifiedAt,
   });
 
-  // Platform admin brand cookie (or host account) scopes inbox to that brand
+  // Platform admin brand cookie scopes the inbox to that brand. System and
+  // brand-setup threads (Domain setup, etc.) always carry their brand's
+  // hostId, so they show only under that brand, never under another one.
   if (viewer.isPlatform && viewer.hostId) {
     return {
-      OR: [
-        { hostId: viewer.hostId },
-        { opsAlert: true, status: "OPEN" },
-        ...asGuest,
-      ],
+      OR: [{ hostId: viewer.hostId }, ...asGuest],
     };
   }
 

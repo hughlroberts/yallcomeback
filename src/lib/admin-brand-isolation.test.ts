@@ -157,3 +157,79 @@ describe("messages inbox for a co-host of two brands", () => {
     expect(hostIdsIn(conversationAccessWhere(viewer!))).toEqual([]);
   });
 });
+
+/** Tiny Prisma-where evaluator: enough for conversationAccessWhere. */
+function matches(row: Record<string, unknown>, where: unknown): boolean {
+  if (!where || typeof where !== "object") return true;
+  return Object.entries(where as Record<string, unknown>).every(([k, v]) => {
+    if (k === "OR") return (v as unknown[]).some((w) => matches(row, w));
+    if (k === "AND") return (v as unknown[]).every((w) => matches(row, w));
+    if (v && typeof v === "object" && "in" in v) {
+      return (v as { in: unknown[] }).in.includes(row[k]);
+    }
+    if (v && typeof v === "object") return false;
+    return row[k] === v;
+  });
+}
+
+describe("system and brand-setup threads stay in their brand", () => {
+  const threads = [
+    {
+      id: "c_cherokee_domain",
+      hostId: CHEROKEE,
+      opsAlert: true,
+      status: "OPEN",
+      guestUserId: null,
+      guestEmail: "domain-setup@yallcomeback.app",
+      subject: "Domain setup · Cherokee Landing · www.cherokeelanding.net",
+    },
+    {
+      id: "c_hugh_domain",
+      hostId: HUGH,
+      opsAlert: true,
+      status: "OPEN",
+      guestUserId: null,
+      guestEmail: "domain-setup@yallcomeback.app",
+      subject: "Domain setup · Hugh Roberts · www.hughroberts.example",
+    },
+    {
+      id: "c_cherokee_guest",
+      hostId: CHEROKEE,
+      opsAlert: false,
+      status: "OPEN",
+      guestUserId: "u_guest",
+      guestEmail: "guest@example.com",
+    },
+    {
+      id: "c_hugh_guest",
+      hostId: HUGH,
+      opsAlert: false,
+      status: "OPEN",
+      guestUserId: "u_guest2",
+      guestEmail: "guest2@example.com",
+    },
+  ];
+
+  async function visibleIds() {
+    const viewer = await getMessagesViewer();
+    const where = conversationAccessWhere(viewer!);
+    return threads.filter((t) => matches(t, where)).map((t) => t.id);
+  }
+
+  it("Hugh Roberts brand: no Cherokee Domain setup thread", async () => {
+    state.cookieBrand = HUGH;
+    expect(await visibleIds()).toEqual(["c_hugh_domain", "c_hugh_guest"]);
+  });
+
+  it("Cherokee brand: its own Domain setup thread, no Hugh Roberts threads", async () => {
+    state.cookieBrand = CHEROKEE;
+    expect(await visibleIds()).toEqual(["c_cherokee_domain", "c_cherokee_guest"]);
+  });
+
+  it("the brand filter has no unscoped system-alert branch", async () => {
+    state.cookieBrand = HUGH;
+    const viewer = await getMessagesViewer();
+    const json = JSON.stringify(conversationAccessWhere(viewer!));
+    expect(json).not.toContain("opsAlert");
+  });
+});
