@@ -506,7 +506,10 @@ export function buildOpenApiDocument(origin: string) {
               description:
                 "Dates unavailable, or host not ready to take a card deposit (Stripe card onboarding not finished). Body: { ok: false, error, bookUrl } — send the guest to bookUrl (the human booking page for this stay) or have them message the host.",
             },
-            "429": { description: "Too many checkout attempts" },
+            "429": {
+              description:
+                "Too many checkout attempts. Body: { ok: false, error, code, limit: { name, max, windowSeconds }, retryAfterSeconds }. The Retry-After header gives the same seconds; wait that long before you send again.",
+            },
           },
         },
       },
@@ -560,7 +563,10 @@ export function buildOpenApiDocument(origin: string) {
             "400": { description: "Invalid request (missing or bad fields)" },
             "404": { description: "Listing not on marketplace" },
             "422": { description: "Rejected as spam or too many links" },
-            "429": { description: "Rate limited (try again later)" },
+            "429": {
+              description:
+                "Rate limited. Body: { ok: false, error, code, limit: { name, max, windowSeconds }, retryAfterSeconds }. The Retry-After header gives the same seconds; wait that long before you send again. A duplicate (200, duplicate:true) does not count toward the per-IP limits.",
+            },
           },
         },
       },

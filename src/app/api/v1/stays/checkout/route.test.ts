@@ -120,11 +120,22 @@ describe("public agent checkout route", () => {
 
   it("rate limits per IP (10 per 15 minutes)", async () => {
     const statuses: number[] = [];
+    let last: Response | null = null;
     for (let i = 0; i < 11; i++) {
-      statuses.push((await POST(req("203.0.113.9", body(100 + i)))).status);
+      last = await POST(req("203.0.113.9", body(100 + i)));
+      statuses.push(last.status);
     }
     expect(statuses.slice(0, 10).every((s) => s === 200)).toBe(true);
     expect(statuses[10]).toBe(429);
+    const retry = Number(last!.headers.get("retry-after"));
+    expect(retry).toBeGreaterThan(890);
+    expect(retry).toBeLessThanOrEqual(900);
+    expect(await last!.json()).toMatchObject({
+      ok: false,
+      code: "rate_limited",
+      limit: { name: "ip_per_15_minutes", max: 10, windowSeconds: 900 },
+      retryAfterSeconds: retry,
+    });
     expect(checkout.createAgentStayCheckout).toHaveBeenCalledTimes(10);
     // A different IP is not affected.
     expect((await POST(req("203.0.113.10", body(200)))).status).toBe(200);

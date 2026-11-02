@@ -6,6 +6,7 @@ import {
   SHORT_STAY_POLICIES,
 } from "@/lib/cancellation-policies";
 import { SELF_HOST_STEPS } from "@/lib/features";
+import { RepoLinkedText } from "@/components/repo-linked-text";
 import type { HelpArticle } from "@/lib/help";
 import {
   HelpArticleLayout,
@@ -1791,7 +1792,9 @@ function SelfHost({ article }: { article: HelpArticle }) {
               <HelpH3>
                 {i + 1}. {step.title}
               </HelpH3>
-              <HelpP>{step.body}</HelpP>
+              <HelpP>
+                <RepoLinkedText text={step.body} />
+              </HelpP>
             </div>
           ))}
         </div>

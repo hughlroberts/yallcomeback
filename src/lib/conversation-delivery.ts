@@ -45,7 +45,6 @@ export async function deliverHostMessageToGuest(
       conversationId: conversation.id,
       replyPath: `/messages/${conversation.id}`,
       fromPartyName: conversation.host.name,
-      replyTo: conversation.host.contactEmail,
       threadRole: "GUEST",
     });
     if (email.attempted) {

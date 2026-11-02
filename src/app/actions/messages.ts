@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ensureHostAccess } from "@/lib/scope";
 import { incomingIp } from "@/lib/rate-limit";
-import { submitInquiry } from "@/lib/inquiries/submit";
+import { parseTrip, submitInquiry } from "@/lib/inquiries/submit";
 import {
   deliverGuestMessageToHosts,
   deliverHostMessageToGuest,
@@ -74,10 +74,25 @@ export async function startGuestConversation(
       guestPhone: String(formData.get("guestPhone") || ""),
       subject: String(formData.get("subject") || ""),
       body: String(formData.get("body") || ""),
+      trip: parseTrip({
+        checkIn: formData.get("tripCheckIn"),
+        checkOut: formData.get("tripCheckOut"),
+        guests: formData.get("tripGuests"),
+      }),
     },
     { source: "WEB", ip, sessionUserId: session?.user?.id ?? null },
   );
-  if (!result.ok) return { error: result.error };
+  if (!result.ok) {
+    if (result.status === 429) {
+      const min = Math.max(1, Math.ceil(result.retryAfterSeconds / 60));
+      const wait =
+        min >= 90
+          ? `${Math.ceil(min / 60)} hours`
+          : `${min} minute${min === 1 ? "" : "s"}`;
+      return { error: `${result.error} Try again in about ${wait}.` };
+    }
+    return { error: result.error };
+  }
 
   revalidatePath("/messages");
   revalidatePath("/admin/messages");

@@ -71,3 +71,55 @@ export function extraGuestSettingsError(input: {
   }
   return null;
 }
+
+export type ExtraGuestFieldErrors = {
+  extraGuestFee?: string;
+  extraGuestsIncluded?: string;
+};
+
+/** Plain decimal, optional minus sign: "10", "10.5", ".5", "-3". No "1e2" or "0x1". */
+const PLAIN_NUMBER = /^-?(\d+(\.\d*)?|\.\d+)$/;
+
+/**
+ * Check the two extra-guest inputs as typed (strings), for the inline errors
+ * in the listing form and for the server save. A null value means the form
+ * did not send that field (it is not checked). `badInput` is the browser's
+ * flag for text a number input cannot read (for example "abc" or "1e").
+ * Fee: empty means $0. Included: required, whole number, 1 to maxGuests.
+ */
+export function extraGuestFieldErrors(input: {
+  extraGuestFee: string | null;
+  extraGuestsIncluded: string | null;
+  maxGuests: number;
+  feeBadInput?: boolean;
+  includedBadInput?: boolean;
+}): ExtraGuestFieldErrors {
+  const errors: ExtraGuestFieldErrors = {};
+  const max = Math.max(1, Math.floor(input.maxGuests) || 1);
+
+  if (input.extraGuestFee != null || input.feeBadInput) {
+    const fee = (input.extraGuestFee ?? "").trim();
+    if (input.feeBadInput || (fee !== "" && !PLAIN_NUMBER.test(fee))) {
+      errors.extraGuestFee = "Extra guest fee must be a number, for example 10";
+    } else if (fee !== "" && Number(fee) < 0) {
+      errors.extraGuestFee = "Extra guest fee must be 0 or more";
+    }
+  }
+
+  if (input.extraGuestsIncluded != null || input.includedBadInput) {
+    const inc = (input.extraGuestsIncluded ?? "").trim();
+    if (input.includedBadInput || (inc !== "" && !PLAIN_NUMBER.test(inc))) {
+      errors.extraGuestsIncluded = "Guests in base price must be a number";
+    } else if (inc === "") {
+      errors.extraGuestsIncluded = "Enter how many guests the base price covers";
+    } else {
+      const n = Number(inc);
+      if (n < 0) {
+        errors.extraGuestsIncluded = "Guests in base price must be 1 or more";
+      } else if (!Number.isInteger(n) || n < 1 || n > max) {
+        errors.extraGuestsIncluded = `Guests in base price must be a whole number from 1 to ${max} (the listing max)`;
+      }
+    }
+  }
+  return errors;
+}

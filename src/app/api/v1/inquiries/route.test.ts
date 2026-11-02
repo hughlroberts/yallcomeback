@@ -85,6 +85,8 @@ describe("POST /api/v1/inquiries", () => {
       status: 429,
       code: "rate_limited",
       error: "Too many",
+      limit: { name: "ip_per_10_minutes", max: 5, windowSeconds: 600 },
+      retryAfterSeconds: 412,
     });
     const res = await POST(
       req({
@@ -95,10 +97,14 @@ describe("POST /api/v1/inquiries", () => {
       }),
     );
     expect(res.status).toBe(429);
+    expect(res.headers.get("retry-after")).toBe("412");
+    expect(res.headers.get("access-control-expose-headers")).toContain("Retry-After");
     expect(await res.json()).toEqual({
       ok: false,
       code: "rate_limited",
       error: "Too many",
+      limit: { name: "ip_per_10_minutes", max: 5, windowSeconds: 600 },
+      retryAfterSeconds: 412,
     });
   });
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RepoLinkedText } from "@/components/repo-linked-text";
 import {
   LICENSE,
   PRODUCT_NAME,
@@ -214,7 +215,7 @@ export default function SelfHostPage() {
                 <div>
                   <h3 className="font-semibold text-stone-900">{step.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-stone-600">
-                    {step.body}
+                    <RepoLinkedText text={step.body} />
                   </p>
                 </div>
               </li>

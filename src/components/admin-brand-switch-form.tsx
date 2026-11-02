@@ -29,7 +29,13 @@ export function AdminBrandSwitchForm({
 
   return (
     <form action={onSwitch} className="flex flex-wrap items-center gap-2">
-      <input type="hidden" name="returnTo" value={returnTo} />
+      {/* No brand picked yet (after "Change brand"): land on the dashboard,
+          /admin?brand=<slug>, not on a page of the previous brand. */}
+      <input
+        type="hidden"
+        name="returnTo"
+        value={activeHostId ? returnTo : "/admin"}
+      />
       <label className="sr-only" htmlFor="admin-brand-select">
         Host brand
       </label>

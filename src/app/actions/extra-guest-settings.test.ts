@@ -26,7 +26,10 @@ vi.mock("@/lib/upload-image", () => ({
 vi.mock("@/lib/safe-url", () => ({ assertSafeOutboundUrl: vi.fn() }));
 
 import { updatePropertyPricing } from "./properties";
-import { extraGuestSettingsError } from "@/lib/extra-guests";
+import {
+  extraGuestFieldErrors,
+  extraGuestSettingsError,
+} from "@/lib/extra-guests";
 
 function pricingForm(extra: Record<string, string>) {
   const f = new FormData();
@@ -64,19 +67,57 @@ describe("listing pricing: extra-guest fee and guests included", () => {
   });
 
   it("rejects a negative fee", async () => {
-    await expect(
-      updatePropertyPricing(pricingForm({ extraGuestFee: "-1" })),
-    ).rejects.toThrow(/0 or more/);
+    const r = await updatePropertyPricing(pricingForm({ extraGuestFee: "-1" }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.fieldErrors.extraGuestFee).toMatch(/0 or more/);
+    expect(db.prisma.property.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects a non-numeric fee (never saved as 0)", async () => {
+    for (const v of ["abc", "1e2", "0x10", "10$", "NaN", "Infinity"]) {
+      const r = await updatePropertyPricing(pricingForm({ extraGuestFee: v }));
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.fieldErrors.extraGuestFee).toMatch(/must be a number/);
+    }
     expect(db.prisma.property.update).not.toHaveBeenCalled();
   });
 
   it("rejects included guests above the listing max (4) or below 1", async () => {
     for (const v of ["5", "0", "1.5"]) {
-      await expect(
-        updatePropertyPricing(pricingForm({ extraGuestsIncluded: v })),
-      ).rejects.toThrow(/from 1 to 4/);
+      const r = await updatePropertyPricing(
+        pricingForm({ extraGuestsIncluded: v }),
+      );
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.fieldErrors.extraGuestsIncluded).toMatch(/from 1 to 4/);
     }
     expect(db.prisma.property.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects negative, non-numeric or empty included guests", async () => {
+    const cases: [string, RegExp][] = [
+      ["-2", /1 or more/],
+      ["two", /must be a number/],
+      ["2e0", /must be a number/],
+      ["", /Enter how many guests/],
+    ];
+    for (const [v, re] of cases) {
+      const r = await updatePropertyPricing(
+        pricingForm({ extraGuestsIncluded: v }),
+      );
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.fieldErrors.extraGuestsIncluded).toMatch(re);
+    }
+    expect(db.prisma.property.update).not.toHaveBeenCalled();
+  });
+
+  it("an empty fee means $0", async () => {
+    const r = await updatePropertyPricing(
+      pricingForm({ extraGuestFee: "", extraGuestsIncluded: "2" }),
+    );
+    expect(r).toEqual({ ok: true });
+    expect(db.prisma.property.update.mock.calls[0]![0].data).toMatchObject({
+      extraGuestFee: 0,
+    });
   });
 
   it("accepts included = max guests", async () => {
@@ -97,6 +138,26 @@ describe("extraGuestSettingsError", () => {
     expect(extraGuestSettingsError({ extraGuestFee: 0, extraGuestsIncluded: 1, maxGuests: 4 })).toBeNull();
     expect(extraGuestSettingsError({ extraGuestFee: 10, extraGuestsIncluded: 4, maxGuests: 4 })).toBeNull();
     expect(extraGuestSettingsError({ extraGuestFee: null, extraGuestsIncluded: null, maxGuests: 4 })).toBeNull();
+  });
+  it("extraGuestFieldErrors flags the browser's badInput (text a number input cannot read)", () => {
+    expect(
+      extraGuestFieldErrors({
+        extraGuestFee: "",
+        extraGuestsIncluded: "",
+        maxGuests: 4,
+        feeBadInput: true,
+        includedBadInput: true,
+      }),
+    ).toEqual({
+      extraGuestFee: expect.stringMatching(/must be a number/),
+      extraGuestsIncluded: expect.stringMatching(/must be a number/),
+    });
+    expect(
+      extraGuestFieldErrors({ extraGuestFee: " 12.50 ", extraGuestsIncluded: " 3 ", maxGuests: 4 }),
+    ).toEqual({});
+    expect(
+      extraGuestFieldErrors({ extraGuestFee: null, extraGuestsIncluded: null, maxGuests: 4 }),
+    ).toEqual({});
   });
   it("rejects NaN fee", () => {
     expect(extraGuestSettingsError({ extraGuestFee: NaN, extraGuestsIncluded: null, maxGuests: 4 })).toMatch(/0 or more/);

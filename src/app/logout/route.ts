@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { signOut } from "@/lib/auth";
 import { isSameOriginRequest, isSessionCookieName } from "@/lib/logout";
+import { redirectToPath } from "@/lib/path-redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,6 @@ export const dynamic = "force-dynamic";
  * appended to this response.
  */
 export async function POST(req: NextRequest) {
-  const home = new URL("/", req.nextUrl.origin);
   const sameOrigin = isSameOriginRequest({
     origin: req.headers.get("origin"),
     secFetchSite: req.headers.get("sec-fetch-site"),
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     console.error("[auth] signOut failed; clearing cookies directly", err);
   }
 
-  const res = NextResponse.redirect(home, 303);
+  const res = redirectToPath("/", 303);
   res.headers.set("Cache-Control", "no-store");
   for (const c of req.cookies.getAll()) {
     if (!isSessionCookieName(c.name)) continue;
@@ -50,6 +50,6 @@ export async function POST(req: NextRequest) {
 }
 
 /** GET just goes home; logging out needs a POST from our own page. */
-export function GET(req: NextRequest) {
-  return NextResponse.redirect(new URL("/", req.nextUrl.origin), 303);
+export function GET() {
+  return redirectToPath("/", 303);
 }

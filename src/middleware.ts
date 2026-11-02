@@ -14,7 +14,10 @@ import {
 } from "./lib/custom-domains";
 import { TENANT_SLUG_HEADER } from "./lib/tenant-constants";
 import { applyVisitorCookies } from "./lib/analytics-visitor";
-import { adminBrandParamRedirect } from "./lib/admin-brand-path";
+import {
+  adminBrandParamRedirect,
+  adminLegacyBrandParamRewrite,
+} from "./lib/admin-brand-path";
 import { ADMIN_BRAND_SLUG_COOKIE } from "./lib/admin-brand-cookie";
 import { bareDomainRedirect } from "./lib/canonical-host";
 
@@ -203,8 +206,22 @@ export default auth(async (req) => {
   });
   if (gate !== true) return gate;
 
+  // The old ?brand=1 marker: show the picked brand's slug instead (or drop
+  // it when no brand is picked), so every admin URL names its brand.
+  const legacyBrand = adminLegacyBrandParamRewrite({
+    pathname: req.nextUrl.pathname,
+    search: req.nextUrl.search,
+    role: req.auth?.user?.role,
+    slugCookie: req.cookies.get(ADMIN_BRAND_SLUG_COOKIE)?.value,
+  });
+  // GET/HEAD only: a server action POSTs to the page URL and must not be
+  // redirected.
+  if (legacyBrand && (req.method === "GET" || req.method === "HEAD")) {
+    return NextResponse.redirect(new URL(legacyBrand, req.nextUrl));
+  }
+
   // Bookmarkable brand URLs: /admin/...?brand=<slug> switches the picked
-  // brand first (only when it differs). The old ?brand=1 is left as is.
+  // brand first (only when it differs).
   const brandSwitch = adminBrandParamRedirect({
     pathname: req.nextUrl.pathname,
     search: req.nextUrl.search,

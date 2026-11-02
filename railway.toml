@@ -6,6 +6,17 @@ dockerfilePath = "Dockerfile"
 [deploy]
 # Send traffic to a new deploy only after the app answers (the schema push
 # runs before the server starts). Without this, a deploy can 502 briefly.
+#
+# Known gap: this service has the backups volume (/data/backups) attached.
+# Railway cannot run two deployments of a volume-backed service at once, so
+# the old container stops before the new one starts, and requests in that
+# window (container start + schema push + server start) get a 502. The
+# healthcheck cannot close that gap, and overlapSeconds has no effect here.
+# drainingSeconds is left at 0 on purpose: it would only lengthen the gap.
+# Zero-downtime deploys need the volume moved off the web service.
+#
+# Config-as-code (this file) is deprecated and stops being read on
+# 2026-12-01. Before then, set these in the service settings or migrate.
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"

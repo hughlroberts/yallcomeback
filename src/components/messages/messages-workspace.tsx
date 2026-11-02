@@ -1,10 +1,6 @@
 import Link from "next/link";
-import {
-  differenceInCalendarDays,
-  format,
-  isToday,
-  isYesterday,
-} from "date-fns";
+import { Fragment } from "react";
+import { format } from "date-fns";
 import {
   Phone,
   Send,
@@ -24,6 +20,10 @@ import type {
 } from "@/lib/messages-access";
 import { isViewerHostOnConversation } from "@/lib/messages-access";
 import { cn, formatTime12h } from "@/lib/utils";
+import {
+  LocalDayDivider,
+  LocalMessageTime,
+} from "@/components/messages/local-time";
 
 export type MessageDeliveryPrefs = {
   emailNotifications: boolean;
@@ -61,17 +61,6 @@ function Avatar({
       {initials(name)}
     </span>
   );
-}
-
-function listDateLabel(d: Date) {
-  if (isToday(d)) return format(d, "M/d");
-  if (isYesterday(d)) return "Yesterday";
-  if (differenceInCalendarDays(new Date(), d) < 7) return format(d, "EEE");
-  return format(d, "M/d");
-}
-
-function messageTimeLabel(d: Date) {
-  return format(d, "h:mm a");
 }
 
 function stayDateRange(checkIn: Date, checkOut: Date, nights: number) {
@@ -162,7 +151,10 @@ function ConversationList({
                           )}
                         </p>
                         <span className="shrink-0 text-xs text-stone-400">
-                          {listDateLabel(when)}
+                          <LocalMessageTime
+                            iso={new Date(when).toISOString()}
+                            kind="list"
+                          />
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-sm text-stone-500">
@@ -260,23 +252,10 @@ function ThreadPanel({
   );
   const otherName = otherPartyName(conversation, viewingAsHost);
 
-  // Group messages with day separators
-  const blocks: { dayKey: string; dayLabel: string; messages: typeof conversation.messages }[] =
-    [];
-  for (const m of conversation.messages) {
-    const dayKey = format(m.createdAt, "yyyy-MM-dd");
-    const dayLabel = isToday(m.createdAt)
-      ? "Today"
-      : isYesterday(m.createdAt)
-        ? "Yesterday"
-        : format(m.createdAt, "EEEE, MMM d");
-    const last = blocks[blocks.length - 1];
-    if (last && last.dayKey === dayKey) {
-      last.messages.push(m);
-    } else {
-      blocks.push({ dayKey, dayLabel, messages: [m] });
-    }
-  }
+  // Day dividers are drawn on the client, in the viewer's time zone.
+  const isoTimes = conversation.messages.map((m) =>
+    new Date(m.createdAt).toISOString(),
+  );
 
   return (
     <section className="flex min-w-0 flex-1 flex-col bg-white">
@@ -301,32 +280,34 @@ function ThreadPanel({
       </div>
 
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
-        {blocks.map((block) => (
-          <div key={block.dayKey}>
-            <div className="mb-4 flex justify-center">
-              <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-500">
-                {block.dayLabel}
-              </span>
-            </div>
             <div className="space-y-3">
-              {block.messages.map((m) => {
+              {conversation.messages.map((m, i) => {
+                const divider = (
+                  <LocalDayDivider
+                    iso={isoTimes[i]!}
+                    prevIso={i > 0 ? isoTimes[i - 1]! : null}
+                  />
+                );
                 const mine =
                   (viewingAsHost && m.senderRole === "HOST") ||
                   (!viewingAsHost && m.senderRole === "GUEST");
                 const isSystem = m.senderRole === "SYSTEM";
                 if (isSystem) {
                   return (
+                    <Fragment key={m.id}>
+                    {divider}
                     <div
-                      key={m.id}
                       className="mx-auto max-w-md rounded-xl bg-stone-100 px-4 py-2.5 text-center text-sm text-stone-600"
                     >
                       {m.body}
                     </div>
+                    </Fragment>
                   );
                 }
                 return (
+                  <Fragment key={m.id}>
+                  {divider}
                   <div
-                    key={m.id}
                     className={cn(
                       "flex",
                       mine ? "justify-end" : "justify-start",
@@ -347,15 +328,14 @@ function ThreadPanel({
                           mine ? "text-stone-300" : "text-stone-400",
                         )}
                       >
-                        {messageTimeLabel(m.createdAt)}
+                        <LocalMessageTime iso={isoTimes[i]!} kind="time" />
                       </p>
                     </div>
                   </div>
+                  </Fragment>
                 );
               })}
             </div>
-          </div>
-        ))}
       </div>
 
       <div className="border-t border-stone-100 p-3 sm:p-4">

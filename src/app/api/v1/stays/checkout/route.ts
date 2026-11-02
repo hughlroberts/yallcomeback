@@ -3,7 +3,11 @@ import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { createAgentStayCheckout } from "@/lib/agent/checkout";
 import { agentCheckoutBookPath } from "@/lib/agent/book-path";
 import { absoluteUrl, publicOrigin } from "@/lib/agent/origin";
-import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
+import {
+  incomingIpFromRequest,
+  rateLimitedPayload,
+  rateLimitHit,
+} from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +15,7 @@ const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Expose-Headers": "Retry-After",
 };
 
 // Public endpoint (no token). Per-IP limits stop anonymous callers from
@@ -34,29 +39,45 @@ function withCors(res: NextResponse): NextResponse {
  * Nothing is held: the calendar is written only when Stripe says the deposit
  * is paid, and the webhook refunds a payment that lost the dates to another.
  */
+function checkoutTooMany(
+  rule: { name: string; max: number; windowMs: number },
+  retryAfterSeconds: number,
+) {
+  const p = rateLimitedPayload({
+    error: "Too many checkout attempts. Try again later.",
+    code: "rate_limited",
+    limit: {
+      name: rule.name,
+      max: rule.max,
+      windowSeconds: rule.windowMs / 1000,
+    },
+    retryAfterSeconds,
+  });
+  return withCors(NextResponse.json(p.body, { status: 429, headers: p.headers }));
+}
+
 export async function POST(req: NextRequest) {
   const disabled = agentApiDisabledResponse();
   if (disabled) return disabled;
 
   const ip = incomingIpFromRequest(req);
-  if (
-    !rateLimitAllow(
-      `agent-checkout:ip:${ip}`,
-      CHECKOUT_IP_LIMIT,
-      CHECKOUT_IP_WINDOW_MS,
-    ) ||
-    !rateLimitAllow(
-      `agent-checkout:ip-day:${ip}`,
-      CHECKOUT_IP_DAILY_LIMIT,
-      CHECKOUT_IP_DAILY_WINDOW_MS,
-    )
-  ) {
-    return withCors(
-      NextResponse.json(
-        { ok: false, error: "Too many checkout attempts. Try again later." },
-        { status: 429 },
-      ),
-    );
+  const ipRules = [
+    {
+      key: `agent-checkout:ip:${ip}`,
+      name: "ip_per_15_minutes",
+      max: CHECKOUT_IP_LIMIT,
+      windowMs: CHECKOUT_IP_WINDOW_MS,
+    },
+    {
+      key: `agent-checkout:ip-day:${ip}`,
+      name: "ip_per_day",
+      max: CHECKOUT_IP_DAILY_LIMIT,
+      windowMs: CHECKOUT_IP_DAILY_WINDOW_MS,
+    },
+  ];
+  for (const rule of ipRules) {
+    const check = rateLimitHit(rule.key, rule.max, rule.windowMs);
+    if (!check.allowed) return checkoutTooMany(rule, check.retryAfterSeconds);
   }
 
   let body: Record<string, unknown> = {};
@@ -72,20 +93,18 @@ export async function POST(req: NextRequest) {
   const guestEmail = String(body.guestEmail || "")
     .trim()
     .toLowerCase();
-  if (
-    guestEmail &&
-    !rateLimitAllow(
+  if (guestEmail) {
+    const rule = {
+      name: "email_per_hour",
+      max: CHECKOUT_EMAIL_LIMIT,
+      windowMs: CHECKOUT_EMAIL_WINDOW_MS,
+    };
+    const check = rateLimitHit(
       `agent-checkout:email:${guestEmail}`,
-      CHECKOUT_EMAIL_LIMIT,
-      CHECKOUT_EMAIL_WINDOW_MS,
-    )
-  ) {
-    return withCors(
-      NextResponse.json(
-        { ok: false, error: "Too many checkout attempts. Try again later." },
-        { status: 429 },
-      ),
+      rule.max,
+      rule.windowMs,
     );
+    if (!check.allowed) return checkoutTooMany(rule, check.retryAfterSeconds);
   }
 
   // A 409 tells the agent to send the guest to bookUrl, so include it.

@@ -280,7 +280,6 @@ export async function deliverBookingAutoMessage(
     conversationId,
     replyPath: `/messages/${conversationId}`,
     fromPartyName: host.name,
-    replyTo: host.contactEmail,
     threadRole: "GUEST",
   });
 

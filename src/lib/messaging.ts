@@ -13,7 +13,11 @@
  */
 
 import { canonicalSiteOrigin, PRODUCT_NAME } from "@/lib/features";
-import { replyAddressFor, type ReplyRole } from "@/lib/inbound/reply-address";
+import {
+  parseReplyAddress,
+  replyAddressFor,
+  type ReplyRole,
+} from "@/lib/inbound/reply-address";
 
 export type ExternalMessageChannel = "SMS" | "EMAIL";
 
@@ -107,6 +111,23 @@ function withPlatformFooter(text: string, replyable = false): string {
 }
 
 /**
+ * Reply-To guard. Only our own signed thread address (reply+…@inbound) may be
+ * a Reply-To. A person's address (a host's contact email or a guest's email)
+ * must never go in a header: mail apps show Reply-To as a participant, so the
+ * other party would see it. Without a thread address there is no Reply-To,
+ * and the email shows only the recipient and the bookings@ sender.
+ */
+export function safeReplyTo(
+  candidate: string | null | undefined,
+  to: string,
+): string | null {
+  const addr = candidate?.trim().toLowerCase() || null;
+  if (!addr || !isUsableEmail(addr)) return null;
+  if (addr === to.trim().toLowerCase()) return null;
+  return parseReplyAddress(addr) ? addr : null;
+}
+
+/**
  * Ops / billing mail. Booking emails may pass a per-thread `replyTo`
  * (reply+…@inbound domain); then the footer invites a reply instead of
  * "do not reply".
@@ -143,8 +164,7 @@ export async function dispatchPlatformEmail(opts: {
       detail: "MESSAGING_EMAIL_FROM missing",
     };
   }
-  const platformReplyTo =
-    opts.replyTo && isUsableEmail(opts.replyTo) ? opts.replyTo.trim() : null;
+  const platformReplyTo = safeReplyTo(opts.replyTo, to);
   const text = withPlatformFooter(opts.text, Boolean(platformReplyTo));
   const html = `<p style="font:16px/1.5 system-ui,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</p>`;
   if (process.env.MESSAGING_EMAIL_DRY_RUN === "true") {
@@ -491,8 +511,6 @@ export async function dispatchEmail(opts: {
    * Omit for platform/ops mail.
    */
   fromPartyName?: string | null;
-  /** Reply-To: host contact (guest mail) or guest email (host mail). */
-  replyTo?: string | null;
   /**
    * Who this email goes to in the thread. When reply-by-email is on, Reply-To
    * becomes the thread's own address so the reply lands in /admin/messages.
@@ -550,10 +568,8 @@ export async function dispatchEmail(opts: {
   const threadReplyTo = opts.threadRole
     ? replyAddressFor("c", opts.conversationId, opts.threadRole)
     : null;
-  const replyToRaw =
-    threadReplyTo || opts.replyTo?.trim().toLowerCase() || null;
-  const replyTo =
-    isUsableEmail(replyToRaw) && replyToRaw !== to ? replyToRaw : null;
+  // Never a person's address: see safeReplyTo.
+  const replyTo = safeReplyTo(threadReplyTo, to);
 
   const { unsubscribeUrl } = await import("@/lib/notification-prefs");
   const { text, html } = buildEmailBodies({

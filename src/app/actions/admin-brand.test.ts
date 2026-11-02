@@ -62,7 +62,7 @@ describe("switch brand (first click must take effect)", () => {
     expect(jar.delete).toHaveBeenCalledWith("ycb_admin_brand");
     expect(jar.delete).toHaveBeenCalledWith("ycb_admin_brand_slug");
     expect(jar.set).not.toHaveBeenCalled();
-    expect(r.path).toBe("/admin?brand=1");
+    expect(r.path).toBe("/admin");
   });
 
   it("unknown brand: clears the cookie and reports not ok", async () => {
@@ -84,7 +84,7 @@ describe("switch brand (first click must take effect)", () => {
 
   it("Change brand: clears both cookies and returns to the picker", async () => {
     const r = await switchAdminBrand(form({ hostId: "", returnTo: "/admin" }));
-    expect(r).toEqual({ ok: true, path: "/admin?brand=1", hostId: null });
+    expect(r).toEqual({ ok: true, path: "/admin", hostId: null });
     expect(jar.delete).toHaveBeenCalledWith("ycb_admin_brand");
     expect(jar.delete).toHaveBeenCalledWith("ycb_admin_brand_slug");
   });

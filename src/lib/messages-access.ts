@@ -213,3 +213,54 @@ export async function getConversationForViewer(
     include: conversationThreadInclude,
   });
 }
+
+/**
+ * A thread exists but belongs to a brand other than the one picked in /admin.
+ * A platform admin (who can manage every brand) is sent through the brand
+ * switch and lands back on the thread. Hosts are always scoped to their own
+ * brand, so another brand's thread stays "not found" for them.
+ * `alreadySwitched` (the `?switched=1` marker) stops a redirect loop.
+ */
+export function threadBrandSwitchPath(input: {
+  conversationId: string;
+  isPlatform: boolean;
+  viewerHostId: string | null;
+  thread: { hostId: string; hostSlug: string } | null;
+  alreadySwitched: boolean;
+}): string | null {
+  const { conversationId, isPlatform, viewerHostId, thread } = input;
+  if (!isPlatform || input.alreadySwitched || !thread) return null;
+  if (thread.hostId === viewerHostId) return null;
+  const to = `/admin/messages/${encodeURIComponent(conversationId)}?switched=1`;
+  return `/admin/use-brand?${new URLSearchParams({ slug: thread.hostSlug, to })}`;
+}
+
+/** DB side of threadBrandSwitchPath: re-reads the admin role from the DB. */
+export async function findThreadBrandSwitch(
+  conversationId: string,
+  viewer: MessagesViewer,
+  alreadySwitched: boolean,
+): Promise<string | null> {
+  if (!viewer.isPlatform || alreadySwitched) return null;
+  const [user, convo] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: viewer.userId },
+      select: { role: true },
+    }),
+    prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { hostId: true, host: { select: { slug: true } } },
+    }),
+  ]);
+  if (user?.role !== "ADMIN") return null;
+  return threadBrandSwitchPath({
+    conversationId,
+    isPlatform: true,
+    viewerHostId: viewer.hostId,
+    thread:
+      convo?.hostId && convo.host?.slug
+        ? { hostId: convo.hostId, hostSlug: convo.host.slug }
+        : null,
+    alreadySwitched,
+  });
+}

@@ -508,6 +508,9 @@ export default async function BookPage({
             defaultPhone={signedInUser?.phone || ""}
             defaultSubject={`Question about ${formatDateRangeUS(checkIn, checkOut)}`}
             hideContactFields={isSignedIn}
+            tripCheckIn={checkIn}
+            tripCheckOut={checkOut}
+            tripGuests={guests}
           />
         </div>
       </section>

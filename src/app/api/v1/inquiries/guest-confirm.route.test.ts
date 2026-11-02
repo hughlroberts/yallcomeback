@@ -65,15 +65,26 @@ beforeEach(() => {
 });
 
 describe("API inquiry guest receipt", () => {
-  it("emails the guest the receipt once (fixed wording, no sender text)", async () => {
-    const res = await post(ask);
+  it("emails the guest the receipt once (trip, reference, quoted copy)", async () => {
+    const res = await post({
+      ...ask,
+      checkIn: "2026-12-01",
+      checkOut: "2026-12-04",
+      guests: 3,
+      message: `${ask.message} See https://evil.example/x`,
+    });
     expect(res.status).toBe(201);
     expect(mail.dispatchPlatformEmail).toHaveBeenCalledTimes(1);
     const sent = mail.dispatchPlatformEmail.mock.calls[0]![0];
     expect(sent.to).toBe("jo@example.com");
     expect(sent.subject).toBe("We sent your question to Hugh");
     expect(sent.text).toContain("Lakefront");
-    expect(sent.text).not.toContain("pontoon");
+    expect(sent.text).toContain("Dates: December 1, 2026 to December 4, 2026");
+    expect(sent.text).toContain("Guests: 3");
+    expect(sent.text).toContain("Inquiry reference: conv_api");
+    expect(sent.text).toContain("> Is the dock deep enough for a pontoon boat?");
+    // The guest's own text never carries a link to the address typed in.
+    expect(sent.text).not.toContain("evil.example");
     expect(db.conversation.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "conv_api", guestConfirmSentAt: null } }),
     );

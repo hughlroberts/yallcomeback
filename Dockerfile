@@ -40,6 +40,11 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+# Keep idle connections open longer than the hosting edge proxy does (60 s).
+# Node's default is 5 s: the proxy then reuses a socket Node already closed,
+# and the first page load after a pause fails (connection closed / 502) while
+# a retry works. The standalone server reads this value (milliseconds).
+ENV KEEP_ALIVE_TIMEOUT=65000
 
 RUN apk add --no-cache su-exec \
   && addgroup --system --gid 1001 nodejs \

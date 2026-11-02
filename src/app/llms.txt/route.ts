@@ -116,7 +116,7 @@ Content-Type: application/json
   "acceptTerms": true
 }
 
-- No token or API key. Rate limited: 10 checkouts per IP per 15 minutes, 40 per IP per day, 5 per guest email per hour (HTTP 429).
+- No token or API key. Rate limited: 10 checkouts per IP per 15 minutes, 40 per IP per day, 5 per guest email per hour (HTTP 429 with a Retry-After header and the limit named in the body).
 - Returns checkoutUrl. Send the human there to pay with a card.
 - Dates are not held. Calendar is not written until Stripe confirms the deposit is paid.
 - If another guest pays for overlapping nights first, this payment is refunded in full automatically and the booking is cancelled. Tell the guest this can happen.
@@ -142,7 +142,7 @@ Content-Type: application/json
 
 - AI agents are welcome. Send only on behalf of a real person who wants the answer; the host replies by email to guestEmail.
 - 201 {ok, inquiryId, duplicate:false, hostNotification}. Sending the same question again from the same email within 24 hours returns 200 with duplicate:true and is not re-sent.
-- Limits (HTTP 429): per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day.
+- Limits (HTTP 429): per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day. A duplicate (200, duplicate:true) does not count toward the per-IP limits. A 429 body names the limit (limit.name, limit.max, limit.windowSeconds) and gives retryAfterSeconds; the Retry-After header has the same value.
 - Rejected with 422: more than one link, links in the name or subject, HTML, link shorteners, or spam wording. message is 5 to 2000 characters.
 - Hosts and co-hosts get an email for every question right away. Only during a flood (more than 10 emails to one host in 10 minutes) are later messages grouped into one email when that 10-minute window ends.
 

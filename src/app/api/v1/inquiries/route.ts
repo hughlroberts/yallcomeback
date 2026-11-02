@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
-import { incomingIpFromRequest } from "@/lib/rate-limit";
-import { submitInquiry, tripContextLine } from "@/lib/inquiries/submit";
+import {
+  incomingIpFromRequest,
+  rateLimitedPayload,
+} from "@/lib/rate-limit";
+import {
+  parseTrip,
+  submitInquiry,
+  tripContextLine,
+} from "@/lib/inquiries/submit";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +16,11 @@ const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Expose-Headers": "Retry-After",
 };
 
-function json(body: unknown, status: number) {
-  return NextResponse.json(body, { status, headers: CORS });
+function json(body: unknown, status: number, headers: Record<string, string> = {}) {
+  return NextResponse.json(body, { status, headers: { ...CORS, ...headers } });
 }
 
 export async function OPTIONS() {
@@ -51,6 +59,7 @@ export async function POST(req: NextRequest) {
       guestPhone: typeof body.guestPhone === "string" ? body.guestPhone : null,
       subject: typeof body.subject === "string" ? body.subject : null,
       body: context && message.trim() ? `${context}\n\n${message}` : message,
+      trip: parseTrip(body),
     },
     {
       source: "AGENT",
@@ -59,6 +68,10 @@ export async function POST(req: NextRequest) {
     },
   );
 
+  if (!result.ok && result.status === 429) {
+    const p = rateLimitedPayload(result);
+    return json(p.body, 429, p.headers);
+  }
   if (!result.ok) {
     return json(
       { ok: false, error: result.error, code: result.code },

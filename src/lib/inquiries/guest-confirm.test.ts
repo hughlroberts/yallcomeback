@@ -20,7 +20,9 @@ vi.mock("@/lib/features", () => ({
 
 import {
   GUEST_CONFIRM_LIMITS,
+  GUEST_CONFIRM_MESSAGE_MAX,
   guestConfirmEmail,
+  receiptMessageCopy,
   sendGuestInquiryConfirmation,
 } from "./guest-confirm";
 
@@ -58,7 +60,65 @@ describe("guestConfirmEmail", () => {
   });
 });
 
+describe("receipt details", () => {
+  it("lists the listing, dates, guests, reference and a quoted copy", () => {
+    const m = guestConfirmEmail({
+      hostName: "Hugh",
+      propertyTitle: "Lakefront",
+      listingUrl:
+        "https://www.yallcomeback.app/marketplace/properties/lakefront",
+      reference: "conv123",
+      trip: { checkIn: "2026-12-01", checkOut: "2026-12-04", guests: 3 },
+      message: "Is the dock deep?\nWe have a pontoon.",
+    });
+    expect(m.text).toContain("Listing: Lakefront");
+    expect(m.text).toContain("Dates: December 1, 2026 to December 4, 2026");
+    expect(m.text).toContain("Guests: 3");
+    expect(m.text).toContain("Inquiry reference: conv123");
+    expect(m.text).toContain("> Is the dock deep?\n> We have a pontoon.");
+  });
+
+  it("removes links and addresses from the copy and caps its length", () => {
+    const copy = receiptMessageCopy(
+      "Win! https://evil.example/x or www.spam.test or evil.biz/p or mail a@b.co now",
+    );
+    expect(copy).toBe(
+      "Win! [link removed] or [link removed] or [link removed] or mail [link removed] now",
+    );
+    const long = receiptMessageCopy("a ".repeat(2000))!;
+    expect(long.length).toBeLessThanOrEqual(GUEST_CONFIRM_MESSAGE_MAX + 1);
+    const m = guestConfirmEmail({
+      hostName: "Hugh",
+      propertyTitle: null,
+      listingUrl: null,
+      message: "see https://evil.example",
+    });
+    expect(m.text.match(/https?:\/\/\S+/g) ?? []).toEqual([]);
+    expect(m.text).not.toContain("evil");
+  });
+
+  it("omits details it does not have", () => {
+    const m = guestConfirmEmail({
+      hostName: "Hugh",
+      propertyTitle: null,
+      listingUrl: null,
+    });
+    expect(m.text).not.toContain("Dates:");
+    expect(m.text).not.toContain("Guests:");
+    expect(m.text).not.toContain("Your message");
+  });
+});
+
 describe("sendGuestInquiryConfirmation", () => {
+  it("puts the thread id in the receipt as the reference", async () => {
+    await sendGuestInquiryConfirmation({ ...base, message: "Hello" });
+    const call = messaging.dispatchPlatformEmail.mock.calls[0] as unknown as [
+      { text: string },
+    ];
+    expect(call[0].text).toContain("Inquiry reference: c1");
+    expect(call[0].text).toContain("> Hello");
+  });
+
   it("sends once and marks the thread", async () => {
     expect(await sendGuestInquiryConfirmation(base)).toBe("sent");
     expect(db.conversation.updateMany).toHaveBeenCalledWith({

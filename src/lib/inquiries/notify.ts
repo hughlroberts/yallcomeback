@@ -301,7 +301,6 @@ async function flushOnce(
       conversationId: first.id,
       replyPath: email.replyPath,
       fromPartyName: email.single ? first.guestName : null,
-      replyTo: email.single ? first.guestEmail : null,
       // One thread: replies to a single-message email land in that thread.
       threadRole: email.single ? "HOST" : undefined,
     });

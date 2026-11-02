@@ -174,8 +174,15 @@ describe("flushHostInquiryEmails", () => {
       to: "host@x.com",
       subject: "Guest reply · Lakefront",
       threadRole: "HOST",
-      replyTo: "g1@example.com",
     });
+    // One recipient per email, and no guest address in a header.
+    const sent = dispatchEmail.mock.calls.map((c) => c[0]);
+    expect(sent.map((o) => o.to)).toEqual(["host@x.com", expect.any(String)]);
+    expect(new Set(sent.map((o) => o.to)).size).toBe(2);
+    for (const o of sent) {
+      expect(typeof o.to).toBe("string");
+      expect(o).not.toHaveProperty("replyTo");
+    }
     expect(db.inquiryNotifyState.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ windowCount: { increment: 1 } }),
@@ -232,8 +239,8 @@ describe("flushHostInquiryEmails", () => {
     expect(dispatchEmail.mock.calls[0][0]).toMatchObject({
       subject: "3 new guest messages · Hugh",
       threadRole: undefined,
-      replyTo: null,
     });
+    expect(dispatchEmail.mock.calls[0][0]).not.toHaveProperty("replyTo");
     expect(db.inquiryNotifyState.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ windowCount: 1 }),

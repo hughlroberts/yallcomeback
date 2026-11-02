@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { extraGuestSettingsError } from "@/lib/extra-guests";
+import {
+  extraGuestFieldErrors,
+  extraGuestSettingsError,
+  type ExtraGuestFieldErrors,
+} from "@/lib/extra-guests";
 import { assertHostAllowsFutureWork } from "@/lib/hosting";
 import { assertEmailVerifiedForPublish } from "@/lib/email-verified";
 import { parseTimeTo24h, slugify } from "@/lib/utils";
@@ -812,7 +816,13 @@ export async function updateListingVisibility(formData: FormData) {
 }
 
 /** Quick pricing sidebar on admin listing calendar (no redirect). */
-export async function updatePropertyPricing(formData: FormData) {
+export type PricingSaveResult =
+  | { ok: true }
+  | { ok: false; error: string; fieldErrors: ExtraGuestFieldErrors };
+
+export async function updatePropertyPricing(
+  formData: FormData,
+): Promise<PricingSaveResult> {
   const access = await ensureHostAccess();
   const id = String(formData.get("propertyId") || formData.get("id") || "");
   await assertPropertyAccess(id, access);
@@ -831,26 +841,45 @@ export async function updatePropertyPricing(formData: FormData) {
       : 2,
   );
   const defaultMinNights = Number(formData.get("defaultMinNights") || 1);
-  // Optional: only forms that send these change them.
+  // Optional: only forms that send these change them. Checked as typed, so
+  // "abc", "1e2" or "-5" is rejected (never stored as 0 or NaN). These errors
+  // come back as a result, not a throw: a thrown message is hidden in
+  // production builds, and the form shows them next to each field.
   const extraGuestFeeRaw = formData.get("extraGuestFee");
   const extraGuestsIncludedRaw = formData.get("extraGuestsIncluded");
-  const extraGuestFee =
-    extraGuestFeeRaw == null ? null : Number(extraGuestFeeRaw || 0);
-  const extraGuestsIncluded =
-    extraGuestsIncludedRaw == null
-      ? null
-      : Number(extraGuestsIncludedRaw || 2);
-  if (extraGuestFee != null || extraGuestsIncluded != null) {
+  const feeText = extraGuestFeeRaw == null ? null : String(extraGuestFeeRaw);
+  const includedText =
+    extraGuestsIncludedRaw == null ? null : String(extraGuestsIncludedRaw);
+  let extraGuestFee: number | null = null;
+  let extraGuestsIncluded: number | null = null;
+  if (feeText != null || includedText != null) {
     const current = await prisma.property.findUnique({
       where: { id },
       select: { maxGuests: true },
     });
+    const fieldErrors = extraGuestFieldErrors({
+      extraGuestFee: feeText,
+      extraGuestsIncluded: includedText,
+      maxGuests: current?.maxGuests ?? 1,
+    });
+    if (fieldErrors.extraGuestFee || fieldErrors.extraGuestsIncluded) {
+      return {
+        ok: false,
+        error:
+          fieldErrors.extraGuestFee ?? fieldErrors.extraGuestsIncluded ?? "",
+        fieldErrors,
+      };
+    }
+    extraGuestFee = feeText == null ? null : Number(feeText.trim() || 0);
+    extraGuestsIncluded =
+      includedText == null ? null : Number(includedText.trim());
+    // Same rule as before, kept as a second check.
     const err = extraGuestSettingsError({
       extraGuestFee,
       extraGuestsIncluded,
       maxGuests: current?.maxGuests ?? 1,
     });
-    if (err) throw new Error(err);
+    if (err) return { ok: false, error: err, fieldErrors: {} };
   }
 
   if (!Number.isFinite(baseNightlyRate) || baseNightlyRate < 1) {
@@ -904,6 +933,7 @@ export async function updatePropertyPricing(formData: FormData) {
   revalidatePath("/marketplace");
   revalidatePath(`/h/${property.host.slug}`);
   revalidatePath(`/h/${property.host.slug}/properties/${property.slug}`);
+  return { ok: true };
 }
 
 export async function updateProperty(formData: FormData) {

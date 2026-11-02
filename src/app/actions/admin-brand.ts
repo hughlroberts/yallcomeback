@@ -57,8 +57,11 @@ export async function switchAdminBrand(
     jar.delete(ADMIN_BRAND_COOKIE);
     jar.delete(ADMIN_BRAND_SLUG_COOKIE);
   }
-  // ?brand=<slug> makes the URL bookmarkable per brand; ?brand=1 when cleared
-  const path = `${safeReturn}?brand=${active ? encodeURIComponent(active.slug) : "1"}`;
+  // ?brand=<slug> makes the URL bookmarkable per brand. Cleared ("Change
+  // brand"): plain /admin, the brand picker (no ?brand=1 marker).
+  const path = active
+    ? `${safeReturn}?brand=${encodeURIComponent(active.slug)}`
+    : "/admin";
 
   revalidatePath("/admin", "layout");
   revalidatePath("/ops", "layout");

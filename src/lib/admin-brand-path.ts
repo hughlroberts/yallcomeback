@@ -74,3 +74,33 @@ export function adminBrandParamRedirect(input: {
   const to = `${pathname}${search}`;
   return `${ADMIN_USE_BRAND_PATH}?${new URLSearchParams({ slug, to })}`;
 }
+
+/** The old picker-refresh marker `?brand=1` (not a brand slug). */
+export function isLegacyBrandMarker(raw: string | null | undefined): boolean {
+  return (raw || "").trim() === "1";
+}
+
+/**
+ * Middleware: a platform admin opens /admin/...?brand=1 (the old marker, from
+ * a bookmark or the old "Change brand" link). Rewrite it to the picked
+ * brand's slug, or drop it when no brand is picked. Null when the URL has no
+ * `?brand=1`, or for anyone who is not a platform admin.
+ */
+export function adminLegacyBrandParamRewrite(input: {
+  pathname: string;
+  search: string;
+  role: string | null | undefined;
+  slugCookie: string | null | undefined;
+}): string | null {
+  const { pathname, search, role } = input;
+  if (role !== "ADMIN") return null;
+  if (!pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith(ADMIN_USE_BRAND_PATH)) return null;
+  const params = new URLSearchParams(search);
+  if (!isLegacyBrandMarker(params.get("brand"))) return null;
+  const slug = brandSlugFromParam(input.slugCookie);
+  if (slug) params.set("brand", slug);
+  else params.delete("brand");
+  const q = params.toString();
+  return `${pathname}${q ? `?${q}` : ""}`;
+}

@@ -48,6 +48,10 @@ import {
 import { ListingVisibilityForm } from "@/components/listing-visibility-form";
 import { cn, formatMoney } from "@/lib/utils";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
+import {
+  extraGuestFieldErrors,
+  type ExtraGuestFieldErrors,
+} from "@/lib/extra-guests";
 
 type Photo = {
   id: string;
@@ -194,9 +198,31 @@ function PricingSidebar({
   );
   const [maxPets, setMaxPets] = useState(String(property.maxPets ?? 0));
   const [minNights, setMinNights] = useState(String(property.defaultMinNights));
+  // Inline errors for the two extra-guest inputs. badInput is the browser's
+  // flag for text a number input cannot read (value is "" then).
+  const [extraGuestBad, setExtraGuestBad] = useState(false);
+  const [extraIncludedBad, setExtraIncludedBad] = useState(false);
+  const [serverFieldErrors, setServerFieldErrors] =
+    useState<ExtraGuestFieldErrors>({});
+  const extraErrors = extraGuestFieldErrors({
+    extraGuestFee: extraGuest,
+    extraGuestsIncluded: extraIncluded,
+    maxGuests: property.maxGuests,
+    feeBadInput: extraGuestBad,
+    includedBadInput: extraIncludedBad,
+  });
+  const extraGuestError =
+    extraErrors.extraGuestFee ?? serverFieldErrors.extraGuestFee;
+  const extraIncludedError =
+    extraErrors.extraGuestsIncluded ?? serverFieldErrors.extraGuestsIncluded;
 
   function savePricing() {
     setError(null);
+    setServerFieldErrors({});
+    if (extraErrors.extraGuestFee || extraErrors.extraGuestsIncluded) {
+      setError("Fix the marked fields, then save again.");
+      return;
+    }
     const form = new FormData();
     form.set("propertyId", property.id);
     form.set("baseNightlyRate", nightly);
@@ -210,7 +236,12 @@ function PricingSidebar({
     form.set("defaultMinNights", minNights);
     startTransition(async () => {
       try {
-        await updatePropertyPricing(form);
+        const result = await updatePropertyPricing(form);
+        if (!result.ok) {
+          setServerFieldErrors(result.fieldErrors);
+          setError(result.error);
+          return;
+        }
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not save pricing");
@@ -335,11 +366,28 @@ function PricingSidebar({
                   type="number"
                   min={0}
                   step="0.01"
-                  className="h-11 pl-7"
+                  className={`h-11 pl-7${extraGuestError ? " border-red-500" : ""}`}
+                  aria-invalid={extraGuestError ? true : undefined}
+                  aria-describedby={
+                    extraGuestError ? "ws-extra-guest-error" : undefined
+                  }
                   value={extraGuest}
-                  onChange={(e) => setExtraGuest(e.target.value)}
+                  onChange={(e) => {
+                    setExtraGuest(e.target.value);
+                    setExtraGuestBad(e.target.validity.badInput);
+                    setServerFieldErrors((f) => ({ ...f, extraGuestFee: undefined }));
+                  }}
                 />
               </div>
+              {extraGuestError ? (
+                <p
+                  id="ws-extra-guest-error"
+                  role="alert"
+                  className="mt-1 text-[11px] text-red-600"
+                >
+                  {extraGuestError}
+                </p>
+              ) : null}
             </div>
             <div>
               <Label
@@ -354,10 +402,30 @@ function PricingSidebar({
                 min={1}
                 max={Math.max(1, property.maxGuests)}
                 step="1"
-                className="h-11"
+                className={`h-11${extraIncludedError ? " border-red-500" : ""}`}
+                aria-invalid={extraIncludedError ? true : undefined}
+                aria-describedby={
+                  extraIncludedError ? "ws-extra-included-error" : undefined
+                }
                 value={extraIncluded}
-                onChange={(e) => setExtraIncluded(e.target.value)}
+                onChange={(e) => {
+                  setExtraIncluded(e.target.value);
+                  setExtraIncludedBad(e.target.validity.badInput);
+                  setServerFieldErrors((f) => ({
+                    ...f,
+                    extraGuestsIncluded: undefined,
+                  }));
+                }}
               />
+              {extraIncludedError ? (
+                <p
+                  id="ws-extra-included-error"
+                  role="alert"
+                  className="mt-1 text-[11px] text-red-600"
+                >
+                  {extraIncludedError}
+                </p>
+              ) : null}
             </div>
             <p className="col-span-2 text-xs text-stone-500">
               Charged per night for each guest beyond the base price&apos;s

@@ -3,6 +3,7 @@ import { MessagesWorkspace } from "@/components/messages/messages-workspace";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
+  findThreadBrandSwitch,
   getConversationForViewer,
   getMessagesViewer,
   isViewerHostOnConversation,
@@ -17,7 +18,7 @@ export default async function AdminMessageThreadPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sent?: string; prefs?: string }>;
+  searchParams: Promise<{ sent?: string; prefs?: string; switched?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -36,7 +37,13 @@ export default async function AdminMessageThreadPage({
     listConversationsForViewer(viewer),
     getConversationForViewer(id, viewer),
   ]);
-  if (!active) notFound();
+  if (!active) {
+    // Thread of another brand: a platform admin switches to that brand and
+    // lands on the thread. Everyone else gets "not in this brand".
+    const switchTo = await findThreadBrandSwitch(id, viewer, sp.switched === "1");
+    if (switchTo) redirect(switchTo);
+    notFound();
+  }
 
   const viewingAsHost = isViewerHostOnConversation(viewer, active.hostId);
   const canReply =

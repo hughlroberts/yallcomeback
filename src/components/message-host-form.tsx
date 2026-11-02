@@ -95,6 +95,10 @@ type FormProps = {
   defaultSubject?: string;
   /** When true and name/email are prefilled, hide contact fields */
   hideContactFields?: boolean;
+  /** Trip the guest picked (shown in their receipt email). */
+  tripCheckIn?: string;
+  tripCheckOut?: string;
+  tripGuests?: number;
 };
 
 /** Compact message form body (used inside the host-card dialog). */
@@ -109,6 +113,9 @@ function MessageHostFields({
   defaultPhone = "",
   defaultSubject = "",
   hideContactFields = false,
+  tripCheckIn,
+  tripCheckOut,
+  tripGuests,
   config,
   ensureConfig,
   onCancel,
@@ -200,6 +207,15 @@ function MessageHostFields({
       ) : null}
       {bookingId ? (
         <input type="hidden" name="bookingId" value={bookingId} />
+      ) : null}
+      {tripCheckIn ? (
+        <input type="hidden" name="tripCheckIn" value={tripCheckIn} />
+      ) : null}
+      {tripCheckOut ? (
+        <input type="hidden" name="tripCheckOut" value={tripCheckOut} />
+      ) : null}
+      {tripGuests ? (
+        <input type="hidden" name="tripGuests" value={String(tripGuests)} />
       ) : null}
       <input type="hidden" name={STAMP_FIELD} value={config?.stamp ?? ""} />
       {/* Honeypot: hidden from people and screen readers; bots fill it. */}
@@ -321,6 +337,9 @@ export function MessageHostButton({
   defaultPhone,
   defaultSubject,
   hideContactFields,
+  tripCheckIn,
+  tripCheckOut,
+  tripGuests,
   label = "Message host",
   className,
   variant = "primary",
@@ -445,6 +464,9 @@ export function MessageHostButton({
                   defaultPhone={defaultPhone}
                   defaultSubject={defaultSubject}
                   hideContactFields={hideContactFields}
+                  tripCheckIn={tripCheckIn}
+                  tripCheckOut={tripCheckOut}
+                  tripGuests={tripGuests}
                   config={config}
                   ensureConfig={ensureConfig}
                   onCancel={() => setOpen(false)}
