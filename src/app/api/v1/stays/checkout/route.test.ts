@@ -79,6 +79,21 @@ describe("public agent checkout route", () => {
     );
   });
 
+  it("a 409 bookUrl keeps the requested guests and pets", async () => {
+    checkout.createAgentStayCheckout.mockResolvedValueOnce({
+      ok: false,
+      status: 409,
+      error: "Dates not available",
+    });
+    const res = await POST(
+      req("203.0.113.6", { ...body(6), guests: 4, pets: 1 }),
+    );
+    expect(res.status).toBe(409);
+    expect((await res.json()).bookUrl).toMatch(
+      /\/book\/kitchenette-1\?checkIn=2026-12-01&checkOut=2026-12-03&guests=4&pets=1$/,
+    );
+  });
+
   it("a race-lost 409 (thrown) also includes bookUrl; other errors do not", async () => {
     checkout.createAgentStayCheckout.mockRejectedValueOnce(
       new Error("Dates not available"),

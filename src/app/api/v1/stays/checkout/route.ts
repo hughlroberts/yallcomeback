@@ -89,11 +89,13 @@ export async function POST(req: NextRequest) {
   }
 
   // A 409 tells the agent to send the guest to bookUrl, so include it.
-  const bookPath = agentCheckoutBookPath(
-    String(body.slug || ""),
-    String(body.checkIn || ""),
-    String(body.checkOut || ""),
-  );
+  // Keep the request's dates and party so the page restores the selection.
+  const bookPath = agentCheckoutBookPath(String(body.slug || ""), {
+    checkIn: body.checkIn,
+    checkOut: body.checkOut,
+    guests: body.guests,
+    pets: body.pets,
+  });
   const conflictExtras = (status: number) =>
     status === 409 && bookPath
       ? { bookUrl: absoluteUrl(publicOrigin(req), bookPath) }
