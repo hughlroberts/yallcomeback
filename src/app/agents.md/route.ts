@@ -76,7 +76,7 @@ Each result uses the **property** slug in \`slug\`, \`url\`, \`bookUrl\`, and \`
 
 Use \`listing.url\` and \`listing.bookUrl\` to send humans into the product. \`bookUrl\` (listing and search) keeps the dates, \`guests\` and \`pets\` you sent.
 
-Extra guests: listing and search results have \`extraGuestFee\` (per night for each guest beyond \`extraGuestsIncluded\`; 0 = none) and \`extraGuestsIncluded\`. Search \`priceEstimate.extraGuestFee\` and listing \`availability.quote.extraGuestFee\` are that charge for the whole stay, already in the total. The quote also has \`availability.quote.guests\` (guests it is priced for, capped at \`maxGuests\`) and \`availability.quote.extraGuests\` (guests charged the fee).
+Extra guests: listing and search results have \`extraGuestFee\` (per night for each guest beyond \`extraGuestsIncluded\`; 0 = none) and \`extraGuestsIncluded\`. Search \`priceEstimate.extraGuestFee\` and listing \`availability.quote.extraGuestFee\` are that charge for the whole stay, already in the total. The quote also has \`availability.quote.guests\` (guests it is priced for, capped at \`maxGuests\`) and \`availability.quote.extraGuests\` (guests beyond \`extraGuestsIncluded\`, even when the fee is 0); search \`priceEstimate.extraGuests\` is the same at the searched guest count.
 
 ### Pay-first checkout
 

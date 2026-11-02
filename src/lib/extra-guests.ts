@@ -23,7 +23,9 @@ export function extraGuestCharge(
   );
   const g = Math.max(0, Math.floor(Number(guests) || 0));
   const n = Math.max(0, Math.floor(Number(nights) || 0));
-  const extraGuests = fee > 0 ? Math.max(0, g - included) : 0;
+  // Guests beyond the included count, whether or not a fee applies (a $0 fee
+  // still has extra guests; it just charges nothing for them).
+  const extraGuests = Math.max(0, g - included);
   return {
     extraGuests,
     perGuestPerNight: fee,

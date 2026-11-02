@@ -91,21 +91,53 @@ describe("API listing quote: extra-guest fee", () => {
     });
     expect(d?.availability.quote).toMatchObject({
       guests: 4,
+      extraGuests: 2,
       extraGuestFee: 40,
     });
   });
 
-  it("charges nothing extra while the fee is $0 (unconfigured)", async () => {
+  it("counts extra guests but charges nothing while the fee is $0 (motel-room-2 live)", async () => {
     db.prisma.property.findFirst.mockResolvedValue(motel(0));
     const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
       ...dates,
       guests: 4,
     });
+    expect(d?.extraGuestsIncluded).toBe(2);
     expect(d?.availability.quote).toMatchObject({
-      extraGuests: 0,
+      guests: 4,
+      extraGuests: 2,
       extraGuestFee: 0,
       totalAmount: 185,
     });
+  });
+
+  it("lakefront-style listing (sleeps 9, 2 included, $0 fee) at guests=9 has 7 extra guests", async () => {
+    db.prisma.property.findFirst.mockResolvedValue({
+      ...motel(0),
+      slug: "lakefront-private-dock",
+      maxGuests: 9,
+    });
+    const d = await getAgentListingDetail(
+      "https://x.test",
+      "lakefront-private-dock",
+      { ...dates, guests: 9 },
+    );
+    expect(d?.availability.quote).toMatchObject({
+      guests: 9,
+      extraGuests: 7,
+      extraGuestFee: 0,
+    });
+  });
+
+  it("has no extra guests at or below the included count", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(motel(0));
+    for (const guests of [1, 2]) {
+      const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
+        ...dates,
+        guests,
+      });
+      expect(d?.availability.quote?.extraGuests).toBe(0);
+    }
   });
 });
 

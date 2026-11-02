@@ -21,6 +21,31 @@ const badDatesResponse = {
   },
 };
 
+const badSearchResponse = {
+  description:
+    "Bad search input: past_dates, checkout_not_after_checkin or invalid_date for dates, or invalid_limit (take/limit is not a whole number from 1 to 50).",
+  content: {
+    "application/json": {
+      schema: {
+        type: "object",
+        properties: {
+          ok: { type: "boolean", const: false },
+          code: {
+            type: "string",
+            enum: [
+              "past_dates",
+              "checkout_not_after_checkin",
+              "invalid_date",
+              "invalid_limit",
+            ],
+          },
+          error: { type: "string" },
+        },
+      },
+    },
+  },
+};
+
 export function buildOpenApiDocument(origin: string) {
   return {
     openapi: "3.1.0",
@@ -121,7 +146,7 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "integer", minimum: 1, maximum: 50, default: 20 },
               description:
-                "Max results (default 20, max 50; larger values are clamped; 0, negative, non-numeric or non-integer values such as 2.5 get the default 20). Alias: limit.",
+                "Max results: a whole number from 1 to 50 (default 20 when omitted). Non-integer (e.g. 2.5), non-numeric or out-of-range values (0, negative, above 50) return 400 with code invalid_limit. Alias: limit; take wins when both are sent.",
             },
             {
               name: "limit",
@@ -191,6 +216,11 @@ export function buildOpenApiDocument(origin: string) {
                                 checkIn: { type: "string", format: "date" },
                                 checkOut: { type: "string", format: "date" },
                                 nightlySubtotal: { type: "number" },
+                                extraGuests: {
+                                  type: "integer",
+                                  description:
+                                    "Guests beyond extraGuestsIncluded at the searched guest count (max(0, guests − extraGuestsIncluded)), even when extraGuestFee is 0.",
+                                },
                                 extraGuestFee: {
                                   type: "number",
                                   description:
@@ -264,7 +294,7 @@ export function buildOpenApiDocument(origin: string) {
                 },
               },
             },
-            "400": badDatesResponse,
+            "400": badSearchResponse,
           },
         },
       },
@@ -357,7 +387,7 @@ export function buildOpenApiDocument(origin: string) {
                                   extraGuests: {
                                     type: "integer",
                                     description:
-                                      "Guests charged the extra-guest fee (guests beyond extraGuestsIncluded).",
+                                      "Guests beyond extraGuestsIncluded: max(0, guests − extraGuestsIncluded), even when the listing's extraGuestFee is 0 (then the charge is 0).",
                                   },
                                   extraGuestFee: {
                                     type: "number",

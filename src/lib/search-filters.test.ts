@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { checkSearchDates, earliestTodayYmd } from "./search-dates";
 import {
   appendListingFilterParams,
+  clampGuestsInput,
   hasListingFilters,
   listingFilterLabels,
   listingFiltersFromParams,
@@ -12,6 +13,7 @@ import {
   searchGuests,
   searchLimit,
   searchLimitFromParams,
+  strictSearchLimitFromParams,
 } from "./search-filters";
 
 const params = (q: string) => {
@@ -174,5 +176,69 @@ describe("searchGuests", () => {
     expect(searchGuests(0)).toBeUndefined();
     expect(searchGuests("abc")).toBeUndefined();
     expect(searchGuests(undefined)).toBeUndefined();
+  });
+});
+
+describe("strictSearchLimitFromParams (agent API)", () => {
+  it("defaults to 20 when missing or empty and takes whole numbers 1–50", () => {
+    expect(strictSearchLimitFromParams(params(""))).toEqual({
+      ok: true,
+      take: SEARCH_DEFAULT_LIMIT,
+    });
+    expect(strictSearchLimitFromParams(params("limit="))).toEqual({
+      ok: true,
+      take: SEARCH_DEFAULT_LIMIT,
+    });
+    expect(strictSearchLimitFromParams(params("limit=1"))).toEqual({
+      ok: true,
+      take: 1,
+    });
+    expect(strictSearchLimitFromParams(params("limit=50"))).toEqual({
+      ok: true,
+      take: SEARCH_MAX_LIMIT,
+    });
+    expect(strictSearchLimitFromParams(params("take=7&limit=30"))).toEqual({
+      ok: true,
+      take: 7,
+    });
+  });
+
+  it("rejects decimals, out-of-range and junk, naming the param", () => {
+    for (const q of [
+      "limit=2.5",
+      "limit=0",
+      "limit=-3",
+      "limit=51",
+      "limit=abc",
+    ]) {
+      const r = strictSearchLimitFromParams(params(q));
+      expect(r.ok, q).toBe(false);
+      if (!r.ok) {
+        expect(r.param).toBe("limit");
+        expect(r.error).toMatch(/whole number from 1 to 50/);
+      }
+    }
+    const t = strictSearchLimitFromParams(params("take=2.5&limit=5"));
+    expect(t.ok).toBe(false);
+    if (!t.ok) expect(t.param).toBe("take");
+  });
+});
+
+describe("clampGuestsInput (guests box on blur)", () => {
+  it("clamps typed values to 1–50", () => {
+    expect(clampGuestsInput("0")).toBe("1");
+    expect(clampGuestsInput("-4")).toBe("1");
+    expect(clampGuestsInput("51")).toBe(String(SEARCH_MAX_GUESTS));
+    expect(clampGuestsInput("500")).toBe("50");
+    expect(clampGuestsInput("2.7")).toBe("2");
+    expect(clampGuestsInput(" 6 ")).toBe("6");
+    expect(clampGuestsInput("50")).toBe("50");
+    expect(clampGuestsInput("1")).toBe("1");
+  });
+
+  it("leaves empty or junk empty (Any)", () => {
+    expect(clampGuestsInput("")).toBe("");
+    expect(clampGuestsInput("  ")).toBe("");
+    expect(clampGuestsInput("abc")).toBe("");
   });
 });

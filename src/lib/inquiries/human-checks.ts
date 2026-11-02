@@ -8,15 +8,19 @@ import { createHmac, timingSafeEqual } from "crypto";
 
 import {
   HONEYPOT_FIELD,
+  MIN_FILL_MS,
   STAMP_FIELD,
   TURNSTILE_ACTION,
   TURNSTILE_FIELD,
 } from "@/lib/inquiries/fields";
 
-export { HONEYPOT_FIELD, STAMP_FIELD, TURNSTILE_ACTION, TURNSTILE_FIELD };
-
-/** Faster than this from opening the form to sending looks automated. */
-export const MIN_FILL_MS = 3_000;
+export {
+  HONEYPOT_FIELD,
+  MIN_FILL_MS,
+  STAMP_FIELD,
+  TURNSTILE_ACTION,
+  TURNSTILE_FIELD,
+};
 /** Stamps older than this need a fresh form. */
 export const MAX_STAMP_AGE_MS = 24 * 60 * 60 * 1000;
 

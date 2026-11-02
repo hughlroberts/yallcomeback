@@ -85,6 +85,44 @@ describe("extra-guest charge ($10/night beyond 2)", () => {
     expect(extraGuestCharge({}, 4, 3).total).toBe(0);
   });
 
+  it("counts extra guests as max(0, guests - included) even with a $0 fee", () => {
+    expect(
+      extraGuestCharge({ extraGuestFee: 0, extraGuestsIncluded: 2 }, 4, 2),
+    ).toEqual({ extraGuests: 2, perGuestPerNight: 0, total: 0 });
+    expect(
+      extraGuestCharge({ extraGuestFee: 0, extraGuestsIncluded: 2 }, 9, 2)
+        .extraGuests,
+    ).toBe(7);
+    expect(
+      extraGuestCharge({ extraGuestFee: 0, extraGuestsIncluded: 2 }, 2, 2)
+        .extraGuests,
+    ).toBe(0);
+  });
+
+  it("server quote and widget quote agree on extra guests with a $0 fee", () => {
+    const free = { ...motel, extraGuestFee: 0 };
+    const server = calculateQuote({
+      property: free,
+      seasons: [],
+      checkIn: new Date(checkIn + "T00:00:00"),
+      checkOut: new Date(checkOut + "T00:00:00"),
+      guests: 4,
+    });
+    const widget = computeBookingQuote({
+      ...free,
+      checkIn,
+      checkOut,
+      pets: 0,
+      guests: 4,
+      seasons: [],
+      blocked: new Set(),
+      taxLines: [],
+      taxLiabilityAcknowledged: false,
+    })!;
+    expect(server).toMatchObject({ extraGuests: 2, extraGuestFee: 0 });
+    expect(widget).toMatchObject({ extraGuests: 2, extraGuestFee: 0 });
+  });
+
   it("taxes the extra-guest charge as lodging", () => {
     const q = calculateQuote({
       property: motel,

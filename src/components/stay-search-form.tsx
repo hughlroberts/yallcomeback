@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SEARCH_MAX_GUESTS } from "@/lib/search-filters";
+import { SEARCH_MAX_GUESTS, clampGuestsInput } from "@/lib/search-filters";
 import { WhereAutocomplete } from "@/components/where-autocomplete";
 import { SearchDateRangePicker } from "@/components/search-date-range-picker";
 import { formatYmd, isYmd, nightsBetweenYmd } from "@/lib/search-dates";
@@ -199,7 +199,14 @@ export function StaySearchForm({
                   type="number"
                   min={1}
                   max={SEARCH_MAX_GUESTS}
+                  step={1}
                   defaultValue={defaultGuests}
+                  onBlur={(e) => {
+                    const next = clampGuestsInput(e.currentTarget.value);
+                    if (next !== e.currentTarget.value) {
+                      e.currentTarget.value = next;
+                    }
+                  }}
                   placeholder="Any"
                   className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
                 />

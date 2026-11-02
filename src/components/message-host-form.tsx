@@ -23,6 +23,11 @@ import {
 } from "@/lib/inquiries/fields";
 import { Button, Input, Label, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import {
+  fetchInquiryFormConfig,
+  prepareInquirySubmit,
+  type InquiryFormConfig,
+} from "@/lib/inquiries/form-config-client";
 
 /** Client-only flag without setState-in-effect (portals need the browser). */
 function useIsClient() {
@@ -34,10 +39,10 @@ function useIsClient() {
 }
 
 /** Fill-time stamp + optional Turnstile site key from /api/inquiries/form-config */
-export type InquiryFormConfig = {
-  stamp: string;
-  turnstileSiteKey: string | null;
-};
+export type { InquiryFormConfig };
+
+/** A submit that has to fetch its own stamp waits at most this long. */
+const SUBMIT_CONFIG_TIMEOUT_MS = 8_000;
 
 type TurnstileApi = {
   render: (
@@ -105,8 +110,14 @@ function MessageHostFields({
   defaultSubject = "",
   hideContactFields = false,
   config,
+  ensureConfig,
   onCancel,
-}: FormProps & { config: InquiryFormConfig | null; onCancel?: () => void }) {
+}: FormProps & {
+  config: InquiryFormConfig | null;
+  /** Loaded config, the one in flight, or a fresh fetch (null if none). */
+  ensureConfig: () => Promise<InquiryFormConfig | null>;
+  onCancel?: () => void;
+}) {
   const hideContact =
     hideContactFields && Boolean(defaultName.trim() && defaultEmail.trim());
   const aboutLabel = propertyTitle?.trim() || hostName?.trim() || "this host";
@@ -114,6 +125,10 @@ function MessageHostFields({
 
   const submit = useCallback(
     async (prev: GuestInquiryState | undefined, formData: FormData) => {
+      // The stamp request may still be pending or may have failed (e.g. a
+      // 502 during a deploy); get one now instead of blocking the button.
+      const ready = await prepareInquirySubmit(formData, { ensureConfig });
+      if (!ready.ok) return { error: ready.error };
       const result = await startGuestConversation(prev, formData);
       // Turnstile tokens are single-use; get a fresh one for the retry.
       if (result.error && widgetId.current && window.turnstile) {
@@ -121,7 +136,7 @@ function MessageHostFields({
       }
       return result;
     },
-    [],
+    [ensureConfig],
   );
   const [state, formAction, pending] = useActionState<
     GuestInquiryState | undefined,
@@ -282,8 +297,9 @@ function MessageHostFields({
             Not now
           </Button>
         ) : null}
-        <Button type="submit" disabled={pending || !config}>
-          {pending ? "Sending…" : config ? "Send message" : "Loading…"}
+        {/* Never gated on the config request, so it can't stick on "Loading…". */}
+        <Button type="submit" disabled={pending}>
+          {pending ? "Sending…" : "Send message"}
         </Button>
       </div>
     </form>
@@ -316,6 +332,32 @@ export function MessageHostButton({
   const titleId = useId();
   const [open, setOpen] = useState(false);
   const [config, setConfig] = useState<InquiryFormConfig | null>(null);
+  const configRef = useRef<InquiryFormConfig | null>(null);
+  const inflightRef = useRef<Promise<InquiryFormConfig | null> | null>(null);
+  const loadSeq = useRef(0);
+
+  // Fresh stamp each time the form opens (fill-time check). Times out instead
+  // of hanging; a late answer from an earlier open is ignored.
+  const loadConfig = useCallback((timeoutMs?: number) => {
+    const seq = ++loadSeq.current;
+    const p = fetchInquiryFormConfig({ timeoutMs }).then((c) => {
+      if (seq === loadSeq.current && c) {
+        configRef.current = c;
+        setConfig(c);
+      }
+      return seq === loadSeq.current ? c : configRef.current;
+    });
+    inflightRef.current = p;
+    return p;
+  }, []);
+
+  const ensureConfig = useCallback(async () => {
+    if (configRef.current) return configRef.current;
+    const pending = inflightRef.current;
+    const c = pending ? await pending : null;
+    if (c) return c;
+    return loadConfig(SUBMIT_CONFIG_TIMEOUT_MS);
+  }, [loadConfig]);
   const mounted = useIsClient();
   const aboutLabel = propertyTitle?.trim() || hostName?.trim() || "host";
   // Hides the mobile "Request to book" bar while this dialog is open.
@@ -341,14 +383,9 @@ export function MessageHostButton({
         type="button"
         onClick={() => {
           setOpen(true);
-          // Fresh stamp each time the form opens (fill-time check).
+          configRef.current = null;
           setConfig(null);
-          void fetch("/api/inquiries/form-config", { cache: "no-store" })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((c: InquiryFormConfig | null) =>
-              setConfig(c ?? { stamp: "", turnstileSiteKey: null }),
-            )
-            .catch(() => setConfig({ stamp: "", turnstileSiteKey: null }));
+          void loadConfig();
         }}
         className={cn(
           "inline-flex items-center justify-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet",
@@ -409,6 +446,7 @@ export function MessageHostButton({
                   defaultSubject={defaultSubject}
                   hideContactFields={hideContactFields}
                   config={config}
+                  ensureConfig={ensureConfig}
                   onCancel={() => setOpen(false)}
                 />
               </div>

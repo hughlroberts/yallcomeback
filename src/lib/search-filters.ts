@@ -148,6 +148,19 @@ export function searchGuests(
   return Math.min(SEARCH_MAX_GUESTS, n);
 }
 
+/**
+ * What the guests box should read after blur: typed values clamped to
+ * 1–SEARCH_MAX_GUESTS (decimals rounded down); empty or junk stays empty
+ * ("Any").
+ */
+export function clampGuestsInput(raw: string): string {
+  const t = raw.trim();
+  if (t === "") return "";
+  const n = Math.floor(Number(t));
+  if (!Number.isFinite(n)) return "";
+  return String(Math.min(SEARCH_MAX_GUESTS, Math.max(1, n)));
+}
+
 export const SEARCH_DEFAULT_LIMIT = 20;
 export const SEARCH_MAX_LIMIT = 50;
 
@@ -167,4 +180,32 @@ export function searchLimitFromParams(
   get: (key: string) => string | null | undefined,
 ): number {
   return searchLimit(get("take") || get("limit"));
+}
+
+export type StrictSearchLimit =
+  | { ok: true; take: number }
+  | { ok: false; param: "take" | "limit"; error: string };
+
+/**
+ * Strict `take` / `limit` for the public agent API (/api/v1/search): missing
+ * or empty gets the default (20); anything else must be a whole number from
+ * 1 to 50, otherwise the caller returns 400 invalid_limit instead of quietly
+ * using a different value. `take` wins when both are sent.
+ */
+export function strictSearchLimitFromParams(
+  get: (key: string) => string | null | undefined,
+): StrictSearchLimit {
+  const take = get("take")?.trim();
+  const param: "take" | "limit" = take ? "take" : "limit";
+  const raw = take || get("limit")?.trim();
+  if (!raw) return { ok: true, take: SEARCH_DEFAULT_LIMIT };
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > SEARCH_MAX_LIMIT) {
+    return {
+      ok: false,
+      param,
+      error: `${param} must be a whole number from 1 to ${SEARCH_MAX_LIMIT} (got "${raw.slice(0, 40)}").`,
+    };
+  }
+  return { ok: true, take: n };
 }

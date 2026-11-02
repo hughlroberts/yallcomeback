@@ -77,24 +77,36 @@ describe("GET /api/v1/search", () => {
     });
   });
 
-  it("limit: default 20, max 50, take wins; returns currentCount", async () => {
-    for (const q of [
-      "",
-      "limit=5",
-      "limit=500",
-      "limit=0",
-      "limit=-3",
-      "limit=abc",
-      "limit=2.5",
-      "take=7&limit=30",
-    ]) {
-      await get(`location=Malakoff&${q}`);
+  it("limit: default 20, whole numbers 1-50 used as-is, take wins; returns currentCount", async () => {
+    for (const q of ["", "limit=", "limit=5", "limit=50", "take=7&limit=30"]) {
+      const res = await get(`location=Malakoff&${q}`);
+      expect(res.status).toBe(200);
     }
     expect(host.searchMarketplace.mock.calls.map((c) => c[0].take)).toEqual([
-      20, 5, 50, 20, 20, 20, 20, 7,
+      20, 20, 5, 50, 7,
     ]);
     const json = await (await get("location=Malakoff")).json();
     expect(json).toMatchObject({ count: 37, returned: 0, currentCount: 37 });
+  });
+
+  it("returns 400 invalid_limit for non-integer or out-of-range limit/take", async () => {
+    for (const q of [
+      "limit=2.5",
+      "limit=0",
+      "limit=-3",
+      "limit=51",
+      "limit=500",
+      "limit=abc",
+      "take=2.5&limit=5",
+    ]) {
+      const res = await get(`location=Malakoff&${q}`);
+      expect(res.status, q).toBe(400);
+      expect(res.headers.get("access-control-allow-origin")).toBe("*");
+      const body = await res.json();
+      expect(body, q).toMatchObject({ ok: false, code: "invalid_limit" });
+      expect(body.error).toMatch(/whole number from 1 to 50/);
+    }
+    expect(host.searchMarketplace).not.toHaveBeenCalled();
   });
 
   it("caps guests at the search max in the query echo, filter and humanSearchUrl", async () => {

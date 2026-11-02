@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import { agentSearch, SearchInputError } from "@/lib/agent/search";
-import { searchLimitFromParams } from "@/lib/search-filters";
+import { strictSearchLimitFromParams } from "@/lib/search-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +48,16 @@ export async function GET(req: NextRequest) {
   const maxNightly = sp.get("maxNightly")
     ? Number(sp.get("maxNightly"))
     : undefined;
-  // Same rule as /api/marketplace/stays: default 20, max 50.
-  const take = searchLimitFromParams((k) => sp.get(k));
+  // Default 20; otherwise a whole number 1–50 or 400 invalid_limit (the
+  // browser-facing /api/marketplace/stays stays lenient and clamps instead).
+  const limit = strictSearchLimitFromParams((k) => sp.get(k));
+  if (!limit.ok) {
+    return NextResponse.json(
+      { ok: false, code: "invalid_limit", error: limit.error },
+      { status: 400, headers: { "Access-Control-Allow-Origin": "*" } },
+    );
+  }
+  const take = limit.take;
 
   const amenitiesRaw = sp.get("amenities") || sp.get("amenity");
   const amenities = amenitiesRaw

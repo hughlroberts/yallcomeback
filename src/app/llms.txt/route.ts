@@ -59,7 +59,7 @@ GET ${origin}/api/v1/search?location=Cedar%20Creek%20Lake&checkIn=${checkIn}&che
 
 - checkIn / checkOut are YYYY-MM-DD (checkout exclusive, like hotel nights).
 - Response includes listing summaries, priceEstimate when dates are free, url deep links.
-- Each listing has extraGuestFee (per night for each guest beyond extraGuestsIncluded; 0 = none) and extraGuestsIncluded (guests the base rate covers). priceEstimate.extraGuestFee is that charge for the whole stay at the searched guests, already in totalBeforeTax.
+- Each listing has extraGuestFee (per night for each guest beyond extraGuestsIncluded; 0 = none) and extraGuestsIncluded (guests the base rate covers). priceEstimate.extraGuests is max(0, guests − extraGuestsIncluded) at the searched guests (even when the fee is 0); priceEstimate.extraGuestFee is that charge for the whole stay, already in totalBeforeTax.
 - Each listing.slug is the property slug. listing.hostSlug is the host brand slug. URLs use the property slug.
 
 ## How to search (I'm flexible / ± days)
@@ -75,9 +75,9 @@ Homepage-style flexibility:
 - flexibilityDays (aliases: dateFlex, flex) is ± days on check-in, same night count.
 - When flexible without dates, each listing includes availableWindows (next free stays).
 - Use amenities=lake_view,wifi for amenity filters (comma-separated ids).
-- limit (alias take): default 20, max 50 (larger values are clamped; 0, negative, non-numeric or non-integer values such as 2.5 get the default 20).
+- limit (alias take): a whole number from 1 to 50, default 20 when omitted. Non-integer (e.g. 2.5), non-numeric, 0, negative or above-50 values return HTTP 400 {ok:false, code:"invalid_limit", error}.
 - count is every matching stay (not limited by limit; returned is how many are in this response; currentCount equals count). It matches flexibleDates.currentCount for exact dates; both are counted over at most 200 candidate stays.
-- GET ${origin}/api/marketplace/stays takes the same where, checkIn, checkOut, guests, pets, filters and limit/take (default 20, max 50) and returns the same count, returned and currentCount.
+- GET ${origin}/api/marketplace/stays takes the same where, checkIn, checkOut, guests, pets, filters and limit/take (default 20, max 50) and returns the same count, returned and currentCount (that browser endpoint clamps limit instead of returning 400).
 - Past dates (checkIn before today) or checkOut on/before checkIn return HTTP 400 with {ok:false, code, error}; code is past_dates, checkout_not_after_checkin or invalid_date. Same on GET /api/marketplace/stays.
 - humanSearchUrl and each flexibleDates searchUrl keep every active filter (guests, pets, bedrooms, price, amenities).
 - guests above 50 (the search form max) are capped at 50; query.guests and humanSearchUrl show the capped number.
@@ -91,7 +91,7 @@ Returns description, amenities, house rules, photos, host name, nextWindows, and
 
 - listing.extraGuestFee: per night for each guest beyond listing.extraGuestsIncluded (0 = none).
 - availability.quote.guests: guests the quote is priced for (your guests, capped at maxGuests; 1 if not sent).
-- availability.quote.extraGuests: guests charged the extra-guest fee. availability.quote.extraGuestFee: that charge for the whole stay, already in totalAmount.
+- availability.quote.extraGuests: guests beyond extraGuestsIncluded, max(0, guests − extraGuestsIncluded), even when the fee is 0. availability.quote.extraGuestFee: that charge for the whole stay, already in totalAmount.
 - bookUrl keeps checkIn, checkOut, guests (capped at maxGuests, like the quote) and pets, so the booking page opens on the same stay.
 - Dates follow the search rules: past, reversed or invalid dates return HTTP 400 with {ok:false, code, error} (past_dates, checkout_not_after_checkin or invalid_date).
 
