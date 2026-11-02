@@ -4,14 +4,12 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
-import {
-  hostServicesPageLabel,
-  hostSiteNavItems,
-} from "@/lib/host-site";
+import { hostServicesPageLabel, hostSiteNavItems } from "@/lib/host-site";
 import { hostSiteMarkUrl } from "@/lib/host-images";
 import { PropertyCard } from "@/components/property-card";
 import { cn } from "@/lib/utils";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
+import { publicListingText } from "@/lib/listing-public-text";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +24,7 @@ export default async function HostSiteHomePage({
 }) {
   const { hostSlug } = await params;
   const host = await getHostForGuestSite(hostSlug);
+  const hostAbout = publicListingText(host?.description);
   if (!host) notFound();
 
   const base = await hostPublicBasePath(host.slug);
@@ -193,7 +192,7 @@ export default async function HostSiteHomePage({
         )}
       </section>
 
-      {host.sitePageAbout && host.description ? (
+      {host.sitePageAbout && hostAbout ? (
         <section
           id="about"
           className="scroll-mt-24 border-t border-stone-200 bg-stone-50"
@@ -201,9 +200,9 @@ export default async function HostSiteHomePage({
           <div className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6">
             <h2 className="text-2xl font-semibold text-stone-900">About us</h2>
             <p className="mt-4 whitespace-pre-line text-stone-600 leading-relaxed">
-              {host.description.length > 420
-                ? `${host.description.slice(0, 420).trim()}…`
-                : host.description}
+              {hostAbout.length > 420
+                ? `${hostAbout.slice(0, 420).trim()}…`
+                : hostAbout}
             </p>
             <Link
               href={`${base}/about`}

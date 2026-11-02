@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { publicListingText } from "@/lib/listing-public-text";
 
 /**
  * Meta descriptions for a host's public pages (/h/[slug], /about, /stays).
@@ -44,7 +45,7 @@ export function hostHomeDescription(host: HostMetaInput): string {
 /** About (/h/[slug]/about): the host's own story, not the tagline. */
 export function hostAboutDescription(host: HostMetaInput): string {
   const name = clean(host.name);
-  const about = clean(host.description);
+  const about = clean(publicListingText(host.description));
   const text = about
     ? `About ${name}: ${about}`
     : `About ${name}: who we are, where we host, and how to reach us.`;

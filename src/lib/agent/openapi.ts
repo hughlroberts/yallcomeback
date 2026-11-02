@@ -130,7 +130,57 @@ export function buildOpenApiDocument(origin: string) {
                         description:
                           "Stays matching the current search; same as count (and flexibleDates.currentCount when present).",
                       },
-                      listings: { type: "array", items: { type: "object" } },
+                      listings: {
+                        type: "array",
+                        description:
+                          "Matching stays. Only the pricing and link fields are listed here; each item also has title, location, rooms, amenities and coverImage.",
+                        items: {
+                          type: "object",
+                          properties: {
+                            slug: { type: "string" },
+                            hostSlug: { type: "string" },
+                            baseNightlyRate: { type: "number" },
+                            cleaningFee: { type: "number" },
+                            extraGuestFee: {
+                              type: "number",
+                              description:
+                                "Per night for each guest beyond extraGuestsIncluded. 0 = no extra-guest fee.",
+                            },
+                            extraGuestsIncluded: {
+                              type: "integer",
+                              description:
+                                "Guests the base nightly rate covers.",
+                            },
+                            maxGuests: { type: "integer" },
+                            url: { type: "string" },
+                            bookUrl: {
+                              type: "string",
+                              description:
+                                "Human booking page. Keeps exact dates, guests and pets from the search.",
+                            },
+                            apiUrl: { type: "string" },
+                            priceEstimate: {
+                              type: ["object", "null"],
+                              description:
+                                "Only with exact dates. Priced for the searched guests and pets (1 guest, 0 pets when not sent).",
+                              properties: {
+                                nights: { type: "integer" },
+                                checkIn: { type: "string", format: "date" },
+                                checkOut: { type: "string", format: "date" },
+                                nightlySubtotal: { type: "number" },
+                                extraGuestFee: {
+                                  type: "number",
+                                  description:
+                                    "Extra-guest charge for the whole stay; included in totalBeforeTax.",
+                                },
+                                cleaningFee: { type: "number" },
+                                totalBeforeTax: { type: "number" },
+                                currency: { type: "string", const: "USD" },
+                              },
+                            },
+                          },
+                        },
+                      },
                       humanSearchUrl: {
                         type: "string",
                         description:
@@ -244,19 +294,92 @@ export function buildOpenApiDocument(origin: string) {
               name: "guests",
               in: "query",
               schema: { type: "integer" },
+              description:
+                "Party size for the quote (capped at maxGuests; default 1). Kept in bookUrl.",
             },
             {
               name: "pets",
               in: "query",
               schema: { type: "integer" },
+              description: "Pets for the quote. Kept in bookUrl.",
             },
           ],
           responses: {
             "200": {
-              description: "Listing detail",
+              description:
+                "Listing detail. Only the pricing and link fields are listed here; listing also has title, description, location, rooms, rules, amenities, images and host.",
               content: {
                 "application/json": {
-                  schema: { type: "object" },
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok: { type: "boolean", const: true },
+                      version: { type: "string" },
+                      listing: {
+                        type: "object",
+                        properties: {
+                          slug: { type: "string" },
+                          baseNightlyRate: { type: "number" },
+                          cleaningFee: { type: "number" },
+                          extraGuestFee: {
+                            type: "number",
+                            description:
+                              "Per night for each guest beyond extraGuestsIncluded. 0 = no extra-guest fee.",
+                          },
+                          extraGuestsIncluded: {
+                            type: "integer",
+                            description: "Guests the base nightly rate covers.",
+                          },
+                          maxGuests: { type: "integer" },
+                          url: { type: "string" },
+                          bookUrl: {
+                            type: "string",
+                            description:
+                              "Human booking page. Keeps checkIn/checkOut (when both are valid), guests and pets from the request.",
+                          },
+                          apiUrl: { type: "string" },
+                          availability: {
+                            type: "object",
+                            properties: {
+                              quote: {
+                                type: ["object", "null"],
+                                description:
+                                  "Only when checkIn and checkOut are sent.",
+                                properties: {
+                                  nights: { type: "integer" },
+                                  guests: {
+                                    type: "integer",
+                                    description:
+                                      "Guests the quote is priced for (requested guests capped at maxGuests).",
+                                  },
+                                  nightlySubtotal: { type: "number" },
+                                  extraGuests: {
+                                    type: "integer",
+                                    description:
+                                      "Guests charged the extra-guest fee (guests beyond extraGuestsIncluded).",
+                                  },
+                                  extraGuestFee: {
+                                    type: "number",
+                                    description:
+                                      "Extra-guest charge for the whole stay; included in totalAmount.",
+                                  },
+                                  cleaningFee: { type: "number" },
+                                  petFee: { type: "number" },
+                                  discountAmount: { type: "number" },
+                                  totalAmount: { type: "number" },
+                                  depositAmount: { type: "number" },
+                                  currency: { type: "string", const: "USD" },
+                                  meetsMinNights: { type: "boolean" },
+                                  error: { type: "string" },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                      docs: { type: "string" },
+                    },
+                  },
                 },
               },
             },

@@ -8,6 +8,7 @@ import { hostPublicBasePath } from "@/lib/host-base-path";
 import { hostSocialLinks } from "@/lib/host-site";
 import { pageMetadata } from "@/lib/seo";
 import { hostAboutDescription } from "@/lib/host-meta";
+import { publicListingText } from "@/lib/listing-public-text";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export default async function HostAboutPage({
 }) {
   const { hostSlug } = await params;
   const host = await getHostForGuestSite(hostSlug);
+  const hostAbout = publicListingText(host?.description);
   if (!host || !host.sitePageAbout) notFound();
 
   const base = await hostPublicBasePath(host.slug);
@@ -83,9 +85,9 @@ export default async function HostAboutPage({
               </div>
             ) : null}
             <div className="min-w-0 flex-1">
-              {host.description ? (
+              {hostAbout ? (
                 <div className="whitespace-pre-line text-base leading-relaxed text-stone-700">
-                  {host.description}
+                  {hostAbout}
                 </div>
               ) : (
                 <p className="text-stone-600 leading-relaxed">

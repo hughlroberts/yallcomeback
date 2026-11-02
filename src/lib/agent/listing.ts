@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { marketplacePropertyWhere } from "@/lib/host";
 import { calculateQuote } from "@/lib/pricing";
 import { clampGuests } from "@/lib/extra-guests";
+import { agentCheckoutBookPath } from "@/lib/agent/book-path";
+import { publicListingText } from "@/lib/listing-public-text";
 import { listingHrefWithSearch } from "@/lib/listing-href";
 import { amenityLabelById } from "@/lib/listing-amenities";
 import { parseAmenities } from "@/lib/utils";
@@ -226,7 +228,7 @@ export async function getAgentListingDetail(
     slug: property.slug,
     title: property.title,
     tagline: property.tagline,
-    description: property.description,
+    description: publicListingText(property.description),
     propertyType: property.propertyType,
     spaceType: property.spaceType,
     ...publicListingLocation(property),
@@ -266,13 +268,16 @@ export async function getAgentListingDetail(
       tagline: property.host.tagline,
     },
     url: absoluteUrl(origin, path),
+    // Keeps the requested dates, guests and pets so the /book page opens on
+    // the same stay the agent quoted.
     bookUrl: absoluteUrl(
       origin,
-      `/book/${encodeURIComponent(property.slug)}${
-        opts?.checkIn && opts?.checkOut
-          ? `?checkIn=${opts.checkIn}&checkOut=${opts.checkOut}`
-          : ""
-      }`,
+      agentCheckoutBookPath(property.slug, {
+        checkIn: opts?.checkIn,
+        checkOut: opts?.checkOut,
+        guests: opts?.guests,
+        pets: opts?.pets,
+      }) ?? `/book/${encodeURIComponent(property.slug)}`,
     ),
     apiUrl: absoluteUrl(
       origin,

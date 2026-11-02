@@ -13,6 +13,7 @@ import {
   type AvailableWindow,
 } from "@/lib/agent/availability";
 import { absoluteUrl } from "@/lib/agent/origin";
+import { agentCheckoutBookPath } from "@/lib/agent/book-path";
 import {
   appendListingFilterParams,
   normalizeListingFilters,
@@ -236,9 +237,11 @@ export async function agentSearch(
     };
     const path = listingHrefWithSearch(listingSlug, hostSlug, searchForHref);
     const url = absoluteUrl(origin, path);
+    // Same selection as the listing link: exact dates, guests and pets.
     const bookUrl = absoluteUrl(
       origin,
-      `/book/${encodeURIComponent(listingSlug)}${hasExactDates ? `?checkIn=${params.checkIn}&checkOut=${params.checkOut}` : ""}`,
+      agentCheckoutBookPath(listingSlug, searchForHref) ??
+        `/book/${encodeURIComponent(listingSlug)}`,
     );
     const apiUrl = absoluteUrl(
       origin,

@@ -69,12 +69,14 @@ Exact dates but few results? \`flexibleDates\` (null otherwise) suggests up to 4
 ### Listing detail
 
 \`\`\`
-GET ${origin}/api/v1/listings/{slug}?checkIn=${checkIn}&checkOut=${checkOut}
+GET ${origin}/api/v1/listings/{slug}?checkIn=${checkIn}&checkOut=${checkOut}&guests=4&pets=1
 \`\`\`
 
 Each result uses the **property** slug in \`slug\`, \`url\`, \`bookUrl\`, and \`apiUrl\`. The host brand slug is \`hostSlug\` (also under \`host.slug\`).
 
-Use \`listing.url\` and \`listing.bookUrl\` to send humans into the product.
+Use \`listing.url\` and \`listing.bookUrl\` to send humans into the product. \`bookUrl\` (listing and search) keeps the dates, \`guests\` and \`pets\` you sent.
+
+Extra guests: listing and search results have \`extraGuestFee\` (per night for each guest beyond \`extraGuestsIncluded\`; 0 = none) and \`extraGuestsIncluded\`. Search \`priceEstimate.extraGuestFee\` and listing \`availability.quote.extraGuestFee\` are that charge for the whole stay, already in the total. The quote also has \`availability.quote.guests\` (guests it is priced for, capped at \`maxGuests\`) and \`availability.quote.extraGuests\` (guests charged the fee).
 
 ### Pay-first checkout
 

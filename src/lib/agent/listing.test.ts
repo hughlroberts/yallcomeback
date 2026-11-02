@@ -108,3 +108,51 @@ describe("API listing quote: extra-guest fee", () => {
     });
   });
 });
+
+describe("API listing bookUrl keeps the party", () => {
+  beforeEach(() => db.prisma.property.findFirst.mockReset());
+
+  it("carries dates, guests and pets into /book", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(motel(10));
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
+      ...dates,
+      guests: 4,
+      pets: 1,
+    });
+    const u = new URL(d!.bookUrl);
+    expect(u.origin + u.pathname).toBe("https://x.test/book/motel-room-2");
+    expect(Object.fromEntries(u.searchParams)).toEqual({
+      checkIn: "2030-03-04",
+      checkOut: "2030-03-06",
+      guests: "4",
+      pets: "1",
+    });
+  });
+
+  it("keeps guests and pets without dates, and drops junk values", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(motel(10));
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
+      checkIn: "2030-03-04",
+      checkOut: "soon",
+      guests: 3,
+      pets: Number("x"),
+    });
+    expect(d!.bookUrl).toBe("https://x.test/book/motel-room-2?guests=3");
+  });
+
+  it("is the bare book page with nothing requested", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(motel(10));
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2");
+    expect(d!.bookUrl).toBe("https://x.test/book/motel-room-2");
+  });
+
+  it("hides an import note in the API description", async () => {
+    db.prisma.property.findFirst.mockResolvedValue({
+      ...motel(10),
+      description:
+        "Lake house.\r\n\r\n—\r\nImported from Airbnb\r\nhttps://www.airbnb.com/rooms/1",
+    });
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2");
+    expect(d!.description).toBe("Lake house.");
+  });
+});

@@ -4,6 +4,7 @@ import type { HostSitePresence, HostingMode } from "@prisma/client";
 import { hostBrandWebsite } from "@/lib/hosting";
 import { hostProfileFaceUrl } from "@/lib/host-images";
 import { MessageHostButton } from "@/components/message-host-form";
+import { publicListingText } from "@/lib/listing-public-text";
 
 export type MeetYourHostProps = {
   host: {
@@ -16,7 +17,8 @@ export type MeetYourHostProps = {
     websiteUrl?: string | null;
     sitePresence?: HostSitePresence | null;
     hostingMode?: HostingMode | null;
-    createdAt: Date | string;
+    /** Unused: the card no longer shows years hosting. */
+    createdAt?: Date | string;
   };
   /** Personal photo for the host face (preferred over logo) */
   profileAvatarUrl?: string | null;
@@ -29,14 +31,6 @@ export type MeetYourHostProps = {
   propertyTitle?: string;
   className?: string;
 };
-
-function yearsHosting(createdAt: Date | string): number {
-  const start = new Date(createdAt);
-  if (Number.isNaN(start.getTime())) return 1;
-  const years =
-    (Date.now() - start.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
-  return Math.max(1, Math.floor(years) || 1);
-}
 
 function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] || name;
@@ -55,7 +49,7 @@ export function MeetYourHost({
   className = "",
 }: MeetYourHostProps) {
   const display = firstName(host.name);
-  const years = yearsHosting(host.createdAt);
+  const about = publicListingText(host.description);
   const initials = host.name
     .split(/\s+/)
     .filter(Boolean)
@@ -76,22 +70,16 @@ export function MeetYourHost({
       value: String(staysHosted),
       label: staysHosted === 1 ? "Stay hosted" : "Stays hosted",
     });
-  } else if (listingCount > 0) {
+  }
+  if (listingCount > 0) {
     stats.push({
       value: String(listingCount),
       label: listingCount === 1 ? "Listing" : "Listings",
     });
   }
-  stats.push({
-    value: String(years),
-    label: years === 1 ? "Year hosting" : "Years hosting",
-  });
 
   return (
-    <section
-      className={className}
-      aria-labelledby="meet-your-host-heading"
-    >
+    <section className={className} aria-labelledby="meet-your-host-heading">
       <h2
         id="meet-your-host-heading"
         className="text-2xl font-semibold tracking-tight text-stone-900"
@@ -135,16 +123,21 @@ export function MeetYourHost({
             </div>
           </div>
 
-          <dl className="mt-8 space-y-3 border-t border-stone-100 pt-6">
-            {stats.map((s) => (
-              <div key={s.label} className="flex items-baseline justify-between gap-4">
-                <dt className="text-sm text-stone-500">{s.label}</dt>
-                <dd className="text-base font-semibold text-stone-900">
-                  {s.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          {stats.length > 0 ? (
+            <dl className="mt-8 space-y-3 border-t border-stone-100 pt-6">
+              {stats.map((s) => (
+                <div
+                  key={s.label}
+                  className="flex items-baseline justify-between gap-4"
+                >
+                  <dt className="text-sm text-stone-500">{s.label}</dt>
+                  <dd className="text-base font-semibold text-stone-900">
+                    {s.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>
 
         {/* Host details */}
@@ -172,11 +165,9 @@ export function MeetYourHost({
             </div>
           ) : null}
 
-          {host.description ? (
+          {about ? (
             <p className="mt-8 max-w-xl whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed text-stone-600">
-              {host.description.length > 420
-                ? `${host.description.slice(0, 420).trim()}…`
-                : host.description}
+              {about.length > 420 ? `${about.slice(0, 420).trim()}…` : about}
             </p>
           ) : null}
 
@@ -222,8 +213,8 @@ export function MeetYourHost({
           <p className="mt-8 flex max-w-xl items-start gap-2.5 text-sm leading-relaxed text-stone-500">
             <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
-              To help protect your payment, always book and message through
-              Yall Come Back - never send money or personal payment details outside
+              To help protect your payment, always book and message through Yall
+              Come Back - never send money or personal payment details outside
               the platform.
             </span>
           </p>

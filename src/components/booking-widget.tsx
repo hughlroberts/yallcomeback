@@ -205,235 +205,257 @@ export function BookingWidget({
       : null;
 
   return (
+    // Desktop (lg): the card sits in a sticky column under the header (top-28),
+    // so cap it at the viewport: price stays on top, the calendar / guests /
+    // quote scroll inside, and the book button stays pinned at the bottom.
+    // Mobile keeps the plain full-height card.
     <div
       id="reserve"
-      className="scroll-mt-24 min-w-0 overflow-x-clip rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5"
+      data-testid="booking-card"
+      className="scroll-mt-24 min-w-0 overflow-x-clip rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5 lg:flex lg:max-h-[calc(100vh-8.5rem)] lg:flex-col lg:overflow-hidden lg:p-0"
     >
-      <p className="text-xl font-semibold text-stone-900">
-        {formatMoney(baseNightlyRate, currencySymbol)}
-        <span className="text-base font-normal text-stone-500"> night</span>
-      </p>
-      <p className="mt-1 text-xs text-stone-500">
-        {/* Static per listing: this line sits above the calendar, so it must
+      <div className="lg:shrink-0 lg:border-b lg:border-stone-100 lg:px-5 lg:pb-3 lg:pt-4">
+        <p className="text-xl font-semibold text-stone-900">
+          {formatMoney(baseNightlyRate, currencySymbol)}
+          <span className="text-base font-normal text-stone-500"> night</span>
+        </p>
+        <p className="mt-1 text-xs text-stone-500">
+          {/* Static per listing: this line sits above the calendar, so it must
             not change length (and wrap) as dates are tapped. A longer holiday
             minimum is shown under the calendar instead. */}
-        Min {defaultMinNights} night{defaultMinNights === 1 ? "" : "s"}
-        {cleaningFee > 0
-          ? ` · cleaning ${formatMoney(cleaningFee, currencySymbol)}`
-          : ""}
-        {extraGuestFee > 0
-          ? ` · ${money(extraGuestFee)}/night per guest after ${extraGuestsIncluded}`
-          : ""}
-        {petsAllowed && petFee > 0
-          ? ` · pet fee ${formatPetFeeRate(petFee, petFeeUnit, money)}`
-          : petsAllowed
-            ? maxPets > 0
-              ? ` · pets OK (max ${maxPets})`
-              : " · pets OK"
+          Min {defaultMinNights} night{defaultMinNights === 1 ? "" : "s"}
+          {cleaningFee > 0
+            ? ` · cleaning ${formatMoney(cleaningFee, currencySymbol)}`
             : ""}
-      </p>
-
-      <div className="mt-4">
-        <AvailabilityCalendar
-          blockedDates={blockedDates}
-          seasonRanges={seasons.map((s) => ({
-            name: s.name,
-            startDate: s.startDate,
-            endDate: s.endDate,
-          }))}
-          title="Select dates"
-          monthsToShow={2}
-          compact
-          selectable
-          todayYmd={todayYmd}
-          checkIn={checkIn}
-          checkOut={checkOut}
-          onChange={({ checkIn: nextIn, checkOut: nextOut }) => {
-            setCheckIn(nextIn);
-            setCheckOut(nextOut);
-            setError(null);
-          }}
-        />
-        {specialMinNights ? (
-          <p className="mt-2 text-xs text-amber-800">
-            These dates need at least {specialMinNights} nights (holiday /
-            special dates).
-          </p>
-        ) : null}
+          {extraGuestFee > 0
+            ? ` · ${money(extraGuestFee)}/night per guest after ${extraGuestsIncluded}`
+            : ""}
+          {petsAllowed && petFee > 0
+            ? ` · pet fee ${formatPetFeeRate(petFee, petFeeUnit, money)}`
+            : petsAllowed
+              ? maxPets > 0
+                ? ` · pets OK (max ${maxPets})`
+                : " · pets OK"
+              : ""}
+        </p>
       </div>
 
-      <div className="mt-3 overflow-hidden rounded-xl border border-stone-300">
-        <label className="block p-3">
-          <span className="block text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-            Guests
-          </span>
-          <select
-            value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
-            className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"
-          >
-            {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>
-                {n} guest{n === 1 ? "" : "s"}
-              </option>
-            ))}
-          </select>
-        </label>
-        {petsAllowed ? (
-          <label className="block border-t border-stone-300 p-3">
+      <div
+        data-testid="booking-card-body"
+        className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:px-5 lg:pb-3"
+      >
+        <div className="mt-4 lg:mt-3">
+          <AvailabilityCalendar
+            blockedDates={blockedDates}
+            seasonRanges={seasons.map((s) => ({
+              name: s.name,
+              startDate: s.startDate,
+              endDate: s.endDate,
+            }))}
+            title="Select dates"
+            monthsToShow={2}
+            compact
+            selectable
+            todayYmd={todayYmd}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            onChange={({ checkIn: nextIn, checkOut: nextOut }) => {
+              setCheckIn(nextIn);
+              setCheckOut(nextOut);
+              setError(null);
+            }}
+          />
+          {specialMinNights ? (
+            <p className="mt-2 text-xs text-amber-800">
+              These dates need at least {specialMinNights} nights (holiday /
+              special dates).
+            </p>
+          ) : null}
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-xl border border-stone-300">
+          <label className="block p-3">
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-              Pets (dogs)
-              {maxPets > 0 ? ` · max ${maxPets}` : ""}
+              Guests
             </span>
             <select
-              value={Math.min(pets, petCap)}
-              onChange={(e) => setPets(Number(e.target.value))}
+              value={guests}
+              onChange={(e) => setGuests(Number(e.target.value))}
               className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"
             >
-              {Array.from({ length: petCap + 1 }, (_, n) => n).map((n) => {
-                const feeHint =
-                  n > 0 && petFee > 0
-                    ? ` (+${
-                        petFeeUnit === "PER_PET"
-                          ? money(petFee * n)
-                          : money(petFee)
-                      } ${petFeeUnitLabel(petFeeUnit)})`
-                    : "";
-                return (
-                  <option key={n} value={n}>
-                    {n === 0
-                      ? "No pets"
-                      : `${n} pet${n === 1 ? "" : "s"}${feeHint}`}
-                  </option>
-                );
-              })}
+              {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n} guest{n === 1 ? "" : "s"}
+                </option>
+              ))}
             </select>
           </label>
-        ) : null}
+          {petsAllowed ? (
+            <label className="block border-t border-stone-300 p-3">
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                Pets (dogs)
+                {maxPets > 0 ? ` · max ${maxPets}` : ""}
+              </span>
+              <select
+                value={Math.min(pets, petCap)}
+                onChange={(e) => setPets(Number(e.target.value))}
+                className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"
+              >
+                {Array.from({ length: petCap + 1 }, (_, n) => n).map((n) => {
+                  const feeHint =
+                    n > 0 && petFee > 0
+                      ? ` (+${
+                          petFeeUnit === "PER_PET"
+                            ? money(petFee * n)
+                            : money(petFee)
+                        } ${petFeeUnitLabel(petFeeUnit)})`
+                      : "";
+                  return (
+                    <option key={n} value={n}>
+                      {n === 0
+                        ? "No pets"
+                        : `${n} pet${n === 1 ? "" : "s"}${feeHint}`}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+          ) : null}
+        </div>
+
+        {quote && !("error" in quote && quote.error) && (
+          <div className="mt-4 space-y-2 text-sm text-stone-600">
+            <div className="flex justify-between">
+              <span>
+                Lodging × {(quote as { nights: number }).nights} nights
+              </span>
+              <span>
+                {formatMoney(
+                  (quote as { subtotal: number }).subtotal,
+                  currencySymbol,
+                )}
+              </span>
+            </div>
+            {(quote as { discountAmount?: number }).discountAmount ? (
+              <div className="flex justify-between text-emerald-700">
+                <span>
+                  {(quote as { discountLabel?: string | null }).discountLabel ||
+                    "Discount"}
+                </span>
+                <span>
+                  −
+                  {formatMoney(
+                    (quote as { discountAmount: number }).discountAmount,
+                    currencySymbol,
+                  )}
+                </span>
+              </div>
+            ) : null}
+            {(quote as { extraGuestFee?: number }).extraGuestFee ? (
+              <div className="flex justify-between">
+                <span>
+                  Extra guests ({(quote as { extraGuests: number }).extraGuests}{" "}
+                  × {money(extraGuestFee)} ×{" "}
+                  {(quote as { nights: number }).nights} nights)
+                </span>
+                <span>
+                  {money((quote as { extraGuestFee: number }).extraGuestFee)}
+                </span>
+              </div>
+            ) : null}
+            {cleaningFee > 0 && (
+              <div className="flex justify-between">
+                <span>Cleaning fee</span>
+                <span>{formatMoney(cleaningFee, currencySymbol)}</span>
+              </div>
+            )}
+            {(quote as { petFee?: number }).petFee ? (
+              <div className="flex justify-between">
+                <span>
+                  Pet fee
+                  {(quote as { pets?: number; petFeeUnit?: string }).pets &&
+                  (quote as { petFeeUnit?: string }).petFeeUnit === "PER_PET"
+                    ? ` (${(quote as { pets: number }).pets} × ${money(petFee)})`
+                    : petFee > 0
+                      ? ` (${petFeeUnitLabel(petFeeUnit)})`
+                      : ""}
+                </span>
+                <span>
+                  {formatMoney(
+                    (quote as { petFee: number }).petFee,
+                    currencySymbol,
+                  )}
+                </span>
+              </div>
+            ) : null}
+            {(
+              quote as {
+                taxLines?: {
+                  name: string;
+                  ratePercent: number;
+                  amount: number;
+                }[];
+              }
+            ).taxLines?.map((t) => (
+              <div
+                key={`${t.name}-${t.ratePercent}`}
+                className="flex justify-between"
+              >
+                <span>
+                  {t.name} ({t.ratePercent}%)
+                </span>
+                <span>{formatMoney(t.amount, currencySymbol)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between border-t border-stone-200 pt-2 font-semibold text-stone-900">
+              <span>Total</span>
+              <span>
+                {formatMoney(
+                  (quote as { total: number }).total,
+                  currencySymbol,
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between text-stone-500">
+              <span>
+                {depositDueNow
+                  ? `Deposit due now (${depositPercent}%)`
+                  : "Deposit after host approval · nothing charged now"}
+              </span>
+              <span>
+                {formatMoney(
+                  (quote as { deposit: number }).deposit,
+                  currencySymbol,
+                )}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {(error || (quote && "error" in quote && quote.error)) && (
+          <p className="mt-3 text-sm text-red-600">
+            {error || (quote as { error?: string }).error}
+          </p>
+        )}
       </div>
 
-      {quote && !("error" in quote && quote.error) && (
-        <div className="mt-4 space-y-2 text-sm text-stone-600">
-          <div className="flex justify-between">
-            <span>Lodging × {(quote as { nights: number }).nights} nights</span>
-            <span>
-              {formatMoney(
-                (quote as { subtotal: number }).subtotal,
-                currencySymbol,
-              )}
-            </span>
-          </div>
-          {(quote as { discountAmount?: number }).discountAmount ? (
-            <div className="flex justify-between text-emerald-700">
-              <span>
-                {(quote as { discountLabel?: string | null }).discountLabel ||
-                  "Discount"}
-              </span>
-              <span>
-                −
-                {formatMoney(
-                  (quote as { discountAmount: number }).discountAmount,
-                  currencySymbol,
-                )}
-              </span>
-            </div>
-          ) : null}
-          {(quote as { extraGuestFee?: number }).extraGuestFee ? (
-            <div className="flex justify-between">
-              <span>
-                Extra guests ({(quote as { extraGuests: number }).extraGuests} ×{" "}
-                {money(extraGuestFee)} × {(quote as { nights: number }).nights}{" "}
-                nights)
-              </span>
-              <span>
-                {money((quote as { extraGuestFee: number }).extraGuestFee)}
-              </span>
-            </div>
-          ) : null}
-          {cleaningFee > 0 && (
-            <div className="flex justify-between">
-              <span>Cleaning fee</span>
-              <span>{formatMoney(cleaningFee, currencySymbol)}</span>
-            </div>
-          )}
-          {(quote as { petFee?: number }).petFee ? (
-            <div className="flex justify-between">
-              <span>
-                Pet fee
-                {(quote as { pets?: number; petFeeUnit?: string }).pets &&
-                (quote as { petFeeUnit?: string }).petFeeUnit === "PER_PET"
-                  ? ` (${(quote as { pets: number }).pets} × ${money(petFee)})`
-                  : petFee > 0
-                    ? ` (${petFeeUnitLabel(petFeeUnit)})`
-                    : ""}
-              </span>
-              <span>
-                {formatMoney(
-                  (quote as { petFee: number }).petFee,
-                  currencySymbol,
-                )}
-              </span>
-            </div>
-          ) : null}
-          {(
-            quote as {
-              taxLines?: {
-                name: string;
-                ratePercent: number;
-                amount: number;
-              }[];
-            }
-          ).taxLines?.map((t) => (
-            <div
-              key={`${t.name}-${t.ratePercent}`}
-              className="flex justify-between"
-            >
-              <span>
-                {t.name} ({t.ratePercent}%)
-              </span>
-              <span>{formatMoney(t.amount, currencySymbol)}</span>
-            </div>
-          ))}
-          <div className="flex justify-between border-t border-stone-200 pt-2 font-semibold text-stone-900">
-            <span>Total</span>
-            <span>
-              {formatMoney((quote as { total: number }).total, currencySymbol)}
-            </span>
-          </div>
-          <div className="flex justify-between text-stone-500">
-            <span>
-              {depositDueNow
-                ? `Deposit due now (${depositPercent}%)`
-                : "Deposit after host approval · nothing charged now"}
-            </span>
-            <span>
-              {formatMoney(
-                (quote as { deposit: number }).deposit,
-                currencySymbol,
-              )}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {(error || (quote && "error" in quote && quote.error)) && (
-        <p className="mt-3 text-sm text-red-600">
-          {error || (quote as { error?: string }).error}
-        </p>
-      )}
-
-      <button
-        type="button"
-        onClick={onBook}
-        className="mt-4 min-h-12 w-full rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
+      <div
+        data-testid="booking-card-footer"
+        className="lg:shrink-0 lg:border-t lg:border-stone-100 lg:bg-white lg:px-5 lg:pb-4 lg:pt-3"
       >
-        {depositDueNow ? "Reserve" : "Request to book"}
-      </button>
-      <p className="mt-2 text-center text-xs text-stone-400">
-        {depositDueNow
-          ? "You won't be charged until you confirm"
-          : "The host reviews your request first"}
-      </p>
+        <button
+          type="button"
+          onClick={onBook}
+          className="mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
+        >
+          {depositDueNow ? "Reserve" : "Request to book"}
+        </button>
+        <p className="mt-2 text-center text-xs text-stone-400">
+          {depositDueNow
+            ? "You won't be charged until you confirm"
+            : "The host reviews your request first"}
+        </p>
+      </div>
     </div>
   );
 }

@@ -43,6 +43,7 @@ import {
 import { pageMetadata } from "@/lib/seo";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { listingMetaDescription } from "@/lib/listing-meta-description";
+import { publicListingText } from "@/lib/listing-public-text";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +106,7 @@ export async function generateMetadata({
   const description = listingMetaDescription({
     title: property.title,
     tagline: property.tagline,
-    description: property.description,
+    description: publicListingText(property.description),
     city: property.city,
     region: property.region,
     maxGuests: property.maxGuests,
@@ -366,12 +367,15 @@ export default async function MarketplacePropertyPage({
     img.url.startsWith("http") ? img.url : `${origin}${img.url}`,
   );
 
+  // Guest-facing About text: no "Imported from Airbnb" note or source links.
+  const aboutText = publicListingText(property.description);
+
   return (
     <div>
       <ListingJsonLd
         origin={origin}
         name={property.title}
-        description={property.description || property.tagline}
+        description={aboutText || property.tagline}
         url={listingUrl}
         imageUrls={absImages.slice(0, 8)}
         city={property.city}
@@ -503,13 +507,13 @@ export default async function MarketplacePropertyPage({
               data-testid="listing-details"
               className="order-3 min-w-0 space-y-8 sm:space-y-10 lg:order-none"
             >
-              {property.description ? (
+              {aboutText ? (
                 <div>
                   <h3 className="text-lg font-semibold text-stone-900">
                     About this place
                   </h3>
                   <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed text-stone-600">
-                    {property.description}
+                    {aboutText}
                   </p>
                 </div>
               ) : null}
@@ -597,7 +601,6 @@ export default async function MarketplacePropertyPage({
             websiteUrl: property.host.websiteUrl,
             sitePresence: property.host.sitePresence,
             hostingMode: property.host.hostingMode,
-            createdAt: property.host.createdAt,
           }}
           profileAvatarUrl={brandOwner?.avatarUrl}
           staysHosted={staysHosted}

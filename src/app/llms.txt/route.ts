@@ -59,6 +59,7 @@ GET ${origin}/api/v1/search?location=Cedar%20Creek%20Lake&checkIn=${checkIn}&che
 
 - checkIn / checkOut are YYYY-MM-DD (checkout exclusive, like hotel nights).
 - Response includes listing summaries, priceEstimate when dates are free, url deep links.
+- Each listing has extraGuestFee (per night for each guest beyond extraGuestsIncluded; 0 = none) and extraGuestsIncluded (guests the base rate covers). priceEstimate.extraGuestFee is that charge for the whole stay at the searched guests, already in totalBeforeTax.
 - Each listing.slug is the property slug. listing.hostSlug is the host brand slug. URLs use the property slug.
 
 ## How to search (I'm flexible / ± days)
@@ -83,9 +84,14 @@ Homepage-style flexibility:
 
 ## Listing detail + availability
 
-GET ${origin}/api/v1/listings/{slug}?checkIn=${checkIn}&checkOut=${checkOut}&pets=1
+GET ${origin}/api/v1/listings/{slug}?checkIn=${checkIn}&checkOut=${checkOut}&guests=4&pets=1
 
 Returns description, amenities, house rules, photos, host name, nextWindows, and a quote when dates are given. Host email and phone are not included. Street, postal code, and coordinates are included only when the listing shows a precise location.
+
+- listing.extraGuestFee: per night for each guest beyond listing.extraGuestsIncluded (0 = none).
+- availability.quote.guests: guests the quote is priced for (your guests, capped at maxGuests; 1 if not sent).
+- availability.quote.extraGuests: guests charged the extra-guest fee. availability.quote.extraGuestFee: that charge for the whole stay, already in totalAmount.
+- bookUrl keeps checkIn, checkOut, guests and pets, so the booking page opens on the same stay.
 
 ## Calendar / next free windows
 
@@ -142,7 +148,7 @@ Content-Type: application/json
 
 - Search UI: ${origin}/marketplace?where=...&checkIn=...&checkOut=...&dateFlex=3&guests=4
 - Listing: use the \`url\` field from API responses
-- Book: use the \`bookUrl\` field
+- Book: use the \`bookUrl\` field (keeps dates, guests and pets from your request)
 
 ## Best practices
 

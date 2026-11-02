@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { clampGuests } from "@/lib/extra-guests";
 import { calculateQuote, resolveDisclaimer } from "@/lib/pricing";
+import { publicListingText } from "@/lib/listing-public-text";
 import { isRangeAvailable } from "@/lib/availability";
 import {
   guestFacingBullets,
@@ -65,7 +66,7 @@ export async function generateMetadata({
   const place = [property.city, property.region].filter(Boolean).join(", ");
   const description =
     property.tagline?.trim() ||
-    property.description?.trim().slice(0, 160) ||
+    publicListingText(property.description)?.slice(0, 160) ||
     `Book ${property.title}${place ? ` in ${place}` : ""} with ${property.host.name}.`;
   return pageMetadata({
     title: `Book · ${property.title}`,
