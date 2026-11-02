@@ -251,7 +251,7 @@ export async function handleCustomDomainChange(opts: {
 
   await notifyPlatformAdminsEmail({
     subject: `[Yall Come Back] ${subject}`,
-    body: `${body}\n\nOpen inbox: ${site}/admin/messages/${conversation.id}`,
+    body: `${body}\n\nOpen inbox: ${site}/admin/messages/${conversation.id}?brand=${encodeURIComponent(host.slug)}`,
     conversationId: conversation.id,
   });
 }

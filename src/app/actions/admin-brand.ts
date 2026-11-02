@@ -5,7 +5,11 @@ import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ADMIN_BRAND_COOKIE } from "@/lib/admin-brand-cookie";
+import {
+  ADMIN_BRAND_COOKIE,
+  ADMIN_BRAND_SLUG_COOKIE,
+  adminBrandCookieOptions,
+} from "@/lib/admin-brand-cookie";
 import { adminBrandSwitchPath } from "@/lib/admin-brand-path";
 
 export type AdminBrandSwitchResult = {
@@ -34,36 +38,33 @@ export async function switchAdminBrand(
   const hostId = String(formData.get("hostId") || "").trim();
   const returnTo = String(formData.get("returnTo") || "/admin/calendar").trim();
   const safeReturn = adminBrandSwitchPath(returnTo);
-  const path = `${safeReturn}?brand=1`;
 
   const jar = await cookies();
-  let active: string | null = null;
+  let active: { id: string; slug: string } | null = null;
 
   if (hostId && hostId !== "all") {
     const host = await prisma.host.findFirst({
       where: { id: hostId },
-      select: { id: true },
+      select: { id: true, slug: true },
     });
-    if (host) active = host.id;
+    if (host) active = host;
   }
 
   if (active) {
-    jar.set(ADMIN_BRAND_COOKIE, active, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 180, // 180 days
-      secure: process.env.NODE_ENV === "production",
-    });
+    jar.set(ADMIN_BRAND_COOKIE, active.id, adminBrandCookieOptions());
+    jar.set(ADMIN_BRAND_SLUG_COOKIE, active.slug, adminBrandCookieOptions());
   } else {
     jar.delete(ADMIN_BRAND_COOKIE);
+    jar.delete(ADMIN_BRAND_SLUG_COOKIE);
   }
+  // ?brand=<slug> makes the URL bookmarkable per brand; ?brand=1 when cleared
+  const path = `${safeReturn}?brand=${active ? encodeURIComponent(active.slug) : "1"}`;
 
   revalidatePath("/admin", "layout");
   revalidatePath("/ops", "layout");
   // Drop the client router cache so no page keeps the previous brand's data
   refresh();
-  return { ok: Boolean(active) || !hostId, path, hostId: active };
+  return { ok: Boolean(active) || !hostId, path, hostId: active?.id ?? null };
 }
 
 /** Plain form version (no JS): switch, then go to the target path. */

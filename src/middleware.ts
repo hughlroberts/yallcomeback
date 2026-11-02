@@ -14,6 +14,8 @@ import {
 } from "./lib/custom-domains";
 import { TENANT_SLUG_HEADER } from "./lib/tenant-constants";
 import { applyVisitorCookies } from "./lib/analytics-visitor";
+import { adminBrandParamRedirect } from "./lib/admin-brand-path";
+import { ADMIN_BRAND_SLUG_COOKIE } from "./lib/admin-brand-cookie";
 
 const { auth } = NextAuth(authConfig);
 
@@ -185,6 +187,18 @@ export default auth(async (req) => {
     nextUrl: req.nextUrl,
   });
   if (gate !== true) return gate;
+
+  // Bookmarkable brand URLs: /admin/...?brand=<slug> switches the picked
+  // brand first (only when it differs). The old ?brand=1 is left as is.
+  const brandSwitch = adminBrandParamRedirect({
+    pathname: req.nextUrl.pathname,
+    search: req.nextUrl.search,
+    role: req.auth?.user?.role,
+    slugCookie: req.cookies.get(ADMIN_BRAND_SLUG_COOKIE)?.value,
+  });
+  if (brandSwitch) {
+    return NextResponse.redirect(new URL(brandSwitch, req.nextUrl));
+  }
 
   // Platform admins: keep /ops out of every index.
   if (isOpsAdminRequest(req.nextUrl.pathname, req.auth?.user?.role)) {
