@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordSignupStartedOnce } from "@/lib/analytics";
+import { hasInternalCookieHeader } from "@/lib/analytics-internal";
 import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
 import {
   VISITOR_COOKIE,
@@ -11,6 +12,10 @@ export const dynamic = "force-dynamic";
 
 /** Client-allowed funnel starts only. Completions are recorded server-side. */
 export async function POST(req: Request) {
+  // ?ycb_test=1 browsers: never write, even when logged out.
+  if (hasInternalCookieHeader(req.headers.get("cookie"))) {
+    return NextResponse.json({ ok: true, skipped: "internal" });
+  }
   const cookie = req.headers
     .get("cookie")
     ?.split(";")

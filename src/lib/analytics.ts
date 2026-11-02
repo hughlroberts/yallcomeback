@@ -19,6 +19,13 @@ import {
   utmCookieOptions,
   visitorCookieOptions,
 } from "@/lib/analytics-visitor";
+import {
+  INTERNAL_COOKIE,
+  hasInternalCookieValue,
+  isExcludedEmail,
+  isInternalAccount,
+  isStaffRole,
+} from "@/lib/analytics-internal";
 
 export type Attribution = {
   visitorId: string | null;
@@ -95,6 +102,80 @@ async function attributionForEvent(bookingId?: string | null): Promise<Attributi
   };
 }
 
+/**
+ * True when the person making this request is internal: the ycb_internal
+ * cookie, or a signed-in staff (ADMIN / HOST), excluded-email, or
+ * isInternal user. `staffRole: false` skips the role rule (signup completion,
+ * where the session may already show the new HOST role).
+ */
+export async function actorIsInternal(
+  opts: { staffRole?: boolean } = {},
+): Promise<boolean> {
+  try {
+    const jar = await cookies();
+    if (hasInternalCookieValue(jar.get(INTERNAL_COOKIE)?.value)) return true;
+  } catch {
+    /* no request scope (e.g. background job) */
+  }
+
+  let user: { id?: string; role?: string; email?: string | null } | undefined;
+  try {
+    const { auth } = await import("@/lib/auth");
+    user = (await auth())?.user ?? undefined;
+  } catch {
+    return false;
+  }
+  if (!user?.id) return false;
+  if (opts.staffRole !== false && isStaffRole(user.role)) return true;
+  if (isExcludedEmail(user.email)) return true;
+  return userIdIsInternal(user.id);
+}
+
+/** isInternal flag or ANALYTICS_EXCLUDE_EMAILS for one account. */
+export async function userIdIsInternal(
+  userId: string | null | undefined,
+): Promise<boolean> {
+  if (!userId) return false;
+  const row = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, isInternal: true },
+  });
+  return row ? isInternalAccount(row) : false;
+}
+
+/** Booking made by an internal account (flag, excluded email, or platform admin). */
+export async function bookingIsInternal(
+  bookingId: string | null | undefined,
+): Promise<boolean> {
+  if (!bookingId) return false;
+  const row = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      guestEmail: true,
+      user: { select: { email: true, isInternal: true, role: true } },
+    },
+  });
+  if (!row) return false;
+  if (isExcludedEmail(row.guestEmail)) return true;
+  if (!row.user) return false;
+  return row.user.role === "ADMIN" || isInternalAccount(row.user);
+}
+
+/** Events a visitor causes in their own browser (actor rules apply). */
+const ACTOR_EVENTS = new Set<AnalyticsEventName>([
+  "listing_view",
+  "booking_started",
+  "host_signup_started",
+  "guest_signup_started",
+  "host_signup_completed",
+  "guest_signup_completed",
+]);
+
+const SIGNUP_COMPLETED = new Set<AnalyticsEventName>([
+  "host_signup_completed",
+  "guest_signup_completed",
+]);
+
 export async function recordPageView(input: {
   path: string;
   referrer?: string | null;
@@ -107,6 +188,7 @@ export async function recordPageView(input: {
   const path = sanitizePath(input.path);
   if (!path) return { ok: false, error: "bad_path" };
   if (shouldSkipAnalyticsPath(path)) return { ok: true, skipped: "path" };
+  if (await actorIsInternal()) return { ok: true, skipped: "internal" };
 
   const attr = await ensureAttribution(input.search);
   const visitorId = attr.visitorId;
@@ -134,7 +216,20 @@ export async function recordAnalyticsEvent(input: {
   bookingId?: string | null;
   value?: number | null;
   path?: string | null;
+  /** New account id on *_signup_completed (stored so stats can drop internal accounts). */
+  userId?: string | null;
 }): Promise<void> {
+  const isSignup = SIGNUP_COMPLETED.has(input.name);
+  // Host actions and webhooks also record booking_* events: only the
+  // visitor-side events use the actor (cookie / session) rules.
+  if (ACTOR_EVENTS.has(input.name)) {
+    if (await actorIsInternal({ staffRole: !isSignup })) return;
+  }
+  if (isSignup && (await userIdIsInternal(input.userId))) return;
+  if (input.name.startsWith("booking_") && (await bookingIsInternal(input.bookingId))) {
+    return;
+  }
+
   if (input.bookingId) {
     const exists = await prisma.analyticsEvent.findFirst({
       where: { name: input.name, bookingId: input.bookingId },
@@ -158,6 +253,7 @@ export async function recordAnalyticsEvent(input: {
       utmMedium: attr.utm?.medium ?? null,
       utmCampaign: attr.utm?.campaign ?? null,
       path: sanitizePath(input.path),
+      userId: isSignup ? (input.userId ?? null) : null,
     },
   });
 }

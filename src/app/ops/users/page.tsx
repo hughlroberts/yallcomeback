@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   opsResetUserPassword,
+  opsSetUserInternal,
   opsUpdateUserRole,
   opsUpsertUser,
 } from "@/app/actions/ops-users";
@@ -46,6 +47,7 @@ export default async function OpsUsersPage({
         role: true,
         hostId: true,
         hostAccess: true,
+        isInternal: true,
         createdAt: true,
         host: { select: { name: true, slug: true } },
       },
@@ -208,7 +210,7 @@ export default async function OpsUsersPage({
               <tr>
                 <th className="px-4 py-3 font-semibold">User</th>
                 <th className="px-4 py-3 font-semibold">Role / brand</th>
-                <th className="px-4 py-3 font-semibold">Password</th>
+                <th className="px-4 py-3 font-semibold">Password / analytics</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
@@ -299,6 +301,22 @@ export default async function OpsUsersPage({
                       />
                       <Button type="submit" variant="secondary" className="!text-xs">
                         Reset password
+                      </Button>
+                    </form>
+                    <form action={opsSetUserInternal} className="mt-3 flex flex-col gap-1">
+                      <input type="hidden" name="id" value={u.id} />
+                      <input
+                        type="hidden"
+                        name="isInternal"
+                        value={u.isInternal ? "0" : "1"}
+                      />
+                      <p className="text-[11px] text-stone-500">
+                        {u.isInternal
+                          ? "Internal: not in analytics."
+                          : "Counted in analytics."}
+                      </p>
+                      <Button type="submit" variant="secondary" className="!text-xs">
+                        {u.isInternal ? "Count in analytics" : "Mark internal"}
                       </Button>
                     </form>
                   </td>

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { ANALYTICS_EVENT_NAMES } from "@/lib/analytics-visitor";
+import { parseExcludedEmails } from "@/lib/analytics-internal";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const NONE = "(none)";
@@ -41,6 +42,47 @@ function bump(
   map[key] = (map[key] || 0) + n;
 }
 
+/**
+ * Accounts and bookings to leave out: users with isInternal, users whose
+ * email is in ANALYTICS_EXCLUDE_EMAILS, and bookings made by them (or by a
+ * guest email on that list, or by a platform admin).
+ */
+export async function internalExclusions(bookingIds: string[]): Promise<{
+  userIds: Set<string>;
+  bookingIds: Set<string>;
+}> {
+  const emails = parseExcludedEmails();
+  const users = await prisma.user.findMany({
+    where: {
+      OR: [
+        { isInternal: true },
+        ...emails.map((e) => ({
+          email: { equals: e, mode: "insensitive" as const },
+        })),
+      ],
+    },
+    select: { id: true },
+  });
+  const userIds = new Set(users.map((u) => u.id));
+
+  const ids = [...new Set(bookingIds)];
+  if (ids.length === 0) return { userIds, bookingIds: new Set() };
+  const bookings = await prisma.booking.findMany({
+    where: {
+      id: { in: ids },
+      OR: [
+        ...(userIds.size ? [{ userId: { in: [...userIds] } }] : []),
+        { user: { role: "ADMIN" as const } },
+        ...emails.map((e) => ({
+          guestEmail: { equals: e, mode: "insensitive" as const },
+        })),
+      ],
+    },
+    select: { id: true },
+  });
+  return { userIds, bookingIds: new Set(bookings.map((b) => b.id)) };
+}
+
 export async function buildAnalyticsStats(
   from: string | null,
   to: string | null,
@@ -50,7 +92,7 @@ export async function buildAnalyticsStats(
 
   const whereTime = { createdAt: { gte: range.start, lt: range.endExclusive } };
 
-  const [views, events] = await Promise.all([
+  const [views, rawEvents] = await Promise.all([
     prisma.pageView.findMany({
       where: whereTime,
       select: {
@@ -68,9 +110,20 @@ export async function buildAnalyticsStats(
         utmSource: true,
         value: true,
         createdAt: true,
+        bookingId: true,
+        userId: true,
       },
     }),
   ]);
+
+  const exclude = await internalExclusions(
+    rawEvents.map((e) => e.bookingId).filter((id): id is string => Boolean(id)),
+  );
+  const events = rawEvents.filter(
+    (ev) =>
+      !(ev.userId && exclude.userIds.has(ev.userId)) &&
+      !(ev.bookingId && exclude.bookingIds.has(ev.bookingId)),
+  );
 
   const dailyMap = new Map<
     string,

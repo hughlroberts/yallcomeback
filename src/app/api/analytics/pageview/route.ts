@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { recordPageView } from "@/lib/analytics";
+import { hasInternalCookieHeader } from "@/lib/analytics-internal";
 import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
 import { isValidVisitorId, VISITOR_COOKIE } from "@/lib/analytics-visitor";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  // ?ycb_test=1 browsers: never write, even when logged out.
+  if (hasInternalCookieHeader(req.headers.get("cookie"))) {
+    return NextResponse.json({ ok: true, skipped: "internal" });
+  }
   const cookie = req.headers
     .get("cookie")
     ?.split(";")

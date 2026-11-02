@@ -1,5 +1,6 @@
 "use client";
 
+import { browserIsInternal } from "@/lib/analytics-internal";
 import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -21,6 +22,7 @@ function TrackPageViewInner() {
 
   useEffect(() => {
     if (!pathname) return;
+    if (browserIsInternal()) return;
     const search = searchParams?.toString()
       ? `?${searchParams.toString()}`
       : "";

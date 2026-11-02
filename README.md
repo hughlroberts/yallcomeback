@@ -153,7 +153,7 @@ STRIPE_HOSTING_PRICE_ID=price_...
 ```
 
 Webhooks: `POST /api/stripe/webhook` (snapshot) and `POST /api/stripe/thin-webhook` (Connect thin).  
-`STRIPE_LIVE_READY = true` in `src/lib/features.ts` is the **hosted** Yall Come Back product. Status shows under **Ops → Settings**.
+`STRIPE_LIVE_READY = true` in `src/lib/features.ts` is the **hosted** Yall Come Back product. Status shows under **Platform admin → Settings**.
 
 ### Self-host / open source
 
@@ -171,13 +171,32 @@ On each property admin page:
 
 - **In-process** on Railway: `instrumentation.ts` runs iCal sync and booking auto-messages every ~20 minutes in production (`CRON_IN_PROCESS=true`). Hosting payments and the full backup run **once per UTC day** on that same ticker. Monthly pricing runs there too, and skips a host who already completed a run in the last 28 days.
 - There is no public cron URL and no `CRON_SECRET`. A copy of the database is not served over HTTP.
-- **Daily full backup**: the scheduler writes a gzipped dump to the Railway volume at `BACKUP_DIR` (`/data/backups`) once per UTC day, kept 90 days. A signed-in platform admin downloads copies from Ops → Backups. Restore: `docs/backup-and-restore.md`.
+- **Daily full backup**: the scheduler writes a gzipped dump to the Railway volume at `BACKUP_DIR` (`/data/backups`) once per UTC day, kept 90 days. A signed-in platform admin downloads copies from Platform admin → Backups. Restore: `docs/backup-and-restore.md`.
 
 ## First-party analytics
 
 Page views and booking-funnel events are stored in Postgres (`page_views`, `events`). No third-party analytics services. No raw IP addresses. An anonymous visitor cookie (`ycb_vid`) and first-touch UTM cookie (`ycb_utm`) attribute later bookings, guest signups, and host signups to the landing campaign.
 
-Bots and `/admin`, `/ops`, `/api` paths are skipped. Funnel names: `listing_view`, `booking_started`, `booking_completed`, `booking_cancelled`, `host_signup_started`, `host_signup_completed`, `guest_signup_started`, `guest_signup_completed`.
+Bots, admin pages, and API paths are skipped. Funnel names: `listing_view`, `booking_started`, `booking_completed`, `booking_cancelled`, `host_signup_started`, `host_signup_completed`, `guest_signup_started`, `guest_signup_completed`.
+
+### Internal traffic (your team and test visits)
+
+Nothing is recorded in `page_views` or `events` for:
+
+- **Signed-in staff**: platform admins and host admin-dashboard users (role `ADMIN` or `HOST`).
+- **Excluded emails**: set `ANALYTICS_EXCLUDE_EMAILS` to a comma-separated list, for example `ANALYTICS_EXCLUDE_EMAILS="you@example.com, tester@example.com"`. Matching ignores case and spaces.
+- **Internal accounts**: users with `is_internal = true` (Prisma field `isInternal`, default `false`).
+- **Internal browsers**: open any page with `?ycb_test=1`. This sets the `ycb_internal` cookie (1 year, path `/`, `SameSite=Lax`, `Secure` in production), and that browser is not tracked from then on, even when logged out. Open any page with `?ycb_test=0` to clear it. The tracking endpoints check the cookie on the server too.
+
+Booking events that a host or a webhook records (for example `booking_completed`) are dropped when the booking belongs to an internal account, an excluded email, or a platform admin.
+
+The stats API also leaves out signups and bookings from internal accounts and excluded emails, including rows recorded before you flagged the account. The response shape does not change. Signup rows recorded before this change have no account link, so they stay in the counts.
+
+**Flag an account as internal**: a platform admin opens Platform admin → Users and selects **Mark internal** for that user (**Count in analytics** undoes it). Or use SQL:
+
+```sql
+UPDATE "User" SET "is_internal" = true WHERE lower("email") = lower('you@example.com');
+```
 
 **Stats API** (bearer `ANALYTICS_API_TOKEN`; missing token → 503):
 

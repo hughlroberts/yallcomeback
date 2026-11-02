@@ -396,6 +396,8 @@ model User {
   host         Host?     @relation(fields: [hostId], references: [id], onDelete: SetNull)
   /// OWNER / FULL / LIMITED when role = HOST; null otherwise
   hostAccess   HostAccessLevel?
+  /// Team / test account: never tracked, and left out of the stats API
+  isInternal              Boolean          @default(false) @map("is_internal")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   bookings             Booking[]
@@ -1048,9 +1050,12 @@ model AnalyticsEvent {
   utmMedium   String?
   utmCampaign String?
   path        String?
+  /// Set only on *_signup_completed so the stats API can leave out internal accounts
+  userId      String?
 
   @@index([createdAt])
   @@index([name, createdAt])
+  @@index([userId])
   @@index([utmSource, createdAt])
   @@index([listingId, createdAt])
   @@index([bookingId, name])

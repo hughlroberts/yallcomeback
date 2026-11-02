@@ -141,3 +141,21 @@ export async function opsUpdateUserRole(formData: FormData) {
   revalidatePath("/admin/team");
   redirect("/ops/users?saved=1");
 }
+
+/** Mark a team / test account internal: no analytics, left out of stats. */
+export async function opsSetUserInternal(formData: FormData) {
+  const session = await requirePlatformAdmin();
+  if (!session) throw new Error("Unauthorized");
+
+  const id = String(formData.get("id") || "");
+  const isInternal = formData.get("isInternal") === "1";
+  if (!id) redirect("/ops/users?error=missing");
+
+  const user = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+  if (!user) redirect("/ops/users?error=missing");
+
+  await prisma.user.update({ where: { id }, data: { isInternal } });
+
+  revalidatePath("/ops/users");
+  redirect("/ops/users?saved=1");
+}

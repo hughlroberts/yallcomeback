@@ -1,4 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server";
+import { applyInternalCookie } from "./analytics-internal";
 
 export const VISITOR_COOKIE = "ycb_vid";
 export const UTM_COOKIE = "ycb_utm";
@@ -158,6 +159,7 @@ export function applyVisitorCookies(
   req: NextRequest,
   res: NextResponse,
 ): NextResponse {
+  applyInternalCookie(req, res);
   const existingVid = req.cookies.get(VISITOR_COOKIE)?.value;
   if (!isValidVisitorId(existingVid)) {
     res.cookies.set(VISITOR_COOKIE, crypto.randomUUID(), visitorCookieOptions());

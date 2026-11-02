@@ -1,5 +1,6 @@
 "use client";
 
+import { browserIsInternal } from "@/lib/analytics-internal";
 import { useEffect } from "react";
 import type { SignupStartedName } from "@/lib/analytics-visitor";
 
@@ -12,6 +13,7 @@ export function TrackSignupStarted({
   path: string;
 }) {
   useEffect(() => {
+    if (browserIsInternal()) return;
     void fetch("/api/analytics/event", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

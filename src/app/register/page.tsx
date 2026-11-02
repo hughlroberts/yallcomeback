@@ -60,6 +60,7 @@ export default async function RegisterPage({
     trackAnalyticsEvent({
       name: "guest_signup_completed",
       path: "/register",
+      userId: created.id,
     });
 
     try {

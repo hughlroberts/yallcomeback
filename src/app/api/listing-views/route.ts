@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { recordPropertyView } from "@/lib/listing-insights";
-import { trackAnalyticsEvent } from "@/lib/analytics";
+import { actorIsInternal, trackAnalyticsEvent } from "@/lib/analytics";
+import { hasInternalCookieHeader } from "@/lib/analytics-internal";
 import { incomingIpFromRequest, rateLimitAllow } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,10 @@ export const dynamic = "force-dynamic";
  * Clients should still dedupe per session/tab.
  */
 export async function POST(req: Request) {
+  // Internal browsers and team accounts do not count as listing views.
+  if (hasInternalCookieHeader(req.headers.get("cookie"))) {
+    return NextResponse.json({ ok: true, skipped: "internal" }, { status: 200 });
+  }
   const ip = incomingIpFromRequest(req);
   if (!rateLimitAllow(`listing-views:${ip}`, 60, 10 * 60 * 1000)) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
@@ -38,6 +43,10 @@ export async function POST(req: Request) {
   });
   if (!property) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  if (await actorIsInternal()) {
+    return NextResponse.json({ ok: true, skipped: "internal" }, { status: 200 });
   }
 
   try {

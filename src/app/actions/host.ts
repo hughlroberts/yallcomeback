@@ -198,6 +198,7 @@ export async function registerHost(formData: FormData) {
   trackAnalyticsEvent({
     name: "host_signup_completed",
     path: "/for-hosts",
+    userId,
   });
 
   try {
@@ -354,6 +355,7 @@ export async function startHosting(formData: FormData) {
   trackAnalyticsEvent({
     name: "host_signup_completed",
     path: "/for-hosts",
+    userId: user.id,
   });
 
   try {

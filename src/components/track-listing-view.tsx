@@ -1,5 +1,6 @@
 "use client";
 
+import { browserIsInternal } from "@/lib/analytics-internal";
 import { useEffect } from "react";
 
 /**
@@ -9,6 +10,7 @@ import { useEffect } from "react";
 export function TrackListingView({ propertyId }: { propertyId: string }) {
   useEffect(() => {
     if (!propertyId || typeof window === "undefined") return;
+    if (browserIsInternal()) return;
     const key = `ycb:viewed:${propertyId}`;
     try {
       if (sessionStorage.getItem(key)) return;
