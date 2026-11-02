@@ -70,7 +70,7 @@ export function FirstVisitIntentGate() {
             Finding a stay, or hosting one?
           </p>
           <p className="mt-3 text-base leading-relaxed text-ink-muted sm:text-lg">
-            Pick once. The menu still has both if you change your mind.
+            Pick one. To change later, use Find or Host at the top of the page.
           </p>
         </div>
 

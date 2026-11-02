@@ -202,7 +202,7 @@ export default function TermsPage() {
         share of the guest’s stay price. Stay money is between host and guest.
       </LegalP>
       <LegalP>
-        Free self-host and open-source use may have $0 Platform hosting fee. You
+        Free self-host and open-source use has a $0 Platform hosting fee. You
         still agree to these Terms if you use our marketplace, APIs, or
         branding.
       </LegalP>

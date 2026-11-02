@@ -4,5 +4,9 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
+# Send traffic to a new deploy only after the app answers (the schema push
+# runs before the server starts). Without this, a deploy can 502 briefly.
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5

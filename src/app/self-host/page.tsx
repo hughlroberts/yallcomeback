@@ -25,7 +25,7 @@ export default function SelfHostPage() {
             Free self-host · {LICENSE} · v{PRODUCT_VERSION}
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
-            Run {PRODUCT_NAME} on your own website - free
+            Run {PRODUCT_NAME} on your own website – free
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-stone-300">
             Already have a rental website? Run Yall Come Back on your own domain

@@ -57,3 +57,34 @@ export function AdminBrandSwitchForm({
     </form>
   );
 }
+
+/**
+ * "Change brand": forget the picked brand and go back to the brand picker.
+ * Clears both brand cookies (same action as choosing no brand).
+ */
+export function AdminBrandClearButton() {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  function onClear(formData: FormData) {
+    startTransition(async () => {
+      const result = await switchAdminBrand(formData);
+      router.replace(result.path);
+      router.refresh();
+    });
+  }
+
+  return (
+    <form action={onClear}>
+      <input type="hidden" name="hostId" value="" />
+      <input type="hidden" name="returnTo" value="/admin" />
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-60"
+      >
+        {pending ? "Changing…" : "Change brand"}
+      </button>
+    </form>
+  );
+}

@@ -352,7 +352,7 @@ function PricingSidebar({
                 id="ws-extra-included"
                 type="number"
                 min={1}
-                max={50}
+                max={Math.max(1, property.maxGuests)}
                 step="1"
                 className="h-11"
                 value={extraIncluded}

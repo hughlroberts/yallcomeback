@@ -46,15 +46,15 @@ export const LICENSE = "MIT";
 /**
  * --- Remaining launch placeholders ---
  * Stripe is live (keys + webhooks on Railway). Still unset:
- *   1. Public git repo URL → set REPO_URL below
- *   2. Bitcoin deposit address (optional; not required for cards)
+ *   1. Bitcoin deposit address (optional; not required for cards)
  */
 
 /**
- * Public git clone URL for self-hosters.
- * Leave null until go-live - then set e.g. "https://github.com/you/yallcomeback".
+ * Public git clone URL for self-hosters (public, MIT).
+ * Set to null to hide repo links; copy then says "available on request".
  */
-export const REPO_URL: string | null = null;
+export const REPO_URL: string | null =
+  "https://github.com/hughlroberts/yallcomeback";
 
 /**
  * Ops/docs declaration that Stripe is live on the hosted Yall Come Back
@@ -248,7 +248,7 @@ export const SELF_HOST_STEPS = [
     title: "Install Yall Come Back for websites",
     body: REPO_URL
       ? `Install the free Yall Come Back website package from the open-source project (${REPO_URL}). You can also ask your web person or host support to install it. You get the same booking and listing tools as the platform.`
-      : "Install the free Yall Come Back website package (download link at launch). You can also ask your web person or host support to install it. You get the same booking and listing tools as the platform.",
+      : "Install the free Yall Come Back website package (available on request: use Contact). You can also ask your web person or host support to install it. You get the same booking and listing tools as the platform.",
   },
   {
     title: "Add your brand and stays",
@@ -266,7 +266,7 @@ export const SELF_HOST_DEV_STEPS = [
     title: "Copy the project",
     body: REPO_URL
       ? `Clone the open-source repo (${REPO_URL}). Core booking, host sites, and admin live in that codebase. Some hosted-only tools (agent API, listing import, pricing intelligence) stay platform-only and are not part of the MIT inventory.`
-      : "Clone or download the open-source repository (public git URL will be linked here at launch). Core booking, host sites, and admin live in that codebase. Some hosted-only tools stay platform-only and are not part of the MIT inventory.",
+      : "Get the open-source repository (available on request: use Contact). Core booking, host sites, and admin live in that codebase. Some hosted-only tools stay platform-only and are not part of the MIT inventory.",
   },
   {
     title: "Install & seed",

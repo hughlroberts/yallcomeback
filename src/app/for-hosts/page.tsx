@@ -302,7 +302,7 @@ export default async function ForHostsPage({
                   messaging, Insights, and booking tools with{" "}
                   <strong className="font-semibold text-stone-800">
                     no cut of the booking
-                  </strong>
+                  </strong>{" "}
                   — just{" "}
                   <strong className="font-semibold text-stone-800">
                     $12 per published listing / month

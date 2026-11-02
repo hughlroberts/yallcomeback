@@ -16,6 +16,7 @@ import { TENANT_SLUG_HEADER } from "./lib/tenant-constants";
 import { applyVisitorCookies } from "./lib/analytics-visitor";
 import { adminBrandParamRedirect } from "./lib/admin-brand-path";
 import { ADMIN_BRAND_SLUG_COOKIE } from "./lib/admin-brand-cookie";
+import { bareDomainRedirect } from "./lib/canonical-host";
 
 const { auth } = NextAuth(authConfig);
 
@@ -178,6 +179,20 @@ function requestHostname(req: NextRequest): string | null {
  * 3) Strip spoofed x-tenant-* on every request
  */
 export default auth(async (req) => {
+  // Deploy health check: no host lookup, no redirects (any Host header)
+  if (req.nextUrl.pathname === "/api/health") return NextResponse.next();
+
+  // Bare product domain → https://www, same path (301; 308 keeps POST bodies)
+  const canonical = bareDomainRedirect({
+    hostname: requestHostname(req),
+    pathname: req.nextUrl.pathname,
+    search: req.nextUrl.search,
+  });
+  if (canonical) {
+    const safe = req.method === "GET" || req.method === "HEAD";
+    return NextResponse.redirect(canonical, safe ? 301 : 308);
+  }
+
   // Backstop: Auth.js skips its own sign-in redirect when this function
   // exists and authorized() returns a boolean. Returning a Response from
   // platformGate covers both that path and the authorized() callback.

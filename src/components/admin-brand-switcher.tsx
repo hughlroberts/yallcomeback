@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AdminBrandSwitchForm } from "@/components/admin-brand-switch-form";
+import { AdminBrandClearButton, AdminBrandSwitchForm } from "@/components/admin-brand-switch-form";
 
 type HostOption = {
   id: string;
@@ -44,6 +44,7 @@ export function AdminBrandSwitcher({
             activeHostId={activeHostId}
             returnTo={returnTo}
           />
+          {active ? <AdminBrandClearButton /> : null}
           {active ? (
             <Link
               href={`/h/${active.slug}`}

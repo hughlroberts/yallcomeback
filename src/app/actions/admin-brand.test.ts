@@ -81,4 +81,11 @@ describe("switch brand (first click must take effect)", () => {
     expect(setAt).toBeGreaterThanOrEqual(0);
     expect(redirectAt).toBeGreaterThan(setAt);
   });
+
+  it("Change brand: clears both cookies and returns to the picker", async () => {
+    const r = await switchAdminBrand(form({ hostId: "", returnTo: "/admin" }));
+    expect(r).toEqual({ ok: true, path: "/admin?brand=1", hostId: null });
+    expect(jar.delete).toHaveBeenCalledWith("ycb_admin_brand");
+    expect(jar.delete).toHaveBeenCalledWith("ycb_admin_brand_slug");
+  });
 });

@@ -27,7 +27,7 @@ export default function OpenSourcePage() {
             Free · {LICENSE} · v{PRODUCT_VERSION}
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
-            Copy {PRODUCT_NAME} for your own website - free and open source
+            Copy {PRODUCT_NAME} for your own website – free and open source
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-stone-300">
             The MIT software is free to run on your own servers: host-branded
@@ -187,7 +187,7 @@ npm run dev
 # Production
 npm run build && npm start
 # or: docker compose up`
-  : `# From the project root (public git URL added at launch)
+  : `# From the project root
 npm install
 cp .env.example .env   # set AUTH_SECRET at minimum
 npm run db:setup

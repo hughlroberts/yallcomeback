@@ -47,3 +47,27 @@ export function clampGuests(
   const guests = Math.min(max, asked);
   return { guests, requested: asked, clamped: guests !== asked };
 }
+
+/**
+ * Validate the host's extra-guest settings. Returns an error message, or
+ * null when valid. Fee: 0 or more. Included: whole number, 1 to maxGuests.
+ * A null value means "not sent" and is not checked.
+ */
+export function extraGuestSettingsError(input: {
+  extraGuestFee: number | null;
+  extraGuestsIncluded: number | null;
+  maxGuests: number;
+}): string | null {
+  const { extraGuestFee: fee, extraGuestsIncluded: included } = input;
+  if (fee != null && (!Number.isFinite(fee) || fee < 0)) {
+    return "Extra guest fee must be 0 or more";
+  }
+  const max = Math.max(1, Math.floor(input.maxGuests) || 1);
+  if (
+    included != null &&
+    (!Number.isInteger(included) || included < 1 || included > max)
+  ) {
+    return `Guests in base price must be a whole number from 1 to ${max} (the listing max)`;
+  }
+  return null;
+}

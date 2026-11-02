@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { extraGuestSettingsError } from "@/lib/extra-guests";
 import { assertHostAllowsFutureWork } from "@/lib/hosting";
 import { assertEmailVerifiedForPublish } from "@/lib/email-verified";
 import { parseTimeTo24h, slugify } from "@/lib/utils";
@@ -839,19 +840,17 @@ export async function updatePropertyPricing(formData: FormData) {
     extraGuestsIncludedRaw == null
       ? null
       : Number(extraGuestsIncludedRaw || 2);
-  if (
-    extraGuestFee != null &&
-    (!Number.isFinite(extraGuestFee) || extraGuestFee < 0)
-  ) {
-    throw new Error("Extra guest fee must be 0 or more");
-  }
-  if (
-    extraGuestsIncluded != null &&
-    (!Number.isInteger(extraGuestsIncluded) ||
-      extraGuestsIncluded < 1 ||
-      extraGuestsIncluded > 50)
-  ) {
-    throw new Error("Guests in base price must be a whole number from 1 to 50");
+  if (extraGuestFee != null || extraGuestsIncluded != null) {
+    const current = await prisma.property.findUnique({
+      where: { id },
+      select: { maxGuests: true },
+    });
+    const err = extraGuestSettingsError({
+      extraGuestFee,
+      extraGuestsIncluded,
+      maxGuests: current?.maxGuests ?? 1,
+    });
+    if (err) throw new Error(err);
   }
 
   if (!Number.isFinite(baseNightlyRate) || baseNightlyRate < 1) {
