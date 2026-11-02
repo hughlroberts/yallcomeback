@@ -96,4 +96,24 @@ describe("GET /api/v1/search", () => {
     const json = await (await get("location=Malakoff")).json();
     expect(json).toMatchObject({ count: 37, returned: 0, currentCount: 37 });
   });
+
+  it("caps guests at the search max in the query echo, filter and humanSearchUrl", async () => {
+    const res = await get("location=Malakoff&guests=99");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.query.guests).toBe(50);
+    expect(new URL(body.humanSearchUrl).searchParams.get("guests")).toBe("50");
+    expect(host.searchMarketplace.mock.calls[0][0]).toMatchObject({
+      guests: 50,
+    });
+  });
+
+  it("keeps a normal party as sent and drops junk guests", async () => {
+    const two = await (await get("guests=2")).json();
+    expect(two.query.guests).toBe(2);
+    expect(new URL(two.humanSearchUrl).searchParams.get("guests")).toBe("2");
+    const junk = await (await get("guests=abc")).json();
+    expect(junk.query.guests).toBeUndefined();
+    expect(new URL(junk.humanSearchUrl).searchParams.has("guests")).toBe(false);
+  });
 });

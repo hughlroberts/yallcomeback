@@ -7,7 +7,9 @@ import {
   listingFiltersFromParams,
   listingMatchesFilters,
   SEARCH_DEFAULT_LIMIT,
+  SEARCH_MAX_GUESTS,
   SEARCH_MAX_LIMIT,
+  searchGuests,
   searchLimit,
   searchLimitFromParams,
 } from "./search-filters";
@@ -160,5 +162,17 @@ describe("searchLimit", () => {
     expect(searchLimitFromParams(params("limit=9"))).toBe(9);
     expect(searchLimitFromParams(params("take=4&limit=9"))).toBe(4);
     expect(searchLimitFromParams(params(""))).toBe(20);
+  });
+});
+
+describe("searchGuests", () => {
+  it("caps at the search form max and drops junk", () => {
+    expect(SEARCH_MAX_GUESTS).toBe(50);
+    expect(searchGuests(99)).toBe(50);
+    expect(searchGuests("4")).toBe(4);
+    expect(searchGuests(2.7)).toBe(2);
+    expect(searchGuests(0)).toBeUndefined();
+    expect(searchGuests("abc")).toBeUndefined();
+    expect(searchGuests(undefined)).toBeUndefined();
   });
 });

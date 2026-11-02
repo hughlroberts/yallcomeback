@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { SEARCH_MAX_GUESTS } from "@/lib/search-filters";
 import { WhereAutocomplete } from "@/components/where-autocomplete";
 import { SearchDateRangePicker } from "@/components/search-date-range-picker";
+import { formatYmd, isYmd, nightsBetweenYmd } from "@/lib/search-dates";
 import {
-  formatYmd,
-  isYmd,
-  nightsBetweenYmd,
-} from "@/lib/search-dates";
-import { SEARCH_DATES_EVENT, searchDatesFromEvent } from "@/lib/search-date-sync";
+  SEARCH_DATES_EVENT,
+  searchDatesFromEvent,
+} from "@/lib/search-date-sync";
 
 export { addDaysYmd, nightsBetweenYmd } from "@/lib/search-dates";
 
@@ -112,13 +112,17 @@ export function StaySearchForm({
 
     if (hasIn !== hasOut) {
       e.preventDefault();
-      setDateError("Choose check-in and check-out in the When calendar, or clear dates");
+      setDateError(
+        "Choose check-in and check-out in the When calendar, or clear dates",
+      );
       return;
     }
 
     if (checkIn < todayYmd) {
       e.preventDefault();
-      setDateError("Those dates have already passed. Pick dates from today on.");
+      setDateError(
+        "Those dates have already passed. Pick dates from today on.",
+      );
       return;
     }
 
@@ -146,77 +150,83 @@ export function StaySearchForm({
             : "overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 shadow-sm sm:rounded-full sm:p-1.5"
         }
       >
-      {hiddenFields
-        ? Object.entries(hiddenFields).map(([name, value]) => (
-            <input key={name} type="hidden" name={name} value={value} />
-          ))
-        : null}
+        {hiddenFields
+          ? Object.entries(hiddenFields).map(([name, value]) => (
+              <input key={name} type="hidden" name={name} value={value} />
+            ))
+          : null}
 
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-stretch sm:gap-0 md:flex-wrap lg:flex-nowrap">
-        <label className="group relative flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5 md:min-w-[12rem] md:flex-[1.2]">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-            Where
-          </span>
-          <WhereAutocomplete
-            name="where"
-            defaultValue={defaultWhere}
-            suggestions={placeSuggestions}
-            placeholder="City or town"
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-stretch sm:gap-0 md:flex-wrap lg:flex-nowrap">
+          <label className="group relative flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5 md:min-w-[12rem] md:flex-[1.2]">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+              Where
+            </span>
+            <WhereAutocomplete
+              name="where"
+              defaultValue={defaultWhere}
+              suggestions={placeSuggestions}
+              placeholder="City or town"
+            />
+          </label>
+
+          <div
+            className="hidden w-px bg-stone-200 sm:block md:hidden lg:block"
+            aria-hidden
           />
-        </label>
 
-        <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
+          <SearchDateRangePicker
+            checkIn={checkIn}
+            checkOut={checkOut}
+            dateFlex={dateFlex}
+            onChange={onDatesChange}
+            minDate={todayYmd}
+            className="sm:flex-[1.35]"
+          />
 
-        <SearchDateRangePicker
-          checkIn={checkIn}
-          checkOut={checkOut}
-          dateFlex={dateFlex}
-          onChange={onDatesChange}
-          minDate={todayYmd}
-          className="sm:flex-[1.35]"
-        />
+          <div
+            className="hidden w-px bg-stone-200 sm:block md:hidden lg:block"
+            aria-hidden
+          />
 
-        <div className="hidden w-px bg-stone-200 sm:block md:hidden lg:block" aria-hidden />
-
-        <div className="flex min-w-0 flex-col gap-2 sm:flex-[1.2] sm:flex-row sm:items-stretch md:w-full md:basis-full lg:w-auto lg:basis-auto">
-          <div className="flex min-w-0 flex-1">
-            <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-                Guests
-              </span>
-              <input
-                name="guests"
-                type="number"
-                min={1}
-                max={50}
-                defaultValue={defaultGuests}
-                placeholder="Any"
-                className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
-              />
-            </label>
-            <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-                Pets
-              </span>
-              <input
-                name="pets"
-                type="number"
-                min={0}
-                max={10}
-                defaultValue={defaultPets}
-                placeholder="0"
-                className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
-              />
-            </label>
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-[1.2] sm:flex-row sm:items-stretch md:w-full md:basis-full lg:w-auto lg:basis-auto">
+            <div className="flex min-w-0 flex-1">
+              <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                  Guests
+                </span>
+                <input
+                  name="guests"
+                  type="number"
+                  min={1}
+                  max={SEARCH_MAX_GUESTS}
+                  defaultValue={defaultGuests}
+                  placeholder="Any"
+                  className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
+                />
+              </label>
+              <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                  Pets
+                </span>
+                <input
+                  name="pets"
+                  type="number"
+                  min={0}
+                  max={10}
+                  defaultValue={defaultPets}
+                  placeholder="0"
+                  className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
+                />
+              </label>
+            </div>
+            <button
+              type="submit"
+              className="min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:min-h-0 sm:w-auto sm:self-center sm:py-2.5"
+            >
+              Search
+            </button>
           </div>
-          <button
-            type="submit"
-            className="min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:min-h-0 sm:w-auto sm:self-center sm:py-2.5"
-          >
-            Search
-          </button>
         </div>
-      </div>
       </div>
 
       {dateError ? (
@@ -235,10 +245,7 @@ export function StaySearchForm({
         </p>
       )}
 
-      <div
-        className="mt-5 flex items-center gap-3 px-1"
-        aria-hidden
-      >
+      <div className="mt-5 flex items-center gap-3 px-1" aria-hidden>
         <span
           className={
             isHero ? "h-px flex-1 bg-white/25" : "h-px flex-1 bg-stone-200"

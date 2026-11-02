@@ -17,6 +17,7 @@ import { agentCheckoutBookPath } from "@/lib/agent/book-path";
 import {
   appendListingFilterParams,
   normalizeListingFilters,
+  searchGuests,
   searchLimit,
 } from "@/lib/search-filters";
 
@@ -139,8 +140,11 @@ function parseAmenities(raw: string | null | undefined): string[] {
 
 export async function agentSearch(
   origin: string,
-  params: AgentSearchParams,
+  rawParams: AgentSearchParams,
 ): Promise<AgentSearchResult> {
+  // A party bigger than the search form allows is capped there, so the
+  // query echo, the filter and humanSearchUrl all use the same number.
+  const params = { ...rawParams, guests: searchGuests(rawParams.guests) };
   const dates = checkSearchDates(params.checkIn, params.checkOut);
   if (!dates.ok) throw new SearchInputError(dates.code, dates.error);
   const take = searchLimit(params.take);

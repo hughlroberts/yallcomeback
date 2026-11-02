@@ -134,6 +134,20 @@ export function listingFilterLabels(f: ListingFilters): string[] {
 }
 
 /** Default and max results per search response (agent API and stays API). */
+/** Largest party the search form takes (its guests input max). */
+export const SEARCH_MAX_GUESTS = 50;
+
+/** Whole guests from 1 to SEARCH_MAX_GUESTS, or undefined for none/junk. */
+export function searchGuests(
+  raw: string | number | null | undefined,
+): number | undefined {
+  const n = Math.floor(Number(raw));
+  if (raw == null || raw === "" || !Number.isFinite(n) || n < 1) {
+    return undefined;
+  }
+  return Math.min(SEARCH_MAX_GUESTS, n);
+}
+
 export const SEARCH_DEFAULT_LIMIT = 20;
 export const SEARCH_MAX_LIMIT = 50;
 

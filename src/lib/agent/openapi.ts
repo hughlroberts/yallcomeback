@@ -85,6 +85,8 @@ export function buildOpenApiDocument(origin: string) {
               name: "guests",
               in: "query",
               schema: { type: "integer", minimum: 1 },
+              description:
+                "Party size. Values above 50 (the search form's max) are capped at 50 in query, the results and humanSearchUrl.",
             },
             {
               name: "pets",

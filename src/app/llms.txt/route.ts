@@ -80,6 +80,7 @@ Homepage-style flexibility:
 - GET ${origin}/api/marketplace/stays takes the same where, checkIn, checkOut, guests, pets, filters and limit/take (default 20, max 50) and returns the same count, returned and currentCount.
 - Past dates (checkIn before today) or checkOut on/before checkIn return HTTP 400 with {ok:false, code, error}; code is past_dates, checkout_not_after_checkin or invalid_date. Same on GET /api/marketplace/stays.
 - humanSearchUrl and each flexibleDates searchUrl keep every active filter (guests, pets, bedrooms, price, amenities).
+- guests above 50 (the search form max) are capped at 50; query.guests and humanSearchUrl show the capped number.
 - Exact dates with few results: the response has flexibleDates (else null) with up to 4 nearby windows that have more stays — check-in shifted ±1–3 days, or a longer stay that meets a minimum (e.g. 1 night → 2). Each suggestion: checkIn, checkOut, nights, count, label ("Nov 6–8 · 5 stays"), searchUrl. Suggestion count and label never depend on limit/take; "+" (e.g. "200+ stays") appears only when the 200-stay candidate pool cap is reached. flexibleDates.minStay.message (e.g. "Some places need a 2-night minimum") appears when stays were hidden only by a minimum stay. Re-search with a suggestion's dates to get those listings. GET /api/marketplace/stays returns the same flexibleDates (searchPath, relative).
 
 ## Listing detail + availability
