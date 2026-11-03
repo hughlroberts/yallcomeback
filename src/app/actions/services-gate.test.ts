@@ -8,7 +8,17 @@ const auth = vi.hoisted(() => ({
   signIn: vi.fn(),
   auth: vi.fn(),
 }));
-const guest = vi.hoisted(() => ({ getHostForGuestSite: vi.fn() }));
+const guest = vi.hoisted(() => {
+  const getHostForGuestSite = vi.fn();
+  return {
+    getHostForGuestSite,
+    // Route helper: wraps the guest-site host (servicesOnly false here).
+    getHostForGuestServicesPage: vi.fn(async (slug: string) => {
+      const host = await getHostForGuestSite(slug);
+      return host ? { host, servicesOnly: false } : null;
+    }),
+  };
+});
 vi.mock("@/lib/db", () => db);
 vi.mock("@/lib/auth", () => auth);
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -53,6 +63,7 @@ function form(fields: Record<string, string>) {
 describe("Services gate (paid plan or Platform admin override)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    guest.getHostForGuestSite.mockReset();
     auth.requireHostAdmin.mockResolvedValue({ isPlatform: false, hostId: "h_qa" });
   });
 

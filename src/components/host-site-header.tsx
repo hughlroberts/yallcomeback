@@ -3,7 +3,7 @@ import Link from "next/link";
 import { HeaderHeightVar } from "@/components/header-height-var";
 import type { Host } from "@prisma/client";
 import { cn } from "@/lib/utils";
-import { hostSiteNavItems } from "@/lib/host-site";
+import { hostServicesHref, hostSiteNavItems } from "@/lib/host-site";
 import { hostSiteMarkObjectFit, hostSiteMarkUrl } from "@/lib/host-images";
 
 type Props = {
@@ -25,6 +25,11 @@ type Props = {
   profileAvatarUrl?: string | null;
   /** Public paths on custom domain are root-relative (/about); on platform use /h/slug */
   basePath?: string;
+  /**
+   * Unpublished brand with the Services override: link only to the
+   * Services page (no Home, Stays or About).
+   */
+  servicesOnly?: boolean;
 };
 
 /**
@@ -36,11 +41,16 @@ export function HostSiteHeader({
   host,
   profileAvatarUrl = null,
   basePath = "",
+  servicesOnly = false,
 }: Props) {
-  const home = basePath || "/";
   // Header: Home + page links (Stays, About, Services). No separate Book —
   // Book was a duplicate of Stays.
-  const nav = hostSiteNavItems(host, basePath).filter((item) => !item.primary);
+  const allNav = hostSiteNavItems(host, basePath).filter((item) => !item.primary);
+  const servicesHref = hostServicesHref(host, basePath);
+  const nav = servicesOnly
+    ? allNav.filter((item) => item.href === servicesHref)
+    : allNav;
+  const home = servicesOnly ? servicesHref : basePath || "/";
   const markUrl = hostSiteMarkUrl(host, profileAvatarUrl);
   const markIsLogo = Boolean(host.logoUrl?.trim());
   const markFit = hostSiteMarkObjectFit(host);
@@ -102,7 +112,7 @@ export function HostSiteHeader({
           aria-label="Site"
         >
           {/* Explicit Home (logo also links home) */}
-          <HeaderNavLink href={home}>Home</HeaderNavLink>
+          {servicesOnly ? null : <HeaderNavLink href={home}>Home</HeaderNavLink>}
           {nav.map((item) => (
             <HeaderNavLink key={item.href} href={item.href}>
               {item.label}

@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import type { CSSProperties } from "react";
 import type { Host } from "@prisma/client";
-import { getHostForGuestSite } from "@/lib/host";
+import { getHostForGuestServicesPage, getHostForGuestSite } from "@/lib/host";
+import { isServicesPagePath } from "@/lib/services-access";
+import { hostServicesPathSegment } from "@/lib/host-site";
 import { TENANT_SLUG_HEADER } from "@/lib/tenant-constants";
 
 export type HostTenant = Host;
@@ -27,6 +29,29 @@ export async function getRequestTenant(): Promise<HostTenant | null> {
     return getHostForGuestSite(fromHeader);
   } catch {
     // Build-time / generateStaticParams — no request context
+    return null;
+  }
+}
+
+/**
+ * Services-only guest chrome: the brand site is not published, but a
+ * Platform admin turned on the Services override, and this request is for
+ * the Services page. Returns null for any other path.
+ */
+export async function getRequestServicesOnlyTenant(): Promise<HostTenant | null> {
+  try {
+    const h = await headers();
+    const slug = h.get(TENANT_SLUG_HEADER)?.trim().toLowerCase();
+    if (!slug) return null;
+    const r = await getHostForGuestServicesPage(slug);
+    if (!r || !r.servicesOnly) return null;
+    const basePath = h.get("x-tenant-mode") === "custom" ? "" : `/h/${r.host.slug}`;
+    const pathname = h.get("x-pathname") || "";
+    if (!isServicesPagePath(pathname, basePath, hostServicesPathSegment(r.host))) {
+      return null;
+    }
+    return r.host;
+  } catch {
     return null;
   }
 }

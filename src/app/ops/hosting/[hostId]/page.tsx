@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ServicesOverrideBadge } from "@/components/services-override-badge";
 import { notFound } from "next/navigation";
 import {
   issueHostingInvoice,
@@ -99,6 +100,7 @@ export default async function OpsHostDetailPage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink">
               {host.name}
+              <ServicesOverrideBadge host={host} />
             </h1>
             <p className="mt-1 text-sm text-ink-muted">
               /h/{host.slug}

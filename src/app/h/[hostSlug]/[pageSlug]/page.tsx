@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { hostServicesPageOn } from "@/lib/services-access";
 import { notFound, redirect } from "next/navigation";
-import { getHostForGuestSite } from "@/lib/host";
+import { getHostForGuestServicesPage } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import {
   HOST_SITE_RESERVED_PATHS,
@@ -22,7 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { hostSlug, pageSlug: rawSlug } = await params;
   const pageSlug = slugify(rawSlug);
-  const host = await getHostForGuestSite(hostSlug);
+  const host = (await getHostForGuestServicesPage(hostSlug))?.host ?? null;
   if (
     !host ||
     !hostServicesPageOn(host) ||
@@ -67,7 +67,8 @@ export default async function HostCustomPageSlug({
     notFound();
   }
 
-  const host = await getHostForGuestSite(hostSlug);
+  const guest = await getHostForGuestServicesPage(hostSlug);
+  const host = guest?.host ?? null;
   if (!host || !hostServicesPageOn(host)) notFound();
 
   const expected = hostServicesPathSegment(host);
@@ -81,5 +82,7 @@ export default async function HostCustomPageSlug({
     redirect(hostServicesHref(host, base));
   }
 
-  return <HostServicesPageView host={host} />;
+  return (
+    <HostServicesPageView host={host} servicesOnly={guest?.servicesOnly ?? false} />
+  );
 }
