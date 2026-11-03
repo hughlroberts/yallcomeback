@@ -15,6 +15,7 @@ import {
   PRIVACY_PATH,
 } from "@/lib/legal";
 import { pageMetadata } from "@/lib/seo";
+import { PageJsonLd } from "@/components/page-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Terms of Service",
@@ -28,6 +29,7 @@ export default function TermsPage() {
       title="Terms of Service"
       description="Please read these Terms before you create an account, list a stay, or request a booking. By using Yall Come Back, you agree to them."
     >
+      <PageJsonLd path="/terms" name="Terms of Service" metadata={metadata} />
       <LegalCallout>
         <strong>Read this first.</strong> {PRODUCT_NAME} is a technology
         platform. We do not own, operate, inspect, or manage the stays on this

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
+import { PageJsonLd } from "@/components/page-json-ld";
 
 export const metadata = pageMetadata({
   title: "About",
@@ -12,6 +13,7 @@ export const metadata = pageMetadata({
 export default function AboutPage() {
   return (
     <div>
+      <PageJsonLd path="/about" name="About" metadata={metadata} kind="AboutPage" />
       <div className="relative overflow-hidden bg-stone-900">
         <Image
           src="/seed/hero/about.jpg"

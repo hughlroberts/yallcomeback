@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui";
 
 import { pageMetadata } from "@/lib/seo";
+import { PageJsonLd } from "@/components/page-json-ld";
 
 export const metadata = pageMetadata({
   title: "Syndication API key · Help",
@@ -16,6 +17,15 @@ export const metadata = pageMetadata({
 export default function SyndicationApiKeyHelpPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-10 sm:px-6">
+      <PageJsonLd
+        path="/help/syndication-api-key"
+        name="Marketplace syndication key"
+        metadata={metadata}
+        breadcrumbs={[
+          { name: "Help center", path: "/help" },
+          { name: "Marketplace syndication key", path: "/help/syndication-api-key" },
+        ]}
+      />
       <p className="text-sm text-stone-500">
         <Link href="/admin/brand" className="font-medium text-bonnet hover:underline">
           ← Brand & website

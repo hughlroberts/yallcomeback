@@ -26,6 +26,7 @@ import {
 } from "@/lib/search-filters";
 
 import { pageMetadata } from "@/lib/seo";
+import { PageJsonLd } from "@/components/page-json-ld";
 
 export const dynamic = "force-dynamic";
 export const metadata = pageMetadata({
@@ -93,6 +94,7 @@ export default async function MarketplacePage({
 
   return (
     <div>
+      <PageJsonLd path="/marketplace" name="Find a Place" metadata={metadata} kind="CollectionPage" />
       <section className="relative overflow-hidden border-b border-slate-200/80">
         <div className="absolute inset-0">
           <Image

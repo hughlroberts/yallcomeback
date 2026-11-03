@@ -280,6 +280,7 @@ export function BookingWidget({
               Guests
             </span>
             <select
+              name="guests"
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
               className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"
@@ -298,6 +299,7 @@ export function BookingWidget({
                 {maxPets > 0 ? ` · max ${maxPets}` : ""}
               </span>
               <select
+                name="pets"
                 value={Math.min(pets, petCap)}
                 onChange={(e) => setPets(Number(e.target.value))}
                 className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"

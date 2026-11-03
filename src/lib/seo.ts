@@ -102,11 +102,15 @@ export function pageMetadata(opts: PageMetadataInput): Metadata {
   };
 }
 
+/** T27: home title ~50-60 chars, description ~140-160 chars. */
+export const HOME_TITLE = `${PRODUCT_NAME} · Book Vacation Rentals Direct from Hosts`;
+export const HOME_DESCRIPTION = `Book vacation rentals directly with the host on ${PRODUCT_NAME}. Search stays, check real calendars and prices, and come back to a host you already know.`;
+
 /** Homepage metadata (absolute title, root canonical). */
 export function homePageMetadata(): Metadata {
   return pageMetadata({
-    title: PRODUCT_NAME,
-    description: PRODUCT_TAGLINE,
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
     path: "/",
     absoluteTitle: true,
     imageAlt: `${PRODUCT_NAME} — ${PRODUCT_TAGLINE}`,

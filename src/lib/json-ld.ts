@@ -134,3 +134,61 @@ export function hostOrganizationJsonLd(opts: {
     sameAs,
   });
 }
+
+/** The platform itself, Yall Come Back, as an Organization. */
+export function platformOrganizationJsonLd(origin: string): Json {
+  const base = origin.replace(/\/$/, "");
+  return {
+    "@type": "Organization",
+    "@id": `${base}/#organization`,
+    name: "Yall Come Back",
+    url: `${base}/`,
+    logo: `${base}/apple-touch-icon.png`,
+  };
+}
+
+export type WebPageKind = "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage";
+
+/**
+ * Public content pages: one @graph with the WebPage (title and description
+ * as shown in the page metadata), the platform Organization as publisher,
+ * and a breadcrumb trail when the page sits under a parent (e.g. /help/x).
+ */
+export function webPageJsonLd(opts: {
+  origin: string;
+  path: string;
+  name: string;
+  description: string;
+  kind?: WebPageKind;
+  breadcrumbs?: { name: string; path: string }[];
+}): Json {
+  const base = opts.origin.replace(/\/$/, "");
+  const url = absolute(base, opts.path) ?? `${base}/`;
+  const org = platformOrganizationJsonLd(base);
+  const crumbs = opts.breadcrumbs ?? [];
+  const page = clean({
+    "@type": opts.kind ?? "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: opts.name,
+    description: opts.description.trim() || undefined,
+    inLanguage: "en-US",
+    isPartOf: { "@type": "WebSite", name: "Yall Come Back", url: `${base}/` },
+    publisher: { "@id": org["@id"] },
+    breadcrumb: crumbs.length ? { "@id": `${url}#breadcrumb` } : undefined,
+  });
+  const graph: Json[] = [page, org];
+  if (crumbs.length) {
+    graph.push({
+      "@type": "BreadcrumbList",
+      "@id": `${url}#breadcrumb`,
+      itemListElement: crumbs.map((c, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: c.name,
+        item: absolute(base, c.path),
+      })),
+    });
+  }
+  return { "@context": "https://schema.org", "@graph": graph };
+}

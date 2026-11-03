@@ -9,6 +9,7 @@ import {
 } from "@/lib/features";
 
 import { pageMetadata } from "@/lib/seo";
+import { PageJsonLd } from "@/components/page-json-ld";
 
 export const metadata = pageMetadata({
   title: "Free self-host · migrate your rental website",
@@ -19,6 +20,7 @@ export const metadata = pageMetadata({
 export default function SelfHostPage() {
   return (
     <div>
+      <PageJsonLd path="/self-host" name="Self-host" metadata={metadata} />
       <div className="relative overflow-hidden bg-stone-950">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/50 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6">

@@ -4,6 +4,8 @@ import {
   helpFaqJsonLd,
   hostOrganizationJsonLd,
   jsonLdScriptBody,
+  platformOrganizationJsonLd,
+  webPageJsonLd,
 } from "@/lib/json-ld";
 import { HELP_ARTICLES, helpPath } from "@/lib/help";
 import { BRANDED_WEBSITE_USD, MARKETPLACE_LISTING_USD } from "@/lib/hosting-prices";
@@ -62,5 +64,30 @@ describe("hostOrganizationJsonLd", () => {
       logo: `${origin}/brand/hosts/cl.png`,
       sameAs: ["https://www.facebook.com/cl"],
     });
+  });
+});
+
+describe("webPageJsonLd (T26)", () => {
+  it("is a graph with the page, the Organization and the breadcrumbs", () => {
+    const d = webPageJsonLd({
+      origin,
+      path: "/help/x",
+      name: "X",
+      description: "About X",
+      breadcrumbs: [
+        { name: "Help center", path: "/help" },
+        { name: "X", path: "/help/x" },
+      ],
+    });
+    const graph = d["@graph"] as Record<string, unknown>[];
+    expect(graph.map((n) => n["@type"])).toEqual(["WebPage", "Organization", "BreadcrumbList"]);
+    expect(graph[0].url).toBe(`${origin}/help/x`);
+    expect(graph[1]["@id"]).toBe(platformOrganizationJsonLd(origin)["@id"]);
+    expect(JSON.stringify(d)).not.toContain("/ops");
+  });
+  it("respects the page kind and leaves out empty breadcrumbs", () => {
+    const d = webPageJsonLd({ origin, path: "/about", name: "About", description: "d", kind: "AboutPage" });
+    const graph = d["@graph"] as Record<string, unknown>[];
+    expect(graph.map((n) => n["@type"])).toEqual(["AboutPage", "Organization"]);
   });
 });

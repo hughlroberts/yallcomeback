@@ -11,6 +11,7 @@ import {
 import { PRODUCT_DOMAIN, PRODUCT_NAME } from "@/lib/features";
 import { LEGAL_EFFECTIVE_DATE, LEGAL_OPERATOR, TERMS_PATH } from "@/lib/legal";
 import { pageMetadata } from "@/lib/seo";
+import { PageJsonLd } from "@/components/page-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Privacy Policy",
@@ -24,6 +25,7 @@ export default function PrivacyPage() {
       title="Privacy Policy"
       description="This policy explains what information we collect, how we use it, and the choices you have. It applies to yallcomeback.app, host sites we operate, and related services."
     >
+      <PageJsonLd path="/privacy" name="Privacy Policy" metadata={metadata} />
       <LegalP>
         This Privacy Policy is issued by {LEGAL_OPERATOR} (“{PRODUCT_NAME},”
         “we,” “us”). It is effective {LEGAL_EFFECTIVE_DATE}. It should be read
