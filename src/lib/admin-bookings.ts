@@ -115,7 +115,7 @@ export function directPaymentLabel(m: string | null | undefined): string {
 export function blockTypeLabel(t: string | null | undefined): string {
   switch (t) {
     case "OFFLINE":
-      return "Offline booking";
+      return "Guest booking (offline)";
     case "FRIENDS":
       return "Friends & family";
     case "OWNER":

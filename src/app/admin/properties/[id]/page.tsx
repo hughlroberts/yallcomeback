@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { BLOCK_TYPE_OPTIONS, DEFAULT_BLOCK_TYPE } from "@/lib/block-types";
 import { listingDisplayTitle } from "@/lib/listing-display-title";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -772,12 +773,12 @@ export default async function AdminPropertyDetailPage({
         </div>
         <div>
           <Label>Type</Label>
-          <Select name="blockType" defaultValue="OWNER">
-            <option value="OWNER">Owner use</option>
-            <option value="FRIENDS">Friends & family</option>
-            <option value="MAINTENANCE">Maintenance</option>
-            <option value="OFFLINE">Offline booking</option>
-            <option value="OTHER">Other</option>
+          <Select name="blockType" defaultValue={DEFAULT_BLOCK_TYPE} autoComplete="off">
+            {BLOCK_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </Select>
         </div>
         <div>

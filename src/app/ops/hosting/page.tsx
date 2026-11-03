@@ -22,6 +22,8 @@ import {
 import { isStripeConfigured } from "@/lib/stripe";
 import { brandedPriceLabel, marketplacePriceWithCardLabel } from "@/lib/hosting-prices";
 import { invoiceSkippedNotice } from "@/lib/hosting-billing-notice";
+import { HostingInvoiceButton } from "@/components/billing/hosting-invoice-button";
+import { stripeLiveKeyInUse, testBrandBillingBlocked } from "@/lib/test-brand-billing";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Website hosting · Ops" };
@@ -34,6 +36,7 @@ export default async function OpsHostingPage({
   await requirePlatformAdminOr404();
   const sp = (await searchParams) ?? {};
   const skipped = invoiceSkippedNotice(sp.invoiceSkipped, sp.brand);
+  const liveKeys = stripeLiveKeyInUse();
   const [pending, hosts, openInvoices, plans, renewals] = await Promise.all([
     prisma.host.findMany({
       where: { approvalStatus: "PENDING_REVIEW" },
@@ -223,14 +226,21 @@ export default async function OpsHostingPage({
                       defaultValue={host.approvalNotes || ""}
                     />
                   </div>
-                  <label className="flex items-center gap-2 text-sm sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      name="issueInvoice"
-                      defaultChecked
-                    />
-                    Issue first hosting invoice after approval (platform mode)
-                  </label>
+                  {liveKeys && host.isTestBrand ? (
+                    <p className="text-sm text-amber-800 sm:col-span-2">
+                      Test brand: no first invoice. Invoices and charges are off
+                      while live Stripe keys are in use.
+                    </p>
+                  ) : (
+                    <label className="flex items-center gap-2 text-sm sm:col-span-2">
+                      <input
+                        type="checkbox"
+                        name="issueInvoice"
+                        defaultChecked
+                      />
+                      Issue first hosting invoice after approval (platform mode)
+                    </label>
+                  )}
                   <div className="flex flex-wrap gap-2 sm:col-span-2">
                     <Button type="submit">Approve</Button>
                   </div>
@@ -326,7 +336,14 @@ export default async function OpsHostingPage({
                 className="flex flex-wrap items-center justify-between gap-3"
               >
                 <div>
-                  <p className="font-medium">{host.name}</p>
+                  <p className="font-medium">
+                    {host.name}
+                    {host.isTestBrand ? (
+                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                        Test brand
+                      </span>
+                    ) : null}
+                  </p>
                   <p className="text-sm text-stone-500">
                     {subscriptionLabel(host.subscriptionStatus)}
                     {host.plan
@@ -338,18 +355,14 @@ export default async function OpsHostingPage({
                     {d !== null ? ` (${d}d)` : ""}
                   </p>
                 </div>
-                <form action={issueHostingInvoice} className="flex items-center gap-2">
-                  <input type="hidden" name="hostId" value={host.id} />
-                  <input type="hidden" name="planId" value={host.planId || ""} />
-                  <input
-                    type="hidden"
-                    name="notes"
-                    value="Renewal invoice"
-                  />
-                  <Button type="submit" variant="secondary">
-                    Issue renewal invoice
-                  </Button>
-                </form>
+                <HostingInvoiceButton
+                  action={issueHostingInvoice}
+                  hostId={host.id}
+                  planId={host.planId}
+                  notes="Renewal invoice"
+                  label="Issue renewal invoice"
+                  blocked={testBrandBillingBlocked(host)}
+                />
               </Card>
             );
           })}

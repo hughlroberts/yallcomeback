@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   issueHostingInvoice,
+  setHostTestBrand,
   suspendHost,
   updateHostOps,
 } from "@/app/actions/hosting";
@@ -22,6 +23,11 @@ import {
   subscriptionLabel,
 } from "@/lib/hosting";
 import { formatMoney } from "@/lib/utils";
+import {
+  HostingInvoiceButton,
+  TestBrandToggle,
+} from "@/components/billing/hosting-invoice-button";
+import { stripeLiveKeyInUse, testBrandBillingBlocked } from "@/lib/test-brand-billing";
 
 export const dynamic = "force-dynamic";
 
@@ -612,16 +618,32 @@ export default async function OpsHostDetailPage({
       </Card>
 
       <Card>
+        <h2 className="text-lg font-semibold text-ink">Test brand</h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          Internal / QA brands get no invoices or charges from here while live
+          Stripe keys are in use.
+        </p>
+        <div className="mt-3">
+          <TestBrandToggle
+            action={setHostTestBrand}
+            hostId={host.id}
+            isTestBrand={host.isTestBrand}
+            liveKeys={stripeLiveKeyInUse()}
+          />
+        </div>
+      </Card>
+
+      <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-ink">Hosting invoices</h2>
           {!isComplimentary && host.hostingMode === "PLATFORM" ? (
-            <form action={issueHostingInvoice}>
-              <input type="hidden" name="hostId" value={host.id} />
-              <input type="hidden" name="planId" value={host.planId || ""} />
-              <Button type="submit" variant="secondary">
-                Issue invoice
-              </Button>
-            </form>
+            <HostingInvoiceButton
+              action={issueHostingInvoice}
+              hostId={host.id}
+              planId={host.planId}
+              label="Issue invoice"
+              blocked={testBrandBillingBlocked(host)}
+            />
           ) : (
             <p className="text-xs text-ink-muted">
               Complimentary / self-host — no invoices

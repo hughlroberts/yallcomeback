@@ -20,6 +20,7 @@ import {
 } from "@/lib/platform-billing";
 import type { HostingInvoiceStatus } from "@prisma/client";
 import { hasLiveCardSubscription } from "@/lib/marketplace-billing-plan";
+import { assertTestBrandBillingAllowed } from "@/lib/test-brand-billing";
 
 /**
  * Billing period a successful hosting payment buys.
@@ -83,6 +84,8 @@ export async function createHostingInvoiceForHost(opts: {
     include: { plan: true, users: { where: { role: "HOST" }, take: 1 } },
   });
   if (!host) throw new Error("Host not found");
+  // T48: never invoice an internal / QA brand while live Stripe keys are on.
+  assertTestBrandBillingAllowed(host);
   // T45: a Marketplace brand on a card subscription is billed by Stripe each
   // month. A manual invoice on top would bill it twice.
   if (paysByCardMonthly(host)) {

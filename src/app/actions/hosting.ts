@@ -11,6 +11,7 @@ import {
   paysByCardMonthly,
 } from "@/lib/hosting-billing";
 import { applyMarketplaceOptIn } from "@/lib/hosting";
+import { testBrandBillingBlocked } from "@/lib/test-brand-billing";
 import {
   cancelPlatformHostingSubscription,
   pausePlatformHostingSubscription,
@@ -167,6 +168,9 @@ export async function approveHost(formData: FormData) {
   });
 
   revalidateHosting(host.slug);
+  if (issueInvoice && testBrandBillingBlocked(host)) {
+    redirect(invoiceSkippedHref("test-approved", host.slug));
+  }
   if (issueInvoice && cardBilled) {
     redirect(invoiceSkippedHref("approved", host.slug));
   }
@@ -235,11 +239,28 @@ export async function issueHostingInvoice(formData: FormData) {
     throw new Error("Self-hosted hosts do not pay platform hosting");
   }
 
+  // T48: refused on the server too (createHostingInvoiceForHost also throws).
+  if (testBrandBillingBlocked(host)) {
+    redirect(invoiceSkippedHref("test", host.slug));
+  }
   if (paysByCardMonthly(host)) {
     redirect(invoiceSkippedHref("invoice", host.slug));
   }
   await createHostingInvoiceForHost({ hostId, planId, notes });
   revalidateHosting(host.slug);
+}
+
+/** T48: mark or unmark a brand as internal / QA (no live invoices or charges). */
+export async function setHostTestBrand(formData: FormData) {
+  await ensurePlatform();
+  const hostId = String(formData.get("hostId") || "");
+  const isTestBrand = formData.get("isTestBrand") === "1";
+  const host = await prisma.host.update({
+    where: { id: hostId },
+    data: { isTestBrand },
+  });
+  revalidateHosting(host.slug);
+  revalidatePath(`/ops/hosting/${host.id}`);
 }
 
 export async function markHostingInvoicePaidAction(formData: FormData) {
@@ -522,7 +543,10 @@ export async function updateHostOps(formData: FormData) {
 }
 
 /** Platform admin hosting page with the "invoice skipped" notice. */
-function invoiceSkippedHref(kind: "approved" | "invoice", slug: string): string {
+function invoiceSkippedHref(
+  kind: "approved" | "invoice" | "test-approved" | "test",
+  slug: string,
+): string {
   const q = new URLSearchParams({ invoiceSkipped: kind, brand: slug });
   return `/ops/hosting?${q.toString()}`;
 }

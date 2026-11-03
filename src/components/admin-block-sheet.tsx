@@ -10,6 +10,11 @@ import {
 import { newClientRequestId } from "@/lib/block-dedupe";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui";
 import { WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
+import {
+  BLOCK_TYPE_OPTIONS,
+  DEFAULT_BLOCK_TYPE,
+  blockTypeForSheet,
+} from "@/lib/block-types";
 import { cn, formatMoney } from "@/lib/utils";
 
 type Props = {
@@ -53,7 +58,7 @@ export function blockSavedMessage(
 ): string {
   const what =
     blockType === "OFFLINE"
-      ? "Offline booking saved"
+      ? "Guest booking (offline) saved"
       : blockType === "FRIENDS"
         ? "Friends & family stay saved"
         : blockType === "OWNER"
@@ -90,8 +95,13 @@ export function AdminBlockSheet({
   // (state adjusted during render, not in an effect).
   const sheetKey = open ? `${startDate}|${endDate}` : "";
   const [lastSheetKey, setLastSheetKey] = useState(sheetKey);
+  // T49: Type is controlled and goes back to a guest booking every time the
+  // sheet opens (also on mobile, where the browser may restore form values).
+  const [blockType, setBlockType] = useState<string>(DEFAULT_BLOCK_TYPE);
   if (sheetKey !== lastSheetKey) {
     setLastSheetKey(sheetKey);
+    const nextType = blockTypeForSheet(lastSheetKey, sheetKey, open, blockType);
+    if (nextType !== blockType) setBlockType(nextType);
     if (open) {
       setRequestId(newClientRequestId());
       setError(null);
@@ -272,7 +282,12 @@ export function AdminBlockSheet({
             ) : null}
           </form>
 
-          <form action={onSubmit} className="mt-4 flex flex-col">
+          <form
+            key={requestId}
+            action={onSubmit}
+            autoComplete="off"
+            className="mt-4 flex flex-col"
+          >
             <input type="hidden" name="propertyId" value={propertyId} />
             <input type="hidden" name="clientRequestId" value={requestId} />
             <p className="mb-2 text-sm font-semibold text-stone-900">
@@ -301,12 +316,18 @@ export function AdminBlockSheet({
               </div>
               <div className="space-y-1">
                 <Label htmlFor="sheet-type">Type</Label>
-                <Select id="sheet-type" name="blockType" defaultValue="OWNER">
-                  <option value="OWNER">Owner use</option>
-                  <option value="FRIENDS">Friends & family</option>
-                  <option value="MAINTENANCE">Maintenance</option>
-                  <option value="OFFLINE">Offline booking</option>
-                  <option value="OTHER">Other</option>
+                <Select
+                  id="sheet-type"
+                  name="blockType"
+                  value={blockType}
+                  onChange={(e) => setBlockType(e.target.value)}
+                  autoComplete="off"
+                >
+                  {BLOCK_TYPE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </Select>
               </div>
               <div className="space-y-1">

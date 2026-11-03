@@ -307,6 +307,10 @@ model Host {
   /// new one is made so two tabs cannot both pay.
   setupServiceOpenSessionId     String?
   setupServicePayments          SetupServicePayment[]
+  /// T48: internal / QA brand (e.g. QA Tester Two, QA Marketplace Test).
+  /// While live Stripe keys (sk_live_) are in use, Platform admin cannot
+  /// invoice or charge it. Set in Platform admin > hosting > brand.
+  isTestBrand                   Boolean @default(false)
 
   /// T45: Marketplace card billing. End of the 14-day "Add card" grace for a
   /// Marketplace brand with no card subscription. Set on first view / first
