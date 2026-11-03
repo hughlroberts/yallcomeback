@@ -3,12 +3,13 @@ import { redirect } from "next/navigation";
 import { AccountSettingsShell } from "@/components/account-settings-shell";
 import { FlashToast } from "@/components/flash-toast";
 import { Button, Card } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
-import { upgradeToBrandedWebsite } from "@/app/actions/host";
+import { BrandedPendingBanner } from "@/components/branded-pending-banner";
 import {
-  openBillingPortal,
-  startHostingSubscription,
-} from "@/app/actions/stripe-connect";
+  HOSTING_BILLING_ROUTE,
+  billingErrorMessage,
+  brandedAwaitingPayment,
+  brandedUpgradeConfirmPath,
+} from "@/lib/branded-upgrade";
 import { auth, requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
@@ -59,6 +60,8 @@ export default async function AccountSubscriptionPage({
     canceled?: string;
     welcome?: string;
     upgraded?: string;
+    upgrade?: string;
+    billingError?: string;
     collectCards?: string;
   }>;
 }) {
@@ -153,7 +156,27 @@ export default async function AccountSubscriptionPage({
 
   const hostsNow = await loadBrands();
 
-  const flash = sp.subscribed
+  const billingError = billingErrorMessage(sp.billingError);
+  const upgradeFlow = sp.upgrade === "branded";
+  const flash = billingError
+    ? {
+        title: "Billing did not open",
+        body: billingError,
+        variant: "warn" as const,
+      }
+    : sp.subscribed && upgradeFlow
+    ? {
+        title: "Branded website is on",
+        body: "Payment went through. That brand is on the $25 / month website plan — it covers every listing. Next: logo, colors, and domain under Brand & website.",
+        variant: "success" as const,
+      }
+    : sp.canceled && upgradeFlow
+    ? {
+        title: "Checkout canceled",
+        body: "No charge was made. Your plan did not change: the brand stays on Marketplace only. You can upgrade again from this page.",
+        variant: "warn" as const,
+      }
+    : sp.subscribed
     ? {
         title: "You're subscribed",
         body: sp.collectCards
@@ -261,6 +284,9 @@ function BrandHostingCard({
 
   return (
     <div className="space-y-4">
+      {brandedAwaitingPayment(host, host.plan) ? (
+        <BrandedPendingBanner hostId={host.id} hostName={host.name} />
+      ) : null}
       <Card className="space-y-4 p-5 sm:p-6">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-bonnet">
@@ -325,24 +351,23 @@ function BrandHostingCard({
               <strong>{formatMoney(25)} / month for the whole website</strong>,
               no matter how many listings you publish.
             </p>
-            <form
-              action={upgradeToBrandedWebsite}
-              className="mt-3 flex flex-wrap items-center gap-3"
-            >
-              <input type="hidden" name="hostId" value={host.id} />
-              <SubmitButton
-                pendingLabel="Upgrading…"
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Link
+                href={brandedUpgradeConfirmPath(
+                  host.id,
+                  "/account/settings/subscription",
+                )}
                 className="rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
               >
                 Upgrade to branded website
-              </SubmitButton>
+              </Link>
               <Link
                 href="/help/branded-website"
                 className="text-sm font-semibold text-bonnet hover:underline"
               >
                 How it works →
               </Link>
-            </form>
+            </div>
           </div>
         ) : null}
 
@@ -424,7 +449,8 @@ function BrandHostingCard({
 
           <div className="flex flex-wrap gap-3">
             {branded ? (
-              <form action={startHostingSubscription}>
+              <form method="post" action={HOSTING_BILLING_ROUTE}>
+                <input type="hidden" name="intent" value="subscribe" />
                 <input type="hidden" name="hostId" value={host.id} />
                 <Button type="submit" disabled={!stripeOn || !priceConfigured}>
                   {complimentary
@@ -435,7 +461,8 @@ function BrandHostingCard({
                 </Button>
               </form>
             ) : null}
-            <form action={openBillingPortal}>
+            <form method="post" action={HOSTING_BILLING_ROUTE}>
+              <input type="hidden" name="intent" value="portal" />
               <input type="hidden" name="hostId" value={host.id} />
               <Button type="submit" variant="secondary" disabled={!stripeOn}>
                 {cardOnFile ? "Update card" : "Add a card"}

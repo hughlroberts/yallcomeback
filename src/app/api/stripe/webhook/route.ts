@@ -5,7 +5,9 @@ import {
   recordStripePlatformInvoice,
 } from "@/lib/hosting-billing";
 import { markBlockInvoicePaidByStripeId } from "@/lib/block-invoice";
+import { isBrandedUpgradeMetadata } from "@/lib/branded-upgrade";
 import {
+  applyBrandedUpgrade,
   applyHostingSubscriptionFromStripe,
   ensureCustomerDefaultCard,
   stripeObjectId,
@@ -96,7 +98,12 @@ export async function POST(req: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as {
-      metadata?: { kind?: string; hostId?: string; bookingId?: string };
+      metadata?: {
+        kind?: string;
+        hostId?: string;
+        bookingId?: string;
+        upgrade?: string;
+      };
       mode?: string;
       payment_status?: string;
       subscription?: string | { id?: string } | null;
@@ -158,6 +165,13 @@ export async function POST(req: Request) {
     if (session.metadata?.kind === "hosting_subscription") {
       const customerId = stripeObjectId(session.customer);
       const subscriptionId = stripeObjectId(session.subscription);
+      // Marketplace → Branded: switch the plan only now that checkout is paid.
+      if (
+        session.metadata.hostId &&
+        isBrandedUpgradeMetadata(session.metadata)
+      ) {
+        await applyBrandedUpgrade(session.metadata.hostId);
+      }
       await applyHostingSubscriptionFromStripe({
         hostId: session.metadata.hostId,
         customerId,

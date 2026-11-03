@@ -8,7 +8,14 @@
 
 import { prisma } from "@/lib/db";
 import { canonicalSiteOrigin } from "@/lib/features";
-import { planSlugForSitePresence } from "@/lib/hosting";
+import { hostProductPath, planSlugForSitePresence } from "@/lib/hosting";
+import {
+  BRANDED_UPGRADE_METADATA,
+  SUBSCRIPTION_PATH,
+  canUpgradeToBranded,
+  isBrandedUpgradeMetadata,
+  isComplimentaryPlanPrice,
+} from "@/lib/branded-upgrade";
 import {
   CARD_PROCESSING_LINE,
   getStripe,
@@ -55,7 +62,8 @@ export async function ensurePlatformCustomer(
   if (host.stripeCustomerId) return host.stripeCustomerId;
   const email = hostBillingEmail(host);
   if (!email) {
-    throw new Error(
+    throw new HostingBillingError(
+      "no_email",
       "Add a billing or contact email on this brand before you subscribe.",
     );
   }
@@ -188,14 +196,17 @@ export async function applyHostingCheckoutSession(opts: {
   }
   const customerId = stripeObjectId(session.customer);
   const subscriptionId = stripeObjectId(session.subscription);
+  const paid =
+    session.status === "complete" || session.payment_status === "paid";
+  // Marketplace → Branded: the plan changes only once checkout is paid.
+  if (paid && isBrandedUpgradeMetadata(session.metadata)) {
+    await applyBrandedUpgrade(hostId);
+  }
   await applyHostingSubscriptionFromStripe({
     hostId,
     customerId,
     subscriptionId,
-    stripeStatus:
-      session.status === "complete" || session.payment_status === "paid"
-        ? "active"
-        : session.status,
+    stripeStatus: paid ? "active" : session.status,
   });
   const cardLabel = customerId
     ? await ensureCustomerDefaultCard(customerId, subscriptionId)
@@ -207,7 +218,10 @@ export async function applyHostingCheckoutSession(opts: {
  * Checkout on the platform account: host puts a card on file and starts
  * the monthly hosting subscription. Guest payouts never touch this Customer.
  */
-export async function createHostingSubscriptionCheckout(host: PlatformHost) {
+export async function createHostingSubscriptionCheckout(
+  host: PlatformHost,
+  opts: { upgradeToBranded?: boolean } = {},
+) {
   const stripeClient = requireStripeClient();
   const price = hostingPriceId();
   if (!price) {
@@ -223,6 +237,12 @@ export async function createHostingSubscriptionCheckout(host: PlatformHost) {
   }
   const processingCents = processingFeeToNetCents(netCents);
   const origin = publicOrigin();
+  const upgrade = Boolean(opts.upgradeToBranded);
+  const metadata: Record<string, string> = {
+    kind: "hosting_subscription",
+    hostId: host.id,
+    ...(upgrade ? BRANDED_UPGRADE_METADATA : {}),
+  };
   const line_items: {
     price?: string;
     quantity: number;
@@ -251,13 +271,142 @@ export async function createHostingSubscriptionCheckout(host: PlatformHost) {
     payment_method_collection: "always",
     billing_address_collection: "auto",
     line_items,
-    success_url: `${origin}/account/settings/subscription?subscribed=1&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/account/settings/subscription?canceled=1`,
-    metadata: { kind: "hosting_subscription", hostId: host.id },
-    subscription_data: {
-      metadata: { kind: "hosting_subscription", hostId: host.id },
+    success_url: `${origin}${SUBSCRIPTION_PATH}?subscribed=1${upgrade ? "&upgrade=branded" : ""}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}${SUBSCRIPTION_PATH}?canceled=1${upgrade ? "&upgrade=branded" : ""}`,
+    metadata,
+    subscription_data: { metadata },
+  });
+}
+
+/**
+ * Apply a paid Marketplace → Branded upgrade (idempotent). Called only from
+ * the paid checkout paths (success page + checkout.session.completed).
+ */
+export async function applyBrandedUpgrade(hostId: string) {
+  const host = await prisma.host.findUnique({
+    where: { id: hostId },
+    include: { plan: { select: { monthlyPrice: true, slug: true } } },
+  });
+  if (!host || host.hostingMode !== "PLATFORM") return host;
+  const brandedPlan = await prisma.hostingPlan.findFirst({
+    where: { slug: "branded", isActive: true, monthlyPrice: { gt: 0 } },
+  });
+  const keepPlan = isComplimentaryPlanPrice(host.plan) || !brandedPlan;
+  const alreadyBranded = !canUpgradeToBranded(host);
+  if (alreadyBranded && (keepPlan || host.planId === brandedPlan?.id)) {
+    return host;
+  }
+  return prisma.host.update({
+    where: { id: host.id },
+    data: {
+      ...(alreadyBranded
+        ? {}
+        : {
+            sitePresence: "BOTH" as const,
+            listOnMarketplace: true,
+            sitePublishState:
+              host.sitePublishState === "LIVE" ? ("LIVE" as const) : ("DEMO" as const),
+            sitePageAbout: true,
+          }),
+      ...(keepPlan || !brandedPlan ? {} : { planId: brandedPlan.id }),
     },
   });
+}
+
+export class HostingBillingError extends Error {
+  constructor(
+    public code:
+      | "price_missing"
+      | "no_email"
+      | "has_subscription"
+      | "not_marketplace"
+      | "not_branded"
+      | "failed",
+    message?: string,
+  ) {
+    super(message || code);
+  }
+}
+
+type BillingHost = PlatformHost & {
+  hostingMode: "SELF" | "PLATFORM";
+  sitePresence: "STAYLOCAL" | "CUSTOM" | "BOTH";
+  subscriptionStatus: string;
+  stripeSubscriptionId: string | null;
+  stripeSubscriptionStatus: string | null;
+};
+
+function subscriptionStillOpen(host: BillingHost): boolean {
+  if (!host.stripeSubscriptionId) return false;
+  const s = (host.stripeSubscriptionStatus || "").toLowerCase();
+  return s !== "canceled" && s !== "incomplete_expired";
+}
+
+/**
+ * Card checkout URL for a Marketplace → Branded upgrade. Does not change the
+ * host; the plan changes after payment (see applyBrandedUpgrade).
+ */
+export async function brandedUpgradeCheckoutUrl(
+  host: BillingHost,
+): Promise<string> {
+  if (!canUpgradeToBranded(host)) throw new HostingBillingError("not_marketplace");
+  if (!hostingPriceId()) throw new HostingBillingError("price_missing");
+  // Never start a second subscription next to a live one.
+  if (subscriptionStillOpen(host)) {
+    throw new HostingBillingError("has_subscription");
+  }
+  const session = await createHostingSubscriptionCheckout(host, {
+    upgradeToBranded: true,
+  });
+  if (!session.url) throw new HostingBillingError("failed", "no checkout url");
+  return session.url;
+}
+
+/**
+ * "Add card and subscribe" for a branded brand: fresh checkout, or the
+ * billing portal when the subscription is already active.
+ */
+export async function hostingSubscriptionUrl(
+  host: BillingHost & { plan?: { monthlyPrice: number } | null },
+): Promise<string> {
+  if (hostProductPath(host) !== "website") {
+    throw new HostingBillingError("not_branded");
+  }
+  if (!hostingPriceId()) throw new HostingBillingError("price_missing");
+  const stripeStatus = (host.stripeSubscriptionStatus || "").toLowerCase();
+  const needsFreshCheckout =
+    stripeStatus === "paused" ||
+    stripeStatus === "canceled" ||
+    stripeStatus === "incomplete_expired" ||
+    !host.stripeSubscriptionId;
+  if (needsFreshCheckout) {
+    if (host.stripeSubscriptionId) {
+      await cancelPlatformHostingSubscription(host.stripeSubscriptionId);
+      await prisma.host.update({
+        where: { id: host.id },
+        data: {
+          stripeSubscriptionId: null,
+          stripeSubscriptionStatus: "canceled",
+        },
+      });
+    }
+  } else if (host.subscriptionStatus === "ACTIVE" && host.stripeCustomerId) {
+    const portal = await createPlatformBillingPortalSession(
+      host.stripeCustomerId,
+    );
+    if (!portal.url) throw new HostingBillingError("failed", "no portal url");
+    return portal.url;
+  }
+  const session = await createHostingSubscriptionCheckout(host);
+  if (!session.url) throw new HostingBillingError("failed", "no checkout url");
+  return session.url;
+}
+
+export async function billingPortalUrl(host: PlatformHost): Promise<string> {
+  const customerId = await ensurePlatformCustomer(host);
+  const portal = await createPlatformBillingPortalSession(customerId);
+  if (!portal.url) throw new HostingBillingError("failed", "no portal url");
+  return portal.url;
 }
 
 export async function createPlatformBillingPortalSession(customerId: string) {

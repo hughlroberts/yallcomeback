@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { upgradeToBrandedWebsite } from "@/app/actions/host";
-import { SubmitButton } from "@/components/submit-button";
+import { brandedUpgradeConfirmPath } from "@/lib/branded-upgrade";
 
 type Props = {
   hostId: string;
+  /** Where Cancel on the confirm page goes back to. */
+  returnTo?: string;
   hostName: string;
   previewPath: string;
 };
@@ -14,9 +15,12 @@ type Props = {
  */
 export function MarketplaceToWebsiteUpgrade({
   hostId,
+  returnTo,
   hostName,
   previewPath,
 }: Props) {
+  // T38: a link to the confirm page, never a one-click plan switch. This
+  // card renders inside the brand form, so it must not be a nested <form>.
   return (
     <div className="space-y-4 rounded-2xl border border-bonnet/25 bg-gradient-to-br from-petal/70 to-white p-5 sm:p-6">
       <div>
@@ -40,9 +44,10 @@ export function MarketplaceToWebsiteUpgrade({
             1
           </span>
           <span>
-            <strong className="text-stone-900">Upgrade here</strong> — switches
-            you to the branded website plan ($25 / month for the whole site —
-            any number of listings) and unlocks Brand tools.
+            <strong className="text-stone-900">Upgrade here</strong> — confirm,
+            then pay by card for the branded website plan ($25 / month for the
+            whole site — any number of listings). Your plan and Brand tools
+            change after the payment goes through.
           </span>
         </li>
         <li className="flex gap-3">
@@ -69,18 +74,20 @@ export function MarketplaceToWebsiteUpgrade({
         </li>
       </ol>
 
-      <form action={upgradeToBrandedWebsite} className="flex flex-wrap items-center gap-3">
-        <input type="hidden" name="hostId" value={hostId} />
-        <SubmitButton className="rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet/90">
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href={brandedUpgradeConfirmPath(hostId, returnTo)}
+          className="rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet/90"
+        >
           Create my branded website
-        </SubmitButton>
+        </Link>
         <Link
           href="/help/branded-website"
           className="text-sm font-semibold text-bonnet hover:underline"
         >
           How domains work →
         </Link>
-      </form>
+      </div>
 
       <p className="text-xs text-stone-500">
         Marketplace listing stays on. You can turn it off later per stay if you

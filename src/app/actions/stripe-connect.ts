@@ -14,12 +14,10 @@ import {
   createProductOnConnectedAccount,
 } from "@/lib/stripe-connect";
 import {
-  cancelPlatformHostingSubscription,
-  createHostingSubscriptionCheckout,
   createPlatformBillingPortalSession,
   ensurePlatformCustomer,
+  hostingSubscriptionUrl,
 } from "@/lib/platform-billing";
-import { hostProductPath } from "@/lib/hosting";
 import { isStripeConfigured, requireStripeClient, toStripeAmount } from "@/lib/stripe";
 
 async function requireBrandHost(formData?: FormData) {
@@ -102,45 +100,14 @@ export async function createHostProduct(formData: FormData) {
   revalidatePath(`/pay/${host.slug}`);
 }
 
+/**
+ * Kept for older pages still holding this action id. New pages post a plain
+ * form to /api/billing/hosting (T39: reliable first click).
+ */
 export async function startHostingSubscription(formData?: FormData) {
   assertStripeOn();
   const host = await requireBrandHost(formData);
-  if (hostProductPath(host) !== "website") {
-    throw new Error(
-      "Card checkout is the $25 / month branded website plan. Marketplace-only hosts are billed $12 per listing by invoice.",
-    );
-  }
-  const stripeStatus = (host.stripeSubscriptionStatus || "").toLowerCase();
-  const needsFreshCheckout =
-    stripeStatus === "paused" ||
-    stripeStatus === "canceled" ||
-    stripeStatus === "incomplete_expired" ||
-    !host.stripeSubscriptionId;
-  if (needsFreshCheckout) {
-    if (host.stripeSubscriptionId) {
-      await cancelPlatformHostingSubscription(host.stripeSubscriptionId);
-      await prisma.host.update({
-        where: { id: host.id },
-        data: {
-          stripeSubscriptionId: null,
-          stripeSubscriptionStatus: "canceled",
-        },
-      });
-    }
-    const fresh = await createHostingSubscriptionCheckout(host);
-    if (!fresh.url) throw new Error("Card checkout did not return a URL.");
-    redirect(fresh.url);
-  }
-  if (host.subscriptionStatus === "ACTIVE" && host.stripeCustomerId) {
-    const portal = await createPlatformBillingPortalSession(
-      host.stripeCustomerId,
-    );
-    if (!portal.url) throw new Error("Billing portal did not return a URL.");
-    redirect(portal.url);
-  }
-  const session = await createHostingSubscriptionCheckout(host);
-  if (!session.url) throw new Error("Card checkout did not return a URL.");
-  redirect(session.url);
+  redirect(await hostingSubscriptionUrl(host));
 }
 
 export async function openBillingPortal(formData?: FormData) {

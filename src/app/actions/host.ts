@@ -1,6 +1,11 @@
 "use server";
 
 import { hostCanUseServices } from "@/lib/services-access";
+import {
+  brandedUpgradeConfirmPath,
+  brandedUpgradeNeedsCheckout,
+  canUpgradeToBranded,
+} from "@/lib/branded-upgrade";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { HostSitePresence } from "@prisma/client";
@@ -404,11 +409,32 @@ export async function updateHostProfile(formData: FormData) {
 
   const isSelf = hostingMode === "SELF";
 
+  let requestedPresence = parseSitePresence(
+    String(formData.get("sitePresence") || existing.sitePresence),
+  );
+  // T38: Marketplace → Branded never switches on save. Paid brands go
+  // through the confirm page + card checkout; the plan changes after payment.
+  let upgradeNeedsCheckout = false;
+  if (
+    !isSelf &&
+    requestedPresence !== "STAYLOCAL" &&
+    canUpgradeToBranded(existing)
+  ) {
+    const currentPlan = existing.planId
+      ? await prisma.hostingPlan.findUnique({
+          where: { id: existing.planId },
+          select: { monthlyPrice: true },
+        })
+      : null;
+    if (brandedUpgradeNeedsCheckout(existing, currentPlan)) {
+      upgradeNeedsCheckout = true;
+      requestedPresence = "STAYLOCAL";
+    }
+  }
+
   const opted = applyMarketplaceOptIn(
     isSelf ? "SELF" : "PLATFORM",
-    parseSitePresence(
-      String(formData.get("sitePresence") || existing.sitePresence),
-    ),
+    requestedPresence,
     formData.get("listOnMarketplace") === "on",
   );
   const sitePresence = opted.sitePresence;
@@ -640,64 +666,21 @@ export async function updateHostProfile(formData: FormData) {
     returnTo.startsWith("/admin") || returnTo.startsWith("/ops")
       ? returnTo
       : HOST_PROFILE_PATH;
+  if (upgradeNeedsCheckout) {
+    redirect(brandedUpgradeConfirmPath(host.id, safeReturn));
+  }
   redirect(`${safeReturn}${safeReturn.includes("?") ? "&" : "?"}saved=1`);
 }
 
 /**
- * One-click upgrade: marketplace-only → branded website (BOTH) + branded plan.
- * Unlocks logo/domain/pages. Host still buys the domain at their registrar.
+ * Old one-click upgrade button (pages cached before T38 may still post it).
+ * It no longer changes the plan: it opens the confirm page, which goes to
+ * card checkout. The plan changes only after payment.
  */
 export async function upgradeToBrandedWebsite(formData: FormData) {
-  const access = await requireHostAdmin();
-  if (!access) redirect(`/login?callbackUrl=/admin/brand`);
-
-  const hostId = String(formData.get("hostId") || "");
+  const hostId = String(formData.get("hostId") || "").trim();
   if (!hostId) redirect(`/admin/brand?error=missing`);
-  if (!access.isPlatform && access.hostId !== hostId) {
-    redirect(`/admin/brand?error=forbidden`);
-  }
-
-  const existing = await prisma.host.findUnique({
-    where: { id: hostId },
-    include: { plan: { select: { monthlyPrice: true, slug: true } } },
-  });
-  if (!existing) redirect(`/admin/brand?error=missing`);
-  if (existing.hostingMode === "SELF") {
-    redirect(`/admin/brand?hostId=${hostId}&error=self_host`);
-  }
-
-  const brandedPlan = await prisma.hostingPlan.findFirst({
-    where: { slug: "branded", isActive: true, monthlyPrice: { gt: 0 } },
-  });
-
-  const isComplimentary = Boolean(
-    existing.plan && existing.plan.monthlyPrice <= 0,
-  );
-
-  await prisma.host.update({
-    where: { id: hostId },
-    data: {
-      sitePresence: "BOTH",
-      listOnMarketplace: true,
-      sitePublishState:
-        existing.sitePublishState === "LIVE"
-          ? "LIVE"
-          : existing.sitePublishState === "DEMO"
-            ? "DEMO"
-            : "DEMO",
-      sitePageAbout: true,
-      ...(isComplimentary || !brandedPlan
-        ? {}
-        : { planId: brandedPlan.id }),
-    },
-  });
-
-  revalidatePath("/admin");
-  revalidatePath("/admin/brand");
-  revalidatePath("/ops/hosting");
-  revalidatePath("/account/settings/subscription");
-  revalidatePath(`/h/${existing.slug}`);
-  redirect(`/account/settings/subscription?upgraded=website`);
+  redirect(brandedUpgradeConfirmPath(hostId, "/admin/brand"));
 }
 
 /**

@@ -31,6 +31,12 @@ import {
   hostSiteMarkUrl,
 } from "@/lib/host-images";
 import { BrandPageNav } from "@/components/brand-page-nav";
+import { BrandedPendingBanner } from "@/components/branded-pending-banner";
+import {
+  brandedAwaitingPayment,
+  brandedUpgradeConfirmPath,
+  canUpgradeToBranded,
+} from "@/lib/branded-upgrade";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Brand & website" };
@@ -168,6 +174,14 @@ export default async function AdminBrandPage({
 
   const product = hostProductPath(host);
   const branded = hostHasBrandedWebsite(host);
+  const upgradeAvailable = canUpgradeToBranded(host);
+  const currentPlan = host.planId
+    ? await prisma.hostingPlan.findUnique({
+        where: { id: host.planId },
+        select: { monthlyPrice: true },
+      })
+    : null;
+  const awaitingPayment = brandedAwaitingPayment(host, currentPlan);
   const previewPath = `/h/${host.slug}`;
   const returnTo = access.isPlatform
     ? `/admin/brand?hostId=${host.id}`
@@ -248,6 +262,10 @@ export default async function AdminBrandPage({
           page for things like boat rentals.
         </p>
       </div>
+
+      {awaitingPayment ? (
+        <BrandedPendingBanner hostId={host.id} hostName={host.name} />
+      ) : null}
 
       {params.saved ? (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
@@ -371,7 +389,32 @@ export default async function AdminBrandPage({
                       body: "Hosted brand site on your domain (logo, palette, About, services). $25 covers every listing — the bill does not grow when you add stays. Marketplace listing is included — uncheck it below if you do not want Find a Place. No second fee.",
                     },
                   ] as const
-                ).map((opt) => (
+                ).map((opt) =>
+                  opt.id === "BOTH" && upgradeAvailable ? (
+                    // T38: Marketplace → Branded opens the confirm page and
+                    // card checkout. It never switches the plan on save.
+                    <Link
+                      key={opt.id}
+                      href={brandedUpgradeConfirmPath(host.id, returnTo)}
+                      className="flex items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm hover:border-bonnet/40 hover:bg-petal/30"
+                    >
+                      <span
+                        aria-hidden
+                        className="mt-1 inline-block size-[13px] shrink-0 rounded-full border border-stone-400"
+                      />
+                      <span>
+                        <span className="font-semibold text-stone-900">
+                          {opt.title}
+                        </span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-stone-500">
+                          {opt.body}
+                        </span>
+                        <span className="mt-1.5 block text-xs font-semibold text-bonnet">
+                          Upgrade — confirm and pay by card →
+                        </span>
+                      </span>
+                    </Link>
+                  ) : (
                   <label
                     key={opt.id}
                     className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm hover:bg-stone-50 has-[:checked]:border-bonnet/40 has-[:checked]:bg-petal/30"
@@ -396,7 +439,8 @@ export default async function AdminBrandPage({
                       </span>
                     </span>
                   </label>
-                ))}
+                  ),
+                )}
               </fieldset>
             )}
           </Card>
@@ -406,6 +450,7 @@ export default async function AdminBrandPage({
             <div className="order-2">
               <MarketplaceToWebsiteUpgrade
                 hostId={host.id}
+                returnTo={returnTo}
                 hostName={host.name}
                 previewPath={`/h/${host.slug}`}
               />
