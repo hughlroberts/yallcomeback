@@ -1,3 +1,4 @@
+import { CARD_LOOKUP_TIMEOUT_MS, withTimeout } from "@/lib/with-timeout";
 import { brandedPriceLabel, cardProcessingNote } from "@/lib/hosting-prices";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -140,18 +141,17 @@ export default async function AccountSubscriptionPage({
         cards.set(host.id, null);
         return;
       }
-      try {
-        let label = await ensureCustomerDefaultCard(
-          host.stripeCustomerId,
-          host.stripeSubscriptionId,
-        );
-        if (!label) {
-          label = await describePlatformCard(host.stripeCustomerId);
-        }
-        cards.set(host.id, label);
-      } catch {
-        cards.set(host.id, null);
-      }
+      // T38b: the card label is nice to have. Never hold the page for it.
+      const customerId = host.stripeCustomerId;
+      const label = await withTimeout(
+        (async () =>
+          (await ensureCustomerDefaultCard(
+            customerId,
+            host.stripeSubscriptionId,
+          )) || (await describePlatformCard(customerId)))(),
+        CARD_LOOKUP_TIMEOUT_MS,
+      ).catch(() => null);
+      cards.set(host.id, label);
     }),
   );
 
@@ -214,7 +214,17 @@ export default async function AccountSubscriptionPage({
       title="Subscription"
       description="Hosting is billed per brand, not on your personal login. Guest stay payments live under Admin → Payments — they never mix."
     >
-      {flash ? (
+      {billingError ? (
+        // T38b: billing errors stay on the page (a toast can vanish before
+        // the host sees it).
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        >
+          <p className="font-semibold">Billing did not open</p>
+          <p className="mt-0.5">{billingError}</p>
+        </div>
+      ) : flash ? (
         <FlashToast
           title={flash.title}
           body={flash.body}

@@ -114,6 +114,7 @@ export function billingErrorMessage(code: string | null | undefined): string | n
     case "failed":
       return "Checkout could not start. Nothing changed. Try again.";
     default:
-      return null;
+      // T38b: any other code still gets a readable message.
+      return code ? "Checkout could not start. Nothing changed. Try again." : null;
   }
 }

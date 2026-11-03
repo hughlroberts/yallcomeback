@@ -61,6 +61,30 @@ describe("branded upgrade helpers (T38)", () => {
     for (const c of ["stripe_off", "price_missing", "no_email", "forbidden", "has_subscription", "not_marketplace", "not_branded", "failed"]) {
       expect(billingErrorMessage(c)).toBeTruthy();
     }
-    expect(billingErrorMessage("nope")).toBeNull();
+    expect(billingErrorMessage("nope")).toMatch(/Nothing changed/);
   });
+});
+
+describe("billingErrorMessage (T38b)", () => {
+  it("has a readable message for every billingError code", async () => {
+    const { billingErrorMessage } = await import("./branded-upgrade");
+    for (const code of [
+      "stripe_off",
+      "price_missing",
+      "no_email",
+      "forbidden",
+      "has_subscription",
+      "not_marketplace",
+      "not_branded",
+      "failed",
+    ]) {
+      expect(billingErrorMessage(code), code).toMatch(/\w{3,}.*\./);
+    }
+    expect(billingErrorMessage(undefined)).toBeNull();
+  });
+});
+
+it("unknown billingError codes still read clearly", async () => {
+  const { billingErrorMessage } = await import("./branded-upgrade");
+  expect(billingErrorMessage("weird")).toMatch(/Nothing changed/);
 });

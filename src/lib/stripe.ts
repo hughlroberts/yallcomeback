@@ -39,6 +39,8 @@ export function isStripeConfigured(): boolean {
  * Stripe Client used for all Stripe API calls.
  * Throws a helpful error if the secret key placeholder was left empty.
  */
+export const STRIPE_TIMEOUT_MS = 15_000;
+
 export function getStripeClient(): Stripe {
   const secret = process.env.STRIPE_SECRET_KEY?.trim();
   if (!secret) {
@@ -50,7 +52,12 @@ export function getStripeClient(): Stripe {
     );
   }
   // Stripe Client — use this instance for v1 and v2 requests.
-  const stripeClient = new Stripe(secret);
+  // T38b: cap each call so a slow Stripe answer never hangs a page or a
+  // billing button for the SDK default (80s).
+  const stripeClient = new Stripe(secret, {
+    timeout: STRIPE_TIMEOUT_MS,
+    maxNetworkRetries: 1,
+  });
   return stripeClient;
 }
 

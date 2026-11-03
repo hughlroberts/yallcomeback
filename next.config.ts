@@ -1,25 +1,6 @@
 import type { NextConfig } from "next";
 
-/**
- * Next hydration and JSON-LD need inline scripts. This still blocks
- * unexpected script hosts, plugins, and framing.
- */
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
-  "font-src 'self'",
-  "connect-src 'self'",
-  "frame-src https://www.openstreetmap.org https://challenges.cloudflare.com",
-  "worker-src 'self' blob:",
-  "manifest-src 'self'",
-  "upgrade-insecure-requests",
-].join("; ");
+import { contentSecurityPolicy } from "./src/lib/content-security-policy";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,

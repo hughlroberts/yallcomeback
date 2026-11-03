@@ -96,7 +96,7 @@ describe("agent docs for pre-booking questions", () => {
     expect(read("src/app/agents.md/route.ts")).toContain("/api/v1/inquiries");
   });
   it("CSP allows the optional Turnstile widget", () => {
-    const cfg = read("next.config.ts");
+    const cfg = read("src/lib/content-security-policy.ts");
     expect(cfg).toContain("https://challenges.cloudflare.com");
   });
 });

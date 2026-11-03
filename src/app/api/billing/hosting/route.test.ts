@@ -107,3 +107,49 @@ describe("POST /api/billing/hosting (T38/T39)", () => {
     expect(res.headers.get("location")).toMatch(/^\/login\?callbackUrl=/);
   });
 });
+
+describe("T38b: Waiting for payment → Pay now", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    stripe.isStripeConfigured.mockReturnValue(true);
+    auth.requireHostAdmin.mockResolvedValue({ isPlatform: false, hostId: "h1", hostAccess: "OWNER" });
+    db.prisma.host.findUnique.mockResolvedValue({
+      ...market,
+      sitePresence: "BOTH",
+      subscriptionStatus: "PENDING_PAYMENT",
+      plan: { monthlyPrice: 25, slug: "branded" },
+    });
+  });
+
+  it("subscribe answers 303 straight to checkout", async () => {
+    const res = await POST(post({ intent: "subscribe", hostId: "h1" }));
+    expect(res.status).toBe(303);
+    expect(res.headers.get("location")).toBe("https://checkout.stripe.test/s");
+  });
+
+  it("accepts same-site posts behind the proxy (x-forwarded-host)", async () => {
+    const body = new URLSearchParams({ intent: "subscribe", hostId: "h1" });
+    const req = new NextRequest("http://0.0.0.0:8080/api/billing/hosting", {
+      method: "POST",
+      body,
+      headers: {
+        origin: "https://www.yallcomeback.app",
+        host: "0.0.0.0:8080",
+        "x-forwarded-host": "www.yallcomeback.app",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(303);
+    expect(res.headers.get("location")).toBe("https://checkout.stripe.test/s");
+  });
+
+  it("a Stripe failure comes back with a readable billingError", async () => {
+    billing.hostingSubscriptionUrl.mockRejectedValueOnce(new Error("timeout"));
+    const res = await POST(post({ intent: "subscribe", hostId: "h1" }));
+    expect(res.status).toBe(303);
+    expect(res.headers.get("location")).toBe(
+      "/account/settings/subscription?billingError=failed",
+    );
+  });
+});
