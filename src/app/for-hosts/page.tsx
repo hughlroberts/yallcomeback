@@ -1,3 +1,4 @@
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -111,6 +112,7 @@ export default async function ForHostsPage({
 
   const signupForm = (
     <HostSignupForm
+      brandedPrice={brandedPriceLabel()}
       key={`${initialPath}-${initialPlan}`}
       initialPath={initialPath}
       initialPlan={initialPlan}
@@ -255,7 +257,7 @@ export default async function ForHostsPage({
               </div>
               <div className="rounded-2xl border border-bonnet/25 bg-gradient-to-br from-petal/60 to-white p-4 ring-1 ring-bonnet/10">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                  2 · Branded website · $25/mo
+                  2 · Branded website · {brandedPriceLabel()}
                 </p>
                 <h3 className="mt-1 text-base font-semibold text-stone-900">
                   Your brand, your domain
@@ -265,7 +267,7 @@ export default async function ForHostsPage({
                   Marketplace included.
                 </p>
                 <ul className="mt-2 space-y-0.5 text-xs text-stone-500">
-                  <li>✓ $25 / month for the whole website</li>
+                  <li>✓ {brandedPriceLabel("long")} for the whole website</li>
                   <li>✓ Logo, palette, About, other services</li>
                   <li>✓ Your domain when you are ready</li>
                 </ul>
@@ -320,7 +322,7 @@ export default async function ForHostsPage({
 
               <div className="flex cursor-default flex-col rounded-3xl border border-bonnet/25 bg-gradient-to-br from-petal/60 to-white p-6 shadow-sm ring-1 ring-bonnet/10">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                  2 · Branded website · $25/mo
+                  2 · Branded website · {brandedPriceLabel()}
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-stone-900">
                   Your brand, your domain. $25 covers the whole site.
@@ -334,13 +336,13 @@ export default async function ForHostsPage({
                   page (boat rentals, camping, tours, even when it is not lodging).
                   Point your own custom domain when you are ready.{" "}
                   <strong className="font-semibold text-stone-800">
-                    $25 / month total
+                    {brandedPriceLabel("long")} total
                   </strong>{" "}
                   — add every cabin, boat, and campsite; the hosting bill stays
                   $25. Marketplace listing is included, not a second fee.
                 </p>
                 <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                  <li>✓ $25 / month for the whole website (not per listing)</li>
+                  <li>✓ {brandedPriceLabel("long")} for the whole website (not per listing)</li>
                   <li>✓ Branded site + DNS on your domain</li>
                   <li>✓ Demo to Live publish before DNS cutover</li>
                   <li>✓ Card payments and invoices</li>

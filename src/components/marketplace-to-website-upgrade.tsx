@@ -1,3 +1,4 @@
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 import Link from "next/link";
 import { brandedUpgradeConfirmPath } from "@/lib/branded-upgrade";
 
@@ -45,8 +46,8 @@ export function MarketplaceToWebsiteUpgrade({
           </span>
           <span>
             <strong className="text-stone-900">Upgrade here</strong> — confirm,
-            then pay by card for the branded website plan ($25 / month for the
-            whole site — any number of listings). Your plan and Brand tools
+            then pay by card for the branded website plan ({brandedPriceLabel("long")}{" "}
+            for the whole site — any number of listings). Your plan and Brand tools
             change after the payment goes through.
           </span>
         </li>

@@ -1,3 +1,4 @@
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 import { redirect } from "next/navigation";
 import { HostSignupForm } from "@/components/HostSignupForm";
 import { prisma } from "@/lib/db";
@@ -76,6 +77,7 @@ export default async function SignupPage({
       </div>
 
       <HostSignupForm
+        brandedPrice={brandedPriceLabel()}
         initialPath={initialPath}
         initialPlan={initialPlan}
         existingAccount={

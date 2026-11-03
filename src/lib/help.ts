@@ -1,3 +1,4 @@
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 /**
  * Yall Come Back Help Center catalog.
  * Paths are under /help/[slug].
@@ -70,7 +71,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: "How Yall Come Back works",
     body: "Hosts own the guest. Marketplace listing is a paid product. Bookings go to the host.",
     description:
-      "Yall Come Back model: paid branded websites ($25/mo unlimited listings, marketplace included), paid marketplace ($12/listing/mo), and free open-source software. Direct booking without a cut of each stay.",
+      `Yall Come Back model: paid branded websites (${brandedPriceLabel()} unlimited listings, marketplace included), paid marketplace ($12/listing/mo), and free open-source software. Direct booking without a cut of each stay.`,
     related: [
       "getting-started",
       "become-a-host",
@@ -135,7 +136,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: "Become a host",
     body: "Create a host account. Confirm your email. Then publish a listing.",
     description:
-      "How to host on Yall Come Back: paid marketplace ($12/listing/mo), paid branded website ($25/mo unlimited, marketplace included), or free open-source software.",
+      `How to host on Yall Come Back: paid marketplace ($12/listing/mo), paid branded website (${brandedPriceLabel()} unlimited, marketplace included), or free open-source software.`,
     related: [
       "listings",
       "branded-website",
@@ -149,9 +150,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Branded website on your domain",
-    body: "$25 / month for the whole website — any number of listings. Your brand on your domain. Marketplace listing included. Upgrade anytime from marketplace-only.",
+    body: `${brandedPriceLabel("long")} for the whole website — any number of listings. Your brand on your domain. Marketplace listing included. Upgrade anytime from marketplace-only.`,
     description:
-      "Branded website plan ($25/mo for the whole site): your domain, Yall Come Back hosting, marketplace included, upgrade from marketplace-only, and DNS steps.",
+      `Branded website plan (${brandedPriceLabel()} for the whole site): your domain, Yall Come Back hosting, marketplace included, upgrade from marketplace-only, and DNS steps.`,
     related: [
       "how-yall-come-back-works",
       "become-a-host",

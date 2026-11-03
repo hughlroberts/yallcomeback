@@ -1,3 +1,4 @@
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 /**
  * Product feature inventory - keep this list current when you ship something new.
  * Rendered on /open-source (and mirrored in README) so self-hosters always see
@@ -178,14 +179,14 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
   },
   {
     category: "Platform website hosting & billing",
-    summary: "Paid hosting — $25/mo branded website (unlimited listings, marketplace included) or $12/listing marketplace. Not a cut of bookings. Open-source software is the only free product.",
+    summary: `Paid hosting — ${brandedPriceLabel()} branded website (unlimited listings, marketplace included) or $12/listing marketplace. Not a cut of bookings. Open-source software is the only free product.`,
     items: [
       "Host application form with plan selection",
       "Approval workflow (pending / approved / rejected / suspended)",
       "PLATFORM vs SELF hosting modes",
       "Marketplace listing on yallcomeback.app is paid ($12/listing); included on the $25/mo website plan",
       "Remote open-source → marketplace syndication API (Bearer key)",
-      "Hosting plans: $12/listing marketplace or $25/mo flat website (unlimited listings, marketplace included)",
+      `Hosting plans: $12/listing marketplace or ${brandedPriceLabel()} flat website (unlimited listings, marketplace included)`,
       "Hosting invoices (Stripe invoice when configured, else manual)",
       "Subscription statuses: none, pending payment, active, past due, cancelled",
       "Optional $500 one-time full setup (listings, brand, custom website)",
@@ -260,7 +261,7 @@ export const SELF_HOST_STEPS = [
   },
   {
     title: "Publish and welcome guests",
-    body: "Publish your listings. Guests book on your website. Listing the same stays on the hosted Yall Come Back marketplace is a paid product ($12 per listing / month), or included in the $25 / month branded website plan.",
+    body: `Publish your listings. Guests book on your website. Listing the same stays on the hosted Yall Come Back marketplace is a paid product ($12 per listing / month), or included in the ${brandedPriceLabel("long")} branded website plan.`,
   },
 ];
 

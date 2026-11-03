@@ -10,7 +10,7 @@ import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
 } from "@/lib/hosting";
-import { MARKETPLACE_LISTING_USD } from "@/lib/hosting-prices";
+import { MARKETPLACE_LISTING_USD, brandedPriceLabel } from "@/lib/hosting-prices";
 import { formatMoney } from "@/lib/utils";
 import { TrackSignupStarted } from "@/components/track-signup-started";
 import { Check, X } from "lucide-react";
@@ -33,12 +33,15 @@ export function HostSignupForm({
   initialPath = "paid",
   initialPlan = "marketplace",
   existingAccount = null,
+  brandedPrice = brandedPriceLabel(),
 }: {
   plans: PlanOption[];
   initialPath?: Path;
   initialPlan?: PaidPlan;
   /** Signed-in guest converting this account to a host */
   existingAccount?: { name: string | null; email: string } | null;
+  /** Server-rendered "$25/mo + $1.06/mo card processing" (checkout fee env). */
+  brandedPrice?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -199,7 +202,7 @@ export function HostSignupForm({
                   },
                   {
                     id: "website" as const,
-                    label: "Branded website · $25/mo",
+                    label: `Branded website · ${brandedPrice}`,
                     hint: "Your own site and domain. $25 covers every listing, including marketplace. We will ask for a brand name next.",
                   },
                 ] as const
@@ -317,7 +320,7 @@ export function HostSignupForm({
               <span className="mt-0.5 block text-xs text-stone-500">
                 {path === "self"
                   ? "The hosted marketplace is a paid product ($12 per listing / month). Uncheck to keep stays only on your site."
-                  : "Included on the $25/month website plan — no second fee. You can change this later."}
+                  : "Included on the branded website plan — no second fee. You can change this later."}
               </span>
             </span>
           </label>

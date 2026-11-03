@@ -1,3 +1,4 @@
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 /**
  * Marketplace → Branded website upgrade (T38).
  *
@@ -109,7 +110,7 @@ export function billingErrorMessage(code: string | null | undefined): string | n
     case "not_marketplace":
       return "This brand is already on the Branded website plan.";
     case "not_branded":
-      return "Card checkout is the $25 / month branded website plan. Marketplace-only brands are billed per listing by invoice.";
+      return `Card checkout is the ${brandedPriceLabel("long")} branded website plan. Marketplace-only brands are billed per listing by invoice.`;
     case "failed":
       return "Checkout could not start. Nothing changed. Try again.";
     default:

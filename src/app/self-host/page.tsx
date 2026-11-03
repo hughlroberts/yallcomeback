@@ -1,3 +1,4 @@
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 import Link from "next/link";
 import { RepoLinkedText } from "@/components/repo-linked-text";
 import {
@@ -88,7 +89,7 @@ export default function SelfHostPage() {
             <strong>Self-host = free software ($0 / month platform fee).</strong>{" "}
             You run the app on your servers/domain. That is the only free
             product. The hosted marketplace is <strong>$12 per listing / month</strong>.
-            A branded website is <strong>$25 / month</strong> for unlimited
+            A branded website is <strong>{brandedPriceLabel("long")}</strong> for unlimited
             listings (marketplace included). Optional one-time full setup ($500)
             is available if you want help going live.
           </p>
@@ -127,7 +128,7 @@ export default function SelfHostPage() {
               We run it for you
             </h2>
             <ul className="mt-4 space-y-2 text-sm leading-relaxed text-stone-700">
-              <li>· $25/mo website (unlimited listings, marketplace included) or $12/listing marketplace (not per booking)</li>
+              <li>· {brandedPriceLabel()} website (unlimited listings, marketplace included) or $12/listing marketplace (not per booking)</li>
               <li>
                 · Choose guest surface: Yall Come Back listing URLs, your domain, or
                 both
