@@ -71,6 +71,7 @@ export function EarningsFilters({
       ) : null}
 
       <select
+        name="year"
         className={pill}
         value={sp.get("year") || "all"}
         onChange={(e) => setParam("year", e.target.value)}
@@ -85,6 +86,7 @@ export function EarningsFilters({
       </select>
 
       <select
+        name="listing"
         className={pill}
         value={sp.get("listing") || "all"}
         onChange={(e) => setParam("listing", e.target.value)}
@@ -100,6 +102,7 @@ export function EarningsFilters({
 
       {showMethod ? (
         <select
+          name="method"
           className={pill}
           value={sp.get("method") || "all"}
           onChange={(e) => setParam("method", e.target.value)}
@@ -113,6 +116,7 @@ export function EarningsFilters({
         </select>
       ) : (
         <select
+          name="type"
           className={pill}
           value={sp.get("type") || "all"}
           onChange={(e) => setParam("type", e.target.value)}

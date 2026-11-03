@@ -94,6 +94,7 @@ export function ListingWizardTypeStep({ hostId, hosts = [] }: Props) {
               Host
             </label>
             <select
+              name="hostId"
               value={chosenHostId}
               onChange={(e) =>
                 setValues((prev) => ({

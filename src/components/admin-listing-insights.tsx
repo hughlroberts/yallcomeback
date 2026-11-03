@@ -157,6 +157,7 @@ export function AdminListingInsights({
                   >
                     <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
                       <input
+                        name="insightsListingIds"
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleId(l.id)}

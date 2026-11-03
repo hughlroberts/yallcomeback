@@ -799,6 +799,7 @@ export default async function AdminBrandPage({
               <ul className="space-y-3">
                 <li className="flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
                   <input
+                    id="brand-page-booking-always-on"
                     type="checkbox"
                     checked
                     disabled

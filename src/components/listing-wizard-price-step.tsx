@@ -125,6 +125,7 @@ export function ListingWizardPriceStep({
             <div className="mt-2 flex items-baseline gap-1">
               <span className="text-2xl font-semibold text-stone-900">$</span>
               <input
+                name="nightlyPrice"
                 type="number"
                 min={1}
                 step="1"
@@ -146,6 +147,7 @@ export function ListingWizardPriceStep({
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-semibold text-stone-900">+</span>
                 <input
+                  name="weekendPrice"
                   type="number"
                   min={0}
                   max={100}

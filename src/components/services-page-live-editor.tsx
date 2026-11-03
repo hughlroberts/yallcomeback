@@ -342,6 +342,7 @@ export function ServicesPageLiveEditor({
                         </Label>
                         {b.type === "heading" ? (
                           <Input
+                            name="blockContent"
                             value={b.content}
                             onChange={(e) =>
                               updateBlock(b.id, { content: e.target.value })
@@ -349,6 +350,7 @@ export function ServicesPageLiveEditor({
                           />
                         ) : (
                           <Textarea
+                            name="blockContent"
                             rows={3}
                             value={b.content}
                             onChange={(e) =>
@@ -366,6 +368,7 @@ export function ServicesPageLiveEditor({
                             Boat / service name
                           </Label>
                           <Input
+                            name="blockContent"
                             value={b.content}
                             placeholder="e.g. 24ft Crest pontoon"
                             onChange={(e) =>
@@ -378,6 +381,7 @@ export function ServicesPageLiveEditor({
                             Pricing
                           </Label>
                           <Input
+                            name="blockPrice"
                             value={b.price || ""}
                             placeholder="Half day $175 · Full day $275"
                             onChange={(e) =>
@@ -390,6 +394,7 @@ export function ServicesPageLiveEditor({
                             Details
                           </Label>
                           <Textarea
+                            name="blockSecondary"
                             rows={3}
                             value={b.secondary || ""}
                             placeholder="Capacity, features, what’s included…"
@@ -420,6 +425,7 @@ export function ServicesPageLiveEditor({
                           Items (one per line)
                         </Label>
                         <Textarea
+                          name="blockContent"
                           rows={4}
                           value={b.content}
                           onChange={(e) =>
@@ -454,6 +460,7 @@ export function ServicesPageLiveEditor({
                             Caption (optional)
                           </Label>
                           <Input
+                            name="blockSecondary"
                             value={b.secondary || ""}
                             onChange={(e) =>
                               updateBlock(b.id, { secondary: e.target.value })
@@ -468,6 +475,7 @@ export function ServicesPageLiveEditor({
                         <div className="space-y-1">
                           <Label className="text-xs text-stone-500">Label</Label>
                           <Input
+                            name="blockContent"
                             value={b.content}
                             onChange={(e) =>
                               updateBlock(b.id, { content: e.target.value })
@@ -479,6 +487,7 @@ export function ServicesPageLiveEditor({
                             Link (URL or /about)
                           </Label>
                           <Input
+                            name="blockSecondary"
                             value={b.secondary || ""}
                             placeholder="/about#contact"
                             onChange={(e) =>
@@ -581,6 +590,7 @@ function ImageUploadField({
             ) : null}
           </div>
           <Input
+            name="imageUrl"
             value={imageUrl || ""}
             placeholder="Or paste image URL"
             onChange={(e) => onUrlChange(e.target.value)}

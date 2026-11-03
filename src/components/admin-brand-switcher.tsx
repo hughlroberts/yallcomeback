@@ -30,8 +30,8 @@ export function AdminBrandSwitcher({
       <AdminBrandBarToggle
         summary={
           <>
-            <span className="font-semibold">Managing website</span>
-            <span className="mx-1.5 text-amber-700/70">·</span>
+            <span className="hidden font-semibold sm:inline">Managing website</span>
+            <span className="mx-1.5 hidden text-amber-700/70 sm:inline">·</span>
             {active ? (
               <strong className="font-semibold">{active.name}</strong>
             ) : (
@@ -44,6 +44,15 @@ export function AdminBrandSwitcher({
               </span>
             )}
           </>
+        }
+        action={
+          <Link
+            href="/ops"
+            aria-label="Platform admin"
+            className="inline-flex items-center rounded-lg bg-stone-900 px-2 py-1 text-xs font-semibold text-white hover:bg-stone-800"
+          >
+            ← Platform admin
+          </Link>
         }
       >
         <AdminBrandSwitchForm
@@ -63,7 +72,7 @@ export function AdminBrandSwitcher({
         ) : null}
         <Link
           href="/ops"
-          className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
+          className="hidden rounded-lg bg-stone-900 px-3 sm:inline-flex py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
         >
           ← Platform admin
         </Link>

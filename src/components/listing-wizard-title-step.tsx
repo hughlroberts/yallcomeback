@@ -92,6 +92,7 @@ export function ListingWizardTitleStep({
 
         <div className="mt-10">
           <input
+            name="title"
             value={title}
             onChange={(e) =>
               setValues({ title: e.target.value.slice(0, MAX) })

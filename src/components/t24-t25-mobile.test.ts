@@ -33,3 +33,49 @@ describe("Platform admin labels", () => {
     expect(read("src/app/ops/layout.tsx")).not.toContain("Ops Panel");
   });
 });
+
+/** Opening tags of form fields that have no id, name or spread props. */
+function fieldsWithoutIdOrName(src: string): string[] {
+  const out: string[] = [];
+  const re = /<(input|select|textarea|Input|Select|Textarea)\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src))) {
+    let i = m.index + m[0].length;
+    let depth = 0;
+    for (; i < src.length; i++) {
+      const c = src[i];
+      if (c === "{") depth++;
+      else if (c === "}") depth--;
+      else if (c === ">" && depth === 0) break;
+    }
+    const tag = src.slice(m.index, i);
+    if (/\b(id|name)=|\{\.\.\./.test(tag) || tag.includes('type="hidden"')) continue;
+    out.push(tag.slice(0, 80));
+  }
+  return out;
+}
+
+describe("admin form fields have an id or name", () => {
+  it.each([
+    "src/app/admin/brand/page.tsx",
+    "src/components/listing-wizard-type-step.tsx",
+    "src/components/listing-wizard-title-step.tsx",
+    "src/components/listing-wizard-description-step.tsx",
+    "src/components/listing-wizard-price-step.tsx",
+    "src/components/listing-wizard-location-step.tsx",
+    "src/components/earnings/earnings-filters.tsx",
+    "src/components/admin-listing-insights.tsx",
+    "src/components/admin-listing-workspace.tsx",
+    "src/components/services-page-live-editor.tsx",
+    "src/components/booking-widget.tsx",
+  ])("%s", (file) => {
+    expect(fieldsWithoutIdOrName(read(file))).toEqual([]);
+  });
+});
+
+describe("Platform admin link on the phone brand row", () => {
+  it("is passed as the always-visible action", () => {
+    const sw = read("src/components/admin-brand-switcher.tsx");
+    expect(sw).toMatch(/action=\{\s*<Link[\s\S]*?aria-label="Platform admin"/);
+  });
+});

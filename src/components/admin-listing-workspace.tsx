@@ -663,6 +663,7 @@ function SeasonOverridesCard({
         <div className="space-y-2 border-t border-stone-100 pt-3">
           <p className="text-xs font-medium text-stone-800">Add a date range</p>
           <Input
+            name="seasonName"
             placeholder="Name (Labor Day)"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -670,6 +671,7 @@ function SeasonOverridesCard({
           />
           <div className="grid grid-cols-2 gap-2">
             <Input
+              name="seasonStartDate"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
@@ -677,6 +679,7 @@ function SeasonOverridesCard({
               aria-label="Start date"
             />
             <Input
+              name="seasonEndDate"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
@@ -690,6 +693,7 @@ function SeasonOverridesCard({
                 $
               </span>
               <Input
+                name="seasonNightlyRate"
                 type="number"
                 min={0}
                 step="0.01"
@@ -700,6 +704,7 @@ function SeasonOverridesCard({
               />
             </div>
             <Input
+              name="seasonMinNights"
               type="number"
               min={0}
               max={30}
@@ -776,6 +781,7 @@ function SeasonOverrideRow({
             $
           </span>
           <Input
+            name="seasonRowNightlyRate"
             type="number"
             min={0}
             step="0.01"
@@ -786,6 +792,7 @@ function SeasonOverrideRow({
           />
         </div>
         <Input
+          name="seasonRowMinNights"
           type="number"
           min={0}
           max={30}

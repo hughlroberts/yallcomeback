@@ -280,6 +280,7 @@ export function ListingWizardLocationStep({
 
             <div className="mt-6 space-y-3">
               <input
+                name="address"
                 value={address}
                 onChange={(e) => patch({ address: e.target.value })}
                 placeholder="Street address"
@@ -287,24 +288,28 @@ export function ListingWizardLocationStep({
               />
               <div className="grid gap-3 sm:grid-cols-2">
                 <input
+                  name="city"
                   value={city}
                   onChange={(e) => patch({ city: e.target.value })}
                   placeholder="City"
                   className="rounded-xl border border-stone-300 px-4 py-3 text-sm"
                 />
                 <input
+                  name="region"
                   value={region}
                   onChange={(e) => patch({ region: e.target.value })}
                   placeholder="State / region"
                   className="rounded-xl border border-stone-300 px-4 py-3 text-sm"
                 />
                 <input
+                  name="postalCode"
                   value={postalCode}
                   onChange={(e) => patch({ postalCode: e.target.value })}
                   placeholder="ZIP / postal"
                   className="rounded-xl border border-stone-300 px-4 py-3 text-sm"
                 />
                 <input
+                  name="country"
                   value={country}
                   onChange={(e) => patch({ country: e.target.value })}
                   placeholder="Country"
@@ -392,6 +397,7 @@ export function ListingWizardLocationStep({
                 <label className="block text-xs font-medium text-stone-600">
                   Latitude
                   <input
+                    name="latitude"
                     value={latInput}
                     onChange={(e) => setLatInput(e.target.value)}
                     placeholder="e.g. 32.7767"
@@ -402,6 +408,7 @@ export function ListingWizardLocationStep({
                 <label className="block text-xs font-medium text-stone-600">
                   Longitude
                   <input
+                    name="longitude"
                     value={lngInput}
                     onChange={(e) => setLngInput(e.target.value)}
                     placeholder="e.g. -96.7970"

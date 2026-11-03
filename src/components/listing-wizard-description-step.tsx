@@ -94,6 +94,7 @@ export function ListingWizardDescriptionStep({
 
         <div className="mt-10">
           <textarea
+            name="description"
             value={description}
             onChange={(e) =>
               setValues({ description: e.target.value.slice(0, MAX) })
