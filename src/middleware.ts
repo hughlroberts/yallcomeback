@@ -16,9 +16,13 @@ import { TENANT_SLUG_HEADER } from "./lib/tenant-constants";
 import { applyVisitorCookies } from "./lib/analytics-visitor";
 import {
   adminBrandParamRedirect,
+  adminHostIdParamRedirect,
   adminLegacyBrandParamRewrite,
 } from "./lib/admin-brand-path";
-import { ADMIN_BRAND_SLUG_COOKIE } from "./lib/admin-brand-cookie";
+import {
+  ADMIN_BRAND_COOKIE,
+  ADMIN_BRAND_SLUG_COOKIE,
+} from "./lib/admin-brand-cookie";
 import { bareDomainRedirect } from "./lib/canonical-host";
 
 const { auth } = NextAuth(authConfig);
@@ -230,6 +234,20 @@ export default auth(async (req) => {
   });
   if (brandSwitch) {
     return NextResponse.redirect(new URL(brandSwitch, req.nextUrl));
+  }
+
+  // T42: /admin/...?hostId=<id> picks that brand first, so the top bar and
+  // the page always show the same brand. GET/HEAD only (server actions POST).
+  const hostIdSwitch = adminHostIdParamRedirect({
+    pathname: req.nextUrl.pathname,
+    search: req.nextUrl.search,
+    role: req.auth?.user?.role,
+    brandCookie: req.cookies.get(ADMIN_BRAND_COOKIE)?.value,
+  });
+  if (hostIdSwitch && (req.method === "GET" || req.method === "HEAD")) {
+    const res = NextResponse.redirect(new URL(hostIdSwitch, req.nextUrl));
+    res.headers.set("Cache-Control", "no-store");
+    return res;
   }
 
   // Platform admins: keep /ops out of every index.

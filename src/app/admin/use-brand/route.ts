@@ -8,6 +8,7 @@ import {
 } from "@/lib/admin-brand-cookie";
 import {
   brandSlugFromParam,
+  hostIdFromParam,
   safeAdminReturnTo,
   withoutBrandParam,
 } from "@/lib/admin-brand-path";
@@ -24,14 +25,16 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const to = safeAdminReturnTo(url.searchParams.get("to"));
   const slug = brandSlugFromParam(url.searchParams.get("slug"));
+  // T42: /admin/...?hostId=<id> switches by id.
+  const hostId = hostIdFromParam(url.searchParams.get("hostId"));
 
   let host: { id: string; slug: string } | null = null;
   try {
     const session = await requirePlatformAdmin();
     host =
-      session && slug
+      session && (slug || hostId)
         ? await prisma.host.findUnique({
-            where: { slug },
+            where: slug ? { slug } : { id: hostId! },
             select: { id: true, slug: true },
           })
         : null;

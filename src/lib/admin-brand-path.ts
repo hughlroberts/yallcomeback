@@ -49,6 +49,7 @@ export function safeAdminReturnTo(raw: string | null | undefined): string {
 export function withoutBrandParam(pathWithSearch: string): string {
   const u = new URL(pathWithSearch, "http://x");
   u.searchParams.delete("brand");
+  u.searchParams.delete("hostId");
   const q = u.searchParams.toString();
   return `${u.pathname}${q ? `?${q}` : ""}`;
 }
@@ -103,4 +104,36 @@ export function adminLegacyBrandParamRewrite(input: {
   else params.delete("brand");
   const q = params.toString();
   return `${pathname}${q ? `?${q}` : ""}`;
+}
+
+const HOST_ID = /^[a-z0-9_-]{8,64}$/i;
+
+/** Host id from `?hostId=` (cuid-like ids only). */
+export function hostIdFromParam(raw: string | null | undefined): string | null {
+  const v = (raw || "").trim();
+  return HOST_ID.test(v) ? v : null;
+}
+
+/**
+ * T42: middleware. A platform admin opens /admin/...?hostId=<id> (Platform
+ * admin "Manage website" links) while another brand is picked. The page used
+ * the query and the top bar used the cookie, so they showed different
+ * brands. Switch the picked brand first so both always match. Null when the
+ * id already is the picked brand, or for anyone who is not a platform admin.
+ */
+export function adminHostIdParamRedirect(input: {
+  pathname: string;
+  search: string;
+  role: string | null | undefined;
+  brandCookie: string | null | undefined;
+}): string | null {
+  const { pathname, search, role } = input;
+  if (role !== "ADMIN") return null;
+  if (!pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith(ADMIN_USE_BRAND_PATH)) return null;
+  const hostId = hostIdFromParam(new URLSearchParams(search).get("hostId"));
+  if (!hostId) return null;
+  if ((input.brandCookie || "").trim() === hostId) return null;
+  const to = `${pathname}${search}`;
+  return `${ADMIN_USE_BRAND_PATH}?${new URLSearchParams({ hostId, to })}`;
 }

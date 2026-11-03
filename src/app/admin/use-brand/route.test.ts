@@ -67,3 +67,36 @@ describe("/admin/use-brand", () => {
     expect(res.headers.get("location")).toBe("/admin");
   });
 });
+
+describe("/admin/use-brand?hostId= (T42)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.host.findUnique.mockResolvedValue(null);
+  });
+  const byId = (hostId: string, to: string) =>
+    GET(new Request(`http://localhost/admin/use-brand?${new URLSearchParams({ hostId, to })}`));
+
+  it("picks the brand by id and returns to the same URL", async () => {
+    db.host.findUnique.mockResolvedValue({ id: "cmvvd3kt2000hn101yahyc26m", slug: "qa-test" });
+    const res = await byId("cmvvd3kt2000hn101yahyc26m", "/admin/brand?hostId=cmvvd3kt2000hn101yahyc26m");
+    expect(db.host.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "cmvvd3kt2000hn101yahyc26m" } }),
+    );
+    expect(res.headers.get("location")).toBe("/admin/brand?hostId=cmvvd3kt2000hn101yahyc26m");
+    const set = res.headers.getSetCookie().join("\n");
+    expect(set).toContain("ycb_admin_brand=cmvvd3kt2000hn101yahyc26m");
+    expect(set).toContain("ycb_admin_brand_slug=qa-test");
+  });
+
+  it("unknown id: drops ?hostId= so middleware never loops", async () => {
+    const res = await byId("cmunknown0000000000000000", "/admin/brand?hostId=cmunknown0000000000000000");
+    expect(res.headers.get("location")).toBe("/admin/brand");
+    expect(res.headers.getSetCookie()).toEqual([]);
+  });
+
+  it("non-admin: no switch", async () => {
+    admin.mockResolvedValueOnce(null);
+    const res = await byId("cmvvd3kt2000hn101yahyc26m", "/admin/brand?hostId=cmvvd3kt2000hn101yahyc26m");
+    expect(res.headers.getSetCookie()).toEqual([]);
+  });
+});
