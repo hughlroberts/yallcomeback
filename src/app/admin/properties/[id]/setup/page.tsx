@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { resolveListingSetupStep } from "@/lib/listing-setup-step";
 import { prisma } from "@/lib/db";
 import { assertPropertyAccess, ensureHostAccess } from "@/lib/scope";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
@@ -57,8 +58,14 @@ export default async function ListingSetupPage({
   });
   if (!property) redirect("/admin/properties");
 
-  const stepRaw = sp.step || "2";
-  const step = stepRaw === "done" ? "done" : Number(stepRaw);
+  // step=1 (type) creates the draft on /admin/properties/new, so an existing
+  // draft starts at step 2. Unknown steps go to the nearest real step instead
+  // of the summary page (which had no Back or Save & exit).
+  const resolved = resolveListingSetupStep(sp.step);
+  if ("redirectTo" in resolved) {
+    redirect(`/admin/properties/${property.id}/setup?step=${resolved.redirectTo}`);
+  }
+  const step = resolved.step;
 
   const serverUpdatedAt = property.updatedAt.toISOString();
 
