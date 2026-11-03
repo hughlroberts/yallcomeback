@@ -2,8 +2,9 @@
  * Full-site backup: every database table (listings, hosts, calendar, bookings,
  * hosting invoices / plans, users) plus an inventory of local /uploads files.
  *
- * Daily copies are written to BACKUP_DIR (Railway volume at /data/backups).
- * That volume survives deploys and is separate from Postgres.
+ * Daily copies go to an encrypted S3-compatible bucket (BACKUP_S3_*, see
+ * backup-storage.ts) and/or BACKUP_DIR (the old /data/backups volume). The
+ * volume is still read as a fallback so older copies stay downloadable.
  */
 
 import { gzipSync, gunzipSync } from "zlib";
@@ -12,6 +13,17 @@ import { promises as fs } from "fs";
 import path from "path";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import {
+  bucketBackupMeta,
+  bucketConfig,
+  bucketReady,
+  listBucketBackups,
+  plainBackupBytes,
+  pruneBucketBackups,
+  readBucketBackup,
+  sha256,
+  writeBucketBackup,
+} from "@/lib/backup-storage";
 
 export const DAILY_BACKUP_JOB = "daily_full_backup";
 export const BACKUP_FORMAT_VERSION = 1;
@@ -347,7 +359,8 @@ export function serializeBackup(backup: FullBackup): Buffer {
   return gzipSync(Buffer.from(json, "utf8"));
 }
 
-export function parseBackupBuffer(buf: Buffer): FullBackup {
+export function parseBackupBuffer(raw: Buffer): FullBackup {
+  const buf = plainBackupBytes(raw);
   const unzipped = buf[0] === 0x1f && buf[1] === 0x8b ? gunzipSync(buf) : buf;
   const parsed = JSON.parse(unzipped.toString("utf8")) as FullBackup;
   if (!parsed || parsed.formatVersion !== BACKUP_FORMAT_VERSION) {
@@ -461,10 +474,14 @@ export function backupDir(): string | null {
   return raw || null;
 }
 
+export type BackupLocation = "bucket" | "volume";
+
 export type StoredBackupFile = {
   name: string;
   size: number;
   mtime: string;
+  /** Where the copy was found (bucket wins when both have it). */
+  location: BackupLocation;
 };
 
 export type BackupStorageStatus = {
@@ -473,13 +490,28 @@ export type BackupStorageStatus = {
   dir: string | null;
   fileCount: number;
   error?: string;
+  bucket: {
+    configured: boolean;
+    /** Bucket set but BACKUP_ENCRYPTION_KEY missing or not 32 bytes. */
+    keyMissing: boolean;
+    reachable: boolean;
+    fileCount: number;
+    error?: string;
+  };
 };
 
 export function isStoredBackupName(name: string): boolean {
   return BACKUP_FILE_RE.test(name);
 }
 
-export async function backupStorageStatus(): Promise<BackupStorageStatus> {
+/** Somewhere to write: the bucket (with key) or the volume. */
+export function backupStorageConfigured(): boolean {
+  return Boolean(bucketReady() || backupDir());
+}
+
+async function volumeStatus(): Promise<
+  Pick<BackupStorageStatus, "configured" | "writable" | "dir" | "fileCount" | "error">
+> {
   const dir = backupDir();
   if (!dir) {
     return { configured: false, writable: false, dir: null, fileCount: 0 };
@@ -489,13 +521,8 @@ export async function backupStorageStatus(): Promise<BackupStorageStatus> {
     const probe = path.join(dir, `.write-test-${process.pid}`);
     await fs.writeFile(probe, "ok");
     await fs.unlink(probe);
-    const files = await listStoredBackups();
-    return {
-      configured: true,
-      writable: true,
-      dir,
-      fileCount: files.length,
-    };
+    const files = await listVolumeBackups();
+    return { configured: true, writable: true, dir, fileCount: files.length };
   } catch (e) {
     return {
       configured: true,
@@ -507,7 +534,27 @@ export async function backupStorageStatus(): Promise<BackupStorageStatus> {
   }
 }
 
-export async function listStoredBackups(): Promise<StoredBackupFile[]> {
+export async function backupStorageStatus(): Promise<BackupStorageStatus> {
+  const volume = await volumeStatus();
+  const cfg = bucketConfig();
+  const bucket: BackupStorageStatus["bucket"] = {
+    configured: Boolean(cfg),
+    keyMissing: Boolean(cfg) && !bucketReady(),
+    reachable: false,
+    fileCount: 0,
+  };
+  if (cfg) {
+    try {
+      bucket.fileCount = (await listBucketBackups(isStoredBackupName)).length;
+      bucket.reachable = true;
+    } catch (e) {
+      bucket.error = e instanceof Error ? e.message : "bucket not reachable";
+    }
+  }
+  return { ...volume, bucket };
+}
+
+async function listVolumeBackups(): Promise<StoredBackupFile[]> {
   const dir = backupDir();
   if (!dir) return [];
   let names: string[];
@@ -526,52 +573,168 @@ export async function listStoredBackups(): Promise<StoredBackupFile[]> {
         name,
         size: st.size,
         mtime: st.mtime.toISOString(),
+        location: "volume",
       });
     } catch {
       /* skip */
     }
   }
-  out.sort((a, b) => b.mtime.localeCompare(a.mtime));
   return out;
 }
 
+/** Bucket copies plus any volume-only copies, newest first. */
+export async function listStoredBackups(): Promise<StoredBackupFile[]> {
+  const byName = new Map<string, StoredBackupFile>();
+  for (const f of await listVolumeBackups()) byName.set(f.name, f);
+  if (bucketConfig()) {
+    try {
+      for (const f of await listBucketBackups(isStoredBackupName)) {
+        byName.set(f.name, { ...f, location: "bucket" });
+      }
+    } catch (e) {
+      console.error("[backup] bucket list failed", e);
+    }
+  }
+  return [...byName.values()].sort((a, b) => b.name.localeCompare(a.name));
+}
+
+/** Plain gzip bytes: bucket first, then the volume. */
 export async function readStoredBackup(name: string): Promise<Buffer> {
   if (!isStoredBackupName(name)) {
     throw new Error("Invalid backup file name");
   }
+  if (bucketConfig()) {
+    try {
+      const fromBucket = await readBucketBackup(name);
+      if (fromBucket) return fromBucket;
+    } catch (e) {
+      console.error("[backup] bucket read failed, trying volume", e);
+    }
+  }
   const dir = backupDir();
-  if (!dir) throw new Error("BACKUP_DIR is not set");
+  if (!dir) throw new Error("Backup not found");
   return fs.readFile(path.join(dir, name));
+}
+
+export function backupFileName(createdAt: string): string {
+  const stamp = createdAt.replace(/[:.]/g, "-");
+  return `yallcomeback-backup-${stamp}.json.gz`;
 }
 
 export async function persistBackupFile(
   body: Buffer,
   createdAt: string,
-): Promise<{ name: string; dir: string }> {
+): Promise<{ name: string; dir: string; locations: BackupLocation[] }> {
+  const toBucket = Boolean(bucketReady());
   const dir = backupDir();
-  if (!dir) {
-    throw new Error("BACKUP_DIR is not set (mount a Railway volume and set BACKUP_DIR)");
+  if (!toBucket && !dir) {
+    throw new Error(
+      "No backup storage: set the BACKUP_S3_* variables and BACKUP_ENCRYPTION_KEY (or BACKUP_DIR)",
+    );
   }
-  await fs.mkdir(dir, { recursive: true });
-  const stamp = createdAt.replace(/[:.]/g, "-");
-  const name = `yallcomeback-backup-${stamp}.json.gz`;
+  const name = backupFileName(createdAt);
   if (!isStoredBackupName(name)) {
     throw new Error(`Refusing to write unexpected backup name ${name}`);
   }
-  const abs = path.join(dir, name);
-  await fs.writeFile(abs, body);
-  await pruneStoredBackups(dir);
-  return { name, dir };
+  const locations: BackupLocation[] = [];
+  if (toBucket) {
+    await writeBucketBackup(name, body);
+    locations.push("bucket");
+    const cutoff = new Date(Date.now() - BACKUP_RETENTION_DAYS * 86_400_000);
+    await pruneBucketBackups({
+      isName: isStoredBackupName,
+      cutoff,
+      keepNewest: 14,
+    }).catch((e) => console.error("[backup] bucket prune failed", e));
+  }
+  if (dir) {
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, name), body);
+    locations.push("volume");
+    await pruneStoredBackups(dir);
+  }
+  return { name, dir: locations.join("+"), locations };
 }
 
 async function pruneStoredBackups(dir: string): Promise<void> {
   const cutoff = Date.now() - BACKUP_RETENTION_DAYS * 24 * 60 * 60 * 1000;
-  const files = await listStoredBackups();
+  const files = await listVolumeBackups();
   for (const f of files) {
     if (Date.parse(f.mtime) < cutoff) {
       await fs.unlink(path.join(dir, f.name)).catch(() => undefined);
     }
   }
+}
+
+export type BucketCopyItem = {
+  name: string;
+  bytes: number;
+  sha256: string;
+  status: "copied" | "already_there" | "would_copy" | "mismatch" | "failed";
+  error?: string;
+};
+
+export type BucketCopyReport = {
+  dryRun: boolean;
+  volumeCount: number;
+  verifiedInBucket: number;
+  ok: boolean;
+  items: BucketCopyItem[];
+};
+
+/**
+ * Copy every volume backup into the bucket, then read each one back,
+ * decrypt, and compare sha256. Never deletes or changes volume files.
+ * ok === true only when every volume file is in the bucket with the same hash.
+ */
+export async function copyVolumeBackupsToBucket(opts: {
+  dryRun: boolean;
+}): Promise<BucketCopyReport> {
+  const dir = backupDir();
+  if (!dir) throw new Error("BACKUP_DIR is not set (no volume to copy from)");
+  if (!bucketReady()) {
+    throw new Error("Set the BACKUP_S3_* variables and BACKUP_ENCRYPTION_KEY first");
+  }
+  const files = (await listVolumeBackups()).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  const items: BucketCopyItem[] = [];
+  for (const f of files) {
+    const item: BucketCopyItem = { name: f.name, bytes: 0, sha256: "", status: "failed" };
+    try {
+      const plain = await fs.readFile(path.join(dir, f.name));
+      item.bytes = plain.length;
+      item.sha256 = sha256(plain);
+      const meta = await bucketBackupMeta(f.name);
+      if (opts.dryRun) {
+        item.status = meta?.sha256 === item.sha256 ? "already_there" : "would_copy";
+      } else {
+        const existed = meta?.sha256 === item.sha256;
+        if (!existed) await writeBucketBackup(f.name, plain);
+        const back = await readBucketBackup(f.name);
+        item.status =
+          back && sha256(back) === item.sha256
+            ? existed
+              ? "already_there"
+              : "copied"
+            : "mismatch";
+      }
+    } catch (e) {
+      item.status = "failed";
+      item.error = e instanceof Error ? e.message : "copy failed";
+    }
+    items.push(item);
+  }
+  const verifiedInBucket = items.filter(
+    (i) => i.status === "copied" || i.status === "already_there",
+  ).length;
+  return {
+    dryRun: opts.dryRun,
+    volumeCount: files.length,
+    verifiedInBucket,
+    ok: !opts.dryRun && verifiedInBucket === files.length,
+    items,
+  };
 }
 
 function utcDay(d: Date): string {
@@ -601,13 +764,13 @@ export async function maybeRunDailyBackup(
     const files = await listStoredBackups();
     const todayPrefix = `yallcomeback-backup-${utcDay(now)}`;
     const onVolume = files.some((f) => f.name.startsWith(todayPrefix));
-    if (onVolume || !backupDir()) {
+    if (onVolume || !backupStorageConfigured()) {
       return {
         skipped: true,
         ranAt: now.toISOString(),
         persisted: onVolume,
         file: files[0]?.name,
-        summary: onVolume ? "already on volume today" : "already ran today",
+        summary: onVolume ? "already stored today" : "already ran today",
       };
     }
   }
@@ -625,10 +788,13 @@ export async function createAndPersistBackup(): Promise<{
   const body = serializeBackup(backup);
   const manifest = publicManifest(backup);
   let file: string | undefined;
-  if (backupDir()) {
-    file = (await persistBackupFile(body, backup.createdAt)).name;
+  let where = "";
+  if (backupStorageConfigured()) {
+    const saved = await persistBackupFile(body, backup.createdAt);
+    file = saved.name;
+    where = ` in=${saved.dir}`;
   }
-  const summary = `${backup.createdAt} persisted=${file || "no"} hosts=${manifest.hostCount} invoices=${manifest.invoiceCount} properties=${manifest.counts.Property ?? 0} bookings=${manifest.counts.Booking ?? 0}`;
+  const summary = `${backup.createdAt} persisted=${file || "no"}${where} hosts=${manifest.hostCount} invoices=${manifest.invoiceCount} properties=${manifest.counts.Property ?? 0} bookings=${manifest.counts.Booking ?? 0}`;
   return { backup, body, manifest, file, summary };
 }
 

@@ -29,6 +29,7 @@ import { updatePropertyPricing } from "./properties";
 import {
   extraGuestFieldErrors,
   extraGuestSettingsError,
+  pricingSaveBlocked,
 } from "@/lib/extra-guests";
 
 function pricingForm(extra: Record<string, string>) {
@@ -71,6 +72,39 @@ describe("listing pricing: extra-guest fee and guests included", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.fieldErrors.extraGuestFee).toMatch(/0 or more/);
     expect(db.prisma.property.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects every negative fee on the server (UI bypassed)", async () => {
+    for (const v of ["-0.01", "-10", "-1000", " -5 "]) {
+      const r = await updatePropertyPricing(
+        pricingForm({ extraGuestFee: v, extraGuestsIncluded: "2" }),
+      );
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.fieldErrors.extraGuestFee).toMatch(/0 or more/);
+    }
+    expect(db.prisma.property.update).not.toHaveBeenCalled();
+  });
+
+  it("Save pricing is disabled while either field is invalid", () => {
+    const errs = (fee: string, included: string) =>
+      extraGuestFieldErrors({
+        extraGuestFee: fee,
+        extraGuestsIncluded: included,
+        maxGuests: 4,
+      });
+    expect(pricingSaveBlocked(errs("-1", "2"))).toBe(true);
+    expect(pricingSaveBlocked(errs("abc", "2"))).toBe(true);
+    expect(pricingSaveBlocked(errs("10", "0"))).toBe(true);
+    expect(pricingSaveBlocked(errs("10", "5"))).toBe(true);
+    expect(pricingSaveBlocked(errs("10", "2"))).toBe(false);
+    expect(pricingSaveBlocked(errs("10", "2"), { extraGuestFee: "server" })).toBe(true);
+  });
+
+  it("the pricing form disables and blocks Save on errors", async () => {
+    const { readFileSync } = await import("fs");
+    const src = readFileSync("src/components/admin-listing-workspace.tsx", "utf8");
+    expect(src).toMatch(/disabled=\{pending \|\| saveBlocked\}/);
+    expect(src).toMatch(/if \(pricingSaveBlocked\(extraErrors\)\) \{/);
   });
 
   it("rejects a non-numeric fee (never saved as 0)", async () => {

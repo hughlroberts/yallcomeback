@@ -1266,6 +1266,33 @@ export default async function AdminBrandPage({
             <input type="hidden" name="listOnMarketplace" value="on" />
           )}
 
+          {/* —— Guest message emails (always) —— */}
+          <Card id="guest-email" className="order-11 scroll-mt-28 space-y-3 p-6">
+            <h2 className="text-lg font-semibold text-stone-900">
+              Guest message emails
+            </h2>
+            <label className="flex items-start gap-2 text-sm text-stone-700">
+              <input
+                type="checkbox"
+                name="showEmailToGuests"
+                defaultChecked={host.showEmailToGuests}
+                className="mt-1"
+              />
+              <span>
+                <span className="font-medium text-stone-900">
+                  Show my email to guests
+                </span>
+                <span className="mt-0.5 block text-xs text-stone-500">
+                  {host.contactEmail
+                    ? `When this is on, guests see ${host.contactEmail} on your message emails and can reply to it directly.`
+                    : "When this is on, guests see your public email on your message emails. Add a public email first."}{" "}
+                  When this is off, guests see only the Yall Come Back address
+                  and reply in their inbox.
+                </span>
+              </span>
+            </label>
+          </Card>
+
           {/* —— Disclaimer (always) —— */}
           <Card id="disclaimer" className="order-12 scroll-mt-28 space-y-3 p-6">
             <h2 className="text-lg font-semibold text-stone-900">

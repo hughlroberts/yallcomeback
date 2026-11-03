@@ -2,6 +2,8 @@ import { Card } from "@/components/ui";
 import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { BACKUP_RETENTION_DAYS, backupOpsSnapshot } from "@/lib/backup";
+import { SubmitButton } from "@/components/submit-button";
+import { copyBackupsToBucket } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Backups · Ops" };
@@ -20,8 +22,43 @@ function bytesLabel(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default async function OpsBackupsPage() {
+type CopyResult = {
+  copy?: string;
+  total?: string;
+  verified?: string;
+  todo?: string;
+  bad?: string;
+  msg?: string;
+};
+
+function copyNotice(r: CopyResult): { tone: "ok" | "warn"; text: string } | null {
+  if (!r.copy) return null;
+  if (r.copy === "error") return { tone: "warn", text: `Copy did not run: ${r.msg || "error"}` };
+  if (r.copy === "dry") {
+    return {
+      tone: "ok",
+      text: `Check only: ${r.total} on the volume, ${r.verified} already in the bucket with the same checksum, ${r.todo} to copy.`,
+    };
+  }
+  if (r.copy === "ok") {
+    return {
+      tone: "ok",
+      text: `Done: all ${r.total} volume copies are in the bucket, read back, and match (sha256). Nothing was deleted.`,
+    };
+  }
+  return {
+    tone: "warn",
+    text: `Not complete: ${r.verified} of ${r.total} verified.${r.bad ? ` Problem files: ${r.bad}.` : ""} Do not detach the volume. Run it again.`,
+  };
+}
+
+export default async function OpsBackupsPage({
+  searchParams,
+}: {
+  searchParams: Promise<CopyResult>;
+}) {
   await requirePlatformAdminOr404();
+  const notice = copyNotice(await searchParams);
   const [snap, propertyCount, hostCount, invoiceCount, bookingCount] =
     await Promise.all([
       backupOpsSnapshot(),
@@ -40,28 +77,43 @@ export default async function OpsBackupsPage() {
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-ink-muted">
           Full copy of listings, hosts, calendar, bookings, and website hosting
-          history. Copies are stored on a Railway volume (separate from
-          Postgres) and kept {BACKUP_RETENTION_DAYS} days.
+          history. Copies are stored in an encrypted bucket (and on the old
+          volume while it is attached), separate from Postgres, and kept{" "}
+          {BACKUP_RETENTION_DAYS} days.
         </p>
       </div>
 
       <Card>
-        <h2 className="font-semibold text-ink">Railway volume</h2>
+        <h2 className="font-semibold text-ink">Storage</h2>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-stone-500">Storage</dt>
+            <dt className="text-stone-500">Bucket</dt>
             <dd
-              className={`mt-0.5 font-medium ${storage.writable ? "text-emerald-800" : "text-amber-800"}`}
+              className={`mt-0.5 font-medium ${storage.bucket.reachable && !storage.bucket.keyMissing ? "text-emerald-800" : "text-amber-800"}`}
+            >
+              {!storage.bucket.configured
+                ? "Not set (BACKUP_S3_*)"
+                : storage.bucket.keyMissing
+                  ? "BACKUP_ENCRYPTION_KEY missing or not 32 bytes"
+                  : storage.bucket.reachable
+                    ? `Encrypted · ${storage.bucket.fileCount} file${storage.bucket.fileCount === 1 ? "" : "s"}`
+                    : `Not reachable${storage.bucket.error ? ` · ${storage.bucket.error}` : ""}`}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-stone-500">Volume</dt>
+            <dd
+              className={`mt-0.5 font-medium ${storage.writable ? "text-emerald-800" : "text-stone-700"}`}
             >
               {!storage.configured
-                ? "BACKUP_DIR not set"
+                ? "Not attached (BACKUP_DIR not set)"
                 : storage.writable
                   ? `Writable · ${storage.fileCount} file${storage.fileCount === 1 ? "" : "s"}`
                   : `Not writable${storage.error ? ` · ${storage.error}` : ""}`}
             </dd>
           </div>
           <div>
-            <dt className="text-stone-500">Path</dt>
+            <dt className="text-stone-500">Volume path</dt>
             <dd className="mt-0.5 font-mono text-xs text-stone-700">
               {storage.dir || "—"}
             </dd>
@@ -92,17 +144,47 @@ export default async function OpsBackupsPage() {
           </a>
         </div>
         <p className="mt-3 text-xs text-stone-500">
-          Writes a gzipped dump onto the volume and downloads it. The in-process
+          Writes a gzipped dump to storage and downloads it. The in-process
           scheduler also takes one copy per UTC day.
         </p>
       </Card>
+
+      {storage.configured && storage.bucket.configured ? (
+        <Card id="move">
+          <h2 className="font-semibold text-ink">Move volume copies to the bucket</h2>
+          <p className="mt-2 text-sm text-stone-600">
+            Copies every file on the volume into the bucket, reads each one
+            back, and compares checksums. It does not delete or change volume
+            files. Detach the volume only after this says all files match.
+          </p>
+          {notice ? (
+            <p
+              role="status"
+              className={`mt-3 rounded-md px-3 py-2 text-sm ${notice.tone === "ok" ? "bg-emerald-50 text-emerald-900" : "bg-amber-50 text-amber-900"}`}
+            >
+              {notice.text}
+            </p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <form action={copyBackupsToBucket}>
+              <input type="hidden" name="dryRun" value="1" />
+              <SubmitButton variant="secondary" pendingLabel="Checking…">
+                Check only
+              </SubmitButton>
+            </form>
+            <form action={copyBackupsToBucket}>
+              <SubmitButton pendingLabel="Copying…">Copy and verify</SubmitButton>
+            </form>
+          </div>
+        </Card>
+      ) : null}
 
       <Card>
         <h2 className="font-semibold text-ink">Stored copies</h2>
         {files.length === 0 ? (
           <p className="mt-3 text-sm text-stone-600">
-            No files on the volume yet. Use Run backup now, or wait for the
-            daily job after this volume is mounted.
+            No stored copies yet. Use Run backup now, or wait for the daily
+            job after storage is set.
           </p>
         ) : (
           <ul className="mt-3 divide-y divide-stone-100">
@@ -114,7 +196,8 @@ export default async function OpsBackupsPage() {
                 <div>
                   <p className="font-mono text-xs text-stone-800">{f.name}</p>
                   <p className="text-xs text-stone-500">
-                    {new Date(f.mtime).toLocaleString()} · {bytesLabel(f.size)}
+                    {new Date(f.mtime).toLocaleString()} · {bytesLabel(f.size)} ·{" "}
+                    {f.location === "bucket" ? "Bucket" : "Volume"}
                   </p>
                 </div>
                 <a

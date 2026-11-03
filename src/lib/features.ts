@@ -28,11 +28,15 @@ export function canonicalSiteOrigin(): string {
   ]) {
     if (!raw) continue;
     const origin = raw.replace(/\/$/, "");
+    let hostname: string;
     try {
-      if (isLocalHostname(new URL(origin).hostname)) continue;
+      hostname = new URL(origin).hostname.toLowerCase();
     } catch {
       continue;
     }
+    if (isLocalHostname(hostname)) continue;
+    // Apex only redirects: links in email must use the live host (one domain).
+    if (hostname === PRODUCT_DOMAIN) return PRODUCT_ORIGIN;
     return origin;
   }
   return PRODUCT_ORIGIN;

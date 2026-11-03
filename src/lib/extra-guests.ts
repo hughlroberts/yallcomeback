@@ -123,3 +123,10 @@ export function extraGuestFieldErrors(input: {
   }
   return errors;
 }
+
+/** True when any extra-guest field has an error: Save pricing stays disabled. */
+export function pricingSaveBlocked(
+  ...errors: (ExtraGuestFieldErrors | null | undefined)[]
+): boolean {
+  return errors.some((e) => Boolean(e?.extraGuestFee || e?.extraGuestsIncluded));
+}

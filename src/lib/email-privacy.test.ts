@@ -7,6 +7,7 @@ vi.mock("@/lib/notification-prefs", () => ({
   canSendEmailTo: vi.fn(async () => true),
   canSendSmsTo: vi.fn(async () => false),
   unsubscribeUrl: () => "https://example.test/unsub",
+  oneClickUnsubscribeUrl: () => "https://example.test/one-click",
 }));
 vi.mock("@/lib/db", () => ({
   prisma: { message: { update: vi.fn(), updateMany: vi.fn() } },
@@ -17,6 +18,7 @@ import { replyAddressFor } from "@/lib/inbound/reply-address";
 import {
   dispatchEmail,
   dispatchPlatformEmail,
+  hostReplyToForGuest,
   safeReplyTo,
 } from "@/lib/messaging";
 
@@ -129,6 +131,55 @@ describe("guest copy of a host reply", () => {
     expect(p.reply_to).toEqual([replyAddressFor("c", CONV, "GUEST")]);
     expect(JSON.stringify(p)).not.toContain(HOST_PERSONAL);
   });
+
+  it("keeps the host email hidden when the brand setting is off", async () => {
+    await deliverHostMessageToGuest(
+      { ...thread, host: { ...thread.host, showEmailToGuests: false } },
+      "m1",
+      "Hello",
+    );
+    expect(payloads[0].reply_to).toBeUndefined();
+    expect(JSON.stringify(payloads[0])).not.toContain(HOST_PERSONAL);
+  });
+
+  it("uses the brand email as Reply-To when the brand opted in", async () => {
+    await deliverHostMessageToGuest(
+      { ...thread, host: { ...thread.host, showEmailToGuests: true } },
+      "m1",
+      "Hello",
+    );
+    const p = payloads[0];
+    expect(p.to).toEqual([GUEST]);
+    expect(p.reply_to).toEqual([HOST_PERSONAL]);
+    expect(p.cc).toBeUndefined();
+    expect(p.bcc).toBeUndefined();
+  });
+
+  it("opt-in wins over the thread address", async () => {
+    enableReplyByEmail();
+    await deliverHostMessageToGuest(
+      { ...thread, host: { ...thread.host, showEmailToGuests: true } },
+      "m1",
+      "Hello",
+    );
+    expect(payloads[0].reply_to).toEqual([HOST_PERSONAL]);
+  });
+});
+
+describe("hostReplyToForGuest", () => {
+  it("is null unless the brand opted in with a usable email", () => {
+    expect(hostReplyToForGuest(null)).toBeNull();
+    expect(hostReplyToForGuest({ contactEmail: HOST_PERSONAL })).toBeNull();
+    expect(
+      hostReplyToForGuest({ contactEmail: HOST_PERSONAL, showEmailToGuests: false }),
+    ).toBeNull();
+    expect(
+      hostReplyToForGuest({ contactEmail: "  ", showEmailToGuests: true }),
+    ).toBeNull();
+    expect(
+      hostReplyToForGuest({ contactEmail: " Host.Personal@iCloud.example ", showEmailToGuests: true }),
+    ).toBe(HOST_PERSONAL);
+  });
 });
 
 describe("dispatchers", () => {
@@ -143,6 +194,10 @@ describe("dispatchers", () => {
       threadRole: "GUEST",
     });
     expect(headerAddresses(payloads[0])).toEqual([GUEST]);
+    const h = payloads[0].headers as Record<string, string>;
+    expect(h["List-Unsubscribe"]).toBe("<https://example.test/one-click>");
+    expect(h["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+    expect(typeof payloads[0].text).toBe("string");
   });
 
   it("dispatchPlatformEmail ignores a person's address as Reply-To", async () => {
@@ -174,6 +229,17 @@ describe("source audit", () => {
         if (/contactEmail|guestEmail|billingEmail|\.email\b/.test(m[2])) {
           bad.push(`${f}: ${m[0]}`);
         }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it("the opt-in Reply-To only ever comes from hostReplyToForGuest", () => {
+    const bad: string[] = [];
+    for (const f of files(join(process.cwd(), "src"))) {
+      const src = readFileSync(f, "utf8");
+      for (const m of src.matchAll(/\bhostOptInReplyTo\s*:\s*([^,\n}]+)/g)) {
+        if (!/^hostReplyToForGuest\(/.test(m[1].trim())) bad.push(`${f}: ${m[0]}`);
       }
     }
     expect(bad).toEqual([]);

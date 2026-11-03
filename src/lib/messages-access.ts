@@ -141,6 +141,7 @@ export const conversationThreadInclude = {
       logoUrl: true,
       contactEmail: true,
       contactPhone: true,
+      showEmailToGuests: true,
       tagline: true,
     },
   },

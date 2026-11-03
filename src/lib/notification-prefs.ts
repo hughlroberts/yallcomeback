@@ -5,27 +5,13 @@
 
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/db";
+import { b64url, fromB64url } from "@/lib/b64url";
 import { messagingSiteOrigin } from "@/lib/messaging";
 
 export type NotifyChannel = "email" | "sms";
 
 function secret(): string {
   return process.env.AUTH_SECRET || "dev-notification-secret-change-me";
-}
-
-function b64url(buf: Buffer | string): string {
-  const b = typeof buf === "string" ? Buffer.from(buf, "utf8") : buf;
-  return b
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
-function fromB64url(s: string): Buffer {
-  const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
-  const b64 = s.replace(/-/g, "+").replace(/_/g, "/") + pad;
-  return Buffer.from(b64, "base64");
 }
 
 export function normalizeEmail(email: string): string {
@@ -102,6 +88,15 @@ export function unsubscribeUrl(
   const token = createUnsubscribeToken(emailOrPhone, channel);
   const origin = messagingSiteOrigin();
   return `${origin}/notifications/unsubscribe?token=${encodeURIComponent(token)}`;
+}
+
+/**
+ * RFC 8058 one-click target for the List-Unsubscribe header. Mail apps POST
+ * `List-Unsubscribe=One-Click` here; no page and no sign-in.
+ */
+export function oneClickUnsubscribeUrl(email: string): string {
+  const token = createUnsubscribeToken(email, "email");
+  return `${messagingSiteOrigin()}/api/notifications/unsubscribe?token=${encodeURIComponent(token)}`;
 }
 
 /** Apply opt-out (and mirror onto User if they have an account). */

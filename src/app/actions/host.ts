@@ -571,6 +571,7 @@ export async function updateHostProfile(formData: FormData) {
       primaryColor,
       contactEmail,
       contactPhone,
+      showEmailToGuests: formData.get("showEmailToGuests") === "on",
       defaultDisclaimer,
       sitePresence,
       listOnMarketplace,

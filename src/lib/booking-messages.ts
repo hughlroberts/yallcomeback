@@ -12,7 +12,8 @@
  */
 
 import { prisma } from "@/lib/db";
-import { dispatchEmail } from "@/lib/messaging";
+import { dispatchEmail, hostReplyToForGuest } from "@/lib/messaging";
+import { guestReplyPath } from "@/lib/guest-thread-access";
 import { formatTime12h } from "@/lib/utils";
 
 export type AutoMessageKind = "ON_BOOKING" | "WEEK_BEFORE" | "DAY_BEFORE";
@@ -235,6 +236,12 @@ export async function deliverBookingAutoMessage(
   });
 
   let conversationId = booking.conversations[0]?.id;
+  let threadGuest = booking.conversations[0]
+    ? {
+        guestEmail: booking.conversations[0].guestEmail,
+        guestUserId: booking.conversations[0].guestUserId,
+      }
+    : { guestEmail: booking.guestEmail, guestUserId: booking.userId };
 
   if (!conversationId) {
     const created = await prisma.conversation.create({
@@ -251,6 +258,10 @@ export async function deliverBookingAutoMessage(
       },
     });
     conversationId = created.id;
+    threadGuest = {
+      guestEmail: created.guestEmail,
+      guestUserId: created.guestUserId,
+    };
   }
 
   await prisma.message.create({
@@ -278,9 +289,11 @@ export async function deliverBookingAutoMessage(
     subject: `${host.name}: ${meta.subject}`,
     body,
     conversationId,
-    replyPath: `/messages/${conversationId}`,
+    // No account: signed no-login thread link (T21)
+    replyPath: guestReplyPath({ id: conversationId, ...threadGuest }),
     fromPartyName: host.name,
     threadRole: "GUEST",
+    hostOptInReplyTo: hostReplyToForGuest(host),
   });
 
   if (email.attempted) {

@@ -50,6 +50,7 @@ import { cn, formatMoney } from "@/lib/utils";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import {
   extraGuestFieldErrors,
+  pricingSaveBlocked,
   type ExtraGuestFieldErrors,
 } from "@/lib/extra-guests";
 
@@ -215,11 +216,12 @@ function PricingSidebar({
     extraErrors.extraGuestFee ?? serverFieldErrors.extraGuestFee;
   const extraIncludedError =
     extraErrors.extraGuestsIncluded ?? serverFieldErrors.extraGuestsIncluded;
+  const saveBlocked = pricingSaveBlocked(extraErrors, serverFieldErrors);
 
   function savePricing() {
     setError(null);
     setServerFieldErrors({});
-    if (extraErrors.extraGuestFee || extraErrors.extraGuestsIncluded) {
+    if (pricingSaveBlocked(extraErrors)) {
       setError("Fix the marked fields, then save again.");
       return;
     }
@@ -510,10 +512,16 @@ function PricingSidebar({
 
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
+          {saveBlocked ? (
+            <p id="ws-save-pricing-blocked" className="text-sm text-red-600">
+              Fix the marked fields to save.
+            </p>
+          ) : null}
           <Button
             type="button"
             className="w-full"
-            disabled={pending}
+            disabled={pending || saveBlocked}
+            aria-describedby={saveBlocked ? "ws-save-pricing-blocked" : undefined}
             onClick={savePricing}
           >
             {pending ? "Saving…" : "Save pricing"}

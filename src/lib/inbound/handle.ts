@@ -92,6 +92,7 @@ function loadConversation(id: string) {
           name: true,
           contactEmail: true,
           billingEmail: true,
+          showEmailToGuests: true,
         },
       },
       guestUser: { select: { email: true } },

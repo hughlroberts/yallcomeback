@@ -189,6 +189,8 @@ model Host {
   primaryColor         String              @default("#2563eb") // blue-600
   contactEmail         String?
   contactPhone         String?
+  /// Guest message emails use contactEmail as Reply-To (default: never).
+  showEmailToGuests    Boolean             @default(false)
   /// Physical address shown on About (hosted site is not a freeform CMS)
   siteAddress          String?
   /// Fixed hosted-site pages (toggle only — no arbitrary page builder)

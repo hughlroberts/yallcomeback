@@ -160,26 +160,45 @@ export async function runSystemChecks(): Promise<{
     const { lastBackupRun, backupRunIsStale, backupStorageStatus } =
       await import("@/lib/backup");
     const storage = await backupStorageStatus();
+    const b = storage.bucket;
+    const bucketOk = b.configured && !b.keyMissing && b.reachable;
+    const storageOk = bucketOk || storage.writable;
     rows.push({
-      label: "Backup volume",
-      value: !storage.configured
-        ? "BACKUP_DIR not set"
+      label: "Backup storage",
+      value: bucketOk
+        ? `Bucket OK · ${b.fileCount} file${b.fileCount === 1 ? "" : "s"}${storage.configured ? " · volume still attached" : ""}`
         : storage.writable
-          ? `OK · ${storage.fileCount} file${storage.fileCount === 1 ? "" : "s"}`
-          : "Not writable",
-      tone: storage.writable ? "ok" : "bad",
+          ? `Volume OK · ${storage.fileCount} file${storage.fileCount === 1 ? "" : "s"}`
+          : !storage.configured && !b.configured
+            ? "Not set"
+            : "Not writable",
+      tone: storageOk ? "ok" : "bad",
     });
-    if (!storage.configured || !storage.writable) {
+    if (b.configured && !bucketOk) {
+      findings.push({
+        id: "backup:bucket",
+        checkId: "backup_check",
+        severity: storage.writable ? "warning" : "critical",
+        title: b.keyMissing
+          ? "Backup bucket has no valid encryption key"
+          : "Backup bucket is not reachable",
+        detail: b.keyMissing
+          ? "Set BACKUP_ENCRYPTION_KEY (32 bytes, hex or base64). Backups are never uploaded unencrypted."
+          : b.error || "Check the BACKUP_S3_* variables.",
+        href: "/ops/settings/backups",
+      });
+    }
+    if (!storageOk && !(b.configured && !bucketOk)) {
       findings.push({
         id: "backup:volume",
         checkId: "backup_check",
         severity: "critical",
         title: storage.configured
           ? "Backup volume is not writable"
-          : "Backup volume is not configured",
+          : "Backup storage is not configured",
         detail:
           storage.error ||
-          "Attach a Railway volume to this service and set BACKUP_DIR=/data/backups.",
+          "Set the BACKUP_S3_* variables and BACKUP_ENCRYPTION_KEY (see docs/backup-and-restore.md).",
         href: "/ops/settings/backups",
       });
     }
@@ -196,7 +215,7 @@ export async function runSystemChecks(): Promise<{
         severity: "warning",
         title: "No Railway backup has been recorded",
         detail:
-          "The daily job writes gzipped dumps to the backups volume. Ops → Platform settings → Backups can also run one now.",
+          "The daily job writes gzipped dumps to backup storage. Ops → Platform settings → Backups can also run one now.",
         href: "/ops/settings/backups",
       });
     } else {

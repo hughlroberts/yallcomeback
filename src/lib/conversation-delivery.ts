@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/db";
-import { dispatchEmail, dispatchSms } from "@/lib/messaging";
+import {
+  dispatchEmail,
+  dispatchSms,
+  hostReplyToForGuest,
+} from "@/lib/messaging";
+import { guestReplyPath } from "@/lib/guest-thread-access";
 import { canSendEmailTo, canSendSmsTo } from "@/lib/notification-prefs";
 import {
   flushHostInquiryEmails,
@@ -25,7 +30,11 @@ type ThreadForGuest = {
   guestEmail: string;
   guestPhone: string | null;
   guestUserId: string | null;
-  host: { name: string; contactEmail: string | null };
+  host: {
+    name: string;
+    contactEmail: string | null;
+    showEmailToGuests?: boolean | null;
+  };
 };
 
 /** Host → guest: email (and SMS when opted in), then record the status. */
@@ -43,9 +52,11 @@ export async function deliverHostMessageToGuest(
       subject: `Message from ${conversation.host.name}`,
       body: `${conversation.host.name} wrote:\n\n${body}`,
       conversationId: conversation.id,
-      replyPath: `/messages/${conversation.id}`,
+      // No account: signed no-login thread link (T21)
+      replyPath: guestReplyPath(conversation),
       fromPartyName: conversation.host.name,
       threadRole: "GUEST",
+      hostOptInReplyTo: hostReplyToForGuest(conversation.host),
     });
     if (email.attempted) {
       externalStatus = mergeExternalStatus(

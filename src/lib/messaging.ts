@@ -5,13 +5,15 @@
  * when a transport is configured (Resend API key, or SMTP via nodemailer).
  *
  * Envelope is Airbnb-style: we always send from the Yall Come Back address.
- * Stay mail uses "Name via Yall Come Back" plus Reply-To for the other party.
+ * Stay mail uses "Name via Yall Come Back". Reply-To is only our signed thread
+ * address, or the brand's public email when the brand opted in (T18).
  * Never send From a host's personal mailbox.
  *
  * SMS is wired for a future Twilio-style provider; enable only via ops env.
  * Do not surface SMS in guest-facing product copy — ops settings only.
  */
 
+import { randomUUID } from "crypto";
 import { canonicalSiteOrigin, PRODUCT_NAME } from "@/lib/features";
 import {
   parseReplyAddress,
@@ -128,6 +130,18 @@ export function safeReplyTo(
 }
 
 /**
+ * The brand opted in ("Show my email to guests"): guest-facing message mail
+ * may use the brand's public contact email as Reply-To. Off by default.
+ */
+export function hostReplyToForGuest(
+  host: { contactEmail?: string | null; showEmailToGuests?: boolean | null } | null | undefined,
+): string | null {
+  if (!host?.showEmailToGuests) return null;
+  const addr = host.contactEmail?.trim().toLowerCase() || null;
+  return isUsableEmail(addr) ? addr : null;
+}
+
+/**
  * Ops / billing mail. Booking emails may pass a per-thread `replyTo`
  * (reply+…@inbound domain); then the footer invites a reply instead of
  * "do not reply".
@@ -166,7 +180,7 @@ export async function dispatchPlatformEmail(opts: {
   }
   const platformReplyTo = safeReplyTo(opts.replyTo, to);
   const text = withPlatformFooter(opts.text, Boolean(platformReplyTo));
-  const html = `<p style="font:16px/1.5 system-ui,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</p>`;
+  const html = platformEmailHtml(text);
   if (process.env.MESSAGING_EMAIL_DRY_RUN === "true") {
     console.info("[messaging:email:dry-run:platform]", {
       to,
@@ -189,6 +203,7 @@ export async function dispatchPlatformEmail(opts: {
       html,
       apiKey,
       replyTo: platformReplyTo,
+      headers: platformHeaders(),
     });
   }
   if (smtpConfigured()) {
@@ -199,6 +214,7 @@ export async function dispatchPlatformEmail(opts: {
       text,
       html,
       replyTo: platformReplyTo,
+      headers: platformHeaders(),
     });
   }
   return {
@@ -254,6 +270,52 @@ export function isSmsMessagingEnabled(): boolean {
   );
 }
 
+/** Headers every email gets. Transactional mail has no List-Unsubscribe. */
+function platformHeaders(): Record<string, string> {
+  return { "X-Entity-Ref-ID": randomUUID() };
+}
+
+/**
+ * Message mail headers. List-Unsubscribe + List-Unsubscribe-Post give the
+ * one-click "Unsubscribe" button (Gmail / Yahoo sender rules, RFC 8058).
+ * X-Entity-Ref-ID stops Gmail from folding separate messages together.
+ */
+export function messageEmailHeaders(
+  oneClickUrl: string | null,
+): Record<string, string> {
+  const h = platformHeaders();
+  if (oneClickUrl) {
+    h["List-Unsubscribe"] = `<${oneClickUrl}>`;
+    h["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+  }
+  return h;
+}
+
+const URL_IN_TEXT = /https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]]/g;
+
+/** Escape text, then make each URL a link whose text is the same URL. */
+export function linkifyText(text: string): string {
+  let out = "";
+  let last = 0;
+  for (const m of text.matchAll(URL_IN_TEXT)) {
+    const i = m.index ?? 0;
+    out += escapeHtml(text.slice(last, i));
+    const url = escapeHtml(m[0]);
+    out += `<a href="${url}" style="color:#3a4a86">${url}</a>`;
+    last = i + m[0].length;
+  }
+  return out + escapeHtml(text.slice(last));
+}
+
+/** Full HTML document for platform mail (same words as the text part). */
+export function platformEmailHtml(text: string): string {
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.5;color:#1c1917">
+  <div style="white-space:pre-wrap;font-size:15px">${linkifyText(text)}</div>
+</body></html>`;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -289,14 +351,15 @@ function buildEmailBodies(opts: {
     .filter(Boolean)
     .join("\n");
   const html = `<!DOCTYPE html>
-<html><body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.5;color:#1c1917">
-  <div style="white-space:pre-wrap;font-size:15px">${escapeHtml(opts.body)}</div>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.5;color:#1c1917">
+  <div style="white-space:pre-wrap;font-size:15px">${linkifyText(opts.body)}</div>
   <p style="margin-top:24px">
     ${opts.replyByEmail ? "You can reply to this email, or " : ""}<a href="${escapeHtml(url)}" style="color:#3a4a86;font-weight:600">${opts.replyByEmail ? "reply in your inbox" : "Reply in your inbox"} →</a>
   </p>
   <p style="margin-top:28px;padding-top:16px;border-top:1px solid #e7e5e4;font-size:12px;color:#78716c">
     You received this because someone messaged you on ${escapeHtml(
-      process.env.NEXT_PUBLIC_SITE_NAME || "Yall Come Back",
+      PRODUCT_NAME,
     )}.
     ${
       unsub
@@ -359,6 +422,7 @@ async function sendViaResend(opts: {
   html: string;
   apiKey: string;
   replyTo?: string | null;
+  headers?: Record<string, string>;
 }): Promise<DispatchResult> {
   try {
     const payload: Record<string, unknown> = {
@@ -369,6 +433,9 @@ async function sendViaResend(opts: {
       html: opts.html,
     };
     if (opts.replyTo) payload.reply_to = [opts.replyTo];
+    if (opts.headers && Object.keys(opts.headers).length) {
+      payload.headers = opts.headers;
+    }
     const res = await resendPostWithRetry(opts.apiKey, payload);
     const data = (await res.json().catch(() => ({}))) as {
       id?: string;
@@ -409,6 +476,7 @@ async function sendViaSmtp(opts: {
   text: string;
   html: string;
   replyTo?: string | null;
+  headers?: Record<string, string>;
 }): Promise<DispatchResult> {
   const host =
     process.env.MESSAGING_SMTP_HOST?.trim() ||
@@ -471,6 +539,7 @@ async function sendViaSmtp(opts: {
       text: opts.text,
       html: opts.html,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
+      ...(opts.headers ? { headers: opts.headers } : {}),
     });
     return {
       attempted: true,
@@ -516,6 +585,11 @@ export async function dispatchEmail(opts: {
    * becomes the thread's own address so the reply lands in /admin/messages.
    */
   threadRole?: ReplyRole;
+  /**
+   * Only from hostReplyToForGuest(): the brand chose to show its public
+   * email to guests. Any other person's address is never a Reply-To.
+   */
+  hostOptInReplyTo?: string | null;
 }): Promise<DispatchResult> {
   const to = opts.to.trim().toLowerCase();
   if (!to || !to.includes("@")) {
@@ -568,14 +642,21 @@ export async function dispatchEmail(opts: {
   const threadReplyTo = opts.threadRole
     ? replyAddressFor("c", opts.conversationId, opts.threadRole)
     : null;
-  // Never a person's address: see safeReplyTo.
-  const replyTo = safeReplyTo(threadReplyTo, to);
+  // Never a person's address (see safeReplyTo), unless the brand opted in.
+  const optIn = opts.hostOptInReplyTo?.trim().toLowerCase() || null;
+  const replyTo =
+    optIn && isUsableEmail(optIn) && optIn !== to
+      ? optIn
+      : safeReplyTo(threadReplyTo, to);
 
-  const { unsubscribeUrl } = await import("@/lib/notification-prefs");
+  const { unsubscribeUrl, oneClickUnsubscribeUrl } = await import(
+    "@/lib/notification-prefs"
+  );
+  const headers = messageEmailHeaders(oneClickUnsubscribeUrl(to));
   const { text, html } = buildEmailBodies({
     ...opts,
     unsubscribeUrl: unsubscribeUrl(to, "email"),
-    replyByEmail: Boolean(threadReplyTo && replyTo === threadReplyTo),
+    replyByEmail: Boolean(replyTo),
   });
 
   // Explicit dry-run for staging (default off when a real transport exists)
@@ -606,6 +687,7 @@ export async function dispatchEmail(opts: {
       html,
       apiKey,
       replyTo,
+      headers,
     });
   }
 
@@ -617,6 +699,7 @@ export async function dispatchEmail(opts: {
       text,
       html,
       replyTo,
+      headers,
     });
   }
 

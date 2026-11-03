@@ -62,6 +62,22 @@ export function dnsInstructionsBody(opts: {
   return lines.join("\n");
 }
 
+/**
+ * Platform admin alert inbox: ADMIN users plus the optional
+ * PLATFORM_ALERT_EMAIL env value (comma-separated). Lowercase, no repeats.
+ */
+export function platformAlertRecipients(
+  adminEmails: string[],
+  envValue: string | undefined,
+): string[] {
+  const out = new Set<string>();
+  for (const raw of [...adminEmails, ...(envValue || "").split(",")]) {
+    const e = raw.trim().toLowerCase();
+    if (e.includes("@") && !e.includes(" ")) out.add(e);
+  }
+  return [...out];
+}
+
 async function notifyPlatformAdminsEmail(opts: {
   subject: string;
   body: string;
@@ -78,8 +94,11 @@ async function notifyPlatformAdminsEmail(opts: {
   // Prefer platform operators (no hostId); fall back to any ADMIN
   const preferred = admins.filter((u) => !u.hostId);
   const list = preferred.length > 0 ? preferred : admins;
-  for (const u of list) {
-    const email = u.email!.trim().toLowerCase();
+  const recipients = platformAlertRecipients(
+    list.map((u) => u.email!),
+    process.env.PLATFORM_ALERT_EMAIL,
+  );
+  for (const email of recipients) {
     if (!(await canSendEmailTo(email))) continue;
     await dispatchEmail({
       to: email,

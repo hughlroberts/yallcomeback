@@ -416,7 +416,9 @@ function DetailsPanel({
     : conversation.host.contactPhone;
   const email = viewingAsHost
     ? conversation.guestEmail
-    : conversation.host.contactEmail;
+    : conversation.host.showEmailToGuests
+      ? conversation.host.contactEmail
+      : null;
 
   const placeLine = property
     ? [property.city, property.region].filter(Boolean).join(", ")
