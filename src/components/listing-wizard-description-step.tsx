@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { saveListingDescription } from "@/app/actions/properties";
 import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
 import { WizardMissingFields } from "@/components/wizard-missing-fields";
@@ -25,10 +25,13 @@ export function ListingWizardDescriptionStep({
   serverUpdatedAt,
 }: Props) {
   const draftKey = `property-${propertyId}`;
-  const { values, setValues } = useListingWizardAutosave<DescriptionFields>({
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  const { values, setValues, flush, latest } = useListingWizardAutosave<DescriptionFields>({
     draftKey,
     step: "description",
     serverUpdatedAt,
+    readLive: () =>
+      fieldRef.current ? { description: fieldRef.current.value.slice(0, MAX) } : null,
     initial: { description: (initialDescription || "").slice(0, MAX) },
   });
 
@@ -51,7 +54,9 @@ export function ListingWizardDescriptionStep({
 
   function onNext() {
     setError(null);
-    const trimmed = description.trim();
+    // Save exactly what is in the field now, not a value from an older render.
+    flush();
+    const trimmed = latest().description.trim();
     if (trimmed.length < MIN) {
       setError("Write a little more so guests know what to expect");
       return;
@@ -94,7 +99,9 @@ export function ListingWizardDescriptionStep({
 
         <div className="mt-10">
           <textarea
+            ref={fieldRef}
             name="description"
+            onBlur={flush}
             value={description}
             onChange={(e) =>
               setValues({ description: e.target.value.slice(0, MAX) })

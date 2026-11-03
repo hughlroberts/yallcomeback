@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { saveListingTitle } from "@/app/actions/properties";
 import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
 import { WizardMissingFields } from "@/components/wizard-missing-fields";
@@ -29,10 +29,13 @@ export function ListingWizardTitleStep({
   const starter =
     initialTitle === "Untitled listing" ? "" : initialTitle.slice(0, MAX);
 
-  const { values, setValues } = useListingWizardAutosave<TitleFields>({
+  const fieldRef = useRef<HTMLInputElement>(null);
+  const { values, setValues, flush, latest } = useListingWizardAutosave<TitleFields>({
     draftKey,
     step: "title",
     serverUpdatedAt,
+    readLive: () =>
+      fieldRef.current ? { title: fieldRef.current.value.slice(0, MAX) } : null,
     initial: { title: starter },
   });
 
@@ -48,7 +51,9 @@ export function ListingWizardTitleStep({
 
   function onNext() {
     setError(null);
-    const trimmed = title.trim();
+    // Save exactly what is in the field now, not a value from an older render.
+    flush();
+    const trimmed = latest().title.trim();
     if (!trimmed) {
       setError("Add a title to continue");
       return;
@@ -92,7 +97,9 @@ export function ListingWizardTitleStep({
 
         <div className="mt-10">
           <input
+            ref={fieldRef}
             name="title"
+            onBlur={flush}
             value={title}
             onChange={(e) =>
               setValues({ title: e.target.value.slice(0, MAX) })
