@@ -731,6 +731,9 @@ export async function publishListing(formData: FormData) {
     where: { id },
     include: { host: { select: { slug: true, id: true } } },
   });
+  if (property.archivedAt) {
+    throw new Error("Restore this listing before you publish it");
+  }
   if (!property.published) {
     await assertHostAllowsFutureWork(property.host.id, {
       bypass: access.isPlatform,
@@ -789,6 +792,9 @@ export async function updateListingVisibility(formData: FormData) {
   });
   if (!existing) throw new Error("Listing not found");
 
+  if (flags.published && existing.archivedAt) {
+    throw new Error("Restore this listing before you turn bookings on");
+  }
   if (flags.published && !existing.published) {
     await assertHostAllowsFutureWork(existing.host.id, {
       bypass: access.isPlatform,
@@ -1030,25 +1036,17 @@ export async function updateProperty(formData: FormData) {
   revalidatePath(`/h/${property.host.slug}/properties/${property.slug}`);
 }
 
-export async function deleteProperty(formData: FormData) {
-  const access = await ensureHostAccess();
-  const { canDeleteListings, resolveHostAccessInfo } = await import(
-    "@/lib/host-access"
-  );
-  const info = resolveHostAccessInfo({
-    isPlatform: access.isPlatform,
-    hostId: access.hostId,
-    hostAccess: access.hostAccess,
-  });
-  if (!canDeleteListings(info)) {
-    throw new Error("Your access level cannot delete listings");
-  }
-  const id = String(formData.get("id") || "");
-  await assertPropertyAccess(id, access);
-  await prisma.property.delete({ where: { id } });
-  revalidatePath("/admin/properties");
-  revalidatePath("/marketplace");
-  redirect("/admin/properties");
+/**
+ * Delete a listing forever (called by the Delete confirm dialog).
+ * Checks brand scope, access level, the typed name, and blocks while the
+ * listing has upcoming or current stays or payment records. Returns a result
+ * so the reason reaches the host in production builds.
+ */
+export async function deleteProperty(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { deleteListing } = await import("@/app/actions/listing-lifecycle");
+  return deleteListing(formData);
 }
 
 export async function addSeason(formData: FormData) {

@@ -549,6 +549,9 @@ model Property {
   featured         Boolean          @default(false)
   /// Show this listing on the central marketplace (in addition to host site)
   listOnMarketplace Boolean         @default(true)
+  /// Set when the host archives the listing. Archived listings are hidden
+  /// publicly, cannot take bookings, and cannot be published until restored.
+  archivedAt       DateTime?
 
   /// Auto guest messages (per listing override; empty body falls back to host defaults)
   /// Sent to guest inbox when a booking is created
@@ -575,6 +578,7 @@ model Property {
 
   @@unique([hostId, slug])
   @@index([listOnMarketplace, published])
+  @@index([hostId, archivedAt])
 }
 
 /**

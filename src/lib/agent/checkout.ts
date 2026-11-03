@@ -92,7 +92,12 @@ export async function createAgentStayCheckout(
     where: { slug, ...marketplacePropertyWhere() },
     include: { seasons: true, host: true },
   });
-  if (!property || !property.published || !property.listOnMarketplace) {
+  if (
+    !property ||
+    !property.published ||
+    !property.listOnMarketplace ||
+    property.archivedAt
+  ) {
     return { ok: false, status: 404, error: "Listing not found or not on marketplace" };
   }
   if (!canHostAddFutureWork(property.host)) {

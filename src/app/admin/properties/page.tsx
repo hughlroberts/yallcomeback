@@ -8,9 +8,11 @@ import { listingTypeLabel } from "@/lib/listing-types";
 import { duplicateProperty } from "@/app/actions/properties";
 import {
   canCreateListings,
+  canDeleteListings,
   resolveHostAccessInfo,
 } from "@/lib/host-access";
 import { ListingVisibilityForm } from "@/components/listing-visibility-form";
+import { ListingLifecycleActions } from "@/components/listing-lifecycle-actions";
 import {
   visibilityBadgeClass,
   visibilityFromFlags,
@@ -32,6 +34,7 @@ export default async function AdminPropertiesPage() {
     hostAccess: access.hostAccess,
   });
   const allowCreate = canCreateListings(accessInfo);
+  const allowRemove = canDeleteListings(accessInfo);
   let hostingAllowsCreate = true;
   if (access.hostId && !access.isPlatform) {
     const { canHostAddFutureWork } = await import("@/lib/hosting");
@@ -52,7 +55,7 @@ export default async function AdminPropertiesPage() {
     bypass: access.isPlatform,
   });
 
-  const properties = await prisma.property.findMany({
+  const allProperties = await prisma.property.findMany({
     where: propertyScopeWhere(access),
     include: {
       images: { take: 1, orderBy: { sortOrder: "asc" } },
@@ -61,6 +64,8 @@ export default async function AdminPropertiesPage() {
     },
     orderBy: { updatedAt: "desc" },
   });
+  const properties = allProperties.filter((p) => !p.archivedAt);
+  const archived = allProperties.filter((p) => p.archivedAt);
 
   return (
     <div>
@@ -88,7 +93,7 @@ export default async function AdminPropertiesPage() {
       </div>
 
       <div className="space-y-3">
-        {properties.length === 0 ? (
+        {properties.length === 0 && archived.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
             <p className="font-medium text-slate-900">No listings yet</p>
             <p className="mt-1 text-sm text-slate-500">
@@ -129,7 +134,7 @@ export default async function AdminPropertiesPage() {
                       visibilityBadgeClass(vis),
                     )}
                   >
-                    {visibilityLabel(vis)}
+                    {vis === "off" ? "Inactive" : visibilityLabel(vis)}
                   </span>
                   {p.featured && (
                     <span className="rounded-full bg-petal px-2.5 py-0.5 text-xs font-semibold text-bonnet ring-1 ring-inset ring-petal">
@@ -167,6 +172,13 @@ export default async function AdminPropertiesPage() {
                 >
                   Fridge magnet
                 </Link>
+                <ListingLifecycleActions
+                  propertyId={p.id}
+                  title={p.title}
+                  published={p.published}
+                  archived={false}
+                  canRemove={allowRemove}
+                />
                 {showCreate ? (
                   <form action={duplicateProperty}>
                     <input type="hidden" name="propertyId" value={p.id} />
@@ -189,6 +201,53 @@ export default async function AdminPropertiesPage() {
           );
         })}
       </div>
+
+      {archived.length > 0 ? (
+        <section aria-labelledby="archived-listings" className="mt-10">
+          <h2
+            id="archived-listings"
+            className="text-lg font-semibold tracking-tight text-slate-900"
+          >
+            Archived ({archived.length})
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Guests cannot find or book these listings. Restore a listing to
+            move it back as paused.
+          </p>
+          <div className="mt-3 space-y-3">
+            {archived.map((p) => (
+              <div
+                key={p.id}
+                className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4"
+              >
+                <Link
+                  href={`/admin/properties/${p.id}`}
+                  className="min-w-0 flex-1 hover:opacity-90"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-slate-700">{p.title}</span>
+                    <span className="rounded-full bg-stone-200 px-2.5 py-0.5 text-xs font-semibold text-stone-700">
+                      Archived
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {access.isPlatform ? `${p.host.name} · ` : ""}
+                    {listingTypeLabel(p.propertyType)} · {p.city || "No city"} ·{" "}
+                    {p._count.bookings} bookings
+                  </p>
+                </Link>
+                <ListingLifecycleActions
+                  propertyId={p.id}
+                  title={p.title}
+                  published={false}
+                  archived
+                  canRemove={allowRemove}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

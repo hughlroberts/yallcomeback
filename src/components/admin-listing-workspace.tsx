@@ -46,6 +46,7 @@ import {
   visibilityLabel,
 } from "@/lib/listing-visibility";
 import { ListingVisibilityForm } from "@/components/listing-visibility-form";
+import { ListingLifecycleActions } from "@/components/listing-lifecycle-actions";
 import { cn, formatMoney } from "@/lib/utils";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import {
@@ -145,6 +146,8 @@ type WorkspaceProperty = {
   published: boolean;
   listOnMarketplace: boolean;
   hostMarketplaceOn: boolean;
+  /** ISO time when archived; null or missing when active. */
+  archivedAt?: string | null;
   city: string | null;
   region: string | null;
   bedrooms: number;
@@ -1133,6 +1136,7 @@ export function AdminListingWorkspace({
   initialTab,
   calendarOnly = false,
   emailVerified = true,
+  canRemoveListing = false,
   todayYmd,
 }: {
   property: WorkspaceProperty;
@@ -1153,6 +1157,8 @@ export function AdminListingWorkspace({
   /** Calendar home: no listing tabs, property switcher lives outside. */
   calendarOnly?: boolean;
   emailVerified?: boolean;
+  /** Owner, full co-host, or Platform admin: may archive, restore, delete. */
+  canRemoveListing?: boolean;
   /** Host-zone today (YYYY-MM-DD) from the server, so SSR and hydration match. */
   todayYmd?: string;
 }) {
@@ -1456,10 +1462,16 @@ export function AdminListingWorkspace({
             <span
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                visibilityBadgeClass(visibility),
+                property.archivedAt
+                  ? "bg-stone-200 text-stone-700"
+                  : visibilityBadgeClass(visibility),
               )}
             >
-              {visibilityLabel(visibility)}
+              {property.archivedAt
+                ? "Archived"
+                : visibility === "off"
+                  ? "Inactive"
+                  : visibilityLabel(visibility)}
             </span>
           </div>
           <p className="mt-1 text-sm text-stone-500">
@@ -1483,8 +1495,19 @@ export function AdminListingWorkspace({
           </p>
           {visibility === "off" ? (
             <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-              This stay is off. Guests cannot book it on your website or on Find
-              a Place. Use <strong>Taking bookings</strong> to turn it on.
+              {property.archivedAt ? (
+                <>
+                  This stay is archived. Guests cannot find it or book it. Use{" "}
+                  <strong>Restore</strong> to move it back to your listings as
+                  paused.
+                </>
+              ) : (
+                <>
+                  This stay is paused. Guests cannot book it on your website or
+                  on Find a Place. Use <strong>Resume</strong> or{" "}
+                  <strong>Taking bookings</strong> to turn it on.
+                </>
+              )}
             </p>
           ) : (
             <p className="mt-1 text-xs text-stone-400">
@@ -1517,14 +1540,20 @@ export function AdminListingWorkspace({
           )}
         </div>
         <div className="flex flex-wrap items-end gap-2">
-          <ListingVisibilityForm
-            propertyId={property.id}
-            published={property.published}
-            listOnMarketplace={property.listOnMarketplace}
-            hostMarketplaceOn={property.hostMarketplaceOn}
-            emailVerified={emailVerified}
-            compact
-          />
+          {property.archivedAt ? (
+            <p className="rounded-lg bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-700">
+              Archived. Guests cannot find or book this listing.
+            </p>
+          ) : (
+            <ListingVisibilityForm
+              propertyId={property.id}
+              published={property.published}
+              listOnMarketplace={property.listOnMarketplace}
+              hostMarketplaceOn={property.hostMarketplaceOn}
+              emailVerified={emailVerified}
+              compact
+            />
+          )}
           <form action={duplicateProperty}>
             <input type="hidden" name="propertyId" value={property.id} />
             <button
@@ -1548,6 +1577,13 @@ export function AdminListingWorkspace({
           >
             Fridge magnet
           </Link>
+          <ListingLifecycleActions
+            propertyId={property.id}
+            title={property.title}
+            published={property.published}
+            archived={Boolean(property.archivedAt)}
+            canRemove={canRemoveListing}
+          />
           {visibility !== "off" ? (
             <Link
               href={

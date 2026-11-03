@@ -18,6 +18,7 @@ export default async function PropertyDetailPage({
     where: {
       slug,
       published: true,
+      archivedAt: null,
       ...(sp.host ? { host: { slug: sp.host } } : {}),
     },
     select: { slug: true, host: { select: { slug: true } } },

@@ -7,7 +7,15 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/calendar",
   useSearchParams: () => new URLSearchParams(),
 }));
+vi.mock("@/app/actions/listing-lifecycle", () => ({
+  pauseListing: vi.fn(),
+  resumeListing: vi.fn(),
+  archiveListing: vi.fn(),
+  restoreListing: vi.fn(),
+  deleteListing: vi.fn(),
+}));
 vi.mock("@/app/actions/properties", () => ({
+  deleteProperty: vi.fn(),
   addSeason: vi.fn(),
   applyPeakHolidays: vi.fn(),
   deleteSeason: vi.fn(),

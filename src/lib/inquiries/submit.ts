@@ -215,7 +215,7 @@ export async function submitInquiry(
   if (input.propertyId || input.propertySlug) {
     const property = await prisma.property.findFirst({
       where: input.propertyId
-        ? { id: input.propertyId, published: true }
+        ? { id: input.propertyId, published: true, archivedAt: null }
         : { slug: input.propertySlug!, ...marketplacePropertyWhere() },
       select: {
         id: true,

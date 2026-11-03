@@ -20,7 +20,7 @@ export default async function HostPropertyPage({
   if (!host) notFound();
 
   const property = await prisma.property.findFirst({
-    where: { hostId: host.id, slug, published: true },
+    where: { hostId: host.id, slug, published: true, archivedAt: null },
     select: { slug: true },
   });
   if (!property) notFound();

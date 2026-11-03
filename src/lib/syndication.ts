@@ -162,7 +162,8 @@ export async function upsertSyndicatedListing(
   if (existing) {
     property = await prisma.property.update({
       where: { id: existing.id },
-      data,
+      // An archived listing stays unpublished until the host restores it.
+      data: existing.archivedAt ? { ...data, published: false } : data,
     });
   } else {
     property = await prisma.property.create({

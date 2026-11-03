@@ -72,7 +72,9 @@ export async function createBooking(formData: FormData) {
     where: { id: propertyId },
     include: { seasons: true, host: true },
   });
-  if (!property || !property.published) throw new Error("Property not found");
+  if (!property || !property.published || property.archivedAt) {
+    throw new Error("Property not found");
+  }
   const { canHostAddFutureWork } = await import("@/lib/hosting");
   if (!canHostAddFutureWork(property.host)) {
     throw new Error(

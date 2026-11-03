@@ -55,6 +55,7 @@ export function marketplacePropertyWhere() {
   return {
     published: true,
     listOnMarketplace: true,
+    archivedAt: null,
     host: {
       active: true,
       approvalStatus: "APPROVED" as const,

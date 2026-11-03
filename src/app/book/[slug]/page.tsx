@@ -98,6 +98,7 @@ export default async function BookPage({
     where: {
       slug,
       published: true,
+      archivedAt: null,
       ...(sp.host ? { host: { slug: sp.host } } : {}),
     },
     include: {

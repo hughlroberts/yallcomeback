@@ -31,7 +31,11 @@ import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 import { formatTime12h, nightsBetween, parseAmenities } from "@/lib/utils";
 import { requireHostAdmin } from "@/lib/auth";
 import { propertyScopeWhere } from "@/lib/scope";
-import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
+import {
+  canDeleteListings,
+  canManageBrand,
+  resolveHostAccessInfo,
+} from "@/lib/host-access";
 import {
   getListingInsights,
   listHostInsightsOptions,
@@ -1046,12 +1050,22 @@ export default async function AdminPropertyDetailPage({
       <AdminListingWorkspace
         todayYmd={hostTodayYmd()}
         emailVerified={emailVerified}
+        canRemoveListing={canDeleteListings(
+          resolveHostAccessInfo({
+            isPlatform: access.isPlatform,
+            hostId: access.hostId,
+            hostAccess: access.hostAccess,
+          }),
+        )}
         property={{
           id: property.id,
           title: property.title,
           slug: property.slug,
           hostSlug: property.host.slug,
           published: property.published,
+          archivedAt: property.archivedAt
+            ? property.archivedAt.toISOString()
+            : null,
           listOnMarketplace: property.listOnMarketplace,
           hostMarketplaceOn: property.host.listOnMarketplace,
           city: property.city,
