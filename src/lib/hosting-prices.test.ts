@@ -17,11 +17,11 @@ describe("branded price copy", () => {
     expect(cardProcessingUsd()).toBe(1.06);
   });
 
-  it("formats short and long labels", () => {
+  it("uses one short format everywhere (T43)", () => {
     expect(brandedPriceLabel()).toBe("$25/mo + $1.06/mo card processing");
-    expect(brandedPriceLabel("long")).toBe(
-      "$25 / month + $1.06 / month card processing",
-    );
+    expect(brandedPriceLabel()).not.toMatch(/ \/ month/);
+    const fee30 = processingFeeToNetCents(3000) / 100;
+    expect(brandedPriceLabel(30)).toBe(`$30/mo + $${fee30.toFixed(2)}/mo card processing`);
     expect(cardProcessingNote()).toBe("$1.06/mo card processing");
   });
 

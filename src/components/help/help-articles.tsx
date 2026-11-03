@@ -232,7 +232,7 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             <strong>Platform hosting (paid)</strong> — Marketplace only at $12
-            per published listing / month, or branded website at {brandedPriceLabel("long")}{" "}
+            per published listing / month, or branded website at {brandedPriceLabel()}{" "}
             for the whole site (marketplace included). Full brand-domain guide:{" "}
             <Link
               href="/help/branded-website"
@@ -744,7 +744,7 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             month. Guests book on Find a Place. No custom brand site.
           </li>
           <li>
-            <strong>Branded website</strong> — {brandedPriceLabel("long")}{" "}
+            <strong>Branded website</strong> — {brandedPriceLabel()}{" "}
             for the whole website, any number of listings. Yall Come Back hosts your brand
             site on your domain. Marketplace listing is included (no second
             fee).
@@ -1522,7 +1522,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
             not keep a separate brand website. This is a paid product.
           </li>
           <li>
-            <strong>2 · Branded website — {brandedPriceLabel("long")}</strong>{" "}
+            <strong>2 · Branded website — {brandedPriceLabel()}</strong>{" "}
             — Yall Come Back hosts a site that looks like your brand. Point your
             domain with DNS. One $25 fee covers the whole website, no matter how many
             cabins, boats, or campsites you publish. This plan{" "}
@@ -1542,7 +1542,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         </HelpUl>
         <HelpP>
           Example: seven published stays on the branded website plan cost{" "}
-          <strong>$25 / month</strong> total, plus {cardProcessingNote(25, "long")}. The same seven stays on
+          <strong>$25/mo</strong> total, plus {cardProcessingNote(25)}. The same seven stays on
           marketplace only cost <strong>$84 / month</strong> ($12 × 7). Use
           marketplace-only if you do not need your own website.
         </HelpP>
@@ -1577,7 +1577,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         <HelpP>
           Open Admin → Brand &amp; website and select{" "}
           <strong>Create my branded website</strong>. Confirm, then pay by card.
-          The plan is {brandedPriceLabel("long")} (marketplace stays included).
+          The plan is {brandedPriceLabel()} (marketplace stays included).
           After the payment goes through, you are on the website plan. Logo and
           domain fields unlock, and your listings stay. Then buy a domain at your
           registrar and enter it under Domain &amp; guest site.

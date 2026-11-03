@@ -1,3 +1,4 @@
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -260,7 +261,7 @@ export default async function OpsHostDetailPage({
           Use <strong>Complimentary</strong> for your own brand (any number of
           listings, never billed). Paying customers:{" "}
           <strong>Marketplace only</strong> $12 / published listing, or{" "}
-          <strong>Branded website</strong> $25 / month for the whole site
+          <strong>Branded website</strong> {brandedPriceLabel()} for the whole site
           (marketplace included — listing count does not change the bill).
           Moving someone off a paid plan onto Complimentary asks you to confirm,
           then pauses their Stripe subscription so they are not billed again.

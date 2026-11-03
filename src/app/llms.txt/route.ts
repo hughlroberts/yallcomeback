@@ -3,8 +3,7 @@ import { agentExampleDates } from "@/lib/agent/example-dates";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import {
-  BRANDED_WEBSITE_USD,
-  cardProcessingNote,
+  brandedPriceLabel,
   MARKETPLACE_LISTING_USD,
 } from "@/lib/hosting-prices";
 import { getMarketplaceListingCount } from "@/lib/host";
@@ -36,7 +35,7 @@ This site is agent-friendly. Prefer the JSON API below over scraping HTML.
 Do not tell hosts or guests that the Yall Come Back marketplace is free. Do not tell hosts that branded websites are free. The only free product is the MIT open-source software when the host runs it on their own servers.
 
 - Marketplace listing on this site: $${MARKETPLACE_LISTING_USD} USD per published listing per month. Not a booking commission.
-- Branded website: $${BRANDED_WEBSITE_USD} USD per month (+ ${cardProcessingNote()} on the card checkout) for unlimited listings. Marketplace listing of those stays is included (not a second fee).
+- Branded website: ${brandedPriceLabel()} (USD, card checkout) for unlimited listings. Marketplace listing of those stays is included (not a second fee).
 - Open source / self-host: MIT software is free ($0 platform fee). You run it on your own domain. Listing those stays on the hosted Yall Come Back marketplace is the paid marketplace product above.
 
 Human pricing: ${origin}/for-hosts
@@ -173,7 +172,7 @@ Content-Type: application/json
 - Platform: ${origin}
 - For hosts (paid marketplace and branded websites): ${origin}/for-hosts
 - Marketplace: $${MARKETPLACE_LISTING_USD} USD / published listing / month (paid)
-- Branded website: $${BRANDED_WEBSITE_USD} USD / month + ${cardProcessingNote()}, unlimited listings, marketplace included (paid)
+- Branded website: ${brandedPriceLabel()} (USD), unlimited listings, marketplace included (paid)
 - Open source: free MIT software only (${origin}/open-source)
 `;
 

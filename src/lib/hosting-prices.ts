@@ -32,28 +32,18 @@ export function formatUsd(usd: number): string {
 }
 
 /** "$1.06/mo card processing" — the add-on for a branded plan price. */
-export function cardProcessingNote(
-  netUsd: number = BRANDED_WEBSITE_USD,
-  style: "short" | "long" = "short",
-): string {
+export function cardProcessingNote(netUsd: number = BRANDED_WEBSITE_USD): string {
   const fee = cardProcessingUsd(netUsd);
   if (fee <= 0) return "";
-  return style === "short"
-    ? `${formatUsd(fee)}/mo card processing`
-    : `${formatUsd(fee)} / month card processing`;
+  return `${formatUsd(fee)}/mo card processing`;
 }
 
 /**
- * Branded website price with the card processing line, e.g.
- * "$25/mo + $1.06/mo card processing" (short) or
- * "$25 / month + $1.06 / month card processing" (long).
+ * Branded website price with the card processing line:
+ * "$25/mo + $1.06/mo card processing". T43: this one format everywhere.
  */
-export function brandedPriceLabel(
-  style: "short" | "long" = "short",
-  netUsd: number = BRANDED_WEBSITE_USD,
-): string {
-  const base =
-    style === "short" ? `${formatUsd(netUsd)}/mo` : `${formatUsd(netUsd)} / month`;
-  const note = cardProcessingNote(netUsd, style);
+export function brandedPriceLabel(netUsd: number = BRANDED_WEBSITE_USD): string {
+  const base = `${formatUsd(netUsd)}/mo`;
+  const note = cardProcessingNote(netUsd);
   return note ? `${base} + ${note}` : base;
 }

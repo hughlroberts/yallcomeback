@@ -46,7 +46,7 @@ export function MarketplaceToWebsiteUpgrade({
           </span>
           <span>
             <strong className="text-stone-900">Upgrade here</strong> — confirm,
-            then pay by card for the branded website plan ({brandedPriceLabel("long")}{" "}
+            then pay by card for the branded website plan ({brandedPriceLabel()}{" "}
             for the whole site — any number of listings). Your plan and Brand tools
             change after the payment goes through.
           </span>

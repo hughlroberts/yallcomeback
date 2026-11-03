@@ -130,7 +130,7 @@ export default async function OpsHostingPlansPage() {
                 id="description"
                 name="description"
                 rows={2}
-                placeholder="e.g. $25 / month for the whole website"
+                placeholder="e.g. $25/mo for the whole website"
               />
             </div>
             <div>

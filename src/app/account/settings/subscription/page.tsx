@@ -168,7 +168,7 @@ export default async function AccountSubscriptionPage({
     : sp.subscribed && upgradeFlow
     ? {
         title: "Branded website is on",
-        body: `Payment went through. That brand is on the ${brandedPriceLabel("long")} website plan — it covers every listing. Next: logo, colors, and domain under Brand & website.`,
+        body: `Payment went through. That brand is on the ${brandedPriceLabel()} website plan — it covers every listing. Next: logo, colors, and domain under Brand & website.`,
         variant: "success" as const,
       }
     : sp.canceled && upgradeFlow
@@ -188,7 +188,7 @@ export default async function AccountSubscriptionPage({
     : sp.upgraded === "website"
       ? {
           title: "Branded website is on",
-          body: `That brand is on the ${brandedPriceLabel("long")} website plan — it covers every listing. Next: logo, colors, and domain under Brand & website.`,
+          body: `That brand is on the ${brandedPriceLabel()} website plan — it covers every listing. Next: logo, colors, and domain under Brand & website.`,
           variant: "success" as const,
         }
       : sp.welcome
@@ -320,7 +320,7 @@ function BrandHostingCard({
                 ? "No monthly hosting fee on this brand."
                 : marketplaceOnly
                   ? `${formatMoney(host.plan?.monthlyPrice ?? 5)} per published listing / month. Guests find this brand on Find a Place.`
-                  : `${formatMoney(host.plan?.monthlyPrice ?? 25)} / month${cardProcessingNote(host.plan?.monthlyPrice ?? 25, "long") ? ` + ${cardProcessingNote(host.plan?.monthlyPrice ?? 25, "long")}` : ""} for the whole website. Add as many listings as you want. Marketplace listing included.`}
+                  : `${formatMoney(host.plan?.monthlyPrice ?? 25)} / month${cardProcessingNote(host.plan?.monthlyPrice ?? 25) ? ` + ${cardProcessingNote(host.plan?.monthlyPrice ?? 25)}` : ""} for the whole website. Add as many listings as you want. Marketplace listing included.`}
           </p>
         </div>
 
@@ -362,7 +362,7 @@ function BrandHostingCard({
             <p className="mt-1 text-sm leading-relaxed text-stone-600">
               Own domain, logo, colors, and About page. Marketplace listing
               stays included.{" "}
-              <strong>{brandedPriceLabel("long")} for the whole website</strong>,
+              <strong>{brandedPriceLabel()} for the whole website</strong>,
               no matter how many listings you publish.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -419,7 +419,7 @@ function BrandHostingCard({
             </h2>
             <p className="mt-1 text-sm text-stone-600">
               {complimentary
-                ? `Subscribing ends complimentary on ${host.name} and starts the ${brandedPriceLabel("long")} website plan. This is not your personal card.`
+                ? `Subscribing ends complimentary on ${host.name} and starts the ${brandedPriceLabel()} website plan. This is not your personal card.`
                 : `Yall Come Back charges this card for ${host.name} hosting only. It is not your personal account card. Guests pay the host on a different account.`}
             </p>
           </div>

@@ -150,7 +150,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     category: "Host guide",
     categoryId: "hosts",
     title: "Branded website on your domain",
-    body: `${brandedPriceLabel("long")} for the whole website — any number of listings. Your brand on your domain. Marketplace listing included. Upgrade anytime from marketplace-only.`,
+    body: `${brandedPriceLabel()} for the whole website — any number of listings. Your brand on your domain. Marketplace listing included. Upgrade anytime from marketplace-only.`,
     description:
       `Branded website plan (${brandedPriceLabel()} for the whole site): your domain, Yall Come Back hosting, marketplace included, upgrade from marketplace-only, and DNS steps.`,
     related: [

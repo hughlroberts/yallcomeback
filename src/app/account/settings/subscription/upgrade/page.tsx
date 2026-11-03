@@ -87,7 +87,7 @@ export default async function BrandedUpgradeConfirmPage({
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
             {needsCheckout
-              ? `${brandedPriceLabel("long")} for the whole website. Add as many listings as you want. Marketplace listing stays included.`
+              ? `${brandedPriceLabel()} for the whole website. Add as many listings as you want. Marketplace listing stays included.`
               : "This brand is complimentary. There is no charge for the branded website."}
           </p>
         </div>
@@ -182,7 +182,7 @@ function BrandedPayStep({
             Branded website · Waiting for payment
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
-            {`${brandedPriceLabel("long")} for the whole website. Guests do not see the branded site until the payment goes through.`}
+            {`${brandedPriceLabel()} for the whole website. Guests do not see the branded site until the payment goes through.`}
           </p>
         </div>
         {!checkoutReady ? (

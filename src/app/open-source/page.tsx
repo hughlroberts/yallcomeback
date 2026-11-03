@@ -92,7 +92,7 @@ export default function OpenSourcePage() {
             <strong>Free forever for self-hosting the software.</strong> The MIT
             code is the only free product. Publishing on the hosted Yall Come
             Back marketplace is a paid product ($12 per listing / month). A
-            branded website is {brandedPriceLabel("long")} for unlimited
+            branded website is {brandedPriceLabel()} for unlimited
             listings, marketplace included. Register, then either manage listings on this platform or
             push from a remote open-source deploy with a syndication API key
             (Admin → Brand &amp; website). The software itself is {LICENSE}{" "}
@@ -470,7 +470,7 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
               Platform-hosted (paid)
             </h2>
             <ul className="mt-4 space-y-2 text-sm text-stone-600">
-              <li>$12 / listing / month marketplace, or {brandedPriceLabel("long")} branded website (unlimited listings, marketplace included)</li>
+              <li>$12 / listing / month marketplace, or {brandedPriceLabel()} branded website (unlimited listings, marketplace included)</li>
               <li>We list your stays with host branding on each listing</li>
               <li>Still not a booking commission</li>
               <li>

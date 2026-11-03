@@ -89,7 +89,7 @@ export default function SelfHostPage() {
             <strong>Self-host = free software ($0 / month platform fee).</strong>{" "}
             You run the app on your servers/domain. That is the only free
             product. The hosted marketplace is <strong>$12 per listing / month</strong>.
-            A branded website is <strong>{brandedPriceLabel("long")}</strong> for unlimited
+            A branded website is <strong>{brandedPriceLabel()}</strong> for unlimited
             listings (marketplace included). Optional one-time full setup ($500)
             is available if you want help going live.
           </p>

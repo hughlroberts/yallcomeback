@@ -267,7 +267,7 @@ export default async function ForHostsPage({
                   Marketplace included.
                 </p>
                 <ul className="mt-2 space-y-0.5 text-xs text-stone-500">
-                  <li>✓ {brandedPriceLabel("long")} for the whole website</li>
+                  <li>✓ {brandedPriceLabel()} for the whole website</li>
                   <li>✓ Logo, palette, About, other services</li>
                   <li>✓ Your domain when you are ready</li>
                 </ul>
@@ -336,13 +336,13 @@ export default async function ForHostsPage({
                   page (boat rentals, camping, tours, even when it is not lodging).
                   Point your own custom domain when you are ready.{" "}
                   <strong className="font-semibold text-stone-800">
-                    {brandedPriceLabel("long")} total
+                    {brandedPriceLabel()} total
                   </strong>{" "}
                   — add every cabin, boat, and campsite; the hosting bill stays
                   $25. Marketplace listing is included, not a second fee.
                 </p>
                 <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                  <li>✓ {brandedPriceLabel("long")} for the whole website (not per listing)</li>
+                  <li>✓ {brandedPriceLabel()} for the whole website (not per listing)</li>
                   <li>✓ Branded site + DNS on your domain</li>
                   <li>✓ Demo to Live publish before DNS cutover</li>
                   <li>✓ Card payments and invoices</li>

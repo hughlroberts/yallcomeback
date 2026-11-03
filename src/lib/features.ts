@@ -261,7 +261,7 @@ export const SELF_HOST_STEPS = [
   },
   {
     title: "Publish and welcome guests",
-    body: `Publish your listings. Guests book on your website. Listing the same stays on the hosted Yall Come Back marketplace is a paid product ($12 per listing / month), or included in the ${brandedPriceLabel("long")} branded website plan.`,
+    body: `Publish your listings. Guests book on your website. Listing the same stays on the hosted Yall Come Back marketplace is a paid product ($12 per listing / month), or included in the ${brandedPriceLabel()} branded website plan.`,
   },
 ];
 
