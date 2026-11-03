@@ -10,7 +10,11 @@ import {
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
 } from "@/lib/hosting";
-import { MARKETPLACE_LISTING_USD, brandedPriceLabel } from "@/lib/hosting-prices";
+import {
+  MARKETPLACE_LISTING_USD,
+  brandedPriceLabel,
+  marketplacePriceWithCardLabel,
+} from "@/lib/hosting-prices";
 import { formatMoney } from "@/lib/utils";
 import { TrackSignupStarted } from "@/components/track-signup-started";
 import { Check, X } from "lucide-react";
@@ -197,7 +201,7 @@ export function HostSignupForm({
                 [
                   {
                     id: "marketplace" as const,
-                    label: "Marketplace only · $12/listing/mo",
+                    label: `Marketplace only · ${marketplacePriceWithCardLabel()}`,
                     hint: "Your stay on Find a Place. Use your name — no brand website to set up.",
                   },
                   {

@@ -94,6 +94,7 @@ export type BillingErrorCode =
   | "has_subscription"
   | "not_marketplace"
   | "not_branded"
+  | "setup_paid"
   | "failed";
 
 export function billingErrorMessage(code: string | null | undefined): string | null {
@@ -110,7 +111,9 @@ export function billingErrorMessage(code: string | null | undefined): string | n
     case "not_marketplace":
       return "This brand is already on the Branded website plan.";
     case "not_branded":
-      return `Card checkout is the ${brandedPriceLabel()} branded website plan. Marketplace-only brands are billed per listing by invoice.`;
+      return `This button is for the ${brandedPriceLabel()} branded website plan. Use "Add card" in the Marketplace section to pay for listings.`;
+    case "setup_paid":
+      return "Full setup is already paid for this brand. We will contact you. Nothing was charged.";
     case "failed":
       return "Checkout could not start. Nothing changed. Try again.";
     default:

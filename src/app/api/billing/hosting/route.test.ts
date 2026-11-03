@@ -21,6 +21,15 @@ vi.mock("@/lib/db", () => db);
 vi.mock("@/lib/auth", () => auth);
 vi.mock("@/lib/stripe", () => stripe);
 vi.mock("@/lib/platform-billing", () => billing);
+const mkt = vi.hoisted(() => ({
+  marketplaceSubscriptionUrl: vi.fn(async () => "https://checkout.stripe.test/m"),
+}));
+const setup = vi.hoisted(() => ({
+  setupServiceCheckoutUrl: vi.fn(async () => "https://checkout.stripe.test/setup"),
+  setupServiceDone: (s: string) => s === "PAID" || s === "WAIVED",
+}));
+vi.mock("@/lib/marketplace-billing", () => mkt);
+vi.mock("@/lib/setup-service", () => setup);
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { NextRequest } from "next/server";
@@ -32,7 +41,9 @@ const market = {
   hostingMode: "PLATFORM",
   sitePresence: "STAYLOCAL",
   plan: { monthlyPrice: 12 },
+  setupServiceStatus: "NONE",
 };
+const branded = { ...market, sitePresence: "BOTH", plan: { monthlyPrice: 25 } };
 
 function post(fields: Record<string, string>, origin = "https://ycb.test") {
   const body = new URLSearchParams(fields);
@@ -70,13 +81,41 @@ describe("POST /api/billing/hosting (T38/T39)", () => {
     expect(billing.brandedUpgradeCheckoutUrl).not.toHaveBeenCalled();
   });
 
-  it("subscribe: 303 to checkout", async () => {
+  it("subscribe (Branded): 303 to checkout", async () => {
+    db.prisma.host.findUnique.mockResolvedValue(branded);
     const res = await POST(post({ intent: "subscribe", hostId: "h1" }));
     expect(res.status).toBe(303);
     expect(res.headers.get("location")).toBe("https://checkout.stripe.test/s");
+    expect(mkt.marketplaceSubscriptionUrl).not.toHaveBeenCalled();
+  });
+
+  it("subscribe (Marketplace, T45): 303 to the per-listing card checkout", async () => {
+    const res = await POST(post({ intent: "subscribe", hostId: "h1" }));
+    expect(res.status).toBe(303);
+    expect(res.headers.get("location")).toBe("https://checkout.stripe.test/m");
+    expect(billing.hostingSubscriptionUrl).not.toHaveBeenCalled();
+  });
+
+  it("setup (T45): 303 to the one-time card checkout, on any plan", async () => {
+    for (const h of [market, branded]) {
+      db.prisma.host.findUnique.mockResolvedValue(h);
+      const res = await POST(post({ intent: "setup", hostId: "h1" }));
+      expect(res.status).toBe(303);
+      expect(res.headers.get("location")).toBe("https://checkout.stripe.test/setup");
+    }
+  });
+
+  it("setup already paid or waived: no second checkout", async () => {
+    for (const status of ["PAID", "WAIVED"]) {
+      db.prisma.host.findUnique.mockResolvedValue({ ...market, setupServiceStatus: status });
+      const res = await POST(post({ intent: "setup", hostId: "h1" }));
+      expect(res.headers.get("location")).toBe("/account/settings/subscription?billingError=setup_paid");
+    }
+    expect(setup.setupServiceCheckoutUrl).not.toHaveBeenCalled();
   });
 
   it("errors come back as a message on the subscription page, never a crash", async () => {
+    db.prisma.host.findUnique.mockResolvedValueOnce(branded);
     billing.hostingSubscriptionUrl.mockRejectedValueOnce(new Error("stripe down"));
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await POST(post({ intent: "subscribe", hostId: "h1" }));

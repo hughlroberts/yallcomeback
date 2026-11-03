@@ -12,6 +12,7 @@ const CODES = [
   "has_subscription",
   "not_marketplace",
   "not_branded",
+  "setup_paid",
   "failed",
   "some_unknown_code",
 ];

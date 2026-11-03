@@ -11,6 +11,7 @@ import {
   ACTIVE_BOOKING_STATUSES,
   deleteConfirmMatches,
 } from "@/lib/listing-lifecycle";
+import { queueListingBillingSync } from "@/lib/marketplace-billing-queue";
 
 /**
  * Listing lifecycle: pause / resume, archive / restore, delete.
@@ -54,6 +55,8 @@ async function scopedListing(formData: FormData) {
 }
 
 async function revalidateListing(id: string, hostId: string, slug: string) {
+  // T45: Marketplace bill follows the published listings (next bill only).
+  queueListingBillingSync(hostId);
   const host = await prisma.host.findUnique({
     where: { id: hostId },
     select: { slug: true },

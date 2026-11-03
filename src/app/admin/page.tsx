@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/utils";
 import { KpiCard, PageHeader } from "@/components/ui";
 import { requireHostAdmin } from "@/lib/auth";
+import { MarketplaceCardNotice } from "@/components/marketplace-card-notice";
 import {
   bookingScopeWhere,
   calendarBlockScopeWhere,
@@ -193,6 +194,10 @@ export default async function AdminDashboard({
           </Link>
         }
       />
+
+      {host ? (
+        <MarketplaceCardNotice hostId={host.id} className="mb-4" />
+      ) : null}
 
       {adminOnly ? (
         <p

@@ -18,7 +18,7 @@ export {
 } from "@/lib/hosting-prices";
 
 /** One-time done-for-you setup: listings, brand, custom domain / website. */
-export const SETUP_SERVICE_FEE_USD = 500;
+export { SETUP_SERVICE_USD as SETUP_SERVICE_FEE_USD } from "@/lib/hosting-prices";
 
 export const SETUP_SERVICE_LABEL =
   "Full setup (listings, brand & website)";

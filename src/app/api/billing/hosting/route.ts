@@ -19,12 +19,15 @@ import {
   canUpgradeToBranded,
   type BillingErrorCode,
 } from "@/lib/branded-upgrade";
+import { hostProductPath } from "@/lib/hosting";
+import { marketplaceSubscriptionUrl } from "@/lib/marketplace-billing";
+import { setupServiceCheckoutUrl, setupServiceDone } from "@/lib/setup-service";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Hosting billing buttons (Add card and subscribe, Upgrade to branded
- * website, Manage billing) post a plain form here.
+ * website, Manage billing, Buy full setup) post a plain form here.
  *
  * Why not a server action (T39): a server action that redirects to Stripe
  * fails on a page that is older than the last deploy (unknown action id),
@@ -89,7 +92,17 @@ export async function POST(req: NextRequest) {
     }
     if (intent === "subscribe") {
       if (!isStripeConfigured()) return back("stripe_off");
+      // T45: Marketplace pays by card too ($12/listing + card processing).
+      if (hostProductPath(host) === "marketplace") {
+        return toStripe(await marketplaceSubscriptionUrl(host));
+      }
       return toStripe(await hostingSubscriptionUrl(host));
+    }
+    if (intent === "setup") {
+      // T45: $500 one-time full setup, any plan, once.
+      if (setupServiceDone(host.setupServiceStatus)) return back("setup_paid");
+      if (!isStripeConfigured()) return back("stripe_off");
+      return toStripe(await setupServiceCheckoutUrl(host));
     }
     if (intent === "portal") {
       if (!isStripeConfigured()) return back("stripe_off");

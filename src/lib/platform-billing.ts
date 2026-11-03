@@ -198,14 +198,12 @@ export async function applyHostingCheckoutSession(opts: {
   const subscriptionId = stripeObjectId(session.subscription);
   const paid =
     session.status === "complete" || session.payment_status === "paid";
-  // Marketplace → Branded: the plan changes only once checkout is paid.
-  if (paid && isBrandedUpgradeMetadata(session.metadata)) {
-    await applyBrandedUpgrade(hostId);
-  }
-  await applyHostingSubscriptionFromStripe({
+  await finishHostingCheckout({
     hostId,
     customerId,
     subscriptionId,
+    metadata: session.metadata,
+    paid,
     stripeStatus: paid ? "active" : session.status,
   });
   const cardLabel = customerId
@@ -214,13 +212,84 @@ export async function applyHostingCheckoutSession(opts: {
   return { ok: true, cardLabel };
 }
 
+/** Metadata key: the Marketplace subscription a paid Branded upgrade replaces. */
+export const REPLACES_SUBSCRIPTION_KEY = "replacesSubscription";
+
+/**
+ * Shared by the success page and checkout.session.completed (idempotent):
+ * 1. Marketplace → Branded: switch the plan (only when paid).
+ * 2. Store the new subscription on the host (ACTIVE clears a Marketplace
+ *    suspension).
+ * 3. Upgrade from a card Marketplace subscription: end the old one now,
+ *    crediting its unused days to the customer balance (no double bill).
+ */
+export async function finishHostingCheckout(opts: {
+  hostId: string | null | undefined;
+  customerId: string | null;
+  subscriptionId: string | null;
+  metadata: Record<string, string | undefined> | null | undefined;
+  paid: boolean;
+  stripeStatus?: string | null;
+}) {
+  const hostId = opts.hostId || null;
+  if (opts.paid && hostId && isBrandedUpgradeMetadata(opts.metadata)) {
+    await applyBrandedUpgrade(hostId);
+  }
+  const host = await applyHostingSubscriptionFromStripe({
+    hostId,
+    customerId: opts.customerId,
+    subscriptionId: opts.subscriptionId,
+    stripeStatus: opts.stripeStatus ?? (opts.paid ? "active" : null),
+  });
+  const replaced = opts.metadata?.[REPLACES_SUBSCRIPTION_KEY] || null;
+  if (
+    opts.paid &&
+    replaced &&
+    opts.subscriptionId &&
+    replaced !== opts.subscriptionId
+  ) {
+    await endReplacedSubscription(replaced, opts.customerId);
+  }
+  return host;
+}
+
+/**
+ * End the old Marketplace subscription after a paid Branded upgrade.
+ * prorate + invoice_now: unused days become a credit on the customer
+ * balance, used on the next Branded bill. Only ends a subscription that
+ * belongs to the same customer. Safe to call twice.
+ */
+export async function endReplacedSubscription(
+  subscriptionId: string,
+  customerId: string | null,
+): Promise<boolean> {
+  const stripe = getStripe();
+  if (!stripe) return false;
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    if (sub.status === "canceled" || sub.status === "incomplete_expired") {
+      return true;
+    }
+    if (customerId && stripeObjectId(sub.customer) !== customerId) return false;
+    await stripe.subscriptions.cancel(subscriptionId, {
+      prorate: true,
+      invoice_now: true,
+    });
+    return true;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/no such subscription/i.test(message)) return true;
+    throw err;
+  }
+}
+
 /**
  * Checkout on the platform account: host puts a card on file and starts
  * the monthly hosting subscription. Guest payouts never touch this Customer.
  */
 export async function createHostingSubscriptionCheckout(
   host: PlatformHost,
-  opts: { upgradeToBranded?: boolean } = {},
+  opts: { upgradeToBranded?: boolean; replacesSubscription?: string | null } = {},
 ) {
   const stripeClient = requireStripeClient();
   const price = hostingPriceId();
@@ -242,6 +311,9 @@ export async function createHostingSubscriptionCheckout(
     kind: "hosting_subscription",
     hostId: host.id,
     ...(upgrade ? BRANDED_UPGRADE_METADATA : {}),
+    ...(upgrade && opts.replacesSubscription
+      ? { [REPLACES_SUBSCRIPTION_KEY]: opts.replacesSubscription }
+      : {}),
   };
   const line_items: {
     price?: string;
@@ -321,6 +393,7 @@ export class HostingBillingError extends Error {
       | "has_subscription"
       | "not_marketplace"
       | "not_branded"
+      | "setup_paid"
       | "failed",
     message?: string,
   ) {
@@ -351,12 +424,14 @@ export async function brandedUpgradeCheckoutUrl(
 ): Promise<string> {
   if (!canUpgradeToBranded(host)) throw new HostingBillingError("not_marketplace");
   if (!hostingPriceId()) throw new HostingBillingError("price_missing");
-  // Never start a second subscription next to a live one.
-  if (subscriptionStillOpen(host)) {
-    throw new HostingBillingError("has_subscription");
-  }
+  // A Marketplace card subscription is swapped, not doubled: the checkout
+  // names it, and it ends (with credit) only after the Branded one is paid.
+  const replacesSubscription = subscriptionStillOpen(host)
+    ? host.stripeSubscriptionId
+    : null;
   const session = await createHostingSubscriptionCheckout(host, {
     upgradeToBranded: true,
+    replacesSubscription,
   });
   if (!session.url) throw new HostingBillingError("failed", "no checkout url");
   return session.url;
@@ -529,10 +604,13 @@ export async function applyHostingSubscriptionFromStripe(opts: {
     | "CANCELLED" = host.subscriptionStatus;
   let hostingPastDueAt: Date | null | undefined;
   let hostingDunningReminderSentAt: Date | null | undefined;
+  let clearMarketplaceSuspension = false;
   if (raw === "active" || raw === "trialing") {
     subscriptionStatus = "ACTIVE";
     hostingPastDueAt = null;
     hostingDunningReminderSentAt = null;
+    // Card in place: Marketplace listings show again (T45).
+    clearMarketplaceSuspension = true;
   } else if (raw === "past_due" || raw === "unpaid") {
     if (host.subscriptionStatus !== "PAUSED") {
       subscriptionStatus = "PAST_DUE";
@@ -568,6 +646,9 @@ export async function applyHostingSubscriptionFromStripe(opts: {
       ...(hostingPastDueAt !== undefined ? { hostingPastDueAt } : {}),
       ...(hostingDunningReminderSentAt !== undefined
         ? { hostingDunningReminderSentAt }
+        : {}),
+      ...(clearMarketplaceSuspension && !paused
+        ? { marketplaceSuspendedAt: null }
         : {}),
     },
   });

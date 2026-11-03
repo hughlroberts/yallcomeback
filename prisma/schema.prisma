@@ -299,6 +299,18 @@ model Host {
   setupServiceAmount   Float               @default(500)
   setupServicePaidAt   DateTime?
   setupServiceNotes    String?
+  /// T45: Stripe Checkout session (cs_…) that paid the $500 setup by card.
+  setupServiceCheckoutSessionId String?
+  /// T45: when the platform team was emailed about the card setup purchase.
+  setupServiceAdminNotifiedAt   DateTime?
+
+  /// T45: Marketplace card billing. End of the 14-day "Add card" grace for a
+  /// Marketplace brand with no card subscription. Set on first view / first
+  /// scheduler run, never by a bulk script.
+  marketplaceGraceEndsAt DateTime?
+  /// T45: set when the grace ended with no card. Hides the brand's listings
+  /// from Find a Place (listing rows stay untouched). Cleared on payment.
+  marketplaceSuspendedAt DateTime?
 
   /// Beta/rollout: ops toggles who can see Pricing intelligence in admin
   pricingIntelligenceEnabled        Boolean            @default(false)

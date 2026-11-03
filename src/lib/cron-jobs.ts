@@ -88,6 +88,24 @@ export async function runAllCronJobs(): Promise<{
     console.error("[cron:hosting-payments]", e);
   }
 
+  // T45: Marketplace card grace (DB only, every run) and the once-a-day
+  // item sync safety net. In-process only; there is no public URL.
+  try {
+    const { runMarketplaceGraceJob, maybeRunDailyMarketplaceSync } =
+      await import("@/lib/marketplace-billing");
+    const grace = await runMarketplaceGraceJob();
+    if (grace.suspended.length || grace.restored.length || grace.graceStarted) {
+      console.log(
+        `[cron:marketplace-grace] started ${grace.graceStarted}, hidden ${grace.suspended.join(",") || "-"}, shown again ${grace.restored.join(",") || "-"}`,
+      );
+    }
+    for (const err of grace.errors) console.error("[cron:marketplace-grace]", err);
+    const sync = await maybeRunDailyMarketplaceSync();
+    for (const err of sync.errors) console.error("[cron:marketplace-sync]", err);
+  } catch (e) {
+    console.error("[cron:marketplace-billing]", e);
+  }
+
   let backup: import("@/lib/backup").DailyBackupResult = {
     skipped: true,
     ranAt: new Date().toISOString(),

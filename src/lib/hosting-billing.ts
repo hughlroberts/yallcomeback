@@ -19,6 +19,7 @@ import {
   stripeObjectId,
 } from "@/lib/platform-billing";
 import type { HostingInvoiceStatus } from "@prisma/client";
+import { hasLiveCardSubscription } from "@/lib/marketplace-billing-plan";
 
 /**
  * Billing period a successful hosting payment buys.
@@ -62,6 +63,15 @@ export async function createHostingInvoiceForHost(opts: {
     include: { plan: true, users: { where: { role: "HOST" }, take: 1 } },
   });
   if (!host) throw new Error("Host not found");
+  // T45: a Marketplace brand on a card subscription is billed by Stripe each
+  // month. A manual invoice on top would bill it twice.
+  if (
+    host.hostingMode === "PLATFORM" &&
+    host.sitePresence === "STAYLOCAL" &&
+    hasLiveCardSubscription(host)
+  ) {
+    throw new Error("This brand pays by card each month. Do not send an invoice.");
+  }
 
   const planId = opts.planId || host.planId;
   if (!planId) throw new Error("Assign a hosting plan first");

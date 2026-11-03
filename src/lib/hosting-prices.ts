@@ -50,6 +50,47 @@ export function marketplacePriceLabel(
 }
 
 /**
+ * T45: Marketplace price with the card line, short format:
+ * "$12/mo per listing + card processing". The card amount depends on how
+ * many listings are published, so the line shows no fixed number.
+ */
+export function marketplacePriceWithCardLabel(
+  unitUsd: number | null | undefined = MARKETPLACE_LISTING_USD,
+): string {
+  return `${marketplacePriceLabel(unitUsd)} + card processing`;
+}
+
+/**
+ * T45: card processing on a Marketplace bill for `listingCount` published
+ * listings (1 listing minimum), on the whole total: 2.9% + $0.30 once.
+ */
+export function marketplaceMonthlyTotal(
+  listingCount: number,
+  unitUsd: number | null | undefined = MARKETPLACE_LISTING_USD,
+): { listings: number; netUsd: number; cardUsd: number; totalUsd: number } {
+  const usd = unitUsd && unitUsd > 0 ? unitUsd : MARKETPLACE_LISTING_USD;
+  const listings = Math.max(1, Math.floor(listingCount || 0));
+  const netUsd = Math.round(usd * 100 * listings) / 100;
+  const cardUsd = cardProcessingUsd(netUsd);
+  return {
+    listings,
+    netUsd,
+    cardUsd,
+    totalUsd: Math.round((netUsd + cardUsd) * 100) / 100,
+  };
+}
+
+/** One-time full setup add-on (listings, brand & website). */
+export const SETUP_SERVICE_USD = 500;
+
+/** T45: "$500 one-time + $15.25 card processing" (fee computed, never typed). */
+export function setupServicePriceLabel(netUsd: number = SETUP_SERVICE_USD): string {
+  const fee = cardProcessingUsd(netUsd);
+  const base = `${formatUsd(netUsd)} one-time`;
+  return fee > 0 ? `${base} + ${formatUsd(fee)} card processing` : base;
+}
+
+/**
  * Branded website price with the card processing line:
  * "$25/mo + $1.06/mo card processing". T43: this one format everywhere.
  */

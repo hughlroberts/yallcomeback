@@ -1,5 +1,9 @@
 import { planPublicDescription } from "@/lib/hosting-prices";
-import { brandedPriceLabel } from "@/lib/hosting-prices";
+import {
+  brandedPriceLabel,
+  marketplacePriceWithCardLabel,
+  setupServicePriceLabel,
+} from "@/lib/hosting-prices";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,11 +11,12 @@ import { HostSignupForm } from "@/components/HostSignupForm";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { destAfterHostAuth } from "@/lib/host-signup";
-import {
-  SETUP_SERVICE_FEE_USD,
-  SETUP_SERVICE_LABEL,
-} from "@/lib/hosting";
+import { SETUP_SERVICE_FEE_USD, SETUP_SERVICE_LABEL } from "@/lib/hosting";
 import { formatMoney } from "@/lib/utils";
+
+/** T45: sign in, then buy full setup on the Subscription page. */
+const SETUP_BUY_HREF =
+  "/login?callbackUrl=%2Faccount%2Fsettings%2Fsubscription%23setup";
 
 import { pageMetadata, seoAbsoluteUrl, seoOrigin } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
@@ -242,7 +247,7 @@ export default async function ForHostsPage({
             <div className="mt-4 space-y-3 lg:hidden">
               <div className="rounded-2xl border border-stone-200 bg-white p-4 ring-1 ring-black/5">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                  1 · Marketplace only · $12/listing/mo
+                  1 · Marketplace only · {marketplacePriceWithCardLabel()}
                 </p>
                 <h3 className="mt-1 text-base font-semibold text-stone-900">
                   List on Yall Come Back
@@ -251,7 +256,7 @@ export default async function ForHostsPage({
                   Guests book on Find a Place. You keep the stay money.
                 </p>
                 <ul className="mt-2 space-y-0.5 text-xs text-stone-500">
-                  <li>✓ $12 / published listing / month</li>
+                  <li>✓ {marketplacePriceWithCardLabel()} (each published listing)</li>
                   <li>✓ Listing URLs · no branded mini-site</li>
                   <li>✓ Zero commission</li>
                 </ul>
@@ -294,7 +299,7 @@ export default async function ForHostsPage({
             <div className="mt-8 hidden gap-4 lg:grid lg:grid-cols-2">
               <div className="flex cursor-default flex-col rounded-3xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-black/5">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-bonnet">
-                  1 · Marketplace only · $12/listing/mo
+                  1 · Marketplace only · {marketplacePriceWithCardLabel()}
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-stone-900">
                   List on Yall Come Back. Keep more of every stay.
@@ -308,13 +313,13 @@ export default async function ForHostsPage({
                   </strong>{" "}
                   — just{" "}
                   <strong className="font-semibold text-stone-800">
-                    $12 per published listing / month
+                    {marketplacePriceWithCardLabel()}
                   </strong>
                   . Perfect if you want discovery without a separate brand
                   website.
                 </p>
                 <ul className="mt-4 space-y-1.5 text-xs text-stone-500">
-                  <li>✓ $12 / published listing / month</li>
+                  <li>✓ {marketplacePriceWithCardLabel()} (each published listing)</li>
                   <li>✓ Listing-first URLs (not a host mini-site)</li>
                   <li>✓ Zero commission · marketplace only</li>
                   <li>✓ Card payments and invoices</li>
@@ -402,14 +407,25 @@ export default async function ForHostsPage({
                 <p className="text-2xl font-semibold tabular-nums text-bonnet">
                   {formatMoney(SETUP_SERVICE_FEE_USD)}
                   <span className="block text-sm font-medium text-stone-500">
-                    one-time
+                    one-time + card processing
                   </span>
                 </p>
               </div>
-              <p className="mt-4 text-xs text-stone-500">
-                Check “Full setup service” on the form if you want us to load
-                listings and brand for you.
+              <p className="mt-4 text-sm text-stone-600">
+                {setupServicePriceLabel()}. Buy it at any time, on any plan.
               </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Link
+                  href={SETUP_BUY_HREF}
+                  className="rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
+                >
+                  Sign in to buy full setup
+                </Link>
+                <span className="text-xs text-stone-500">
+                  New host? Check “Full setup service” on the form, then pay
+                  under Subscription.
+                </span>
+              </div>
             </div>
 
             <div className="rounded-3xl border border-stone-200 bg-white p-6">
@@ -478,10 +494,19 @@ export default async function ForHostsPage({
                 <p className="text-2xl font-semibold tabular-nums text-bonnet">
                   {formatMoney(SETUP_SERVICE_FEE_USD)}
                   <span className="block text-sm font-medium text-stone-500">
-                    one-time
+                    one-time + card processing
                   </span>
                 </p>
               </div>
+              <p className="mt-3 text-sm text-stone-600">
+                {setupServicePriceLabel()}.
+              </p>
+              <Link
+                href={SETUP_BUY_HREF}
+                className="mt-3 inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
+              >
+                Sign in to buy full setup
+              </Link>
             </div>
           </div>
         </div>

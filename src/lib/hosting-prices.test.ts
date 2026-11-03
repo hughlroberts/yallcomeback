@@ -97,3 +97,25 @@ describe("marketplace price copy (T44)", () => {
     expect(src).not.toMatch(/\$5\b/);
   });
 });
+
+describe("T45 Marketplace and setup copy", () => {
+  it("Marketplace reads '$12/mo per listing + card processing'", async () => {
+    const { marketplacePriceWithCardLabel } = await import("./hosting-prices");
+    expect(marketplacePriceWithCardLabel()).toBe("$12/mo per listing + card processing");
+    expect(marketplacePriceWithCardLabel(0)).toBe("$12/mo per listing + card processing");
+  });
+
+  it("setup fee is computed with the same formula: $500 → $15.25", async () => {
+    const { setupServicePriceLabel } = await import("./hosting-prices");
+    expect(processingFeeToNetCents(50000)).toBe(1525);
+    expect(setupServicePriceLabel()).toBe("$500 one-time + $15.25 card processing");
+  });
+
+  it("monthly Marketplace total adds card processing once on the whole bill", async () => {
+    const { marketplaceMonthlyTotal } = await import("./hosting-prices");
+    expect(marketplaceMonthlyTotal(1)).toEqual({ listings: 1, netUsd: 12, cardUsd: 0.67, totalUsd: 12.67 });
+    expect(marketplaceMonthlyTotal(0).listings).toBe(1);
+    const three = marketplaceMonthlyTotal(3);
+    expect(three.cardUsd).toBe(processingFeeToNetCents(3600) / 100);
+  });
+});

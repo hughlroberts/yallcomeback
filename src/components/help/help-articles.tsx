@@ -1,4 +1,10 @@
-import { brandedPriceLabel, cardProcessingNote } from "@/lib/hosting-prices";
+import {
+  brandedPriceLabel,
+  cardProcessingNote,
+  formatUsd,
+  marketplaceMonthlyTotal,
+  marketplacePriceWithCardLabel,
+} from "@/lib/hosting-prices";
 import Link from "next/link";
 import {
   LONG_STAY_NIGHTS_MIN,
@@ -231,8 +237,8 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting vs self-host">
         <HelpUl>
           <li>
-            <strong>Platform hosting (paid)</strong> — Marketplace only at $12
-            per published listing / month, or branded website at {brandedPriceLabel()}{" "}
+            <strong>Platform hosting (paid)</strong> — Marketplace only at{" "}
+            {marketplacePriceWithCardLabel()} (each published listing), or branded website at {brandedPriceLabel()}{" "}
             for the whole site (marketplace included). Full brand-domain guide:{" "}
             <Link
               href="/help/branded-website"
@@ -740,8 +746,11 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
       <HelpSection title="Platform hosting (paid)">
         <HelpUl>
           <li>
-            <strong>Marketplace only</strong> — $12 per published listing /
-            month. Guests book on Find a Place. No custom brand site.
+            <strong>Marketplace only</strong> —{" "}
+            {marketplacePriceWithCardLabel()} (each published listing). Guests
+            book on Find a Place. No custom brand site. You pay by card. When
+            you publish, pause, archive or delete a listing, the next bill
+            changes. There is no extra charge in the middle of the month.
           </li>
           <li>
             <strong>Branded website</strong> — {brandedPriceLabel()}{" "}
@@ -1516,7 +1525,7 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         </HelpP>
         <HelpUl>
           <li>
-            <strong>1 · Marketplace only — $12 / listing / month</strong> —
+            <strong>1 · Marketplace only — {marketplacePriceWithCardLabel()}</strong> —
             Publish listings on Find a Place. You do not need a custom domain.
             Guests book through the shared marketplace. Use this path if you do
             not keep a separate brand website. This is a paid product.
@@ -1543,7 +1552,8 @@ function BrandedWebsite({ article }: { article: HelpArticle }) {
         <HelpP>
           Example: seven published stays on the branded website plan cost{" "}
           <strong>$25/mo</strong> total, plus {cardProcessingNote(25)}. The same seven stays on
-          marketplace only cost <strong>$84 / month</strong> ($12 × 7). Use
+          marketplace only cost <strong>$84 / month</strong> ($12 × 7), plus{" "}
+          {formatUsd(marketplaceMonthlyTotal(7).cardUsd)} card processing. Use
           marketplace-only if you do not need your own website.
         </HelpP>
       </HelpSection>

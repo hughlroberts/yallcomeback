@@ -67,6 +67,8 @@ export function marketplacePropertyWhere() {
         {
           hostingMode: "PLATFORM" as const,
           subscriptionStatus: { in: [...HOSTING_PUBLIC_STATUSES] },
+          // T45: hidden after the add-card grace ends; shown again on payment.
+          marketplaceSuspendedAt: null,
         },
       ],
     },

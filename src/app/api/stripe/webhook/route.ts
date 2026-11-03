@@ -5,13 +5,13 @@ import {
   recordStripePlatformInvoice,
 } from "@/lib/hosting-billing";
 import { markBlockInvoicePaidByStripeId } from "@/lib/block-invoice";
-import { isBrandedUpgradeMetadata } from "@/lib/branded-upgrade";
 import {
-  applyBrandedUpgrade,
   applyHostingSubscriptionFromStripe,
   ensureCustomerDefaultCard,
+  finishHostingCheckout,
   stripeObjectId,
 } from "@/lib/platform-billing";
+import { failedInvoiceHostingHostId } from "@/lib/hosting-invoice-host";
 import { markHostingPastDue } from "@/lib/hosting-dunning";
 import { prisma } from "@/lib/db";
 
@@ -59,17 +59,39 @@ export async function POST(req: Request) {
   }
 
   if (event.type === "invoice.payment_failed") {
-    const invoice = event.data.object as {
-      metadata?: { kind?: string; hostId?: string };
+    // T45: subscription invoices carry the hosting metadata on the
+    // subscription, not the invoice. Same past-due path as Branded.
+    const hostId = await failedInvoiceHostingHostId(
+      event.data.object as Parameters<typeof failedInvoiceHostingHostId>[0],
+    );
+    if (hostId) await markHostingPastDue(hostId);
+  }
+
+  if (event.type === "invoice.upcoming") {
+    // T45: last check before the renewal invoice — Marketplace items match
+    // the published listings (no proration; the next bill only).
+    const inv = event.data.object as {
+      subscription?: string | { id?: string } | null;
+      parent?: { subscription_details?: { metadata?: Record<string, string> | null } | null } | null;
       customer?: string | { id?: string } | null;
     };
-    if (invoice.metadata?.kind === "hosting" && invoice.metadata.hostId) {
-      await markHostingPastDue(invoice.metadata.hostId);
-    } else if (
-      invoice.metadata?.kind === "hosting_subscription" &&
-      invoice.metadata.hostId
-    ) {
-      await markHostingPastDue(invoice.metadata.hostId);
+    const meta = inv.parent?.subscription_details?.metadata;
+    let hostId = meta?.kind === "hosting_subscription" ? meta.hostId : undefined;
+    if (!hostId) {
+      const customerId = stripeObjectId(inv.customer);
+      if (customerId) {
+        const h = await prisma.host.findFirst({
+          where: { stripeCustomerId: customerId },
+          select: { id: true },
+        });
+        hostId = h?.id;
+      }
+    }
+    if (hostId) {
+      const { syncMarketplaceSubscriptionItems } = await import("@/lib/marketplace-billing");
+      await syncMarketplaceSubscriptionItems(hostId).catch((e) => {
+        console.error("[stripe] marketplace item sync failed", hostId, e);
+      });
     }
   }
 
@@ -165,17 +187,14 @@ export async function POST(req: Request) {
     if (session.metadata?.kind === "hosting_subscription") {
       const customerId = stripeObjectId(session.customer);
       const subscriptionId = stripeObjectId(session.subscription);
-      // Marketplace → Branded: switch the plan only now that checkout is paid.
-      if (
-        session.metadata.hostId &&
-        isBrandedUpgradeMetadata(session.metadata)
-      ) {
-        await applyBrandedUpgrade(session.metadata.hostId);
-      }
-      await applyHostingSubscriptionFromStripe({
+      // Marketplace → Branded switches the plan only now that checkout is
+      // paid, and ends the old Marketplace card subscription (credit).
+      await finishHostingCheckout({
         hostId: session.metadata.hostId,
         customerId,
         subscriptionId,
+        metadata: session.metadata,
+        paid: true,
         stripeStatus: "active",
       });
       if (customerId) {
@@ -183,6 +202,13 @@ export async function POST(req: Request) {
           () => null,
         );
       }
+    }
+    if (session.metadata?.kind === "setup_service") {
+      // T45: $500 full setup. Records once + emails the alert inbox once.
+      const { recordSetupServicePayment } = await import("@/lib/setup-service");
+      await recordSetupServicePayment(
+        event.data.object as Parameters<typeof recordSetupServicePayment>[0],
+      );
     }
   }
 

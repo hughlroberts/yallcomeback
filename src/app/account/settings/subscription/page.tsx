@@ -1,5 +1,23 @@
 import { CARD_LOOKUP_TIMEOUT_MS, withTimeout } from "@/lib/with-timeout";
-import { brandedPriceLabel, marketplacePriceLabel } from "@/lib/hosting-prices";
+import {
+  brandedPriceLabel,
+  formatUsd,
+  marketplaceMonthlyTotal,
+  marketplacePriceLabel,
+  marketplacePriceWithCardLabel,
+  setupServicePriceLabel,
+} from "@/lib/hosting-prices";
+import { MarketplaceCardBanner } from "@/components/marketplace-card-banner";
+import {
+  hasLiveCardSubscription,
+  marketplaceCardState,
+  marketplaceNeedsCard,
+} from "@/lib/marketplace-billing-plan";
+import {
+  SETUP_ANCHOR,
+  applySetupServiceSession,
+  setupServiceDone,
+} from "@/lib/setup-service";
 import { BillingErrorAlert } from "@/components/billing/BillingErrorAlert";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -66,6 +84,8 @@ export default async function AccountSubscriptionPage({
     upgrade?: string;
     billingError?: string;
     collectCards?: string;
+    plan?: string;
+    setup?: string;
   }>;
 }) {
   const session = await auth();
@@ -83,7 +103,15 @@ export default async function AccountSubscriptionPage({
 
   if (sp.session_id) {
     try {
-      await applyHostingCheckoutSession({ sessionId: sp.session_id });
+      if (sp.setup === "paid") {
+        // T45: one-time full setup (Checkout mode payment).
+        await applySetupServiceSession(
+          sp.session_id,
+          isPlatform ? null : scopedHostId,
+        );
+      } else {
+        await applyHostingCheckoutSession({ sessionId: sp.session_id });
+      }
     } catch {
       // Webhook will catch up if Checkout retrieve fails.
     }
@@ -124,6 +152,21 @@ export default async function AccountSubscriptionPage({
   const stripeOn = isStripeConfigured();
   const priceConfigured = Boolean(hostingPriceId());
 
+  // T45: start the 14-day "add a card" grace the first time a Marketplace
+  // brand with no card subscription opens this page (set once, never reset).
+  if (stripeOn) {
+    await Promise.all(
+      scopedHosts
+        .filter((h) => marketplaceNeedsCard(h) && !h.marketplaceGraceEndsAt)
+        .map(async (h) => {
+          const { ensureMarketplaceGrace } = await import(
+            "@/lib/marketplace-billing"
+          );
+          await ensureMarketplaceGrace(h).catch(() => null);
+        }),
+    );
+  }
+
   const cards = new Map<string, string | null>();
   await Promise.all(
     scopedHosts.map(async (host) => {
@@ -160,10 +203,35 @@ export default async function AccountSubscriptionPage({
 
   const billingError = billingErrorMessage(sp.billingError);
   const upgradeFlow = sp.upgrade === "branded";
+  const marketplaceFlow = sp.plan === "marketplace";
   const flash = billingError
     ? {
         title: "Billing did not open",
         body: billingError,
+        variant: "warn" as const,
+      }
+    : sp.setup === "paid"
+    ? {
+        title: "Setup purchased",
+        body: "Setup purchased, we'll contact you. We set up your listings, brand and website.",
+        variant: "success" as const,
+      }
+    : sp.setup === "canceled"
+    ? {
+        title: "Checkout canceled",
+        body: "No charge was made. You can buy full setup from this page at any time.",
+        variant: "warn" as const,
+      }
+    : sp.subscribed && marketplaceFlow
+    ? {
+        title: "Marketplace card is on",
+        body: `Payment went through. You pay ${marketplacePriceWithCardLabel()}. Your published listings show on Find a Place.`,
+        variant: "success" as const,
+      }
+    : sp.canceled && marketplaceFlow
+    ? {
+        title: "Checkout canceled",
+        body: "No charge was made. Add a card from this page to keep your listings on Find a Place.",
         variant: "warn" as const,
       }
     : sp.subscribed && upgradeFlow
@@ -234,9 +302,10 @@ export default async function AccountSubscriptionPage({
         </p>
       ) : (
         <div className="space-y-6">
-          {hostsNow.map((host) => (
+          {hostsNow.map((host, index) => (
             <BrandHostingCard
               key={host.id}
+              setupAnchor={index === 0}
               host={host}
               publishedCount={publishedByHost.get(host.id) ?? 0}
               cardOnFile={cards.get(host.id) ?? null}
@@ -265,7 +334,9 @@ function BrandHostingCard({
   cardOnFile,
   stripeOn,
   priceConfigured,
+  setupAnchor,
 }: {
+  setupAnchor: boolean;
   host: HostWithPlan;
   publishedCount: number;
   cardOnFile: string | null;
@@ -287,11 +358,25 @@ function BrandHostingCard({
   const estimate = host.plan
     ? calculateHostingAmount(host.plan, publishedCount)
     : null;
+  const liveCard = hasLiveCardSubscription(host);
+  const cardState = marketplaceCardState(host);
+  const marketplaceBill = marketplaceMonthlyTotal(
+    publishedCount,
+    host.plan?.monthlyPrice,
+  );
 
   return (
     <div className="space-y-4">
       {brandedAwaitingPayment(host, host.plan) ? (
         <BrandedPendingBanner hostId={host.id} hostName={host.name} />
+      ) : null}
+      {marketplaceOnly && stripeOn ? (
+        <MarketplaceCardBanner
+          hostId={host.id}
+          hostName={host.name}
+          state={cardState}
+          unitUsd={host.plan?.monthlyPrice}
+        />
       ) : null}
       <Card className="space-y-4 p-5 sm:p-6">
         <div>
@@ -314,7 +399,7 @@ function BrandHostingCard({
               : complimentary
                 ? "No monthly hosting fee on this brand."
                 : marketplaceOnly
-                  ? `${marketplacePriceLabel(host.plan?.monthlyPrice)}. Guests find this brand on Find a Place.`
+                  ? `${marketplacePriceWithCardLabel(host.plan?.monthlyPrice)}. Guests find this brand on Find a Place.`
                   : `${brandedPriceLabel(host.plan?.monthlyPrice ?? 25)} for the whole website. Add as many listings as you want. Marketplace listing included.`}
           </p>
         </div>
@@ -329,6 +414,19 @@ function BrandHostingCard({
                   ? ` (${publishedCount} published listing${publishedCount === 1 ? "" : "s"})`
                   : ""}
                 . Adding listings does not raise the hosting bill.
+              </>
+            ) : marketplaceOnly ? (
+              <>
+                Next bill:{" "}
+                <strong>{formatUsd(marketplaceBill.netUsd)}</strong> +{" "}
+                {formatUsd(marketplaceBill.cardUsd)} card processing
+                {" · "}
+                {marketplaceBill.listings} listing
+                {marketplaceBill.listings === 1 ? "" : "s"}
+                {publishedCount === 0
+                  ? " (1 listing minimum until you publish)"
+                  : ""}
+                .
               </>
             ) : (
               <>
@@ -356,6 +454,9 @@ function BrandHostingCard({
               stays included.{" "}
               <strong>{brandedPriceLabel()} for the whole website</strong>,
               no matter how many listings you publish.
+              {liveCard
+                ? " Your Marketplace card plan stops when the website plan starts. Unused days go to your next bill as a credit."
+                : ""}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <Link
@@ -448,8 +549,10 @@ function BrandHostingCard({
           {marketplaceOnly ? (
             <p className="text-sm text-stone-600">
               Marketplace-only is billed{" "}
-              {marketplacePriceLabel(host.plan?.monthlyPrice)}.
-              That is not the $25 website subscription.
+              {marketplacePriceWithCardLabel(host.plan?.monthlyPrice)}. Each
+              published listing is one line on the bill. When you publish,
+              pause, archive or delete a listing, the next bill changes. There
+              is no extra charge in the middle of the month.
             </p>
           ) : null}
 
@@ -467,6 +570,15 @@ function BrandHostingCard({
                 </Button>
               </form>
             ) : null}
+            {marketplaceOnly ? (
+              <form method="post" action={HOSTING_BILLING_ROUTE}>
+                <input type="hidden" name="intent" value="subscribe" />
+                <input type="hidden" name="hostId" value={host.id} />
+                <Button type="submit" disabled={!stripeOn}>
+                  {liveCard ? "Manage billing" : "Add card and subscribe"}
+                </Button>
+              </form>
+            ) : null}
             <form method="post" action={HOSTING_BILLING_ROUTE}>
               <input type="hidden" name="intent" value="portal" />
               <input type="hidden" name="hostId" value={host.id} />
@@ -477,6 +589,76 @@ function BrandHostingCard({
           </div>
         </Card>
       ) : null}
+
+      {!selfHost && host.hostingMode === "PLATFORM" ? (
+        <SetupServiceCard
+          host={host}
+          stripeOn={stripeOn}
+          anchor={setupAnchor}
+        />
+      ) : null}
     </div>
+  );
+}
+
+/** T45: $500 one-time full setup, on any plan, at any time. */
+function SetupServiceCard({
+  host,
+  stripeOn,
+  anchor,
+}: {
+  host: HostWithPlan;
+  stripeOn: boolean;
+  anchor: boolean;
+}) {
+  const done = setupServiceDone(host.setupServiceStatus);
+  return (
+    <Card
+      id={anchor ? SETUP_ANCHOR : undefined}
+      className="scroll-mt-24 space-y-3 p-5 sm:p-6"
+      data-testid="setup-service-card"
+    >
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-bonnet">
+          {host.name} · full setup
+        </p>
+        <h2 className="mt-1 text-lg font-semibold text-stone-900">
+          Full setup
+        </h2>
+        <p className="mt-1 text-sm text-stone-600">
+          We set up your listings, brand and website for you.{" "}
+          <strong>{setupServicePriceLabel()}</strong>. You pay one time. Your
+          monthly plan does not change.
+        </p>
+      </div>
+      {done ? (
+        <p className="rounded-xl border border-sage/40 bg-sage/15 px-3 py-2 text-sm font-medium text-stone-800">
+          {host.setupServiceStatus === "WAIVED"
+            ? "Full setup is included for this brand. We'll contact you."
+            : "Setup purchased, we'll contact you."}
+        </p>
+      ) : (
+        <>
+          {host.setupServiceStatus === "REQUESTED" ? (
+            <p className="text-sm text-stone-600">
+              You asked for full setup when you signed up. Pay here to start.
+            </p>
+          ) : null}
+          {host.setupServiceStatus === "INVOICED" ? (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950">
+              We already sent an invoice for full setup. Pay that invoice or pay
+              here. Do not pay both.
+            </p>
+          ) : null}
+          <form method="post" action={HOSTING_BILLING_ROUTE}>
+            <input type="hidden" name="intent" value="setup" />
+            <input type="hidden" name="hostId" value={host.id} />
+            <Button type="submit" disabled={!stripeOn}>
+              Buy full setup
+            </Button>
+          </form>
+        </>
+      )}
+    </Card>
   );
 }

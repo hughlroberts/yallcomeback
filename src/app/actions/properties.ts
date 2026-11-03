@@ -25,6 +25,7 @@ import {
 } from "@/lib/upload-image";
 import { assertSafeOutboundUrl } from "@/lib/safe-url";
 import { parsePaymentMethod } from "@/lib/host-payments";
+import { queueListingBillingSync } from "@/lib/marketplace-billing-queue";
 import { canManageBrand, resolveHostAccessInfo } from "@/lib/host-access";
 import {
   DUPLICATE_BLOCK_WINDOW_MS,
@@ -609,6 +610,7 @@ export async function saveListingTitle(formData: FormData) {
   }
 
   await prisma.property.update({ where: { id }, data });
+  queueListingBillingSync(existing.hostId);
 
   revalidatePath("/admin/properties");
   revalidatePath(`/admin/properties/${id}`);
@@ -769,6 +771,7 @@ export async function publishListing(formData: FormData) {
       listOnMarketplace: flags.listOnMarketplace,
     },
   });
+  queueListingBillingSync(property.host.id);
 
   revalidatePath("/admin/properties");
   revalidatePath(`/admin/properties/${id}`);
@@ -812,6 +815,7 @@ export async function updateListingVisibility(formData: FormData) {
       listOnMarketplace: flags.listOnMarketplace,
     },
   });
+  queueListingBillingSync(existing.host.id);
 
   revalidatePath("/admin");
   revalidatePath("/admin/calendar");
@@ -1027,6 +1031,7 @@ export async function updateProperty(formData: FormData) {
     },
     include: { host: true },
   });
+  queueListingBillingSync(property.hostId);
 
   revalidatePath("/admin/properties");
   revalidatePath(`/admin/properties/${id}`);

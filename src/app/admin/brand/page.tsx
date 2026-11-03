@@ -33,6 +33,7 @@ import {
 } from "@/lib/host-images";
 import { BrandPageNav } from "@/components/brand-page-nav";
 import { BrandedPendingBanner } from "@/components/branded-pending-banner";
+import { MarketplaceCardNotice } from "@/components/marketplace-card-notice";
 import {
   brandedAwaitingPayment,
   brandedUpgradeConfirmPath,
@@ -267,6 +268,7 @@ export default async function AdminBrandPage({
       {awaitingPayment ? (
         <BrandedPendingBanner hostId={host.id} hostName={host.name} />
       ) : null}
+      <MarketplaceCardNotice hostId={host.id} />
 
       {params.saved ? (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">

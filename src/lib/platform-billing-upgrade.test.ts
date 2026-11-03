@@ -10,9 +10,13 @@ const stripe = vi.hoisted(() => {
   const client = {
     prices: { retrieve: vi.fn(async () => ({ unit_amount: 2500, currency: "usd" })) },
     checkout: { sessions: { create: vi.fn(), retrieve: vi.fn() } },
-    customers: { create: vi.fn() },
+    customers: {
+      create: vi.fn(),
+      retrieve: vi.fn(async () => ({ invoice_settings: { default_payment_method: "pm_1" } })),
+      update: vi.fn(),
+    },
     paymentMethods: { list: vi.fn(async () => ({ data: [] })) },
-    subscriptions: { retrieve: vi.fn() },
+    subscriptions: { retrieve: vi.fn(), cancel: vi.fn() },
   };
   return {
     client,
@@ -30,9 +34,9 @@ vi.mock("@/lib/stripe", () => stripe.mod);
 vi.mock("@/lib/features", () => ({ canonicalSiteOrigin: () => "https://ycb.test" }));
 
 import {
-  HostingBillingError,
   applyHostingCheckoutSession,
   brandedUpgradeCheckoutUrl,
+  endReplacedSubscription,
 } from "./platform-billing";
 
 const marketHost = {
@@ -71,11 +75,24 @@ describe("Marketplace → Branded checkout (T38)", () => {
     expect(args.success_url).toContain("upgrade=branded");
   });
 
-  it("refuses a second subscription next to a live one", async () => {
-    await expect(
-      brandedUpgradeCheckoutUrl({ ...marketHost, stripeSubscriptionId: "sub_1", stripeSubscriptionStatus: "active" }),
-    ).rejects.toBeInstanceOf(HostingBillingError);
-    expect(stripe.client.checkout.sessions.create).not.toHaveBeenCalled();
+  it("T45: with a live Marketplace card subscription, the checkout names it to be replaced", async () => {
+    const url = await brandedUpgradeCheckoutUrl({
+      ...marketHost,
+      stripeSubscriptionId: "sub_old",
+      stripeSubscriptionStatus: "active",
+    });
+    expect(url).toBe("https://checkout.stripe.test/s");
+    const args = stripe.client.checkout.sessions.create.mock.calls[0][0];
+    expect(args.metadata.replacesSubscription).toBe("sub_old");
+    expect(args.subscription_data.metadata.replacesSubscription).toBe("sub_old");
+    // Nothing is canceled before the new plan is paid.
+    expect(stripe.client.subscriptions.cancel).not.toHaveBeenCalled();
+  });
+
+  it("no live subscription: nothing to replace", async () => {
+    await brandedUpgradeCheckoutUrl(marketHost);
+    const args = stripe.client.checkout.sessions.create.mock.calls[0][0];
+    expect(args.metadata.replacesSubscription).toBeUndefined();
   });
 
   it("a paid upgrade session switches the brand to Branded + branded plan", async () => {
@@ -106,5 +123,54 @@ describe("Marketplace → Branded checkout (T38)", () => {
       expect(arg.data.sitePresence).toBeUndefined();
       expect(arg.data.planId).toBeUndefined();
     }
+  });
+
+  it("T45: a paid upgrade ends the old Marketplace subscription with credit, once", async () => {
+    stripe.client.checkout.sessions.retrieve.mockResolvedValue({
+      status: "complete",
+      payment_status: "paid",
+      metadata: { kind: "hosting_subscription", hostId: "h1", upgrade: "branded", replacesSubscription: "sub_old" },
+      customer: "cus_1",
+      subscription: "sub_new",
+    });
+    stripe.client.subscriptions.retrieve.mockResolvedValue({ id: "sub_old", status: "active", customer: "cus_1" });
+    db.prisma.host.findUnique.mockResolvedValue({ ...marketHost, stripeSubscriptionId: "sub_old" });
+    await applyHostingCheckoutSession({ sessionId: "cs_test_3" });
+    expect(stripe.client.subscriptions.cancel).toHaveBeenCalledWith("sub_old", { prorate: true, invoice_now: true });
+
+    // Second delivery (webhook after the success page): already canceled → no second cancel.
+    stripe.client.subscriptions.cancel.mockClear();
+    stripe.client.subscriptions.retrieve.mockResolvedValue({ id: "sub_old", status: "canceled", customer: "cus_1" });
+    await applyHostingCheckoutSession({ sessionId: "cs_test_3" });
+    expect(stripe.client.subscriptions.cancel).not.toHaveBeenCalled();
+  });
+
+  it("T45: an unpaid upgrade never ends the old subscription", async () => {
+    stripe.client.checkout.sessions.retrieve.mockResolvedValue({
+      status: "open",
+      payment_status: "unpaid",
+      metadata: { kind: "hosting_subscription", hostId: "h1", upgrade: "branded", replacesSubscription: "sub_old" },
+      customer: "cus_1",
+      subscription: null,
+    });
+    db.prisma.host.findUnique.mockResolvedValue(marketHost);
+    await applyHostingCheckoutSession({ sessionId: "cs_test_4" });
+    expect(stripe.client.subscriptions.retrieve).not.toHaveBeenCalled();
+    expect(stripe.client.subscriptions.cancel).not.toHaveBeenCalled();
+  });
+});
+
+describe("endReplacedSubscription (T45)", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("refuses a subscription that belongs to a different customer", async () => {
+    stripe.client.subscriptions.retrieve.mockResolvedValue({ id: "sub_x", status: "active", customer: "cus_other" });
+    expect(await endReplacedSubscription("sub_x", "cus_1")).toBe(false);
+    expect(stripe.client.subscriptions.cancel).not.toHaveBeenCalled();
+  });
+
+  it("treats a missing subscription as already ended", async () => {
+    stripe.client.subscriptions.retrieve.mockRejectedValue(new Error("No such subscription: 'sub_gone'"));
+    expect(await endReplacedSubscription("sub_gone", "cus_1")).toBe(true);
   });
 });
