@@ -11,8 +11,9 @@ import { processingFeeToNetCents } from "./card-processing";
 export const MARKETPLACE_LISTING_USD = 12;
 export const BRANDED_WEBSITE_USD = 25;
 
+/** T47: starts with the shared label ("$12/mo per listing + card processing"). */
 export const MARKETPLACE_PLAN_DESCRIPTION =
-  `$${MARKETPLACE_LISTING_USD} per published listing / month. List on Find a Place. No custom brand website. Not a booking commission.`;
+  `$${MARKETPLACE_LISTING_USD}/mo per listing + card processing. List on Find a Place. No custom brand website. Not a booking commission.`;
 
 export const BRANDED_PLAN_DESCRIPTION =
   `$${BRANDED_WEBSITE_USD}/mo for the whole website — any number of listings. Brand site on your domain; marketplace listing included. Not a booking commission.`;
@@ -108,9 +109,23 @@ export function brandedPriceLabel(netUsd: number = BRANDED_WEBSITE_USD): string 
 const LEADING_PRICE =
   /^\s*\$+\s*\d+(?:\.\d+)?(?:\s*USD)?\s*(?:\/\s*month|\/\s*mo|per\s+month|a\s+month)\b(?:\s*\+\s*\$?\d+(?:\.\d+)?\s*(?:\/\s*month|\/\s*mo)\s*card processing)?\s*[—–-]?\s*/i;
 
+/**
+ * T47: a leading per-listing price in a stored Marketplace plan description,
+ * e.g. "$12 per published listing per month. ", "$12 / published listing /
+ * month — ", "$12 USD per published listing / month", "$12/mo per listing +
+ * card processing. ".
+ */
+const LEADING_LISTING_PRICE =
+  /^\s*\$+\s*\d+(?:\.\d+)?(?:\s*USD)?\s*(?:\/\s*mo\s+per|per|\/)\s*(?:published\s+)?listing(?:\s*(?:\/|per)\s*month)?(?:\s*\+\s*card processing)?\s*[.—–-]?\s*/i;
+
 /** Stored description without a leading price (T43). */
 export function stripLeadingPrice(description: string | null | undefined): string {
   return (description || "").replace(LEADING_PRICE, "").trim();
+}
+
+/** Stored Marketplace description without a leading per-listing price (T47). */
+export function stripLeadingListingPrice(description: string | null | undefined): string {
+  return (description || "").replace(LEADING_LISTING_PRICE, "").trim();
 }
 
 /**
@@ -123,6 +138,13 @@ export function planPublicDescription(plan: {
   monthlyPrice: number;
   description: string | null;
 }): string | null {
+  if (plan.pricingModel === "PER_PROPERTY") {
+    // T47: per-listing plans get the shared Marketplace label, then the
+    // stored non-price text. Old DB rows keep working without a rewrite.
+    const rest = stripLeadingListingPrice(plan.description);
+    const price = marketplacePriceWithCardLabel(plan.monthlyPrice);
+    return rest ? `${price}. ${rest}` : price;
+  }
   if (plan.pricingModel !== "FLAT" || !(plan.monthlyPrice > 0)) {
     return plan.description;
   }

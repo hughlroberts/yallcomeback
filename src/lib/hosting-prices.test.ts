@@ -64,9 +64,11 @@ describe("stored plan descriptions never set the price copy (T43)", () => {
     );
   });
 
-  it("other plans keep their text", () => {
+  it("other plans keep their text; per-listing plans get the shared label (T47)", () => {
     const d = "$12 per published listing / month. List on Find a Place.";
-    expect(planPublicDescription({ pricingModel: "PER_PROPERTY", monthlyPrice: 12, description: d })).toBe(d);
+    expect(planPublicDescription({ pricingModel: "PER_PROPERTY", monthlyPrice: 12, description: d })).toBe(
+      "$12/mo per listing + card processing. List on Find a Place.",
+    );
     expect(planPublicDescription({ pricingModel: "FLAT", monthlyPrice: 0, description: "Complimentary" })).toBe("Complimentary");
   });
 

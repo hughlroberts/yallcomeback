@@ -6,6 +6,7 @@ import {
   BRANDED_WEBSITE_USD,
   brandedPriceLabel,
   MARKETPLACE_LISTING_USD,
+  marketplacePriceWithCardLabel,
 } from "@/lib/hosting-prices";
 import type { HelpArticle } from "@/lib/help";
 
@@ -60,7 +61,7 @@ export function forHostsServiceJsonLd(opts: { origin: string; url: string; descr
       {
         "@type": "Offer",
         name: "Marketplace listing",
-        description: `$${MARKETPLACE_LISTING_USD} per published listing per month. Not a booking commission.`,
+        description: `${marketplacePriceWithCardLabel()}. Not a booking commission.`,
         price: MARKETPLACE_LISTING_USD,
         priceCurrency: "USD",
         priceSpecification: monthly(MARKETPLACE_LISTING_USD, "listing per month"),

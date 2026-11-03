@@ -1,6 +1,8 @@
 import { planPublicDescription } from "@/lib/hosting-prices";
 import {
   brandedPriceLabel,
+  cardProcessingUsd,
+  formatUsd,
   marketplacePriceWithCardLabel,
   setupServicePriceLabel,
 } from "@/lib/hosting-prices";
@@ -407,7 +409,7 @@ export default async function ForHostsPage({
                 <p className="text-2xl font-semibold tabular-nums text-bonnet">
                   {formatMoney(SETUP_SERVICE_FEE_USD)}
                   <span className="block text-sm font-medium text-stone-500">
-                    one-time + card processing
+                    one-time + {formatUsd(cardProcessingUsd(SETUP_SERVICE_FEE_USD))} card processing
                   </span>
                 </p>
               </div>
@@ -494,7 +496,7 @@ export default async function ForHostsPage({
                 <p className="text-2xl font-semibold tabular-nums text-bonnet">
                   {formatMoney(SETUP_SERVICE_FEE_USD)}
                   <span className="block text-sm font-medium text-stone-500">
-                    one-time + card processing
+                    one-time + {formatUsd(cardProcessingUsd(SETUP_SERVICE_FEE_USD))} card processing
                   </span>
                 </p>
               </div>

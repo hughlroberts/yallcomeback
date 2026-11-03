@@ -14,8 +14,8 @@ import {
   MARKETPLACE_LISTING_USD,
   brandedPriceLabel,
   marketplacePriceWithCardLabel,
+  setupServicePriceLabel,
 } from "@/lib/hosting-prices";
-import { formatMoney } from "@/lib/utils";
 import { TrackSignupStarted } from "@/components/track-signup-started";
 import { Check, X } from "lucide-react";
 
@@ -323,7 +323,7 @@ export function HostSignupForm({
               </span>
               <span className="mt-0.5 block text-xs text-stone-500">
                 {path === "self"
-                  ? "The hosted marketplace is a paid product ($12/mo per listing + card processing). Uncheck to keep stays only on your site."
+                  ? `The hosted marketplace is a paid product (${marketplacePriceWithCardLabel()}). Uncheck to keep stays only on your site.`
                   : "Included on the branded website plan — no second fee. You can change this later."}
               </span>
             </span>
@@ -339,8 +339,7 @@ export function HostSignupForm({
           />
           <span>
             <span className="font-semibold text-stone-900">
-              {SETUP_SERVICE_LABEL} — {formatMoney(SETUP_SERVICE_FEE_USD)}{" "}
-              one-time
+              {SETUP_SERVICE_LABEL} — {setupServicePriceLabel(SETUP_SERVICE_FEE_USD)}
             </span>
             <span className="mt-0.5 block text-xs leading-snug text-stone-600">
               We load listings, brand, and calendars for you. Invoiced after we
