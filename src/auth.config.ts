@@ -37,6 +37,18 @@ export function signInRedirect(nextUrl: URL): Response {
   return Response.redirect(dest);
 }
 
+/**
+ * T21: the signed no-login thread link, /messages/<id>/guest, exactly. The
+ * page and its reply action (a server action POST to the same URL) check
+ * the signed token themselves. One id segment only: no other /messages
+ * route opens up (not /messages, /messages/<id>, or deeper paths).
+ */
+const GUEST_THREAD_PATH = /^\/messages\/[A-Za-z0-9_-]{1,64}\/guest$/;
+
+export function isGuestThreadPath(pathname: string): boolean {
+  return GUEST_THREAD_PATH.test(pathname);
+}
+
 export function platformGate(input: {
   isLoggedIn: boolean;
   /** Not used for gating today (/ops checks the DB role in its pages). */
@@ -69,7 +81,7 @@ export function platformGate(input: {
     return signInRedirect(nextUrl);
   }
 
-  if (path.startsWith("/messages") && !isLoggedIn) {
+  if (path.startsWith("/messages") && !isLoggedIn && !isGuestThreadPath(path)) {
     return signInRedirect(nextUrl);
   }
 
