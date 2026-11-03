@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { hostServicesPageOn } from "@/lib/services-access";
 import { notFound, redirect } from "next/navigation";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
@@ -19,7 +20,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { hostSlug } = await params;
   const host = await getHostForGuestSite(hostSlug);
-  if (!host || !host.sitePageServices) {
+  if (!host || !hostServicesPageOn(host)) {
     return pageMetadata({
       title: "Services",
       description: "Host services.",
@@ -52,7 +53,7 @@ export default async function HostServicesPage({
 }) {
   const { hostSlug } = await params;
   const host = await getHostForGuestSite(hostSlug);
-  if (!host || !host.sitePageServices) notFound();
+  if (!host || !hostServicesPageOn(host)) notFound();
 
   const segment = hostServicesPathSegment(host);
   if (segment !== "services") {

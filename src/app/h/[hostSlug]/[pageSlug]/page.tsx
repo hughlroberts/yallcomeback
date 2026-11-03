@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { hostServicesPageOn } from "@/lib/services-access";
 import { notFound, redirect } from "next/navigation";
 import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
@@ -24,7 +25,7 @@ export async function generateMetadata({
   const host = await getHostForGuestSite(hostSlug);
   if (
     !host ||
-    !host.sitePageServices ||
+    !hostServicesPageOn(host) ||
     !pageSlug ||
     HOST_SITE_RESERVED_PATHS.has(pageSlug) ||
     pageSlug !== hostServicesPathSegment(host)
@@ -67,7 +68,7 @@ export default async function HostCustomPageSlug({
   }
 
   const host = await getHostForGuestSite(hostSlug);
-  if (!host || !host.sitePageServices) notFound();
+  if (!host || !hostServicesPageOn(host)) notFound();
 
   const expected = hostServicesPathSegment(host);
   if (pageSlug !== expected) {

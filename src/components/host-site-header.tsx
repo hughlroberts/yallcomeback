@@ -15,6 +15,9 @@ type Props = {
     | "tagline"
     | "sitePageAbout"
     | "sitePageServices"
+    | "hostingMode"
+    | "sitePresence"
+    | "servicesOverride"
     | "siteServicesTitle"
     | "siteServicesPath"
   >;

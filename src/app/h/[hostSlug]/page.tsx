@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { hostServicesPageOn } from "@/lib/services-access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -214,7 +215,7 @@ export default async function HostSiteHomePage({
         </section>
       ) : null}
 
-      {host.sitePageServices ? (
+      {hostServicesPageOn(host) ? (
         <section
           id="services"
           className="scroll-mt-24 border-t border-stone-200"

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hostServicesPageOn } from "@/lib/services-access";
 import type { Host } from "@prisma/client";
 import { hostServicesHref } from "@/lib/host-site";
 
@@ -13,6 +14,9 @@ type Props = {
     | "sitePageAbout"
     | "sitePageServices"
     | "siteServicesPath"
+    | "hostingMode"
+    | "sitePresence"
+    | "servicesOverride"
   >;
   /** True when the current viewer is host admin / platform (private preview). */
   isOwnerPreview?: boolean;
@@ -117,6 +121,9 @@ function OwnerEditLinks({
     | "sitePageAbout"
     | "sitePageServices"
     | "siteServicesPath"
+    | "hostingMode"
+    | "sitePresence"
+    | "servicesOverride"
   >;
   isPlatformAdmin?: boolean;
 }) {
@@ -134,7 +141,7 @@ function OwnerEditLinks({
       >
         Edit website
       </Link>
-      {host.sitePageServices ? (
+      {hostServicesPageOn(host) ? (
         <Link
           href={servicesLive}
           className="inline-flex items-center rounded-full bg-sky-700 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-sky-800 sm:text-sm"

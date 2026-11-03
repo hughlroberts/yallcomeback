@@ -1,4 +1,5 @@
 import type { Host, HostSitePublishState } from "@prisma/client";
+import { hostServicesPageOn } from "@/lib/services-access";
 import { slugify } from "@/lib/utils";
 
 export type HostSiteNavItem = {
@@ -76,7 +77,9 @@ export function hostSiteNavItems(
     | "sitePageServices"
     | "siteServicesTitle"
     | "siteServicesPath"
-  >,
+    | "hostingMode"
+    | "sitePresence"
+  > & { servicesOverride?: boolean | null },
   basePath = "",
 ): HostSiteNavItem[] {
   const base = basePath || "";
@@ -87,7 +90,7 @@ export function hostSiteNavItems(
   if (host.sitePageAbout) {
     items.push({ href: `${base}/about` || "/about", label: "About" });
   }
-  if (host.sitePageServices) {
+  if (hostServicesPageOn(host)) {
     const servicesLabel =
       host.siteServicesTitle?.trim() || "Services";
     items.push({

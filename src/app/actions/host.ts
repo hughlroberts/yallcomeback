@@ -1,5 +1,6 @@
 "use server";
 
+import { hostCanUseServices } from "@/lib/services-access";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { HostSitePresence } from "@prisma/client";
@@ -488,9 +489,19 @@ export async function updateHostProfile(formData: FormData) {
       String(formData.get("sitePublishState") || existing.sitePublishState),
     );
   } else {
-    // Marketplace-only: no brand website pages / vanity domain
+    // Marketplace-only: no brand website pages / vanity domain.
+    // Exception: a Platform admin services override keeps the Services page.
     sitePageAbout = false;
-    sitePageServices = false;
+    if (hostCanUseServices({ hostingMode, sitePresence, servicesOverride: existing.servicesOverride })) {
+      sitePageServices = formData.get("sitePageServices") === "on";
+      siteServicesTitle = optionalText(formData, "siteServicesTitle", 120);
+      const { normalizeServicesPathInput } = await import("@/lib/host-site");
+      siteServicesPath = normalizeServicesPathInput(
+        String(formData.get("siteServicesPath") || ""),
+      );
+    } else {
+      sitePageServices = false;
+    }
     customDomain = null;
     websiteUrl = null;
     sitePublishState = "UNPUBLISHED";
@@ -713,6 +724,9 @@ export async function saveServicesBlocks(formData: FormData) {
 
   const host = await prisma.host.findUnique({ where: { id: hostId } });
   if (!host) throw new Error("Host not found");
+  if (!hostCanUseServices(host)) {
+    throw new Error("The Services page needs the Branded website plan.");
+  }
 
   const raw = String(formData.get("blocksJson") || "[]");
   let blocks: unknown;
@@ -781,6 +795,9 @@ export async function uploadServicesImage(
 
   const host = await prisma.host.findUnique({ where: { id: hostId } });
   if (!host) return { ok: false, error: "Host not found" };
+  if (!hostCanUseServices(host)) {
+    return { ok: false, error: "The Services page needs the Branded website plan." };
+  }
 
   const parsed = await readUploadedImage(formData.get("file") as File | null);
   if (!parsed.ok) {
