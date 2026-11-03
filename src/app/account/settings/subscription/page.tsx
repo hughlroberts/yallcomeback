@@ -1,5 +1,6 @@
 import { CARD_LOOKUP_TIMEOUT_MS, withTimeout } from "@/lib/with-timeout";
 import { brandedPriceLabel, marketplacePriceLabel } from "@/lib/hosting-prices";
+import { BillingErrorAlert } from "@/components/billing/BillingErrorAlert";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountSettingsShell } from "@/components/account-settings-shell";
@@ -217,13 +218,7 @@ export default async function AccountSubscriptionPage({
       {billingError ? (
         // T38b: billing errors stay on the page (a toast can vanish before
         // the host sees it).
-        <div
-          role="alert"
-          className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
-        >
-          <p className="font-semibold">Billing did not open</p>
-          <p className="mt-0.5">{billingError}</p>
-        </div>
+        <BillingErrorAlert code={sp.billingError} />
       ) : flash ? (
         <FlashToast
           title={flash.title}
