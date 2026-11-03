@@ -15,7 +15,7 @@ export const MARKETPLACE_PLAN_DESCRIPTION =
   `$${MARKETPLACE_LISTING_USD} per published listing / month. List on Find a Place. No custom brand website. Not a booking commission.`;
 
 export const BRANDED_PLAN_DESCRIPTION =
-  `$${BRANDED_WEBSITE_USD} / month for the whole website — any number of listings. Brand site on your domain; marketplace listing included. Not a booking commission.`;
+  `$${BRANDED_WEBSITE_USD}/mo for the whole website — any number of listings. Brand site on your domain; marketplace listing included. Not a booking commission.`;
 
 /**
  * Card processing the hosting card checkout adds on top of a plan price —
@@ -46,4 +46,35 @@ export function brandedPriceLabel(netUsd: number = BRANDED_WEBSITE_USD): string 
   const base = `${formatUsd(netUsd)}/mo`;
   const note = cardProcessingNote(netUsd);
   return note ? `${base} + ${note}` : base;
+}
+
+/**
+ * A leading price in a stored plan description, e.g. "$25 / month ",
+ * "$$25 / month ", "$25/mo ", "$25 per month — ". The stored text can be
+ * old (DB rows are never rewritten), so price copy never comes from it.
+ */
+const LEADING_PRICE =
+  /^\s*\$+\s*\d+(?:\.\d+)?(?:\s*USD)?\s*(?:\/\s*month|\/\s*mo|per\s+month|a\s+month)\b(?:\s*\+\s*\$?\d+(?:\.\d+)?\s*(?:\/\s*month|\/\s*mo)\s*card processing)?\s*[—–-]?\s*/i;
+
+/** Stored description without a leading price (T43). */
+export function stripLeadingPrice(description: string | null | undefined): string {
+  return (description || "").replace(LEADING_PRICE, "").trim();
+}
+
+/**
+ * T43: plan description safe to show. Flat (Branded) plans get the price
+ * from the plan amount and the shared short formatter, then the stored
+ * non-price text. Other plans keep the stored text.
+ */
+export function planPublicDescription(plan: {
+  pricingModel: string;
+  monthlyPrice: number;
+  description: string | null;
+}): string | null {
+  if (plan.pricingModel !== "FLAT" || !(plan.monthlyPrice > 0)) {
+    return plan.description;
+  }
+  const rest = stripLeadingPrice(plan.description);
+  const price = brandedPriceLabel(plan.monthlyPrice);
+  return rest ? `${price} ${rest}` : price;
 }

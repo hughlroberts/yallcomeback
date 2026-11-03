@@ -35,6 +35,12 @@ describe("forHostsServiceJsonLd", () => {
     const market = (d.offers as { name: string; description: string }[])[0]!;
     expect(market.description).not.toMatch(/free/i);
   });
+
+  it("T43: Branded offer text uses the shared short price with the fee", () => {
+    const d = forHostsServiceJsonLd({ origin, url: `${origin}/for-hosts`, description: "x" });
+    const branded = (d.offers as { name: string; description: string }[])[1]!;
+    expect(branded.description).toMatch(/^\$25\/mo \+ \$1\.06\/mo card processing for the whole website/);
+  });
 });
 
 describe("helpFaqJsonLd", () => {

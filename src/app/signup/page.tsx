@@ -1,3 +1,4 @@
+import { planPublicDescription } from "@/lib/hosting-prices";
 import { brandedPriceLabel } from "@/lib/hosting-prices";
 import { redirect } from "next/navigation";
 import { HostSignupForm } from "@/components/HostSignupForm";
@@ -91,7 +92,7 @@ export default async function SignupPage({
           slug: p.slug,
           monthlyPrice: p.monthlyPrice,
           pricingModel: p.pricingModel,
-          description: p.description,
+          description: planPublicDescription(p),
           isDefault: p.isDefault,
         }))}
       />

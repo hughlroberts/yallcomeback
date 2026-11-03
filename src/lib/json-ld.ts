@@ -2,7 +2,11 @@
  * Schema.org JSON-LD builders. Only real data: no ratings, no reviews,
  * no invented fields. Empty values are left out.
  */
-import { BRANDED_WEBSITE_USD, MARKETPLACE_LISTING_USD } from "@/lib/hosting-prices";
+import {
+  BRANDED_WEBSITE_USD,
+  brandedPriceLabel,
+  MARKETPLACE_LISTING_USD,
+} from "@/lib/hosting-prices";
 import type { HelpArticle } from "@/lib/help";
 
 type Json = Record<string, unknown>;
@@ -65,7 +69,7 @@ export function forHostsServiceJsonLd(opts: { origin: string; url: string; descr
       {
         "@type": "Offer",
         name: "Branded website",
-        description: `$${BRANDED_WEBSITE_USD} per month for the whole website, any number of listings. Marketplace listing included. Not a booking commission.`,
+        description: `${brandedPriceLabel()} for the whole website, any number of listings. Marketplace listing included. Not a booking commission.`,
         price: BRANDED_WEBSITE_USD,
         priceCurrency: "USD",
         priceSpecification: monthly(BRANDED_WEBSITE_USD, "month"),

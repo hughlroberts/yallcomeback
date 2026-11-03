@@ -1,5 +1,5 @@
 import { CARD_LOOKUP_TIMEOUT_MS, withTimeout } from "@/lib/with-timeout";
-import { brandedPriceLabel, cardProcessingNote } from "@/lib/hosting-prices";
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountSettingsShell } from "@/components/account-settings-shell";
@@ -320,7 +320,7 @@ function BrandHostingCard({
                 ? "No monthly hosting fee on this brand."
                 : marketplaceOnly
                   ? `${formatMoney(host.plan?.monthlyPrice ?? 5)} per published listing / month. Guests find this brand on Find a Place.`
-                  : `${formatMoney(host.plan?.monthlyPrice ?? 25)} / month${cardProcessingNote(host.plan?.monthlyPrice ?? 25) ? ` + ${cardProcessingNote(host.plan?.monthlyPrice ?? 25)}` : ""} for the whole website. Add as many listings as you want. Marketplace listing included.`}
+                  : `${brandedPriceLabel(host.plan?.monthlyPrice ?? 25)} for the whole website. Add as many listings as you want. Marketplace listing included.`}
           </p>
         </div>
 
@@ -328,10 +328,7 @@ function BrandHostingCard({
           <p className="rounded-xl bg-stone-50 px-3 py-2 text-sm text-stone-700">
             {host.plan?.pricingModel === "FLAT" ? (
               <>
-                This month: <strong>{formatMoney(estimate.amount)}</strong>
-                {cardProcessingNote(estimate.amount)
-                  ? ` + ${cardProcessingNote(estimate.amount)}`
-                  : ""}{" "}
+                This month: <strong>{brandedPriceLabel(estimate.amount)}</strong>{" "}
                 for the whole website
                 {publishedCount > 0
                   ? ` (${publishedCount} published listing${publishedCount === 1 ? "" : "s"})`
@@ -403,7 +400,7 @@ function BrandHostingCard({
             subscribe, <strong>{host.name}</strong> moves off complimentary onto{" "}
             {marketplaceOnly
               ? `${formatMoney(5)} per published listing / month (marketplace).`
-              : `${formatMoney(25)} / month for the whole website.`}
+              : `${brandedPriceLabel()} for the whole website.`}
           </p>
         ) : null}
       </Card>

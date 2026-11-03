@@ -1,3 +1,4 @@
+import { planPublicDescription } from "@/lib/hosting-prices";
 import { brandedPriceLabel } from "@/lib/hosting-prices";
 import Image from "next/image";
 import Link from "next/link";
@@ -127,7 +128,7 @@ export default async function ForHostsPage({
         slug: p.slug,
         monthlyPrice: p.monthlyPrice,
         pricingModel: p.pricingModel,
-        description: p.description,
+        description: planPublicDescription(p),
         isDefault: p.isDefault,
       }))}
     />
