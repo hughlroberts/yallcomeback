@@ -75,6 +75,12 @@ export async function createBooking(formData: FormData) {
   if (!property || !property.published || property.archivedAt) {
     throw new Error("Property not found");
   }
+  // T46: hidden Marketplace brand takes no new bookings (preview included).
+  const { brandListingsHidden, LISTING_UNAVAILABLE_BOOKING_ERROR } =
+    await import("@/lib/brand-visibility");
+  if (brandListingsHidden(property.host)) {
+    throw new Error(LISTING_UNAVAILABLE_BOOKING_ERROR);
+  }
   const { canHostAddFutureWork } = await import("@/lib/hosting");
   if (!canHostAddFutureWork(property.host)) {
     throw new Error(

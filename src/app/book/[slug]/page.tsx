@@ -31,6 +31,9 @@ import { pageMetadata } from "@/lib/seo";
 import { marketplacePropertyWhere } from "@/lib/host";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
+import { ListingUnavailable } from "@/components/listing-unavailable";
+import { hiddenFromViewer } from "@/lib/brand-visibility";
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
@@ -117,11 +120,14 @@ export default async function BookPage({
           hostingMode: true,
           approvalStatus: true,
           subscriptionStatus: true,
+          marketplaceSuspendedAt: true,
         },
       },
     },
   });
   if (!property) notFound();
+  // T46: hidden brand. No new bookings; host/admin can still preview.
+  if (await hiddenFromViewer(property.host)) return <ListingUnavailable />;
 
   const checkIn = sp.checkIn;
   const checkOut = sp.checkOut;

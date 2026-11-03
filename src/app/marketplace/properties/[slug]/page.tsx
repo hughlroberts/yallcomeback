@@ -44,6 +44,14 @@ import { pageMetadata } from "@/lib/seo";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { listingMetaDescription } from "@/lib/listing-meta-description";
 import { publicListingText } from "@/lib/listing-public-text";
+import { ListingUnavailable } from "@/components/listing-unavailable";
+import {
+  LISTING_UNAVAILABLE_TITLE,
+  brandListingsHidden,
+  canPreviewBrand,
+  findHiddenBrandListing,
+  hiddenFromViewer,
+} from "@/lib/brand-visibility";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +93,14 @@ export async function generateMetadata({
       maxGuests: true,
       beds: true,
       bedrooms: true,
-      host: { select: { name: true, slug: true } },
+      host: {
+        select: {
+          name: true,
+          slug: true,
+          hostingMode: true,
+          marketplaceSuspendedAt: true,
+        },
+      },
       images: {
         orderBy: [{ isCover: "desc" as const }, { sortOrder: "asc" as const }],
         take: 1,
@@ -93,6 +108,18 @@ export async function generateMetadata({
       },
     },
   });
+
+  if (
+    brandListingsHidden(property?.host) ||
+    (!property && (await findHiddenBrandListing(slug, sp.host)))
+  ) {
+    return pageMetadata({
+      title: LISTING_UNAVAILABLE_TITLE,
+      description: "Find another place to stay on Yall Come Back.",
+      path: `/marketplace/properties/${encodeURIComponent(slug)}`,
+      noIndex: true,
+    });
+  }
 
   if (!property) {
     return pageMetadata({
@@ -171,6 +198,7 @@ export default async function MarketplacePropertyPage({
         defaultDisclaimer: true,
         stripeAccountId: true,
         websitePaymentMethod: true,
+        marketplaceSuspendedAt: true,
         taxLines: {
           where: { active: true },
           orderBy: { sortOrder: "asc" as const },
@@ -260,6 +288,20 @@ export default async function MarketplacePropertyPage({
       },
       include,
     });
+  }
+
+  // T46: hidden brand. Direct links show a clean page; host/admin preview.
+  if (!property) {
+    const hidden = await findHiddenBrandListing(slug, sp.host);
+    if (hidden) {
+      if (!(await canPreviewBrand(hidden.hostId))) return <ListingUnavailable />;
+      property = await prisma.property.findFirst({
+        where: { id: hidden.id },
+        include,
+      });
+    }
+  } else if (await hiddenFromViewer(property.host)) {
+    return <ListingUnavailable />;
   }
 
   if (!property) notFound();

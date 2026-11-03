@@ -111,6 +111,12 @@ export async function getHostForGuestSite(slug: string) {
   // Peek without publish gate first for ownership check
   const any = await getHostBySlugAny(slug);
   if (!any || !any.active) return null;
+  // T46: a hidden Marketplace brand (grace ended) is preview-only.
+  if (any.hostingMode === "PLATFORM" && any.marketplaceSuspendedAt != null) {
+    if (isPlatform) return any;
+    if (isOwnHost && session!.user.hostId === any.id) return any;
+    return null;
+  }
   if (!isHostPublicLive(any)) {
     // Still allow own host / platform to preview while pending payment/review
     if (isPlatform) return any;
