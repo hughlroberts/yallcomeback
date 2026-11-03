@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateListingVisibility } from "@/app/actions/properties";
 import {
@@ -54,10 +54,12 @@ export function ListingVisibilityForm({
   const [error, setError] = useState<string | null>(null);
   const fromProps = visibilityFromFlags(published, listOnMarketplace);
   const [current, setCurrent] = useState<ListingVisibility>(fromProps);
-
-  useEffect(() => {
+  // Follow new props (e.g. after router.refresh) during render, not in an effect.
+  const [syncedFromProps, setSyncedFromProps] = useState(fromProps);
+  if (fromProps !== syncedFromProps) {
+    setSyncedFromProps(fromProps);
     setCurrent(fromProps);
-  }, [fromProps]);
+  }
 
   function onPick(visibility: ListingVisibility) {
     if (!emailVerified && visibility !== "off") {

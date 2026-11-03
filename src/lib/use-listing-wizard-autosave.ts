@@ -77,6 +77,9 @@ export function useListingWizardAutosave<T extends Record<string, unknown>>(opts
     if (blob && typeof blob.base === "string" && blob.base === base) {
       baseRef.current = blob.base;
     }
+    // The draft lives in localStorage, which only exists after mount, so it
+    // must be read here; reading it during render would break hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from an external store
     setValuesState(next);
     latestRef.current = next;
     hydratedRef.current = true;

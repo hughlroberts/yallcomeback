@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
 import {
   geocodeListingAddress,
   saveListingLocation,
@@ -37,6 +38,11 @@ type Phase = "pin" | "visibility";
 type LocationFields = WizardLocationValues & { addressUnresolved: boolean };
 
 /** Host wizard always centers on the true pin; wider bbox previews guest “area” view. */
+/** Text shown in a manual coordinate field ("" when unset). */
+function coordText(v: number | null | undefined): string {
+  return v != null ? String(v) : "";
+}
+
 function mapEmbedUrl(lat: number, lng: number, precise: boolean) {
   const delta = precise ? 0.008 : 0.04;
   const left = lng - delta;
@@ -66,6 +72,7 @@ export function ListingWizardLocationStep({
   serverUpdatedAt,
   initial,
 }: Props) {
+  const router = useRouter();
   const draftKey = `property-${propertyId}`;
   const { values, setValues } = useListingWizardAutosave<LocationFields>({
     draftKey,
@@ -101,18 +108,20 @@ export function ListingWizardLocationStep({
   const [warning, setWarning] = useState<string | null>(null);
   const [finding, setFinding] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [latInput, setLatInput] = useState(
-    initial.latitude != null ? String(initial.latitude) : "",
-  );
-  const [lngInput, setLngInput] = useState(
-    initial.longitude != null ? String(initial.longitude) : "",
-  );
+  const [latInput, setLatInput] = useState(coordText(initial.latitude));
+  const [lngInput, setLngInput] = useState(coordText(initial.longitude));
 
   // Keep manual coord fields in sync when draft restore / nudge updates lat/lng.
-  useEffect(() => {
-    setLatInput(lat != null ? String(lat) : "");
-    setLngInput(lng != null ? String(lng) : "");
-  }, [lat, lng]);
+  // Adjusted during render (not in an effect) so there is no extra render pass.
+  const coordKey = `${coordText(lat)}|${coordText(lng)}`;
+  const [syncedCoordKey, setSyncedCoordKey] = useState(
+    `${coordText(initial.latitude)}|${coordText(initial.longitude)}`,
+  );
+  if (coordKey !== syncedCoordKey) {
+    setSyncedCoordKey(coordKey);
+    setLatInput(coordText(lat));
+    setLngInput(coordText(lng));
+  }
 
   const queryLine = useMemo(() => {
     return [address, city, region, postalCode, country]
@@ -534,8 +543,7 @@ export function ListingWizardLocationStep({
               type="button"
               onClick={() => {
                 if (phase === "visibility") setPhase("pin");
-                else
-                  window.location.href = `/admin/properties/${propertyId}/setup?step=2`;
+                else router.push(`/admin/properties/${propertyId}/setup?step=2`);
               }}
               className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
             >
