@@ -124,3 +124,29 @@ describe("invoice skipped for card-paying Marketplace brands (T46)", () => {
     expect(invoiceSkippedNotice(null, "QA")).toBeNull();
   });
 });
+
+describe("renewal invoice refused for a card-paying Marketplace brand (T46 follow-up)", () => {
+  it("createHostingInvoiceForHost throws the card-billed error and writes nothing", async () => {
+    const { createHostingInvoiceForHost, CARD_BILLED_INVOICE_ERROR } = await import(
+      "@/lib/hosting-billing"
+    );
+    db.host.findUnique.mockResolvedValueOnce({
+      id: "h1",
+      name: "QA Marketplace Test",
+      planId: "plan_1",
+      hostingMode: "PLATFORM",
+      sitePresence: "STAYLOCAL",
+      stripeSubscriptionId: "sub_1",
+      stripeSubscriptionStatus: "active",
+    });
+    db.host.update.mockClear();
+    db.hostingInvoice.update.mockClear();
+    db.$transaction.mockClear();
+    await expect(createHostingInvoiceForHost({ hostId: "h1" })).rejects.toThrow(
+      CARD_BILLED_INVOICE_ERROR,
+    );
+    expect(db.host.update).not.toHaveBeenCalled();
+    expect(db.hostingInvoice.update).not.toHaveBeenCalled();
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
+});
