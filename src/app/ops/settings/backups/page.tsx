@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { BACKUP_RETENTION_DAYS, backupOpsSnapshot } from "@/lib/backup";
 import { SubmitButton } from "@/components/submit-button";
 import { copyBackupsToBucket } from "./actions";
+import { moveCardState } from "@/lib/backup-move-card";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Backups · Ops" };
@@ -68,6 +69,7 @@ export default async function OpsBackupsPage({
       prisma.booking.count(),
     ]);
   const { last, stale, storage, files } = snap;
+  const move = moveCardState(storage);
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -149,35 +151,58 @@ export default async function OpsBackupsPage({
         </p>
       </Card>
 
-      {storage.configured && storage.bucket.configured ? (
-        <Card id="move">
-          <h2 className="font-semibold text-ink">Move volume copies to the bucket</h2>
-          <p className="mt-2 text-sm text-stone-600">
-            Copies every file on the volume into the bucket, reads each one
-            back, and compares checksums. It does not delete or change volume
-            files. Detach the volume only after this says all files match.
-          </p>
-          {notice ? (
-            <p
-              role="status"
-              className={`mt-3 rounded-md px-3 py-2 text-sm ${notice.tone === "ok" ? "bg-emerald-50 text-emerald-900" : "bg-amber-50 text-amber-900"}`}
-            >
-              {notice.text}
-            </p>
-          ) : null}
-          <div className="mt-4 flex flex-wrap gap-3">
-            <form action={copyBackupsToBucket}>
-              <input type="hidden" name="dryRun" value="1" />
-              <SubmitButton variant="secondary" pendingLabel="Checking…">
-                Check only
-              </SubmitButton>
-            </form>
-            <form action={copyBackupsToBucket}>
-              <SubmitButton pendingLabel="Copying…">Copy and verify</SubmitButton>
-            </form>
+      <Card id="move">
+        <h2 className="font-semibold text-ink">Move volume copies to the bucket</h2>
+        <p className="mt-2 text-sm text-stone-600">
+          Copies every file on the volume into the bucket, reads each one
+          back, and compares checksums. It does not delete or change volume
+          files. Detach the volume only after this says all files match.
+        </p>
+        {move.enabled ? null : (
+          <div
+            id="move-not-ready"
+            className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900"
+          >
+            <p className="font-medium">Not available yet.</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              {move.missing.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+            <p className="mt-1">Then redeploy and open this page again.</p>
           </div>
-        </Card>
-      ) : null}
+        )}
+        {notice ? (
+          <p
+            role="status"
+            className={`mt-3 rounded-md px-3 py-2 text-sm ${notice.tone === "ok" ? "bg-emerald-50 text-emerald-900" : "bg-amber-50 text-amber-900"}`}
+          >
+            {notice.text}
+          </p>
+        ) : null}
+        <div className="mt-4 flex flex-wrap gap-3">
+          <form action={copyBackupsToBucket}>
+            <input type="hidden" name="dryRun" value="1" />
+            <SubmitButton
+              variant="secondary"
+              pendingLabel="Checking…"
+              disabled={!move.enabled}
+              aria-describedby={move.enabled ? undefined : "move-not-ready"}
+            >
+              Check only
+            </SubmitButton>
+          </form>
+          <form action={copyBackupsToBucket}>
+            <SubmitButton
+              pendingLabel="Copying…"
+              disabled={!move.enabled}
+              aria-describedby={move.enabled ? undefined : "move-not-ready"}
+            >
+              Copy and verify
+            </SubmitButton>
+          </form>
+        </div>
+      </Card>
 
       <Card>
         <h2 className="font-semibold text-ink">Stored copies</h2>

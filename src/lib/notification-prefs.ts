@@ -179,6 +179,79 @@ export async function clearChannelOptOut(opts: {
   }
 }
 
+/**
+ * Current state for the address in an unsubscribe token: true when message
+ * emails (or texts) to it are stopped, by a link opt-out or the account
+ * setting.
+ */
+export async function isChannelOptedOut(opts: {
+  channel: NotifyChannel;
+  address: string;
+}): Promise<boolean> {
+  if (opts.channel === "email") {
+    const email = normalizeEmail(opts.address);
+    if (!email.includes("@")) return false;
+    const [user, row] = await Promise.all([
+      prisma.user.findUnique({
+        where: { email },
+        select: { emailNotifications: true },
+      }),
+      prisma.messageDeliveryOptOut.findUnique({
+        where: { email },
+        select: { emailOptOut: true },
+      }),
+    ]);
+    return Boolean(row?.emailOptOut) || user?.emailNotifications === false;
+  }
+  const phone = normalizePhone(opts.address);
+  if (!phone) return false;
+  const [user, row] = await Promise.all([
+    prisma.user.findFirst({
+      where: { phone },
+      select: { smsNotifications: true },
+    }),
+    prisma.messageDeliveryOptOut.findUnique({
+      where: { phone },
+      select: { smsOptOut: true },
+    }),
+  ]);
+  return Boolean(row?.smsOptOut) || user?.smsNotifications === false;
+}
+
+/**
+ * Resubscribe from a signed unsubscribe link: re-enable message emails (or
+ * texts) for that one address only. Clears the link opt-out and the account
+ * setting for the account with exactly that address. Touches nothing else.
+ */
+export async function applyChannelResubscribe(opts: {
+  channel: NotifyChannel;
+  address: string;
+}): Promise<void> {
+  if (opts.channel === "email") {
+    const email = normalizeEmail(opts.address);
+    if (!email.includes("@")) return;
+    await prisma.messageDeliveryOptOut.updateMany({
+      where: { email },
+      data: { emailOptOut: false, source: "email_link_resubscribe" },
+    });
+    await prisma.user.updateMany({
+      where: { email },
+      data: { emailNotifications: true },
+    });
+    return;
+  }
+  const phone = normalizePhone(opts.address);
+  if (!phone) return;
+  await prisma.messageDeliveryOptOut.updateMany({
+    where: { phone },
+    data: { smsOptOut: false, source: "sms_link_resubscribe" },
+  });
+  await prisma.user.updateMany({
+    where: { phone },
+    data: { smsNotifications: true },
+  });
+}
+
 export async function canSendEmailTo(email: string): Promise<boolean> {
   const e = normalizeEmail(email);
   if (!e.includes("@")) return false;

@@ -24,9 +24,9 @@ export function SubmitButton({
       type="submit"
       variant={variant}
       className={className}
-      disabled={pending || props.disabled}
       aria-busy={pending}
       {...props}
+      disabled={pending || props.disabled}
     >
       {pending ? (
         <>

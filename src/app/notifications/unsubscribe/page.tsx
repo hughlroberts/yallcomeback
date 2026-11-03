@@ -1,11 +1,11 @@
 import Link from "next/link";
 import {
-  applyChannelOptOut,
+  isChannelOptedOut,
   verifyUnsubscribeToken,
 } from "@/lib/notification-prefs";
 import { Card } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
-import { redirect } from "next/navigation";
+import { confirmResubscribe, confirmUnsubscribe } from "./actions";
 
 import { pageMetadata } from "@/lib/seo";
 
@@ -18,27 +18,11 @@ export const metadata = pageMetadata({
 });
 
 /**
- * The link only shows a button. Link scanners in some mail systems open every
- * link, so a plain visit must not unsubscribe. One-click from the mail app's
- * own "Unsubscribe" button goes to /api/notifications/unsubscribe (POST).
+ * Shows the address's current state with one button: Unsubscribe when
+ * message emails are on, Resubscribe when they are off. A plain visit changes
+ * nothing (mail scanners open every link). The mail app's own one-click
+ * button POSTs to /api/notifications/unsubscribe.
  */
-async function confirmUnsubscribe(formData: FormData) {
-  "use server";
-  const token = String(formData.get("token") || "").trim();
-  const verified = verifyUnsubscribeToken(token);
-  if (!verified.ok) {
-    redirect(`/notifications/unsubscribe?token=${encodeURIComponent(token)}`);
-  }
-  await applyChannelOptOut({
-    channel: verified.channel,
-    address: verified.address,
-    source: "email_link",
-  });
-  redirect(
-    `/notifications/unsubscribe?token=${encodeURIComponent(token)}&done=1`,
-  );
-}
-
 export default async function UnsubscribePage({
   searchParams,
 }: {
@@ -68,38 +52,63 @@ export default async function UnsubscribePage({
 
   const label =
     verified.channel === "email" ? "message emails" : "message texts (SMS)";
-
-  if (done !== "1") {
-    return (
-      <Shell>
-        <h1 className="text-xl font-semibold text-stone-900">
-          Stop {label}?
-        </h1>
-        <p className="mt-2 text-sm text-stone-600">
-          We will stop sending {label} to{" "}
-          <strong className="font-medium text-stone-800">
-            {verified.address}
-          </strong>
-          . You can still read your messages in the inbox when you sign in.
-        </p>
-        <form action={confirmUnsubscribe} className="mt-4">
-          <input type="hidden" name="token" value={token.trim()} />
-          <SubmitButton pendingLabel="Unsubscribing…">Unsubscribe</SubmitButton>
-        </form>
-      </Shell>
-    );
-  }
+  const optedOut = await isChannelOptedOut({
+    channel: verified.channel,
+    address: verified.address,
+  });
+  const address = (
+    <strong className="font-medium text-stone-800">{verified.address}</strong>
+  );
+  const notice =
+    done === "unsubscribed" || done === "1"
+      ? `Done. We stopped ${label} to this address.`
+      : done === "resubscribed"
+        ? `Done. ${label[0]!.toUpperCase()}${label.slice(1)} to this address are on again.`
+        : null;
 
   return (
     <Shell>
-      <h1 className="text-xl font-semibold text-stone-900">You&apos;re unsubscribed</h1>
-      <p className="mt-2 text-sm text-stone-600">
-        We won&apos;t send {label} to{" "}
-        <strong className="font-medium text-stone-800">{verified.address}</strong>{" "}
-        anymore. You can still use the in-app inbox when signed in.
-      </p>
+      {notice ? (
+        <p
+          role="status"
+          className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-800"
+        >
+          {notice}
+        </p>
+      ) : null}
+      {optedOut ? (
+        <>
+          <h1 className="text-xl font-semibold text-stone-900">
+            Already unsubscribed
+          </h1>
+          <p className="mt-2 text-sm text-stone-600">
+            Status: <strong className="font-medium">unsubscribed</strong>. We
+            do not send {label} to {address}. You can still read your messages
+            in the inbox when you sign in.
+          </p>
+          <form action={confirmResubscribe} className="mt-4">
+            <input type="hidden" name="token" value={token.trim()} />
+            <SubmitButton pendingLabel="Resubscribing…">Resubscribe</SubmitButton>
+          </form>
+        </>
+      ) : (
+        <>
+          <h1 className="text-xl font-semibold text-stone-900">
+            Stop {label}?
+          </h1>
+          <p className="mt-2 text-sm text-stone-600">
+            Status: <strong className="font-medium">subscribed</strong>. We
+            send {label} to {address}. If you unsubscribe, you can still read
+            your messages in the inbox when you sign in.
+          </p>
+          <form action={confirmUnsubscribe} className="mt-4">
+            <input type="hidden" name="token" value={token.trim()} />
+            <SubmitButton pendingLabel="Unsubscribing…">Unsubscribe</SubmitButton>
+          </form>
+        </>
+      )}
       <p className="mt-4 text-sm text-stone-600">
-        Change your mind later in{" "}
+        Signed in? You can also change this in{" "}
         <Link
           href="/account/settings/notifications"
           className="font-semibold text-bonnet hover:underline"
