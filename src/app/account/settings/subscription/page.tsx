@@ -1,5 +1,5 @@
 import { CARD_LOOKUP_TIMEOUT_MS, withTimeout } from "@/lib/with-timeout";
-import { brandedPriceLabel } from "@/lib/hosting-prices";
+import { brandedPriceLabel, marketplacePriceLabel } from "@/lib/hosting-prices";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountSettingsShell } from "@/components/account-settings-shell";
@@ -319,7 +319,7 @@ function BrandHostingCard({
               : complimentary
                 ? "No monthly hosting fee on this brand."
                 : marketplaceOnly
-                  ? `${formatMoney(host.plan?.monthlyPrice ?? 5)} per published listing / month. Guests find this brand on Find a Place.`
+                  ? `${marketplacePriceLabel(host.plan?.monthlyPrice)}. Guests find this brand on Find a Place.`
                   : `${brandedPriceLabel(host.plan?.monthlyPrice ?? 25)} for the whole website. Add as many listings as you want. Marketplace listing included.`}
           </p>
         </div>
@@ -399,7 +399,7 @@ function BrandHostingCard({
             Complimentary is $0 and is not billed. If you add a card and
             subscribe, <strong>{host.name}</strong> moves off complimentary onto{" "}
             {marketplaceOnly
-              ? `${formatMoney(5)} per published listing / month (marketplace).`
+              ? `${marketplacePriceLabel()} (marketplace).`
               : `${brandedPriceLabel()} for the whole website.`}
           </p>
         ) : null}
@@ -453,7 +453,7 @@ function BrandHostingCard({
           {marketplaceOnly ? (
             <p className="text-sm text-stone-600">
               Marketplace-only is billed{" "}
-              {formatMoney(host.plan?.monthlyPrice ?? 12)} per published listing.
+              {marketplacePriceLabel(host.plan?.monthlyPrice)}.
               That is not the $25 website subscription.
             </p>
           ) : null}

@@ -39,6 +39,17 @@ export function cardProcessingNote(netUsd: number = BRANDED_WEBSITE_USD): string
 }
 
 /**
+ * Marketplace price: "$12/mo per listing" (T44). Falls back to the published
+ * price when a plan amount is missing or $0, so copy never shows a stale number.
+ */
+export function marketplacePriceLabel(
+  unitUsd: number | null | undefined = MARKETPLACE_LISTING_USD,
+): string {
+  const usd = unitUsd && unitUsd > 0 ? unitUsd : MARKETPLACE_LISTING_USD;
+  return `${formatUsd(usd)}/mo per listing`;
+}
+
+/**
  * Branded website price with the card processing line:
  * "$25/mo + $1.06/mo card processing". T43: this one format everywhere.
  */

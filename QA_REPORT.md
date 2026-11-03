@@ -54,7 +54,7 @@ Cron fail-closed (prior P0-1) still holds in production.
 
 #### P0-2 — Complimentary hosts could be auto-promoted back to paid
 - **Where:** `src/app/actions/hosting.ts`, `src/lib/platform-billing.ts`
-- **What:** Pause was not always persisted. Checkout/webhook paths that omit `pause_collection` overwrote `"paused"` and `promoteComplimentaryHostIfPaid` put them on $25/$5.
+- **What:** Pause was not always persisted. Checkout/webhook paths that omit `pause_collection` overwrote `"paused"` and `promoteComplimentaryHostIfPaid` put them on $25/$12.
 - **Fix:** Leaving paid always sets `stripeSubscriptionStatus: "paused"` (and pauses Stripe when a live sub exists). `applyHostingSubscriptionFromStripe` keeps paused unless the event actually includes `pause_collection`.
 
 ---

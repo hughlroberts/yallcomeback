@@ -77,3 +77,23 @@ describe("stored plan descriptions never set the price copy (T43)", () => {
     );
   });
 });
+
+import { marketplacePriceLabel } from "./hosting-prices";
+import { readFileSync } from "node:fs";
+
+describe("marketplace price copy (T44)", () => {
+  it("short /mo format at the published $12", () => {
+    expect(marketplacePriceLabel()).toBe("$12/mo per listing");
+    expect(marketplacePriceLabel(12)).toBe("$12/mo per listing");
+  });
+  it("a missing or $0 plan amount falls back to $12, never $5", () => {
+    expect(marketplacePriceLabel(undefined)).toBe("$12/mo per listing");
+    expect(marketplacePriceLabel(null)).toBe("$12/mo per listing");
+    expect(marketplacePriceLabel(0)).toBe("$12/mo per listing");
+  });
+  it("subscription page has no hard-coded $5 marketplace price", () => {
+    const src = readFileSync("src/app/account/settings/subscription/page.tsx", "utf8");
+    expect(src).not.toMatch(/formatMoney\(5\)|\?\?\s*5\)/);
+    expect(src).not.toMatch(/\$5\b/);
+  });
+});
