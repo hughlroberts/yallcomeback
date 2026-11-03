@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { hostServicesPageOn } from "@/lib/services-access";
+import { hostCanUseServices, hostServicesPageOn } from "@/lib/services-access";
 import type { Host } from "@prisma/client";
 import { hostServicesHref } from "@/lib/host-site";
 
@@ -146,14 +146,16 @@ function OwnerEditLinks({
         >
           Edit Services page
         </Link>
-      ) : (
+      ) : hostCanUseServices(host) ? (
+        // T41: only brands that may use Services (Branded website or
+        // self-hosted) get the Add link. Marketplace only: no link.
         <Link
           href={`${brand}#pages`}
           className="font-semibold underline underline-offset-2"
         >
           Add Other services page
         </Link>
-      )}
+      ) : null}
       {host.sitePageAbout ? (
         <Link
           href={`/h/${host.slug}/about`}
