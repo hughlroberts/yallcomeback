@@ -15,7 +15,10 @@ import { cn } from "@/lib/utils";
 
 type Action = "pause" | "resume" | "archive" | "restore" | "delete";
 
-const ACTIONS: Record<Action, (fd: FormData) => Promise<ListingLifecycleResult>> = {
+const ACTIONS: Record<
+  Action,
+  (fd: FormData) => Promise<ListingLifecycleResult>
+> = {
   pause: pauseListing,
   resume: resumeListing,
   archive: archiveListing,
@@ -87,7 +90,10 @@ export function ListingLifecycleActions({
       try {
         result = await ACTIONS[action](fd);
       } catch {
-        result = { ok: false, error: "Could not update this listing. Try again." };
+        result = {
+          ok: false,
+          error: "Could not update this listing. Try again.",
+        };
       }
       if (!result.ok) {
         setError(result.error);
@@ -191,7 +197,11 @@ export function ListingLifecycleActions({
             >
               Archive listing
             </button>
-            <button type="button" className={btn} onClick={() => setConfirm(null)}>
+            <button
+              type="button"
+              className={btn}
+              onClick={() => setConfirm(null)}
+            >
               Cancel
             </button>
           </div>
@@ -207,66 +217,95 @@ export function ListingLifecycleActions({
           e.preventDefault();
           closeDelete();
         }}
-        className="w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-red-200 bg-white p-5 text-sm text-slate-800 shadow-xl backdrop:bg-slate-900/50"
+        // Full-screen overlay. The CSS reset removes the native dialog's
+        // margin:auto centering, so center the card with flex instead.
+        className="fixed inset-0 z-50 m-0 h-full max-h-none w-full max-w-none items-center justify-center overflow-y-auto bg-slate-900/50 p-4 open:flex backdrop:bg-transparent sm:p-6"
+        onClick={(e) => {
+          // A click on the dim backdrop (not the card) closes the dialog.
+          if (e.target === e.currentTarget && !pending) {
+            setError(null);
+            closeDelete();
+          }
+        }}
       >
         {deleteOpen ? (
-          <form
-            method="dialog"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (typedOk && !pending) run("delete");
-            }}
+          <div
+            data-delete-dialog-card
+            className="w-full max-w-md rounded-xl border border-red-200 bg-white p-4 text-sm text-slate-800 shadow-xl sm:p-5"
           >
-            <h2 id={titleId} className="text-base font-semibold text-slate-900">
-              Are you sure?
-            </h2>
-            <p className="mt-2">
-              Delete removes <strong>{title}</strong>, its photos, prices and
-              calendar. You cannot undo this. To keep the data, archive the
-              listing.
-            </p>
-            <label htmlFor={inputId} className="mt-3 block text-xs font-medium">
-              Type the listing name to confirm
-            </label>
-            <input
-              id={inputId}
-              name="confirmTitle"
-              autoComplete="off"
-              autoFocus
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900"
-            />
-            {error ? (
-              <p role="alert" className="mt-2 text-xs font-medium text-bonnet">
-                {error}
+            <form
+              method="dialog"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (typedOk && !pending) run("delete");
+              }}
+            >
+              <h2
+                id={titleId}
+                className="text-base font-semibold text-slate-900"
+              >
+                Are you sure?
+              </h2>
+              <p className="mt-2">
+                Delete removes <strong>{title}</strong>, its photos, prices and
+                calendar. You cannot undo this. To keep the data, archive the
+                listing.
               </p>
-            ) : null}
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                className={btn}
-                onClick={() => {
-                  setError(null);
-                  closeDelete();
-                }}
+              <label
+                htmlFor={inputId}
+                className="mt-3 block text-xs font-medium"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className={cn(dangerBtn, "bg-red-600 text-white hover:bg-red-700")}
-                disabled={pending || !typedOk}
-              >
-                Confirm delete
-              </button>
-            </div>
-          </form>
+                Type the listing name to confirm
+              </label>
+              <input
+                id={inputId}
+                name="confirmTitle"
+                autoComplete="off"
+                autoFocus
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900"
+              />
+              {error ? (
+                <p
+                  role="alert"
+                  className="mt-2 text-xs font-medium text-bonnet"
+                >
+                  {error}
+                </p>
+              ) : null}
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className={btn}
+                  onClick={() => {
+                    setError(null);
+                    closeDelete();
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={cn(
+                    dangerBtn,
+                    "bg-red-600 text-white hover:bg-red-700",
+                  )}
+                  disabled={pending || !typedOk}
+                >
+                  Confirm delete
+                </button>
+              </div>
+            </form>
+          </div>
         ) : null}
       </dialog>
 
       {error && !deleteOpen ? (
-        <p role="alert" className="mt-2 max-w-md text-xs font-medium text-bonnet">
+        <p
+          role="alert"
+          className="mt-2 max-w-md text-xs font-medium text-bonnet"
+        >
           {error}
         </p>
       ) : null}

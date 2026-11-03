@@ -1,5 +1,6 @@
 "use server";
 
+import { listingDisplayTitle } from "@/lib/listing-display-title";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { assertHostAllowsFutureWork } from "@/lib/hosting";
@@ -160,7 +161,11 @@ export async function deleteListing(formData: FormData): Promise<ListingLifecycl
     return fail("Your access level cannot delete listings.");
   }
   const { property } = scoped;
-  if (!deleteConfirmMatches(property.title, String(formData.get("confirmTitle") ?? ""))) {
+  const typed = String(formData.get("confirmTitle") ?? "");
+  if (
+    !deleteConfirmMatches(property.title, typed) &&
+    !deleteConfirmMatches(listingDisplayTitle(property), typed)
+  ) {
     return fail("Type the listing name exactly to delete it.");
   }
 

@@ -61,7 +61,7 @@ describe("ListingLifecycleActions", () => {
     const h = html({ published: true, archived: false });
     expect(h).toMatch(/<dialog[^>]*role="alertdialog"/);
     expect(h).toMatch(/aria-modal="true"/);
-    expect(h).not.toMatch(/<dialog[^>]*\sopen/);
+    expect(h).not.toMatch(/<dialog[^>]*\sopen(=|\s|>)/);
     expect(h).not.toContain("Are you sure?");
   });
 
@@ -77,5 +77,21 @@ describe("ListingLifecycleActions", () => {
     expect(src.match(/run\("delete"\)/g)).toHaveLength(1);
     const cancel = src.slice(src.indexOf("Cancel\n              </button>") - 300);
     expect(cancel.slice(0, 300)).not.toContain('run("delete")');
+  });
+
+  it("Delete dialog is a centered full-screen overlay (T31)", () => {
+    const h = html({ published: true, archived: false });
+    const cls = h.match(/<dialog[^>]*class="([^"]*)"/)?.[1] ?? "";
+    // The CSS reset strips native dialog centering; the overlay must not rely on it.
+    for (const c of ["fixed", "inset-0", "m-0", "w-full", "h-full", "max-w-none", "max-h-none", "open:flex", "items-center", "justify-center", "bg-slate-900/50", "p-4"]) {
+      expect(cls.split(/\s+/)).toContain(c);
+    }
+    // Never "flex" unconditionally: that would show the closed dialog.
+    expect(cls.split(/\s+/)).not.toContain("flex");
+    const src = readFileSync(
+      join(process.cwd(), "src/components/listing-lifecycle-actions.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/data-delete-dialog-card[\s\S]{0,40}className="w-full max-w-md/);
   });
 });

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { listingDisplayTitle } from "@/lib/listing-display-title";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/utils";
@@ -127,7 +128,9 @@ export default async function AdminPropertiesPage() {
             >
               <Link href={primaryHref} className="min-w-0 flex-1 hover:opacity-90">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-slate-900">{p.title}</span>
+                  <span className="font-semibold text-slate-900">
+                    {listingDisplayTitle(p)}
+                  </span>
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-semibold",
@@ -174,7 +177,7 @@ export default async function AdminPropertiesPage() {
                 </Link>
                 <ListingLifecycleActions
                   propertyId={p.id}
-                  title={p.title}
+                  title={listingDisplayTitle(p)}
                   published={p.published}
                   archived={false}
                   canRemove={allowRemove}
@@ -225,7 +228,9 @@ export default async function AdminPropertiesPage() {
                   className="min-w-0 flex-1 hover:opacity-90"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-slate-700">{p.title}</span>
+                    <span className="font-semibold text-slate-700">
+                      {listingDisplayTitle(p)}
+                    </span>
                     <span className="rounded-full bg-stone-200 px-2.5 py-0.5 text-xs font-semibold text-stone-700">
                       Archived
                     </span>
@@ -238,7 +243,7 @@ export default async function AdminPropertiesPage() {
                 </Link>
                 <ListingLifecycleActions
                   propertyId={p.id}
-                  title={p.title}
+                  title={listingDisplayTitle(p)}
                   published={false}
                   archived
                   canRemove={allowRemove}

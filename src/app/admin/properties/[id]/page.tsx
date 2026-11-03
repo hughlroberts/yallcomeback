@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { listingDisplayTitle } from "@/lib/listing-display-title";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import {
@@ -1060,6 +1061,7 @@ export default async function AdminPropertyDetailPage({
         property={{
           id: property.id,
           title: property.title,
+          displayTitle: listingDisplayTitle(property),
           slug: property.slug,
           hostSlug: property.host.slug,
           published: property.published,

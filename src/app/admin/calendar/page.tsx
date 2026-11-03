@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { listingDisplayTitle } from "@/lib/listing-display-title";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
@@ -32,6 +33,10 @@ export default async function AdminCalendarPage({
     select: {
       id: true,
       title: true,
+      propertyType: true,
+      city: true,
+      region: true,
+      createdAt: true,
       published: true,
       listOnMarketplace: true,
       images: {
@@ -122,7 +127,7 @@ export default async function AdminCalendarPage({
           stackFrom="lg"
           listings={listings.map((p) => ({
             id: p.id,
-            title: p.title,
+            title: listingDisplayTitle(p),
             published: p.published,
             listOnMarketplace: p.listOnMarketplace,
             coverUrl: p.images[0]?.url || null,
@@ -138,6 +143,7 @@ export default async function AdminCalendarPage({
           property={{
             id: property.id,
             title: property.title,
+            displayTitle: listingDisplayTitle(property),
             slug: property.slug,
             hostSlug: property.host.slug,
             published: property.published,

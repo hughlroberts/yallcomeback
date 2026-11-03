@@ -8,6 +8,9 @@ type Row = {
   published: boolean;
   listOnMarketplace: boolean;
   archivedAt: Date | null;
+  propertyType?: string;
+  city?: string;
+  region?: string;
 };
 
 const state = vi.hoisted(() => ({
@@ -88,6 +91,7 @@ beforeEach(() => {
   state.payments = 0;
   state.rows = [
     { id: "pa", hostId: "brand-a", title: "Lakefront Cabin", slug: "lakefront", published: true, listOnMarketplace: true, archivedAt: null },
+    { id: "pd", hostId: "brand-a", title: "Untitled listing", slug: "draft-1", published: false, listOnMarketplace: false, archivedAt: null, propertyType: "cabin", city: "Austin", region: "TX" },
     { id: "pb", hostId: "brand-b", title: "Other Brand Stay", slug: "other", published: true, listOnMarketplace: true, archivedAt: null },
   ];
   asHost("brand-a");
@@ -146,6 +150,11 @@ describe("delete", () => {
     const r = await deleteListing(fd("pa", { confirmTitle: "wrong" }));
     expect(r.ok).toBe(false);
     expect(db.prisma.property.delete).not.toHaveBeenCalled();
+  });
+
+  it("an untitled draft can be confirmed with its shown Draft label (T32)", async () => {
+    expect(await deleteListing(fd("pd", { confirmTitle: "Draft · Cabin · Austin, TX" }))).toEqual({ ok: true });
+    expect(row("pd")).toBeUndefined();
   });
 
   it("deletes when confirmed and no stays or payments", async () => {

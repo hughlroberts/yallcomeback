@@ -141,6 +141,8 @@ function formatStaySpan(start: string, checkout: string) {
 type WorkspaceProperty = {
   id: string;
   title: string;
+  /** Title, or a descriptive "Draft · …" label for untitled drafts. */
+  displayTitle?: string;
   slug: string;
   hostSlug: string;
   published: boolean;
@@ -1457,7 +1459,7 @@ export function AdminListingWorkspace({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
-              {property.title}
+              {property.displayTitle ?? property.title}
             </h1>
             <span
               className={cn(
@@ -1579,7 +1581,7 @@ export function AdminListingWorkspace({
           </Link>
           <ListingLifecycleActions
             propertyId={property.id}
-            title={property.title}
+            title={property.displayTitle ?? property.title}
             published={property.published}
             archived={Boolean(property.archivedAt)}
             canRemove={canRemoveListing}

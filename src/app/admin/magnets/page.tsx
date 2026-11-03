@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { listingDisplayTitle } from "@/lib/listing-display-title";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
@@ -60,7 +61,9 @@ export default async function AdminMagnetsPage() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
             >
               <div className="min-w-0">
-                <p className="truncate font-semibold text-slate-900">{p.title}</p>
+                <p className="truncate font-semibold text-slate-900">
+                  {listingDisplayTitle(p)}
+                </p>
                 <p className="mt-0.5 text-sm text-slate-500">
                   {access.isPlatform ? `${p.host.name} · ` : ""}
                   {p.city || "No city"}
