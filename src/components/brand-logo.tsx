@@ -36,9 +36,12 @@ export function BrandMark({
 export function BrandLogo({
   className,
   href = "/",
+  label = "Yall Come Back, home",
 }: {
   className?: string;
   href?: string;
+  /** Accessible name. Listing setup uses "Exit setup" so it is not read as a second Back. */
+  label?: string;
 }) {
   return (
     <Link
@@ -47,7 +50,8 @@ export function BrandLogo({
         "ycb-logo group inline-flex shrink-0 items-center gap-2 overflow-visible sm:gap-3",
         className,
       )}
-      aria-label="Yall Come Back, home"
+      aria-label={label}
+      title={label === "Yall Come Back, home" ? undefined : label}
     >
       <BrandMark
         size={72}
