@@ -196,7 +196,8 @@ model Host {
   /// Fixed hosted-site pages (toggle only — no arbitrary page builder)
   sitePageAbout        Boolean             @default(true)
   sitePageServices     Boolean             @default(false)
-  /// Platform admin only: Services page without the Branded plan (test/internal brands). No billing change.
+  /// DEPRECATED (Nov 2026): the Services override was removed. Not read by any code; Services is Branded plan only.
+  /// Kept so `db push --accept-data-loss` does not drop the column. Do not use.
   servicesOverride     Boolean             @default(false)
   /// Other services page body (boats, tours, etc.)
   siteServicesTitle    String?

@@ -7,20 +7,8 @@ type Props = {
   blocks: ServicesBlock[];
   /** Resolve relative button hrefs (e.g. /about → /h/slug/about) */
   basePath?: string;
-  /**
-   * Services-only guest view (unpublished brand, Platform admin override):
-   * hide buttons that link to other pages of the brand, because those pages
-   * are not open to guests.
-   */
-  hideSiteLinks?: boolean;
   className?: string;
 };
-
-/** True when a button href points at another page of the brand site. */
-export function isBrandSiteHref(href: string): boolean {
-  const t = (href || "").trim();
-  return !t || (t.startsWith("/") && !t.startsWith("//"));
-}
 
 function hrefFor(basePath: string, href: string) {
   const t = href.trim();
@@ -47,14 +35,8 @@ function imageSrc(b: ServicesBlock): string | null {
 export function ServicesPageRenderer({
   blocks,
   basePath = "",
-  hideSiteLinks = false,
   className,
 }: Props) {
-  if (hideSiteLinks) {
-    blocks = blocks.filter(
-      (b) => !(b.type === "button" && isBrandSiteHref(b.secondary || "/stays")),
-    );
-  }
   if (blocks.length === 0) {
     return (
       <div

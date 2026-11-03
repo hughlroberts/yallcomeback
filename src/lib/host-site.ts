@@ -79,7 +79,7 @@ export function hostSiteNavItems(
     | "siteServicesPath"
     | "hostingMode"
     | "sitePresence"
-  > & { servicesOverride?: boolean | null },
+  >,
   basePath = "",
 ): HostSiteNavItem[] {
   const base = basePath || "";

@@ -5,7 +5,6 @@ import { HostSiteHeaderGate } from "@/components/host-site-header-gate";
 import { HostSiteFooter } from "@/components/host-site-footer";
 import { HostSiteDemoBanner } from "@/components/host-site-demo-banner";
 import {
-  getRequestServicesOnlyTenant,
   getRequestTenant,
   hostBrandStyle,
 } from "@/lib/tenant";
@@ -23,25 +22,6 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
   const tenant = await getRequestTenant();
 
   if (!tenant) {
-    // Unpublished brand with the Services override: brand header with only
-    // the Services link. No other page, footer links or owner preview.
-    const servicesOnly = await getRequestServicesOnlyTenant();
-    if (servicesOnly) {
-      const h = await headers();
-      const base =
-        h.get("x-tenant-mode") === "custom" ? "" : `/h/${servicesOnly.slug}`;
-      return (
-        <div
-          className="flex min-h-full flex-1 flex-col"
-          style={hostBrandStyle(servicesOnly)}
-        >
-          <TrackPageView />
-          <HostSiteHeader host={servicesOnly} basePath={base} servicesOnly />
-          <main className="flex-1">{children}</main>
-        </div>
-      );
-    }
-
     return (
       <>
         <TrackPageView />

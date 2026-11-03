@@ -16,7 +16,6 @@ type Props = {
     | "siteServicesPath"
     | "hostingMode"
     | "sitePresence"
-    | "servicesOverride"
   >;
   /** True when the current viewer is host admin / platform (private preview). */
   isOwnerPreview?: boolean;
@@ -123,7 +122,6 @@ function OwnerEditLinks({
     | "siteServicesPath"
     | "hostingMode"
     | "sitePresence"
-    | "servicesOverride"
   >;
   isPlatformAdmin?: boolean;
 }) {

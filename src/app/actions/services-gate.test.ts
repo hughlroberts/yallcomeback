@@ -8,17 +8,7 @@ const auth = vi.hoisted(() => ({
   signIn: vi.fn(),
   auth: vi.fn(),
 }));
-const guest = vi.hoisted(() => {
-  const getHostForGuestSite = vi.fn();
-  return {
-    getHostForGuestSite,
-    // Route helper: wraps the guest-site host (servicesOnly false here).
-    getHostForGuestServicesPage: vi.fn(async (slug: string) => {
-      const host = await getHostForGuestSite(slug);
-      return host ? { host, servicesOnly: false } : null;
-    }),
-  };
-});
+const guest = vi.hoisted(() => ({ getHostForGuestSite: vi.fn() }));
 vi.mock("@/lib/db", () => db);
 vi.mock("@/lib/auth", () => auth);
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -60,41 +50,43 @@ function form(fields: Record<string, string>) {
   return f;
 }
 
-describe("Services gate (paid plan or Platform admin override)", () => {
+// A leftover Host.servicesOverride = true (deprecated column) must grant nothing.
+const leftoverOverride = { ...base, servicesOverride: true };
+
+describe("Services gate (Branded plan only, no override)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     guest.getHostForGuestSite.mockReset();
     auth.requireHostAdmin.mockResolvedValue({ isPlatform: false, hostId: "h_qa" });
   });
 
-  it("marketplace-only host without override cannot save the Services editor", async () => {
-    db.prisma.host.findUnique.mockResolvedValue(base);
-    await expect(
-      saveServicesBlocks(form({ hostId: "h_qa", blocksJson: "[]" })),
-    ).rejects.toThrow(/Branded website plan/);
+  it("marketplace-only host cannot save the Services editor, even with the old override flag", async () => {
+    for (const host of [base, leftoverOverride]) {
+      db.prisma.host.findUnique.mockResolvedValue(host);
+      await expect(
+        saveServicesBlocks(form({ hostId: "h_qa", blocksJson: "[]" })),
+      ).rejects.toThrow(/Branded website plan/);
+      const r = await uploadServicesImage(form({ hostId: "h_qa" }));
+      expect(r).toEqual({ ok: false, error: "The Services page needs the Branded website plan." });
+    }
     expect(db.prisma.host.update).not.toHaveBeenCalled();
-    const r = await uploadServicesImage(form({ hostId: "h_qa" }));
-    expect(r).toEqual({ ok: false, error: "The Services page needs the Branded website plan." });
   });
 
-  it("with the override, the host can save the Services editor", async () => {
-    db.prisma.host.findUnique.mockResolvedValue({ ...base, servicesOverride: true });
+  it("public route: 404 for marketplace-only, even with the old override flag", async () => {
+    for (const host of [base, leftoverOverride]) {
+      guest.getHostForGuestSite.mockResolvedValue(host);
+      await expect(
+        HostServicesPage({ params: Promise.resolve({ hostSlug: "qa" }) }),
+      ).rejects.toThrow("NEXT_NOT_FOUND");
+    }
+  });
+
+  it("a marketplace brand that moves to Branded gets Services", async () => {
+    const migrated = { ...base, sitePresence: "BOTH" };
+    db.prisma.host.findUnique.mockResolvedValue(migrated);
     await saveServicesBlocks(form({ hostId: "h_qa", blocksJson: "[]" }));
     expect(db.prisma.host.update).toHaveBeenCalledTimes(1);
-  });
-
-  it("public route: 404 without the override, loads with it", async () => {
-    const params = Promise.resolve({ hostSlug: "qa" });
-    guest.getHostForGuestSite.mockResolvedValue(base);
-    await expect(HostServicesPage({ params })).rejects.toThrow("NEXT_NOT_FOUND");
-    guest.getHostForGuestSite.mockResolvedValue({ ...base, servicesOverride: true });
-    await expect(
-      HostServicesPage({ params: Promise.resolve({ hostSlug: "qa" }) }),
-    ).resolves.toBeTruthy();
-  });
-
-  it("branded hosts keep Services without the override", async () => {
-    guest.getHostForGuestSite.mockResolvedValue({ ...base, sitePresence: "BOTH" });
+    guest.getHostForGuestSite.mockResolvedValue(migrated);
     await expect(
       HostServicesPage({ params: Promise.resolve({ hostSlug: "qa" }) }),
     ).resolves.toBeTruthy();

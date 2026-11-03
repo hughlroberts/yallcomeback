@@ -1,13 +1,10 @@
 import Link from "next/link";
-import { ServicesOverrideBadge } from "@/components/services-override-badge";
 import { notFound } from "next/navigation";
 import {
   issueHostingInvoice,
   suspendHost,
   updateHostOps,
 } from "@/app/actions/hosting";
-import { setServicesOverride } from "@/app/actions/services-override";
-import { hostHasBrandedWebsite } from "@/lib/hosting";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { requirePlatformAdminOr404 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -100,7 +97,6 @@ export default async function OpsHostDetailPage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink">
               {host.name}
-              <ServicesOverrideBadge host={host} />
             </h1>
             <p className="mt-1 text-sm text-ink-muted">
               /h/{host.slug}
@@ -256,39 +252,6 @@ export default async function OpsHostDetailPage({
             </strong>
           </p>
         </div>
-      </Card>
-
-      <Card id="services-override">
-        <h2 className="text-lg font-semibold text-ink">Services page override</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          Turn on the Services page for this brand without the Branded website
-          plan. Use it for test or internal brands. This does not change the
-          plan, the subscription or billing.
-        </p>
-        {hostHasBrandedWebsite(host) ? (
-          <p className="mt-2 text-xs text-ink-muted">
-            This brand already has a branded website, so Services is available
-            without the override.
-          </p>
-        ) : null}
-        <form action={setServicesOverride} className="mt-4 flex flex-wrap items-center gap-4">
-          <input type="hidden" name="hostId" value={host.id} />
-          <label className="flex items-center gap-2 text-sm font-medium text-ink">
-            <input
-              type="checkbox"
-              name="servicesOverride"
-              defaultChecked={host.servicesOverride}
-            />
-            Services page on (override)
-          </label>
-          <Button type="submit" variant="secondary">
-            Save override
-          </Button>
-          <span className="text-xs text-ink-muted">
-            Now: {host.servicesOverride ? "on" : "off"} · Services page{" "}
-            {host.sitePageServices ? "on" : "off"}
-          </span>
-        </form>
       </Card>
 
       <Card>

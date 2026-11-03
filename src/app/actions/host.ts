@@ -489,19 +489,10 @@ export async function updateHostProfile(formData: FormData) {
       String(formData.get("sitePublishState") || existing.sitePublishState),
     );
   } else {
-    // Marketplace-only: no brand website pages / vanity domain.
-    // Exception: a Platform admin services override keeps the Services page.
+    // Marketplace-only: no brand website pages / vanity domain. The
+    // Services page is Branded plan only (no override).
     sitePageAbout = false;
-    if (hostCanUseServices({ hostingMode, sitePresence, servicesOverride: existing.servicesOverride })) {
-      sitePageServices = formData.get("sitePageServices") === "on";
-      siteServicesTitle = optionalText(formData, "siteServicesTitle", 120);
-      const { normalizeServicesPathInput } = await import("@/lib/host-site");
-      siteServicesPath = normalizeServicesPathInput(
-        String(formData.get("siteServicesPath") || ""),
-      );
-    } else {
-      sitePageServices = false;
-    }
+    sitePageServices = false;
     customDomain = null;
     websiteUrl = null;
     sitePublishState = "UNPUBLISHED";

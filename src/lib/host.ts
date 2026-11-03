@@ -1,4 +1,3 @@
-import { servicesOnlyGuestAllowed } from "./services-access";
 import { prisma } from "./db";
 import type { Host, Property } from "@prisma/client";
 import { HOSTING_PUBLIC_STATUSES, isHostPublicLive } from "./hosting";
@@ -122,23 +121,6 @@ export async function getHostForGuestSite(slug: string) {
   if (isPlatform) return any;
   if (isOwnHost && session!.user.hostId === any.id) return any;
   return null;
-}
-
-/**
- * Guest access to the Services page only. Same as getHostForGuestSite, plus:
- * a guest may open the Services page of an unpublished brand when a
- * Platform admin turned on the Services override. `servicesOnly` is true in
- * that case; callers must not show any other page of the brand.
- */
-export async function getHostForGuestServicesPage(
-  slug: string,
-): Promise<{ host: Host; servicesOnly: boolean } | null> {
-  const host = await getHostForGuestSite(slug);
-  if (host) return { host, servicesOnly: false };
-  const any = await getHostBySlugAny(slug);
-  if (!any || !any.active) return null;
-  if (!servicesOnlyGuestAllowed(any, isHostPublicLive(any))) return null;
-  return { host: any, servicesOnly: true };
 }
 
 export type MarketplaceSearchOpts = {

@@ -16,28 +16,24 @@ function nav(h: object) {
   }).map((i) => i.label);
 }
 
-describe("services access", () => {
-  it("paid-plan gate: marketplace-only without override cannot use Services", () => {
+describe("services access (Branded plan only)", () => {
+  it("marketplace-only cannot use Services; the deprecated override flag is ignored", () => {
     expect(hostCanUseServices(marketplace)).toBe(false);
-    expect(hostCanUseServices({ ...marketplace, servicesOverride: false })).toBe(false);
-    expect(hostServicesPageOn({ ...marketplace, sitePageServices: true })).toBe(false);
+    const leftover = { ...marketplace, servicesOverride: true } as typeof marketplace;
+    expect(hostCanUseServices(leftover)).toBe(false);
+    expect(hostServicesPageOn({ ...leftover, sitePageServices: true })).toBe(false);
   });
 
-  it("branded website or self-host can", () => {
+  it("branded website (incl. a marketplace brand that upgraded) or self-host can", () => {
     expect(hostCanUseServices(branded)).toBe(true);
     expect(hostCanUseServices(selfHost)).toBe(true);
+    expect(hostServicesPageOn({ ...branded, sitePageServices: true })).toBe(true);
+    expect(hostServicesPageOn({ ...branded, sitePageServices: false })).toBe(false);
   });
 
-  it("override lets a marketplace-only brand use Services", () => {
-    const h = { ...marketplace, servicesOverride: true };
-    expect(hostCanUseServices(h)).toBe(true);
-    expect(hostServicesPageOn({ ...h, sitePageServices: true })).toBe(true);
-    expect(hostServicesPageOn({ ...h, sitePageServices: false })).toBe(false);
-  });
-
-  it("header nav shows the Services link only when allowed", () => {
+  it("header nav hides the Services link for marketplace-only brands", () => {
     expect(nav(marketplace)).not.toContain("Boats");
-    expect(nav({ ...marketplace, servicesOverride: true })).toContain("Boats");
+    expect(nav({ ...marketplace, servicesOverride: true })).not.toContain("Boats");
     expect(nav(branded)).toContain("Boats");
   });
 });

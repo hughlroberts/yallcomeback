@@ -39,11 +39,8 @@ function guestBlocksWithoutDupTitle(
  */
 export async function HostServicesPageView({
   host,
-  servicesOnly = false,
 }: {
   host: HostForServices;
-  /** Guest sees only this page of an unpublished brand (Platform admin override). */
-  servicesOnly?: boolean;
 }) {
   const base = await hostPublicBasePath(host.slug);
   const title = hostServicesPageLabel(host);
@@ -95,11 +92,7 @@ export async function HostServicesPageView({
             returnTo={pageHref}
           />
         ) : (
-          <ServicesPageRenderer
-            blocks={guestBlocks}
-            basePath={base}
-            hideSiteLinks={servicesOnly}
-          />
+          <ServicesPageRenderer blocks={guestBlocks} basePath={base} />
         )}
       </div>
     </div>

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { hostCanUseServices, hostServicesPageOn } from "@/lib/services-access";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
@@ -169,8 +168,6 @@ export default async function AdminBrandPage({
 
   const product = hostProductPath(host);
   const branded = hostHasBrandedWebsite(host);
-  // Branded plan, or a Platform admin override for this brand.
-  const servicesAllowed = hostCanUseServices(host);
   const previewPath = `/h/${host.slug}`;
   const returnTo = access.isPlatform
     ? `/admin/brand?hostId=${host.id}`
@@ -229,11 +226,8 @@ export default async function AdminBrandPage({
           { id: "marketplace", label: "Marketplace" },
         ]
       : []),
-    ...(!branded && servicesAllowed
-      ? [{ id: "other-services", label: "Other services" }]
-      : []),
     { id: "disclaimer", label: "Booking disclaimer" },
-    ...(servicesAllowed
+    ...(branded
       ? [{ id: "services-builder", label: "Services editor" }]
       : []),
     ...(showSyndication
@@ -946,31 +940,12 @@ export default async function AdminBrandPage({
             </Card>
           ) : null}
 
-          {/* —— Services title (branded, or Platform admin override) —— */}
-          {servicesAllowed ? (
+          {/* —— Services title (branded) —— */}
+          {branded ? (
             <Card id="other-services" className="order-8 scroll-mt-28 space-y-5 p-6">
               <h2 className="text-lg font-semibold text-stone-900">
                 Other services page
               </h2>
-              {!branded ? (
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-bonnet/30 bg-petal/20 px-4 py-3 hover:bg-petal/40">
-                  <input
-                    type="checkbox"
-                    name="sitePageServices"
-                    defaultChecked={host.sitePageServices}
-                    className="mt-1"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-stone-900">
-                      Show the Other services page
-                    </p>
-                    <p className="text-xs text-stone-500">
-                      Platform admin turned on this page for this brand. Your
-                      plan does not change.
-                    </p>
-                  </div>
-                </label>
-              ) : null}
               <p className="text-sm text-stone-500">
                 Turn the page on above, set a title, then build with blocks after
                 save. Example: boat rentals & camping — a must for many custom
@@ -1367,7 +1342,7 @@ export default async function AdminBrandPage({
         <form id="logo-clear-form" action={clearHostLogo} hidden />
 
         {/* Services — edit live on the guest demo page */}
-        {hostServicesPageOn(host) ? (
+        {branded && host.sitePageServices ? (
           <Card
             id="services-builder"
             className="order-14 scroll-mt-28 space-y-3 p-6"
@@ -1408,17 +1383,14 @@ export default async function AdminBrandPage({
               . Edit under Other services page above, then save brand settings.
             </p>
           </Card>
-        ) : servicesAllowed ? (
+        ) : branded ? (
           <Card
             id="services-builder"
             className="order-14 scroll-mt-28 p-6 text-sm text-stone-500"
           >
             Turn on <strong>Other services</strong> under{" "}
-            <a
-              href={branded ? "#pages" : "#other-services"}
-              className="font-medium text-bonnet hover:underline"
-            >
-              {branded ? "Pages" : "Other services page"}
+            <a href="#pages" className="font-medium text-bonnet hover:underline">
+              Pages
             </a>
             , save, then open the guest services page to add boat cards, photos,
             and pricing live on the site.

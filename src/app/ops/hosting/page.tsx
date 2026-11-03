@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ServicesOverrideBadge } from "@/components/services-override-badge";
 import { prisma } from "@/lib/db";
 import { requirePlatformAdminOr404 } from "@/lib/auth";
 import {
@@ -135,7 +134,6 @@ export default async function OpsHostingPage() {
                   <div>
                     <p className="text-lg font-semibold">
                       {host.name}
-                      <ServicesOverrideBadge host={host} />
                     </p>
                     <p className="text-sm text-stone-500">
                       /h/{host.slug} · {host.users[0]?.email || host.billingEmail}{" "}
@@ -380,7 +378,6 @@ export default async function OpsHostingPage() {
                     >
                       {h.name}
                     </Link>
-                    <ServicesOverrideBadge host={h} />
                     <p className="text-xs text-stone-500">
                       {h.websiteUrl
                         ? h.websiteUrl.replace(/^https?:\/\//i, "")
