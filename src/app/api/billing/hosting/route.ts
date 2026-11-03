@@ -21,7 +21,7 @@ import {
 } from "@/lib/branded-upgrade";
 import { hostProductPath } from "@/lib/hosting";
 import { marketplaceSubscriptionUrl } from "@/lib/marketplace-billing";
-import { setupServiceCheckoutUrl, setupServiceDone } from "@/lib/setup-service";
+import { setupCheckoutBlock, setupServiceCheckoutUrl } from "@/lib/setup-service";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +100,9 @@ export async function POST(req: NextRequest) {
     }
     if (intent === "setup") {
       // T45: $500 one-time full setup, any plan, once.
-      if (setupServiceDone(host.setupServiceStatus)) return back("setup_paid");
+      // T46: also refused when setup was already invoiced by hand.
+      const block = setupCheckoutBlock(host.setupServiceStatus);
+      if (block) return back(block);
       if (!isStripeConfigured()) return back("stripe_off");
       return toStripe(await setupServiceCheckoutUrl(host));
     }

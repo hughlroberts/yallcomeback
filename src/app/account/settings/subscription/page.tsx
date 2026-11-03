@@ -24,6 +24,7 @@ import { redirect } from "next/navigation";
 import { AccountSettingsShell } from "@/components/account-settings-shell";
 import { FlashToast } from "@/components/flash-toast";
 import { Button, Card } from "@/components/ui";
+import { SUBSCRIBE_CHECKOUT_LABEL, UPDATE_CARD_LABEL } from "@/lib/billing-labels";
 import { BrandedPendingBanner } from "@/components/branded-pending-banner";
 import {
   HOSTING_BILLING_ROUTE,
@@ -231,7 +232,7 @@ export default async function AccountSubscriptionPage({
     : sp.canceled && marketplaceFlow
     ? {
         title: "Checkout canceled",
-        body: "No charge was made. Add a card from this page to keep your listings on Find a Place.",
+        body: `No charge was made. Select ${SUBSCRIBE_CHECKOUT_LABEL} on this page to keep your listings on Find a Place.`,
         variant: "warn" as const,
       }
     : sp.subscribed && upgradeFlow
@@ -543,7 +544,7 @@ function BrandHostingCard({
           ) : null}
           {host.subscriptionStatus === "PAUSED" ? (
             <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-950">
-              Hosting is paused. Add a card and pay to take new stays again.
+              Hosting is paused. Pay to take new stays again.
             </p>
           ) : null}
           {marketplaceOnly ? (
@@ -565,7 +566,7 @@ function BrandHostingCard({
                   {complimentary
                     ? "Move to $25/mo website and subscribe"
                     : needsFreshSubscribe
-                      ? "Add card and subscribe"
+                      ? SUBSCRIBE_CHECKOUT_LABEL
                       : "Manage billing"}
                 </Button>
               </form>
@@ -575,17 +576,21 @@ function BrandHostingCard({
                 <input type="hidden" name="intent" value="subscribe" />
                 <input type="hidden" name="hostId" value={host.id} />
                 <Button type="submit" disabled={!stripeOn}>
-                  {liveCard ? "Manage billing" : "Add card and subscribe"}
+                  {liveCard ? "Manage billing" : SUBSCRIBE_CHECKOUT_LABEL}
                 </Button>
               </form>
             ) : null}
-            <form method="post" action={HOSTING_BILLING_ROUTE}>
-              <input type="hidden" name="intent" value="portal" />
-              <input type="hidden" name="hostId" value={host.id} />
-              <Button type="submit" variant="secondary" disabled={!stripeOn}>
-                {cardOnFile ? "Update card" : "Add a card"}
-              </Button>
-            </form>
+            {/* T46: with no card yet, the only way to add one is
+                SUBSCRIBE_CHECKOUT_LABEL above. The portal is for changing it. */}
+            {cardOnFile ? (
+              <form method="post" action={HOSTING_BILLING_ROUTE}>
+                <input type="hidden" name="intent" value="portal" />
+                <input type="hidden" name="hostId" value={host.id} />
+                <Button type="submit" variant="secondary" disabled={!stripeOn}>
+                  {UPDATE_CARD_LABEL}
+                </Button>
+              </form>
+            ) : null}
           </div>
         </Card>
       ) : null}
@@ -645,18 +650,22 @@ function SetupServiceCard({
             </p>
           ) : null}
           {host.setupServiceStatus === "INVOICED" ? (
-            <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950">
-              We already sent an invoice for full setup. Pay that invoice or pay
-              here. Do not pay both.
+            <p
+              className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-950"
+              data-testid="setup-invoiced"
+            >
+              We already sent you an invoice for full setup. Pay that invoice.
+              You cannot pay by card here, so you are not charged twice.
             </p>
-          ) : null}
-          <form method="post" action={HOSTING_BILLING_ROUTE}>
-            <input type="hidden" name="intent" value="setup" />
-            <input type="hidden" name="hostId" value={host.id} />
-            <Button type="submit" disabled={!stripeOn}>
-              Buy full setup
-            </Button>
-          </form>
+          ) : (
+            <form method="post" action={HOSTING_BILLING_ROUTE}>
+              <input type="hidden" name="intent" value="setup" />
+              <input type="hidden" name="hostId" value={host.id} />
+              <Button type="submit" disabled={!stripeOn}>
+                Buy full setup
+              </Button>
+            </form>
+          )}
         </>
       )}
     </Card>

@@ -96,10 +96,31 @@ describe("runMarketplaceGraceJob (T45)", () => {
     });
     expect(calls).toContainEqual({
       where: { id: "c", marketplaceSuspendedAt: { not: null } },
-      data: { marketplaceSuspendedAt: null },
+      data: { marketplaceSuspendedAt: null, marketplaceGraceEndsAt: null },
     });
     // Nobody else is touched.
     expect(calls.map((c) => c.where.id).sort()).toEqual(["a", "b", "c"]);
+    expect(r.graceCleared).toBe(0);
+  });
+
+  it("T46: a brand that pays by card again loses its old grace date", async () => {
+    db.prisma.host.findMany.mockResolvedValue([
+      {
+        ...base,
+        id: "g",
+        slug: "resubscribed",
+        stripeSubscriptionId: "sub_g",
+        stripeSubscriptionStatus: "active",
+        marketplaceGraceEndsAt: new Date("2026-10-01T00:00:00Z"),
+      },
+    ]);
+    const r = await runMarketplaceGraceJob(NOW);
+    expect(r.graceCleared).toBe(1);
+    expect(r.suspended).toEqual([]);
+    expect(db.prisma.host.updateMany).toHaveBeenCalledWith({
+      where: { id: "g", marketplaceGraceEndsAt: { not: null } },
+      data: { marketplaceGraceEndsAt: null },
+    });
   });
 });
 

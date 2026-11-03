@@ -20,12 +20,20 @@ import {
   subscriptionLabel,
 } from "@/lib/hosting";
 import { isStripeConfigured } from "@/lib/stripe";
+import { brandedPriceLabel, marketplacePriceWithCardLabel } from "@/lib/hosting-prices";
+import { invoiceSkippedNotice } from "@/lib/hosting-billing-notice";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Website hosting · Ops" };
 
-export default async function OpsHostingPage() {
+export default async function OpsHostingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ invoiceSkipped?: string; brand?: string }>;
+}) {
   await requirePlatformAdminOr404();
+  const sp = (await searchParams) ?? {};
+  const skipped = invoiceSkippedNotice(sp.invoiceSkipped, sp.brand);
   const [pending, hosts, openInvoices, plans, renewals] = await Promise.all([
     prisma.host.findMany({
       where: { approvalStatus: "PENDING_REVIEW" },
@@ -73,6 +81,15 @@ export default async function OpsHostingPage() {
 
   return (
     <div className="space-y-10">
+      {skipped ? (
+        <p
+          role="status"
+          data-testid="invoice-skipped"
+          className="rounded-xl border border-sage/40 bg-sage/15 px-4 py-3 text-sm font-medium text-stone-800"
+        >
+          {skipped}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Website hosting</h1>
@@ -80,11 +97,11 @@ export default async function OpsHostingPage() {
             Hosts who do not self-host get a site on this platform. After you
             approve them, charge hosting:{" "}
             <strong className="font-medium text-stone-700">
-              $25/mo for a branded website
+              {brandedPriceLabel()} for a branded website
             </strong>{" "}
             (whole site, any listings) or{" "}
             <strong className="font-medium text-stone-700">
-              $12/listing/mo marketplace-only
+              {marketplacePriceWithCardLabel()} marketplace-only
             </strong>
             . Not a cut of each booking.
           </p>

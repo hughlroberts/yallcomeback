@@ -1,3 +1,4 @@
+import { SUBSCRIBE_CHECKOUT_LABEL } from "@/lib/billing-labels";
 import { HOSTING_BILLING_ROUTE } from "@/lib/branded-upgrade";
 
 /**
@@ -19,8 +20,8 @@ export function BrandedPendingBanner({
     >
       <p>
         <strong>Branded website · Waiting for payment.</strong> The branded site
-        for {hostName} stays off for guests until you pay. Add a card to start
-        the plan.
+        for {hostName} stays off for guests until you pay. Select {SUBSCRIBE_CHECKOUT_LABEL}{" "}
+        to start the plan.
       </p>
       <form method="post" action={HOSTING_BILLING_ROUTE}>
         <input type="hidden" name="intent" value="subscribe" />
@@ -29,7 +30,7 @@ export function BrandedPendingBanner({
           type="submit"
           className="rounded-full bg-amber-900 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800"
         >
-          Pay now
+          {SUBSCRIBE_CHECKOUT_LABEL}
         </button>
       </form>
     </div>

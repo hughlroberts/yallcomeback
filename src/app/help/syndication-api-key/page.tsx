@@ -1,3 +1,4 @@
+import { marketplacePriceWithCardLabel } from "@/lib/hosting-prices";
 import Link from "next/link";
 import { Card } from "@/components/ui";
 
@@ -60,7 +61,7 @@ export default function SyndicationApiKeyHelpPage() {
           You only need a key if you run a <strong>separate copy</strong> of
           the open-source software on your own servers, and you still want
           those listings on the hosted Yall Come Back marketplace (a paid
-          product: $12 per listing / month).
+          product: {marketplacePriceWithCardLabel()}).
         </p>
       </Card>
 

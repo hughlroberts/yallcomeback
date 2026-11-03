@@ -68,11 +68,12 @@ Do **not** call the Yall Come Back marketplace “free”. Do **not** tell hosts
 
 | Product | Price |
 | --- | --- |
-| Marketplace listing on yallcomeback.app | **$12 / published listing / month** |
-| Branded website | **$25 / month** unlimited listings, marketplace included |
+| Marketplace listing on yallcomeback.app | **$12/mo per listing + card processing** (one line per published listing) |
+| Branded website | **$25/mo + $1.06/mo card processing**, unlimited listings, marketplace included |
+| Full setup (optional, any plan) | **$500 one-time + $15.25 card processing** |
 | Open source / self-host software | **$0** platform fee |
 
-Canonical numbers: `src/lib/hosting-prices.ts` (`MARKETPLACE_LISTING_USD`, `BRANDED_WEBSITE_USD`). Keep `/llms.txt`, `/agents.md`, help, `/for-hosts`, HostingPlan seed/upsert, and this table in sync.
+Canonical numbers: `src/lib/hosting-prices.ts` (`MARKETPLACE_LISTING_USD`, `BRANDED_WEBSITE_USD`, `SETUP_SERVICE_USD`; labels from `marketplacePriceWithCardLabel()`, `brandedPriceLabel()`, `setupServicePriceLabel()`). Keep `/llms.txt`, `/agents.md`, help, `/for-hosts`, HostingPlan seed/upsert, and this table in sync.
 
 ## Hosted / paid only — not MIT self-host
 

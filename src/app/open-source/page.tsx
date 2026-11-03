@@ -1,4 +1,7 @@
-import { brandedPriceLabel } from "@/lib/hosting-prices";
+import {
+  brandedPriceLabel,
+  marketplacePriceWithCardLabel,
+} from "@/lib/hosting-prices";
 import Link from "next/link";
 import {
   FEATURE_GROUPS,
@@ -91,7 +94,7 @@ export default function OpenSourcePage() {
           <p className="text-sm text-emerald-950">
             <strong>Free forever for self-hosting the software.</strong> The MIT
             code is the only free product. Publishing on the hosted Yall Come
-            Back marketplace is a paid product ($12 per listing / month). A
+            Back marketplace is a paid product ({marketplacePriceWithCardLabel()}). A
             branded website is {brandedPriceLabel()} for unlimited
             listings, marketplace included. Register, then either manage listings on this platform or
             push from a remote open-source deploy with a syndication API key
@@ -223,7 +226,7 @@ npm run build && npm start
           <p className="mt-2 max-w-3xl text-stone-600">
             Running your own copy does <strong>not</strong> automatically put
             stays on Find a Place. The software is free. Marketplace listing on
-            yallcomeback.app is a paid product ($12 per listing / month). Use
+            yallcomeback.app is a paid product ({marketplacePriceWithCardLabel()}). Use
             one of the two technical paths below.
           </p>
 
@@ -239,7 +242,7 @@ npm run build && npm start
                 You do not run the MIT app yourself. Listings live in the
                 central database on this site. There is no separate software
                 license fee for that account mode. Publishing on Find a Place is
-                still the paid marketplace product ($12 per listing / month).
+                still the paid marketplace product ({marketplacePriceWithCardLabel()}).
                 Point your domain at Yall Come Back if you want a vanity URL.
               </p>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-stone-700">
@@ -285,7 +288,7 @@ npm run build && npm start
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
                 You run the MIT code on your own stack. Create a host account
                 on Yall Come Back, then push listings with a syndication API
-                key. Hosted marketplace listing is $12 per listing / month.
+                key. Hosted marketplace listing is {marketplacePriceWithCardLabel()}.
               </p>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-stone-700">
                 <li>
@@ -470,7 +473,7 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
               Platform-hosted (paid)
             </h2>
             <ul className="mt-4 space-y-2 text-sm text-stone-600">
-              <li>$12 / listing / month marketplace, or {brandedPriceLabel()} branded website (unlimited listings, marketplace included)</li>
+              <li>{marketplacePriceWithCardLabel()} marketplace, or {brandedPriceLabel()} branded website (unlimited listings, marketplace included)</li>
               <li>We list your stays with host branding on each listing</li>
               <li>Still not a booking commission</li>
               <li>

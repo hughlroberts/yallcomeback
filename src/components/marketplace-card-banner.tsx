@@ -1,3 +1,4 @@
+import { SUBSCRIBE_CHECKOUT_LABEL } from "@/lib/billing-labels";
 import { HOSTING_BILLING_ROUTE } from "@/lib/branded-upgrade";
 import { marketplacePriceWithCardLabel } from "@/lib/hosting-prices";
 import type { MarketplaceCardState } from "@/lib/marketplace-billing-plan";
@@ -43,14 +44,14 @@ export function MarketplaceCardBanner({
       {suspended ? (
         <p>
           <strong>Marketplace · Listings hidden.</strong> The 14 days to add a
-          card ended. Guests cannot find {hostName} on Find a Place. Add a card
-          to show your listings again. Your listings and bookings are not
+          card ended. Guests cannot find {hostName} on Find a Place. Select{" "}
+          {SUBSCRIBE_CHECKOUT_LABEL} to show your listings again. Your listings and bookings are not
           deleted.
         </p>
       ) : (
         <p>
-          <strong>Marketplace · Add a card.</strong> Marketplace listings are
-          now paid by card: {price}. Add a card by{" "}
+          <strong>Marketplace · Card needed.</strong> Marketplace listings are
+          now paid by card: {price}. Select {SUBSCRIBE_CHECKOUT_LABEL} by{" "}
           <strong>{graceDateLabel(state.endsAt)}</strong> ({state.daysLeft} day
           {state.daysLeft === 1 ? "" : "s"} left). If you do not, guests cannot
           find {hostName} on Find a Place until you pay.
@@ -67,7 +68,7 @@ export function MarketplaceCardBanner({
               : "bg-amber-900 hover:bg-amber-800"
           }`}
         >
-          Add card
+          {SUBSCRIBE_CHECKOUT_LABEL}
         </button>
       </form>
     </div>

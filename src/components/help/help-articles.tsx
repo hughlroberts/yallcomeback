@@ -252,7 +252,7 @@ function HowYallComeBackWorks({ article }: { article: HelpArticle }) {
             <strong>Self-host (free software)</strong> — You run the open-source
             app on your own domain. There is no Yall Come Back hosting fee for
             the software. Listing on the hosted marketplace is a paid product
-            ($12 per listing / month).
+            ({marketplacePriceWithCardLabel()}).
           </li>
         </HelpUl>
       </HelpSection>
@@ -782,8 +782,7 @@ function BecomeAHost({ article }: { article: HelpArticle }) {
             Back hosting invoice.
           </li>
           <li>
-            You may list on the hosted Yall Come Back marketplace ($12 per
-            listing / month), or keep stays only on your site. Marketplace
+            You may list on the hosted Yall Come Back marketplace ({marketplacePriceWithCardLabel()}), or keep stays only on your site. Marketplace
             listing on this site is a paid product.
           </li>
           <li>
@@ -1824,7 +1823,7 @@ function SelfHost({ article }: { article: HelpArticle }) {
         <HelpUl>
           <li>
             Marketplace is optional. Self-host can join the hosted Yall Come
-            Back marketplace ($12 per listing / month), or stay on your domain
+            Back marketplace ({marketplacePriceWithCardLabel()}), or stay on your domain
             only. Marketplace listing on this site is a paid product.
           </li>
           <li>

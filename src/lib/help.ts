@@ -1,4 +1,7 @@
-import { brandedPriceLabel } from "@/lib/hosting-prices";
+import {
+  brandedPriceLabel,
+  marketplacePriceWithCardLabel,
+} from "@/lib/hosting-prices";
 /**
  * Yall Come Back Help Center catalog.
  * Paths are under /help/[slug].
@@ -71,7 +74,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: "How Yall Come Back works",
     body: "Hosts own the guest. Marketplace listing is a paid product. Bookings go to the host.",
     description:
-      `Yall Come Back model: paid branded websites (${brandedPriceLabel()} unlimited listings, marketplace included), paid marketplace ($12/listing/mo), and free open-source software. Direct booking without a cut of each stay.`,
+      `Yall Come Back model: paid branded websites (${brandedPriceLabel()} unlimited listings, marketplace included), paid marketplace (${marketplacePriceWithCardLabel()}), and free open-source software. Direct booking without a cut of each stay.`,
     related: [
       "getting-started",
       "become-a-host",
@@ -136,7 +139,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: "Become a host",
     body: "Create a host account. Confirm your email. Then publish a listing.",
     description:
-      `How to host on Yall Come Back: paid marketplace ($12/listing/mo), paid branded website (${brandedPriceLabel()} unlimited, marketplace included), or free open-source software.`,
+      `How to host on Yall Come Back: paid marketplace (${marketplacePriceWithCardLabel()}), paid branded website (${brandedPriceLabel()} unlimited, marketplace included), or free open-source software.`,
     related: [
       "listings",
       "branded-website",

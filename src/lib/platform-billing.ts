@@ -9,6 +9,7 @@
 import { prisma } from "@/lib/db";
 import { canonicalSiteOrigin } from "@/lib/features";
 import { hostProductPath, planSlugForSitePresence } from "@/lib/hosting";
+import { marketplaceGracePatchForStatus } from "@/lib/marketplace-billing-plan";
 import {
   BRANDED_UPGRADE_METADATA,
   SUBSCRIPTION_PATH,
@@ -394,6 +395,7 @@ export class HostingBillingError extends Error {
       | "not_marketplace"
       | "not_branded"
       | "setup_paid"
+      | "setup_invoiced"
       | "failed",
     message?: string,
   ) {
@@ -604,13 +606,15 @@ export async function applyHostingSubscriptionFromStripe(opts: {
     | "CANCELLED" = host.subscriptionStatus;
   let hostingPastDueAt: Date | null | undefined;
   let hostingDunningReminderSentAt: Date | null | undefined;
-  let clearMarketplaceSuspension = false;
+  // T45/T46: card in place clears grace + suspension; an ended
+  // subscription starts a fresh 14-day window.
+  const gracePatch = paused
+    ? {}
+    : marketplaceGracePatchForStatus(host, raw);
   if (raw === "active" || raw === "trialing") {
     subscriptionStatus = "ACTIVE";
     hostingPastDueAt = null;
     hostingDunningReminderSentAt = null;
-    // Card in place: Marketplace listings show again (T45).
-    clearMarketplaceSuspension = true;
   } else if (raw === "past_due" || raw === "unpaid") {
     if (host.subscriptionStatus !== "PAUSED") {
       subscriptionStatus = "PAST_DUE";
@@ -626,6 +630,7 @@ export async function applyHostingSubscriptionFromStripe(opts: {
         data: {
           stripeSubscriptionId: null,
           stripeSubscriptionStatus: "canceled",
+          ...gracePatch,
         },
       });
     }
@@ -647,9 +652,7 @@ export async function applyHostingSubscriptionFromStripe(opts: {
       ...(hostingDunningReminderSentAt !== undefined
         ? { hostingDunningReminderSentAt }
         : {}),
-      ...(clearMarketplaceSuspension && !paused
-        ? { marketplaceSuspendedAt: null }
-        : {}),
+      ...gracePatch,
     },
   });
   if (subscriptionStatus === "ACTIVE" && !paused) {

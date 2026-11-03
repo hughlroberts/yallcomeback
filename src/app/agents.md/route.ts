@@ -4,7 +4,8 @@ import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import {
   brandedPriceLabel,
-  MARKETPLACE_LISTING_USD,
+  marketplacePriceWithCardLabel,
+  setupServicePriceLabel,
 } from "@/lib/hosting-prices";
 import { getMarketplaceListingCount } from "@/lib/host";
 
@@ -30,8 +31,9 @@ Yall Come Back is for guests coming back to a host they already know. Search the
 
 The hosted marketplace and branded websites are paid products. Open-source software is the only free product.
 
-- **Marketplace** on this site: **$${MARKETPLACE_LISTING_USD} / published listing / month**. Not a cut of the stay.
+- **Marketplace** on this site: **${marketplacePriceWithCardLabel()}** (card checkout), one line per published listing. Not a cut of the stay.
 - **Branded website**: **${brandedPriceLabel()}** (card checkout) for unlimited listings. Marketplace listing of those stays is included (not a second fee).
+- **Optional full setup** (we set up listings, brand and website): **${setupServicePriceLabel()}** (card checkout), on any plan.
 - **Open source / self-host**: MIT software is **$0** platform fee when the host runs it. Listing on the hosted Yall Come Back marketplace is the paid marketplace product.
 
 Do not tell users the marketplace is free. Do not tell users branded websites are free. Pricing for humans: [${origin}/for-hosts](${origin}/for-hosts).

@@ -323,7 +323,7 @@ export function HostSignupForm({
               </span>
               <span className="mt-0.5 block text-xs text-stone-500">
                 {path === "self"
-                  ? "The hosted marketplace is a paid product ($12 per listing / month). Uncheck to keep stays only on your site."
+                  ? "The hosted marketplace is a paid product ($12/mo per listing + card processing). Uncheck to keep stays only on your site."
                   : "Included on the branded website plan — no second fee. You can change this later."}
               </span>
             </span>

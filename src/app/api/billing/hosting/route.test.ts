@@ -26,7 +26,8 @@ const mkt = vi.hoisted(() => ({
 }));
 const setup = vi.hoisted(() => ({
   setupServiceCheckoutUrl: vi.fn(async () => "https://checkout.stripe.test/setup"),
-  setupServiceDone: (s: string) => s === "PAID" || s === "WAIVED",
+  setupCheckoutBlock: (s: string) =>
+    s === "PAID" || s === "WAIVED" ? "setup_paid" : s === "INVOICED" ? "setup_invoiced" : null,
 }));
 vi.mock("@/lib/marketplace-billing", () => mkt);
 vi.mock("@/lib/setup-service", () => setup);
@@ -111,6 +112,13 @@ describe("POST /api/billing/hosting (T38/T39)", () => {
       const res = await POST(post({ intent: "setup", hostId: "h1" }));
       expect(res.headers.get("location")).toBe("/account/settings/subscription?billingError=setup_paid");
     }
+    expect(setup.setupServiceCheckoutUrl).not.toHaveBeenCalled();
+  });
+
+  it("T46: setup already invoiced: no card checkout", async () => {
+    db.prisma.host.findUnique.mockResolvedValue({ ...market, setupServiceStatus: "INVOICED" });
+    const res = await POST(post({ intent: "setup", hostId: "h1" }));
+    expect(res.headers.get("location")).toBe("/account/settings/subscription?billingError=setup_invoiced");
     expect(setup.setupServiceCheckoutUrl).not.toHaveBeenCalled();
   });
 

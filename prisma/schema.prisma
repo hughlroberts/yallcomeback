@@ -303,6 +303,10 @@ model Host {
   setupServiceCheckoutSessionId String?
   /// T45: when the platform team was emailed about the card setup purchase.
   setupServiceAdminNotifiedAt   DateTime?
+  /// T46: open (unpaid) setup Checkout session, reused or expired before a
+  /// new one is made so two tabs cannot both pay.
+  setupServiceOpenSessionId     String?
+  setupServicePayments          SetupServicePayment[]
 
   /// T45: Marketplace card billing. End of the 14-day "Add card" grace for a
   /// Marketplace brand with no card subscription. Set on first view / first
@@ -1081,4 +1085,22 @@ model AnalyticsEvent {
   @@index([listingId, createdAt])
   @@index([bookingId, name])
   @@map("events")
+}
+
+/// T46: every paid $500 setup Checkout session (unique per session, so a
+/// replayed webhook records nothing twice). A second paid session for the
+/// same brand is kept with duplicate = true and the admin is alerted; it is
+/// never refunded automatically.
+model SetupServicePayment {
+  id              String   @id @default(cuid())
+  hostId          String
+  host            Host     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  sessionId       String   @unique
+  paymentIntentId String?
+  amountCents     Int?
+  duplicate       Boolean  @default(false)
+  adminAlertedAt  DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([hostId])
 }

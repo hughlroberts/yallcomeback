@@ -14,7 +14,9 @@ vi.mock("@/lib/db", () => ({ prisma: db }));
 import {
   hostingPeriodAfterPayment,
   markHostingInvoicePaid,
+  paysByCardMonthly,
 } from "@/lib/hosting-billing";
+import { invoiceSkippedNotice } from "@/lib/hosting-billing-notice";
 
 const d = (s: string) => new Date(`${s}T12:00:00Z`);
 
@@ -94,5 +96,31 @@ describe("markHostingInvoicePaid", () => {
     for (const c of db.host.update.mock.calls) {
       expect((c[0] as { data: { currentPeriodEnd: Date } }).data.currentPeriodEnd).toEqual(d("2026-11-30"));
     }
+  });
+});
+
+describe("invoice skipped for card-paying Marketplace brands (T46)", () => {
+  const market = {
+    hostingMode: "PLATFORM",
+    sitePresence: "STAYLOCAL",
+    stripeSubscriptionId: "sub_1",
+    stripeSubscriptionStatus: "active",
+  };
+  it("a live Marketplace card subscription pays by card", () => {
+    expect(paysByCardMonthly(market)).toBe(true);
+    expect(paysByCardMonthly({ ...market, stripeSubscriptionStatus: "past_due" })).toBe(true);
+  });
+  it("no card, ended card, or Branded: an invoice is allowed", () => {
+    expect(paysByCardMonthly({ ...market, stripeSubscriptionId: null })).toBe(false);
+    expect(paysByCardMonthly({ ...market, stripeSubscriptionStatus: "canceled" })).toBe(false);
+    expect(paysByCardMonthly({ ...market, sitePresence: "CUSTOM" })).toBe(false);
+  });
+  it("notice text names the brand and says why", () => {
+    expect(invoiceSkippedNotice("approved", "QA Marketplace Test")).toBe(
+      "QA Marketplace Test is approved. No invoice was sent: QA Marketplace Test already pays by card each month, so an invoice would bill it twice.",
+    );
+    expect(invoiceSkippedNotice("invoice", "")).toMatch(/^No invoice was sent: This brand/);
+    expect(invoiceSkippedNotice("other", "QA")).toBeNull();
+    expect(invoiceSkippedNotice(null, "QA")).toBeNull();
   });
 });

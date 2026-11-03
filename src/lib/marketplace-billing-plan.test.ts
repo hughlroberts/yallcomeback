@@ -9,6 +9,7 @@ import {
   marketplaceCardState,
   marketplaceFeeCents,
   marketplaceGraceEndFrom,
+  marketplaceGracePatchForStatus,
   marketplaceListingProductId,
   marketplaceNeedsCard,
   marketplaceUnitCents,
@@ -209,5 +210,37 @@ describe("Marketplace grace and suspension (T45)", () => {
       shouldRestoreMarketplace({ ...suspended, stripeSubscriptionId: "sub_1", stripeSubscriptionStatus: "active" }),
     ).toBe(true);
     expect(marketplaceCardState(suspended, now)).toEqual({ kind: "suspended", since: now });
+  });
+});
+
+describe("marketplaceGracePatchForStatus (T46)", () => {
+  const now = new Date("2026-11-03T12:00:00Z");
+  const market = {
+    hostingMode: "PLATFORM" as const,
+    sitePresence: "STAYLOCAL" as "STAYLOCAL" | "CUSTOM" | "BOTH",
+    stripeSubscriptionId: "sub_1" as string | null,
+  };
+  it("active or trialing clears grace and hide", () => {
+    for (const s of ["active", "trialing", "ACTIVE"]) {
+      expect(marketplaceGracePatchForStatus(market, s, now)).toEqual({
+        marketplaceGraceEndsAt: null,
+        marketplaceSuspendedAt: null,
+      });
+    }
+  });
+  it("ended subscription starts a fresh 14 days", () => {
+    for (const s of ["canceled", "incomplete_expired"]) {
+      expect(marketplaceGracePatchForStatus(market, s, now)).toEqual({
+        marketplaceGraceEndsAt: new Date(now.getTime() + 14 * 86400000),
+        marketplaceSuspendedAt: null,
+      });
+    }
+  });
+  it("no change for replays, Branded, or other statuses", () => {
+    expect(marketplaceGracePatchForStatus({ ...market, stripeSubscriptionId: null }, "canceled", now)).toEqual({});
+    expect(marketplaceGracePatchForStatus({ ...market, sitePresence: "CUSTOM" }, "canceled", now)).toEqual({});
+    for (const s of ["past_due", "unpaid", "paused", null]) {
+      expect(marketplaceGracePatchForStatus(market, s, now)).toEqual({});
+    }
   });
 });

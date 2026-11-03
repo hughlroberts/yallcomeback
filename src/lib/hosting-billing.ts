@@ -51,6 +51,26 @@ export function hostingPeriodAfterPayment(opts: {
   return { start, end };
 }
 
+export const CARD_BILLED_INVOICE_ERROR =
+  "This brand pays by card each month. Do not send an invoice.";
+
+/**
+ * T45/T46: a Marketplace brand with a live card subscription. Stripe bills
+ * it every month, so a manual hosting invoice is skipped (never sent).
+ */
+export function paysByCardMonthly(host: {
+  hostingMode: string;
+  sitePresence: string;
+  stripeSubscriptionId: string | null;
+  stripeSubscriptionStatus: string | null;
+}): boolean {
+  return (
+    host.hostingMode === "PLATFORM" &&
+    host.sitePresence === "STAYLOCAL" &&
+    hasLiveCardSubscription(host)
+  );
+}
+
 export async function createHostingInvoiceForHost(opts: {
   hostId: string;
   planId?: string | null;
@@ -65,12 +85,8 @@ export async function createHostingInvoiceForHost(opts: {
   if (!host) throw new Error("Host not found");
   // T45: a Marketplace brand on a card subscription is billed by Stripe each
   // month. A manual invoice on top would bill it twice.
-  if (
-    host.hostingMode === "PLATFORM" &&
-    host.sitePresence === "STAYLOCAL" &&
-    hasLiveCardSubscription(host)
-  ) {
-    throw new Error("This brand pays by card each month. Do not send an invoice.");
+  if (paysByCardMonthly(host)) {
+    throw new Error(CARD_BILLED_INVOICE_ERROR);
   }
 
   const planId = opts.planId || host.planId;

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const db = vi.hoisted(() => ({
   prisma: {
     host: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
-    hostingPlan: { findFirst: vi.fn() },
+    hostingPlan: { findFirst: vi.fn<(...a: unknown[]) => Promise<{ id: string } | null>>(async () => null) },
   },
 }));
 const stripe = vi.hoisted(() => {
@@ -35,6 +35,7 @@ vi.mock("@/lib/features", () => ({ canonicalSiteOrigin: () => "https://ycb.test"
 
 import {
   applyHostingCheckoutSession,
+  applyHostingSubscriptionFromStripe,
   brandedUpgradeCheckoutUrl,
   endReplacedSubscription,
 } from "./platform-billing";
@@ -172,5 +173,66 @@ describe("endReplacedSubscription (T45)", () => {
   it("treats a missing subscription as already ended", async () => {
     stripe.client.subscriptions.retrieve.mockRejectedValue(new Error("No such subscription: 'sub_gone'"));
     expect(await endReplacedSubscription("sub_gone", "cus_1")).toBe(true);
+  });
+});
+
+describe("T46: grace date follows the card subscription", () => {
+  const expired = new Date("2026-10-01T00:00:00Z");
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.prisma.host.update.mockImplementation(async ({ data }) => ({ ...marketHost, ...data }));
+  });
+
+  it("resubscribe (active): clears the old expired grace date and the hide", async () => {
+    db.prisma.host.findUnique.mockResolvedValue({
+      ...marketHost,
+      marketplaceGraceEndsAt: expired,
+      marketplaceSuspendedAt: expired,
+      plan: { monthlyPrice: 12, slug: "marketplace" },
+    });
+    await applyHostingSubscriptionFromStripe({ hostId: "h1", subscriptionId: "sub_new", stripeStatus: "active" });
+    const data = db.prisma.host.update.mock.calls[0][0].data;
+    expect(data.marketplaceGraceEndsAt).toBeNull();
+    expect(data.marketplaceSuspendedAt).toBeNull();
+  });
+
+  it("subscription ends: a fresh 14-day window, not the old date", async () => {
+    db.prisma.host.findUnique.mockResolvedValue({
+      ...marketHost,
+      stripeSubscriptionId: "sub_1",
+      stripeSubscriptionStatus: "active",
+      marketplaceGraceEndsAt: expired,
+    });
+    const before = Date.now();
+    await applyHostingSubscriptionFromStripe({ hostId: "h1", subscriptionId: "sub_1", stripeStatus: "canceled" });
+    const data = db.prisma.host.update.mock.calls[0][0].data;
+    const ends = (data.marketplaceGraceEndsAt as Date).getTime();
+    expect(ends).toBeGreaterThanOrEqual(before + 14 * 86400000 - 1000);
+    expect(data.marketplaceSuspendedAt).toBeNull();
+    expect(data.stripeSubscriptionId).toBeNull();
+  });
+
+  it("a replayed cancel after the sub id is gone does not restart the window", async () => {
+    db.prisma.host.findUnique.mockResolvedValue({
+      ...marketHost,
+      stripeSubscriptionId: null,
+      stripeSubscriptionStatus: "canceled",
+      marketplaceGraceEndsAt: expired,
+    });
+    await applyHostingSubscriptionFromStripe({ hostId: "h1", subscriptionId: "sub_1", stripeStatus: "canceled" });
+    const data = db.prisma.host.update.mock.calls[0][0].data;
+    expect("marketplaceGraceEndsAt" in data).toBe(false);
+  });
+
+  it("past_due keeps the dates as they are", async () => {
+    db.prisma.host.findUnique.mockResolvedValue({
+      ...marketHost,
+      stripeSubscriptionId: "sub_1",
+      stripeSubscriptionStatus: "active",
+      marketplaceGraceEndsAt: expired,
+    });
+    await applyHostingSubscriptionFromStripe({ hostId: "h1", subscriptionId: "sub_1", stripeStatus: "past_due" });
+    const data = db.prisma.host.update.mock.calls[0][0].data;
+    expect("marketplaceGraceEndsAt" in data).toBe(false);
   });
 });

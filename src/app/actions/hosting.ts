@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 import {
   createHostingInvoiceForHost,
   markHostingInvoicePaid,
+  paysByCardMonthly,
 } from "@/lib/hosting-billing";
 import { applyMarketplaceOptIn } from "@/lib/hosting";
 import {
@@ -148,6 +150,9 @@ export async function approveHost(formData: FormData) {
 
   if (!planId) throw new Error("Select a hosting plan for platform-hosted sites");
 
+  // T46: a brand that already pays by card keeps its status and never gets a
+  // manual invoice on top (that would bill it twice).
+  const cardBilled = paysByCardMonthly({ ...host, hostingMode: "PLATFORM" });
   await prisma.host.update({
     where: { id: hostId },
     data: {
@@ -156,20 +161,23 @@ export async function approveHost(formData: FormData) {
       approvalNotes,
       reviewedAt: new Date(),
       planId,
-      subscriptionStatus: issueInvoice ? "PENDING_PAYMENT" : "PENDING_PAYMENT",
+      subscriptionStatus: cardBilled ? host.subscriptionStatus : "PENDING_PAYMENT",
       active: true,
     },
   });
 
+  revalidateHosting(host.slug);
+  if (issueInvoice && cardBilled) {
+    redirect(invoiceSkippedHref("approved", host.slug));
+  }
   if (issueInvoice) {
     await createHostingInvoiceForHost({
       hostId,
       planId,
       notes: "First invoice after approval",
     });
+    revalidateHosting(host.slug);
   }
-
-  revalidateHosting(host.slug);
 }
 
 export async function rejectHost(formData: FormData) {
@@ -227,6 +235,9 @@ export async function issueHostingInvoice(formData: FormData) {
     throw new Error("Self-hosted hosts do not pay platform hosting");
   }
 
+  if (paysByCardMonthly(host)) {
+    redirect(invoiceSkippedHref("invoice", host.slug));
+  }
   await createHostingInvoiceForHost({ hostId, planId, notes });
   revalidateHosting(host.slug);
 }
@@ -508,4 +519,10 @@ export async function updateHostOps(formData: FormData) {
 
   revalidateHosting(host.slug);
   revalidatePath(`/ops/hosting/${hostId}`);
+}
+
+/** Platform admin hosting page with the "invoice skipped" notice. */
+function invoiceSkippedHref(kind: "approved" | "invoice", slug: string): string {
+  const q = new URLSearchParams({ invoiceSkipped: kind, brand: slug });
+  return `/ops/hosting?${q.toString()}`;
 }

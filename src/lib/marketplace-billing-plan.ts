@@ -298,3 +298,41 @@ export function shouldSuspendMarketplace(
 export function shouldRestoreMarketplace(host: MarketplaceGraceHost): boolean {
   return Boolean(host.marketplaceSuspendedAt) && !marketplaceNeedsCard(host);
 }
+
+export type MarketplaceGracePatch = {
+  marketplaceGraceEndsAt?: Date | null;
+  marketplaceSuspendedAt?: null;
+};
+
+/**
+ * T46 — grace fields to write when Stripe reports a hosting subscription
+ * status for the brand's CURRENT subscription.
+ * - active / trialing: card in place → clear the grace date and show the
+ *   listings again (an old, expired date can never hide a paying brand).
+ * - canceled / incomplete_expired: the card subscription ended → start a
+ *   FRESH 14-day window (never reuse an expired date) and keep listings
+ *   visible until it ends. Only when the brand still had that subscription
+ *   on file, so a replayed event does not restart the window.
+ * - anything else (past_due, unpaid, paused …): no change.
+ */
+export function marketplaceGracePatchForStatus(
+  host: Pick<MarketplaceGraceHost, "hostingMode" | "sitePresence" | "stripeSubscriptionId">,
+  stripeStatus: string | null | undefined,
+  now: Date = new Date(),
+): MarketplaceGracePatch {
+  const raw = (stripeStatus || "").toLowerCase();
+  if (raw === "active" || raw === "trialing") {
+    return { marketplaceGraceEndsAt: null, marketplaceSuspendedAt: null };
+  }
+  if (raw === "canceled" || raw === "incomplete_expired") {
+    if (!host.stripeSubscriptionId) return {};
+    if (host.hostingMode !== "PLATFORM" || host.sitePresence !== "STAYLOCAL") {
+      return {};
+    }
+    return {
+      marketplaceGraceEndsAt: marketplaceGraceEndFrom(now),
+      marketplaceSuspendedAt: null,
+    };
+  }
+  return {};
+}

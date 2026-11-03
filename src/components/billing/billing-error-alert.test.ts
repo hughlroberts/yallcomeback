@@ -13,6 +13,7 @@ const CODES = [
   "not_marketplace",
   "not_branded",
   "setup_paid",
+  "setup_invoiced",
   "failed",
   "some_unknown_code",
 ];

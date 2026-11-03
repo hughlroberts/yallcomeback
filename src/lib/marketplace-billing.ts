@@ -436,7 +436,7 @@ export async function ensureMarketplaceGrace(
 export async function restoreMarketplaceListings(hostId: string): Promise<boolean> {
   const res = await prisma.host.updateMany({
     where: { id: hostId, marketplaceSuspendedAt: { not: null } },
-    data: { marketplaceSuspendedAt: null },
+    data: { marketplaceSuspendedAt: null, marketplaceGraceEndsAt: null },
   });
   return res.count > 0;
 }
@@ -444,6 +444,7 @@ export async function restoreMarketplaceListings(hostId: string): Promise<boolea
 export type MarketplaceGraceResult = {
   skipped: boolean;
   graceStarted: number;
+  graceCleared: number;
   suspended: string[];
   restored: string[];
   errors: string[];
@@ -460,6 +461,7 @@ export async function runMarketplaceGraceJob(
   const out: MarketplaceGraceResult = {
     skipped: false,
     graceStarted: 0,
+    graceCleared: 0,
     suspended: [],
     restored: [],
     errors: [],
@@ -473,9 +475,19 @@ export async function runMarketplaceGraceJob(
     try {
       if (shouldRestoreMarketplace(host)) {
         if (await restoreMarketplaceListings(host.id)) out.restored.push(host.slug);
+      }
+      if (!marketplaceNeedsCard(host)) {
+        // T46: a paying (or $0) brand never keeps an old grace date, so a
+        // later cancel starts a fresh window instead of reusing it.
+        if (host.marketplaceGraceEndsAt) {
+          const res = await prisma.host.updateMany({
+            where: { id: host.id, marketplaceGraceEndsAt: { not: null } },
+            data: { marketplaceGraceEndsAt: null },
+          });
+          out.graceCleared += res.count;
+        }
         continue;
       }
-      if (!marketplaceNeedsCard(host)) continue;
       if (!host.marketplaceGraceEndsAt) {
         await ensureMarketplaceGrace(host, now);
         out.graceStarted += 1;

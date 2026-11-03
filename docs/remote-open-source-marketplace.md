@@ -6,7 +6,7 @@ Yall Come Back marketplace at [yallcomeback.app](https://www.yallcomeback.app)
 (or your production origin).
 
 The MIT software is free. Listing on the **hosted** Yall Come Back marketplace
-is a **paid** product ($12 per published listing / month). You can self-host
+is a **paid** product ($12/mo per listing + card processing). You can self-host
 forever with zero marketplace connection.
 
 ---
@@ -46,8 +46,8 @@ https://www.yallcomeback.app/for-hosts?path=self
 ```
 
 - Choose **Free self-host** ($0 / month platform fee).
-- Optionally check **List on the Yall Come Back marketplace** (paid: $12 / listing / month).
-- Optionally request the **$500 full setup** one-time add-on (separate from hosting).
+- Optionally check **List on the Yall Come Back marketplace** (paid: $12/mo per listing + card processing).
+- Optionally request the **Full setup** add-on ($500 one-time + $15.25 card processing) (separate from hosting).
 - After approval you can sign in and open **Admin**.
 
 ### 2. Enable marketplace + create an API key

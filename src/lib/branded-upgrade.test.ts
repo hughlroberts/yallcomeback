@@ -58,7 +58,7 @@ describe("branded upgrade helpers (T38)", () => {
   });
 
   it("every error code has a message", () => {
-    for (const c of ["stripe_off", "price_missing", "no_email", "forbidden", "has_subscription", "not_marketplace", "not_branded", "setup_paid", "failed"]) {
+    for (const c of ["stripe_off", "price_missing", "no_email", "forbidden", "has_subscription", "not_marketplace", "not_branded", "setup_paid", "setup_invoiced", "failed"]) {
       expect(billingErrorMessage(c)).toBeTruthy();
     }
     expect(billingErrorMessage("nope")).toMatch(/Nothing changed/);
@@ -77,6 +77,7 @@ describe("billingErrorMessage (T38b)", () => {
       "not_marketplace",
       "not_branded",
       "setup_paid",
+      "setup_invoiced",
       "failed",
     ]) {
       expect(billingErrorMessage(code), code).toMatch(/\w{3,}.*\./);

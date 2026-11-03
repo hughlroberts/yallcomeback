@@ -94,9 +94,9 @@ export async function runAllCronJobs(): Promise<{
     const { runMarketplaceGraceJob, maybeRunDailyMarketplaceSync } =
       await import("@/lib/marketplace-billing");
     const grace = await runMarketplaceGraceJob();
-    if (grace.suspended.length || grace.restored.length || grace.graceStarted) {
+    if (grace.suspended.length || grace.restored.length || grace.graceStarted || grace.graceCleared) {
       console.log(
-        `[cron:marketplace-grace] started ${grace.graceStarted}, hidden ${grace.suspended.join(",") || "-"}, shown again ${grace.restored.join(",") || "-"}`,
+        `[cron:marketplace-grace] started ${grace.graceStarted}, cleared ${grace.graceCleared}, hidden ${grace.suspended.join(",") || "-"}, shown again ${grace.restored.join(",") || "-"}`,
       );
     }
     for (const err of grace.errors) console.error("[cron:marketplace-grace]", err);
