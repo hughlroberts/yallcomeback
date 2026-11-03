@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildOpenApiDocument } from "./agent/openapi";
@@ -22,9 +22,11 @@ const DOC_FILES = [
   "src/app/agents.md/route.ts",
   "src/app/help/syndication-api-key/page.tsx",
   "src/components/help/help-articles.tsx",
-  "AGENTS.md",
   "docs/remote-open-source-marketplace.md",
 ];
+// Root *.md files are left out of the Docker build context (.dockerignore),
+// and the image runs vitest. Check them only when they are present.
+const ROOT_DOC_FILES = ["AGENTS.md"];
 const OLD = [
   /\$12 per\s+(published\s+)?listing\s*\/\s*month/,
   /\$12 \/ (published )?listing \/ month/,
@@ -44,6 +46,12 @@ describe("price wording (T46)", () => {
   });
 
   it.each(DOC_FILES)("%s has no old price wording", (file) => {
+    const src = read(file);
+    for (const re of OLD) expect(src, `${file} ${re}`).not.toMatch(re);
+  });
+
+  it.each(ROOT_DOC_FILES)("%s has no old price wording (when present)", (file) => {
+    if (!existsSync(join(process.cwd(), file))) return;
     const src = read(file);
     for (const re of OLD) expect(src, `${file} ${re}`).not.toMatch(re);
   });
