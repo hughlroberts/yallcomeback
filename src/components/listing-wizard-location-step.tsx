@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import {
   geocodeListingAddress,
@@ -72,7 +71,6 @@ export function ListingWizardLocationStep({
   serverUpdatedAt,
   initial,
 }: Props) {
-  const router = useRouter();
   const draftKey = `property-${propertyId}`;
   const { values, setValues } = useListingWizardAutosave<LocationFields>({
     draftKey,
@@ -539,16 +537,24 @@ export function ListingWizardLocationStep({
             <WizardMissingFields missing={missing} />
           ) : null}
           <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                if (phase === "visibility") setPhase("pin");
-                else router.push(`/admin/properties/${propertyId}/setup?step=2`);
-              }}
-              className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
-            >
-              Back
-            </button>
+            {phase === "visibility" ? (
+              // Back inside this step (visibility → pin) stays on the page.
+              <button
+                type="button"
+                onClick={() => setPhase("pin")}
+                className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
+              >
+                Back
+              </button>
+            ) : (
+              // Back to the previous step is a link, same as every other step.
+              <Link
+                href={`/admin/properties/${propertyId}/setup?step=2`}
+                className="text-sm font-semibold text-stone-800 underline-offset-2 hover:underline"
+              >
+                Back
+              </Link>
+            )}
             <button
               type="button"
               onClick={phase === "pin" ? onNextFromPin : onSave}
