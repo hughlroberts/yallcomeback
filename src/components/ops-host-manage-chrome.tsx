@@ -45,7 +45,7 @@ export function OpsHostManageChrome({
             href="/ops/hosting"
             className="rounded-full bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
           >
-            ← Exit to Ops Panel
+            ← Platform admin
           </Link>
         </div>
       </div>

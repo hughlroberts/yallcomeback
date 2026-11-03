@@ -66,7 +66,7 @@ export default async function OpsLayout({
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-2.5 sm:px-6">
             <div className="mr-2">
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Ops Panel
+                Platform admin
               </p>
               <Link
                 href="/ops"

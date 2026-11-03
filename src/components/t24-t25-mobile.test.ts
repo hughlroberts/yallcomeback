@@ -26,3 +26,10 @@ describe("T25 compact admin header", () => {
     expect(nav).toContain('aria-label="Book a stay"');
   });
 });
+
+describe("Platform admin labels", () => {
+  it("no visible Ops Panel label remains", () => {
+    expect(read("src/components/ops-host-manage-chrome.tsx")).not.toContain("Ops Panel");
+    expect(read("src/app/ops/layout.tsx")).not.toContain("Ops Panel");
+  });
+});
