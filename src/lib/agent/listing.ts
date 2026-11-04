@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { marketplacePropertyWhere } from "@/lib/host";
 import { calculateQuote } from "@/lib/pricing";
 import { clampGuests } from "@/lib/extra-guests";
+import { petsForListingLink } from "@/lib/pets";
+import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import { agentCheckoutBookPath } from "@/lib/agent/book-path";
 import { publicListingText } from "@/lib/listing-public-text";
 import { listingHrefWithSearch } from "@/lib/listing-href";
@@ -135,6 +137,12 @@ export async function getAgentListingDetail(
   // throw SearchInputError, which the API answers with a 400.
   const dates = checkSearchDates(opts?.checkIn, opts?.checkOut);
   if (!dates.ok) throw new SearchInputError(dates.code, dates.error);
+  if (opts?.pets != null && opts.pets > SEARCH_MAX_PETS) {
+    throw new SearchInputError(
+      "invalid_pets",
+      `pets must be a whole number from 0 to ${SEARCH_MAX_PETS} (got "${opts.pets}").`,
+    );
+  }
 
   const property = await prisma.property.findFirst({
     where: {
@@ -172,12 +180,15 @@ export async function getAgentListingDetail(
     opts?.guests != null && Number.isFinite(opts.guests) && opts.guests >= 1
       ? clampGuests(opts.guests, property.maxGuests).guests
       : undefined;
+  // Pets over this listing's max (or any pets when it takes none) are left
+  // out of url / bookUrl; the quote's error says why.
+  const partyPets = petsForListingLink(property, opts?.pets);
 
   const path = listingHrefWithSearch(property.slug, property.host.slug, {
     checkIn: opts?.checkIn,
     checkOut: opts?.checkOut,
     guests: partyGuests,
-    pets: opts?.pets,
+    pets: partyPets,
   });
 
   let requested: AgentListingDetail["availability"]["requested"] = null;
@@ -289,7 +300,7 @@ export async function getAgentListingDetail(
         checkIn: opts?.checkIn,
         checkOut: opts?.checkOut,
         guests: partyGuests,
-        pets: opts?.pets,
+        pets: partyPets,
       }) ?? `/book/${encodeURIComponent(property.slug)}`,
     ),
     apiUrl: absoluteUrl(

@@ -40,9 +40,15 @@ describe("partyFromParams", () => {
       expect(partyFromParams(from(`guests=${g}`)), g).toMatchObject({ ok: false, code: "invalid_guests" });
     }
   });
-  it("invalid_pets for -1, abc, 1.5, 1e1", () => {
-    for (const p of ["-1", "abc", "1.5", "1e1"]) {
+  it("invalid_pets for -1, abc, 1.5, 1e1, 11, 99 (max 10 in the message)", () => {
+    for (const p of ["-1", "abc", "1.5", "1e1", "11", "99"]) {
       expect(partyFromParams(from(`guests=2&pets=${p}`)), p).toMatchObject({ ok: false, code: "invalid_pets" });
     }
+  });
+  it("accepts pets=10 and names the max for pets=99", () => {
+    expect(partyFromParams(from("pets=10"))).toMatchObject({ ok: true, pets: 10 });
+    const r = partyFromParams(from("pets=99"));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("0 to 10");
   });
 });

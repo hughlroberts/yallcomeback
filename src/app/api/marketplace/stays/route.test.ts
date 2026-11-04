@@ -74,7 +74,7 @@ describe("GET /api/marketplace/stays", () => {
       expect(res.status, q).toBe(400);
       expect(await res.json(), q).toMatchObject({ code: "invalid_guests" });
     }
-    for (const q of ["pets=abc", "pets=-1", "pets=1.5"]) {
+    for (const q of ["pets=abc", "pets=-1", "pets=1.5", "pets=99"]) {
       const res = await get(q);
       expect(res.status, q).toBe(400);
       expect(await res.json(), q).toMatchObject({ code: "invalid_pets" });

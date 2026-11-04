@@ -1,3 +1,5 @@
+import { SEARCH_MAX_PETS } from "@/lib/search-filters";
+
 /**
  * Pet fee and pet rules for listings.
  * Guest-facing copy should stay short (ASD-STE100 for help docs).
@@ -17,8 +19,21 @@ export type PetPolicyInput = {
   maxPets?: number | null;
 };
 
-/** Practical upper bound when maxPets is 0 (unlimited). */
-export const PET_SELECT_FALLBACK_MAX = 10;
+/** Practical upper bound when maxPets is 0 (unlimited): the search max. */
+export const PET_SELECT_FALLBACK_MAX = SEARCH_MAX_PETS;
+
+/**
+ * Pets to carry into a listing / book link: only a count this listing can
+ * take (1..effectiveMaxPets). Over the listing max, or any pets on a no-pets
+ * listing, gives undefined so bookUrl never offers a stay the host refuses.
+ */
+export function petsForListingLink(
+  policy: PetPolicyInput,
+  pets: number | null | undefined,
+): number | undefined {
+  if (pets == null || !Number.isInteger(pets) || pets < 1) return undefined;
+  return pets <= effectiveMaxPets(policy) ? pets : undefined;
+}
 
 export function normalizePetFeeUnit(
   unit: PetFeeUnit | string | null | undefined,

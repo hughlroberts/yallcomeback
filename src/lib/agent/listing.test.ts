@@ -174,8 +174,8 @@ describe("API listing quote: extra-guest fee", () => {
 describe("API listing bookUrl keeps the party", () => {
   beforeEach(() => db.prisma.property.findFirst.mockReset());
 
-  it("carries dates, guests and pets into /book", async () => {
-    db.prisma.property.findFirst.mockResolvedValue(motel(10));
+  it("carries dates, guests and pets into /book (pet-friendly listing)", async () => {
+    db.prisma.property.findFirst.mockResolvedValue({ ...motel(10), petsAllowed: true, maxPets: 2 });
     const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
       ...dates,
       guests: 4,
@@ -258,6 +258,57 @@ describe("API listing dates follow the search rules", () => {
     await expect(
       getAgentListingDetail("https://x.test", "motel-room-2", opts),
     ).rejects.toMatchObject({ name: "SearchInputError", code });
+    expect(db.prisma.property.findFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe("T54b: pets over the listing max never reach url / bookUrl", () => {
+  beforeEach(() => db.prisma.property.findFirst.mockReset());
+  const withPets = (petsAllowed: boolean, maxPets: number) => ({
+    ...motel(0),
+    petsAllowed,
+    maxPets,
+    petFee: 20,
+  });
+
+  it("keeps pets=2 on a listing that takes 2", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(withPets(true, 2));
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
+      ...dates,
+      guests: 2,
+      pets: 2,
+    });
+    expect(d?.url).toContain("pets=2");
+    expect(d?.bookUrl).toContain("pets=2");
+  });
+
+  it("drops pets=3 on a maxPets 2 listing and the quote says why", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(withPets(true, 2));
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
+      ...dates,
+      guests: 2,
+      pets: 3,
+    });
+    expect(d?.url).not.toContain("pets=");
+    expect(d?.bookUrl ?? "").not.toContain("pets=");
+    expect(d?.availability.quote).toMatchObject({ error: expect.stringMatching(/pet/i) });
+  });
+
+  it("drops pets=1 on a no-pets listing", async () => {
+    db.prisma.property.findFirst.mockResolvedValue(withPets(false, 0));
+    const d = await getAgentListingDetail("https://x.test", "motel-room-2", {
+      ...dates,
+      guests: 2,
+      pets: 1,
+    });
+    expect(d?.url).not.toContain("pets=");
+    expect(d?.bookUrl ?? "").not.toContain("pets=");
+  });
+
+  it("rejects pets=99 (over the global max of 10) before any lookup", async () => {
+    await expect(
+      getAgentListingDetail("https://x.test", "motel-room-2", { ...dates, pets: 99 }),
+    ).rejects.toMatchObject({ code: "invalid_pets", message: expect.stringContaining("0 to 10") });
     expect(db.prisma.property.findFirst).not.toHaveBeenCalled();
   });
 });

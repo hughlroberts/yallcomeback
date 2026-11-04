@@ -131,7 +131,7 @@ describe("GET /api/v1/search", () => {
       expect(res.status, g).toBe(400);
       expect(await res.json(), g).toMatchObject({ ok: false, code: "invalid_guests" });
     }
-    for (const p of ["abc", "-1", "1.5"]) {
+    for (const p of ["abc", "-1", "1.5", "99", "11"]) {
       const res = await get(`guests=2&pets=${p}`);
       expect(res.status, p).toBe(400);
       expect(await res.json(), p).toMatchObject({ ok: false, code: "invalid_pets" });

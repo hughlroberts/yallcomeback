@@ -7,7 +7,7 @@ import {
 /** 400 for bad dates, shared by search and listing detail. */
 const badDatesResponse = {
   description:
-    "Bad input: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn), invalid_date (not YYYY-MM-DD), invalid_guests (guests not a whole number ≥ 1) or invalid_pets (pets not a whole number ≥ 0).",
+    "Bad input: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn), invalid_date (not YYYY-MM-DD), invalid_guests (guests not a whole number ≥ 1) or invalid_pets (pets not a whole number from 0 to 10).",
   content: {
     "application/json": {
       schema: {
@@ -33,7 +33,7 @@ const badDatesResponse = {
 
 const badSearchResponse = {
   description:
-    "Bad search input: past_dates, checkout_not_after_checkin or invalid_date for dates, invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number ≥ 1) or invalid_pets (pets not a whole number ≥ 0).",
+    "Bad search input: past_dates, checkout_not_after_checkin or invalid_date for dates, invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number ≥ 1) or invalid_pets (pets not a whole number from 0 to 10).",
   content: {
     "application/json": {
       schema: {
@@ -128,8 +128,9 @@ export function buildOpenApiDocument(origin: string) {
             {
               name: "pets",
               in: "query",
-              schema: { type: "integer", minimum: 0 },
-              description: "If > 0, only pet-friendly listings",
+              schema: { type: "integer", minimum: 0, maximum: 10 },
+              description:
+                "If > 0, only pet-friendly listings that take that many pets. Whole number 0–10; anything else is 400 invalid_pets.",
             },
             {
               name: "bedrooms",
@@ -216,7 +217,7 @@ export function buildOpenApiDocument(origin: string) {
                             bookUrl: {
                               type: "string",
                               description:
-                                "Human booking page. Keeps exact dates, guests and pets from the search.",
+                                "Human booking page. Keeps exact dates, guests and pets from the search (pets only when the listing takes that many).",
                             },
                             apiUrl: { type: "string" },
                             priceEstimate: {
@@ -343,8 +344,9 @@ export function buildOpenApiDocument(origin: string) {
             {
               name: "pets",
               in: "query",
-              schema: { type: "integer" },
-              description: "Pets for the quote. Kept in bookUrl.",
+              schema: { type: "integer", minimum: 0, maximum: 10 },
+              description:
+                "Pets for the quote. Whole number 0–10, else 400 invalid_pets. Kept in url/bookUrl only when the listing takes that many pets (maxPets); over the listing max it is left out and quote.error says why.",
             },
           ],
           responses: {
@@ -378,7 +380,7 @@ export function buildOpenApiDocument(origin: string) {
                           bookUrl: {
                             type: "string",
                             description:
-                              "Human booking page. Keeps checkIn/checkOut (when both are valid), guests and pets from the request.",
+                              "Human booking page. Keeps checkIn/checkOut (when both are valid), guests and pets from the request (pets only when the listing takes that many).",
                           },
                           apiUrl: { type: "string" },
                           availability: {

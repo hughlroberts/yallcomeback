@@ -14,11 +14,13 @@ import {
 } from "@/lib/agent/availability";
 import { absoluteUrl } from "@/lib/agent/origin";
 import { agentCheckoutBookPath } from "@/lib/agent/book-path";
+import { petsForListingLink } from "@/lib/pets";
 import {
   appendListingFilterParams,
   normalizeListingFilters,
   searchGuests,
   searchLimit,
+  SEARCH_MAX_PETS,
 } from "@/lib/search-filters";
 
 /** Bad search input (past or inverted dates, bad format) → HTTP 400. */
@@ -149,6 +151,12 @@ export async function agentSearch(
   const params = { ...rawParams, guests: searchGuests(rawParams.guests) };
   const dates = checkSearchDates(params.checkIn, params.checkOut);
   if (!dates.ok) throw new SearchInputError(dates.code, dates.error);
+  if (params.pets != null && params.pets > SEARCH_MAX_PETS) {
+    throw new SearchInputError(
+      "invalid_pets",
+      `pets must be a whole number from 0 to ${SEARCH_MAX_PETS} (got "${params.pets}").`,
+    );
+  }
   const take = searchLimit(params.take);
   const flexible = Boolean(params.flexible);
   let flexibilityDays = Math.min(
@@ -239,7 +247,8 @@ export async function agentSearch(
       checkIn: hasExactDates ? params.checkIn : undefined,
       checkOut: hasExactDates ? params.checkOut : undefined,
       guests: params.guests,
-      pets: params.pets,
+      // Only a pet count this listing takes reaches url / bookUrl.
+      pets: petsForListingLink(p, params.pets),
     };
     const path = listingHrefWithSearch(listingSlug, hostSlug, searchForHref);
     const url = absoluteUrl(origin, path);

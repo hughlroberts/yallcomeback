@@ -136,6 +136,8 @@ export function listingFilterLabels(f: ListingFilters): string[] {
 /** Default and max results per search response (agent API and stays API). */
 /** Largest party the search form takes (its guests input max). */
 export const SEARCH_MAX_GUESTS = 50;
+/** Most pets any search or listing link carries (the search form max). */
+export const SEARCH_MAX_PETS = 10;
 
 /** Whole guests from 1 to SEARCH_MAX_GUESTS, or undefined for none/junk. */
 export function searchGuests(
@@ -234,7 +236,8 @@ export type PartyParams =
  * Shared `guests` / `pets` parser for the public search and listing APIs
  * (/api/v1/search, /api/v1/listings/{slug}, /api/marketplace/stays).
  * Missing or empty = not sent. guests must be a whole number ≥ 1 and pets a
- * whole number ≥ 0; anything else (-5, abc, 2.5, 1e1) is a 400
+ * whole number from 0 to SEARCH_MAX_PETS (10); anything else (-5, abc, 2.5,
+ * 1e1, 99) is a 400
  * invalid_guests / invalid_pets, so a bad value is never quietly dropped
  * or carried into bookUrl.
  */
@@ -258,11 +261,11 @@ export function partyFromParams(
   }
   if (p) {
     const n = plainWholeNumber(p);
-    if (n == null) {
+    if (n == null || n > SEARCH_MAX_PETS) {
       return {
         ok: false,
         code: "invalid_pets",
-        error: `pets must be a whole number of 0 or more (got "${p.slice(0, 40)}").`,
+        error: `pets must be a whole number from 0 to ${SEARCH_MAX_PETS} (got "${p.slice(0, 40)}").`,
       };
     }
     pets = n;

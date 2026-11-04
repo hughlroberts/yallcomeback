@@ -71,3 +71,32 @@ describe("agentSearch priceEstimate.extraGuests", () => {
     });
   });
 });
+
+describe("T54b: search url / bookUrl only carry pets a listing takes", () => {
+  beforeEach(() => host.searchMarketplace.mockReset());
+
+  it("guards pets per result and rejects pets over 10", async () => {
+    const takesTwo = { ...motel, id: "p2", slug: "pets-two", petsAllowed: true, maxPets: 2 };
+    const takesOne = { ...motel, id: "p3", slug: "pets-one", petsAllowed: true, maxPets: 1 };
+    host.searchMarketplace.mockResolvedValue({
+      listings: [takesTwo, takesOne],
+      total: 2,
+      flexibleDates: null,
+    });
+    const r = await agentSearch("https://x.test", {
+      checkIn: ymd(40),
+      checkOut: ymd(42),
+      guests: 2,
+      pets: 2,
+    });
+    const bySlug = Object.fromEntries(r.listings.map((l) => [l.slug, l]));
+    expect(bySlug["pets-two"].url).toContain("pets=2");
+    expect(bySlug["pets-two"].bookUrl).toContain("pets=2");
+    expect(bySlug["pets-one"].url).not.toContain("pets=");
+    expect(bySlug["pets-one"].bookUrl ?? "").not.toContain("pets=");
+
+    await expect(
+      agentSearch("https://x.test", { guests: 2, pets: 99 }),
+    ).rejects.toMatchObject({ code: "invalid_pets" });
+  });
+});
