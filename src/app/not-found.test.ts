@@ -21,7 +21,7 @@ describe("site not-found page", () => {
   });
 
   it("is titled and kept out of search results", () => {
-    expect(metadata.title).toBe("Page not found");
+    expect((metadata.title as { absolute: string }).absolute).toMatch(/^Page not found · /);
     expect(metadata.robots).toEqual({ index: false });
   });
 });

@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-logo";
+import { PRODUCT_NAME } from "@/lib/features";
 
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME || PRODUCT_NAME;
+
+// R1104-14: absolute, so the brand suffix survives under /h/* where the
+// root title template does not apply to a missing host.
 export const metadata: Metadata = {
-  title: "Page not found",
+  title: { absolute: `Page not found · ${siteName}` },
   robots: { index: false },
 };
 
