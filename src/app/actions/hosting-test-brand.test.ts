@@ -107,3 +107,18 @@ describe("Mark / unmark test brand", () => {
     expect(db.host.update).toHaveBeenLastCalledWith({ where: { id: "h_qa" }, data: { isTestBrand: false } });
   });
 });
+
+describe("T50: a failed invoice shows a notice, not an error page", () => {
+  it("issueHostingInvoice: create fails, redirect to invoiceSkipped=failed (brand not touched here)", async () => {
+    vi.stubEnv("STRIPE_SECRET_KEY", TEST);
+    db.host.findUnique.mockResolvedValue(brand({ isTestBrand: false }));
+    billing.createHostingInvoiceForHost.mockRejectedValueOnce(new Error("stripe down"));
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(issueHostingInvoice(form({ hostId: "h_qa" }))).rejects.toMatchObject({
+      url: "/ops/hosting?invoiceSkipped=failed&brand=qa-tester-two",
+    });
+    expect(db.host.update).not.toHaveBeenCalled();
+    expect(err).toHaveBeenCalledWith("[hosting-invoice] invoice not created", expect.objectContaining({ brand: "qa-tester-two" }));
+    err.mockRestore();
+  });
+});

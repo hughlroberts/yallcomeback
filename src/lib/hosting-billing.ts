@@ -139,7 +139,9 @@ export async function createHostingInvoiceForHost(opts: {
 
   // Complimentary / $0 plans: keep host as a customer; still charge add-on if active
   if (amount <= 0) {
-    const record = await prisma.hostingInvoice.create({
+    // T50: invoice row and brand update land together or not at all.
+    return prisma.$transaction(async (tx) => {
+    const record = await tx.hostingInvoice.create({
       data: {
         hostId: host.id,
         planId: plan.id,
@@ -158,7 +160,7 @@ export async function createHostingInvoiceForHost(opts: {
           `Complimentary hosting · no charge · ${lineDescription}`,
       },
     });
-    await prisma.host.update({
+    await tx.host.update({
       where: { id: host.id },
       data: {
         planId: plan.id,
@@ -169,6 +171,7 @@ export async function createHostingInvoiceForHost(opts: {
       },
     });
     return record;
+    });
   }
 
   let stripeInvoiceId: string | null = null;
@@ -178,107 +181,103 @@ export async function createHostingInvoiceForHost(opts: {
 
   const stripe = opts.sendStripe !== false ? getStripe() : null;
 
+  // T50: Stripe objects made so far, so a failure part way can clean up and
+  // leave nothing billed and nothing changed on the brand.
+  const createdItemIds: string[] = [];
+  let draftInvoiceId: string | null = null;
+  let finalizedOpen = false;
+
   if (stripe && billingEmail) {
-    const customerId = await ensurePlatformCustomer({
-      id: host.id,
-      name: host.name,
-      slug: host.slug,
-      stripeCustomerId: host.stripeCustomerId,
-      contactEmail: host.contactEmail,
-      billingEmail: host.billingEmail,
-      users: host.users,
-    });
-    const chargeCard = await customerHasCardOnFile(customerId);
-
-    // Separate Stripe line items so hosting and the $35 add-on stay distinct
-    if (hostingAmount > 0) {
-      await stripe.invoiceItems.create({
-        customer: customerId,
-        amount: toStripeAmount(hostingAmount),
-        currency: plan.currency.toLowerCase(),
-        description: hostingLine,
+    try {
+      const customerId = await ensurePlatformCustomer({
+        id: host.id,
+        name: host.name,
+        slug: host.slug,
+        stripeCustomerId: host.stripeCustomerId,
+        contactEmail: host.contactEmail,
+        billingEmail: host.billingEmail,
+        users: host.users,
       });
-    }
-    if (addonAmount > 0) {
-      await stripe.invoiceItems.create({
-        customer: customerId,
-        amount: toStripeAmount(addonAmount),
-        currency: plan.currency.toLowerCase(),
-        description: `${PRICING_INTELLIGENCE_ADDON_LABEL} — $${addonAmount}/mo add-on (not included in hosting)`,
-      });
-    }
-    const processingCents = processingFeeToNetCents(toStripeAmount(amount));
-    if (processingCents > 0) {
-      await stripe.invoiceItems.create({
-        customer: customerId,
-        amount: processingCents,
-        currency: plan.currency.toLowerCase(),
-        description: `${CARD_PROCESSING_LINE} — so Yall Come Back nets the listed hosting price`,
-      });
-    }
+      const chargeCard = await customerHasCardOnFile(customerId);
 
-    const invoice = await stripe.invoices.create({
-      customer: customerId,
-      auto_advance: true,
-      metadata: {
-        hostId: host.id,
-        planId: plan.id,
-        kind: "hosting",
-        propertyCount: String(propertyCount),
-        pricingModel: plan.pricingModel,
-        pricingIntelligenceAddon: addonActive ? "1" : "0",
-        pricingIntelligenceAddonAmount: String(addonAmount),
-      },
-      ...(chargeCard
-        ? { collection_method: "charge_automatically" as const }
-        : { collection_method: "send_invoice" as const, days_until_due: 7 }),
-    });
-
-    const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
-    if (!chargeCard) {
-      try {
-        await stripe.invoices.sendInvoice(finalized.id);
-      } catch {
-        // Test mode / restricted accounts may block send; hosted URL still works
+      // Separate Stripe line items so hosting and the $35 add-on stay distinct
+      if (hostingAmount > 0) {
+        const item = await stripe.invoiceItems.create({
+          customer: customerId,
+          amount: toStripeAmount(hostingAmount),
+          currency: plan.currency.toLowerCase(),
+          description: hostingLine,
+        });
+        createdItemIds.push(item.id);
       }
+      if (addonAmount > 0) {
+        const item = await stripe.invoiceItems.create({
+          customer: customerId,
+          amount: toStripeAmount(addonAmount),
+          currency: plan.currency.toLowerCase(),
+          description: `${PRICING_INTELLIGENCE_ADDON_LABEL} — $${addonAmount}/mo add-on (not included in hosting)`,
+        });
+        createdItemIds.push(item.id);
+      }
+      const processingCents = processingFeeToNetCents(toStripeAmount(amount));
+      if (processingCents > 0) {
+        const item = await stripe.invoiceItems.create({
+          customer: customerId,
+          amount: processingCents,
+          currency: plan.currency.toLowerCase(),
+          description: `${CARD_PROCESSING_LINE} — so Yall Come Back nets the listed hosting price`,
+        });
+        createdItemIds.push(item.id);
+      }
+
+      const invoice = await stripe.invoices.create({
+        customer: customerId,
+        auto_advance: true,
+        metadata: {
+          hostId: host.id,
+          planId: plan.id,
+          kind: "hosting",
+          propertyCount: String(propertyCount),
+          pricingModel: plan.pricingModel,
+          pricingIntelligenceAddon: addonActive ? "1" : "0",
+          pricingIntelligenceAddonAmount: String(addonAmount),
+        },
+        ...(chargeCard
+          ? { collection_method: "charge_automatically" as const }
+          : { collection_method: "send_invoice" as const, days_until_due: 7 }),
+      });
+      draftInvoiceId = invoice.id;
+
+      const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
+      draftInvoiceId = null;
+      stripeInvoiceId = finalized.id;
+      finalizedOpen = finalized.status !== "paid";
+      if (!chargeCard) {
+        try {
+          await stripe.invoices.sendInvoice(finalized.id);
+        } catch {
+          // Test mode / restricted accounts may block send; hosted URL still works
+        }
+      }
+
+      stripeHostedInvoiceUrl = finalized.hosted_invoice_url ?? null;
+      status = finalized.status === "paid" ? "PAID" : "OPEN";
+      chargedCardOnFile = chargeCard;
+    } catch (err) {
+      await undoStripeHostingInvoice(stripe, {
+        draftInvoiceId,
+        itemIds: createdItemIds,
+        openInvoiceId: finalizedOpen ? stripeInvoiceId : null,
+      });
+      throw new Error(
+        `${HOSTING_INVOICE_FAILED_ERROR} (${errorText(err)})`,
+      );
     }
-
-    stripeInvoiceId = finalized.id;
-    stripeHostedInvoiceUrl = finalized.hosted_invoice_url ?? null;
-    status = finalized.status === "paid" ? "PAID" : "OPEN";
-    chargedCardOnFile = chargeCard;
   }
-
-  const record = await prisma.hostingInvoice.create({
-    data: {
-      hostId: host.id,
-      planId: plan.id,
-      amount,
-      currency: plan.currency,
-      pricingModel: plan.pricingModel,
-      unitPrice,
-      propertyCount,
-      periodStart,
-      periodEnd,
-      status,
-      dueDate,
-      paidAt: status === "PAID" ? new Date() : undefined,
-      stripeInvoiceId,
-      stripeHostedInvoiceUrl,
-      notes:
-        opts.notes ||
-        (chargedCardOnFile
-          ? `Card on file · ${lineDescription}`
-          : stripe
-            ? `Stripe invoice sent · ${lineDescription}`
-            : isStripeConfigured()
-              ? `Stripe customer email missing - manual invoice · ${lineDescription}`
-              : `Manual invoice (Stripe not enabled) · ${lineDescription}`),
-    },
-  });
 
   // Card on file charged at once: the paid webhook then finds the invoice
   // already PAID, so advance the billing period here too.
+  const paidAt = status === "PAID" ? new Date() : undefined;
   const paidPeriod =
     status === "PAID"
       ? hostingPeriodAfterPayment({
@@ -286,31 +285,112 @@ export async function createHostingInvoiceForHost(opts: {
           currentPeriodEnd: host.currentPeriodEnd,
           invoicePeriodStart: periodStart,
           invoicePeriodEnd: periodEnd,
-          paidAt: record.paidAt,
+          paidAt,
         })
       : null;
 
-  await prisma.host.update({
-    where: { id: host.id },
-    data: {
-      planId: plan.id,
-      subscriptionStatus:
-        status === "PAID" || host.subscriptionStatus === "ACTIVE"
-          ? "ACTIVE"
-          : "PENDING_PAYMENT",
-      billingEmail: billingEmail || host.billingEmail,
-      ...(paidPeriod
-        ? {
-            currentPeriodStart: paidPeriod.start,
-            currentPeriodEnd: paidPeriod.end,
-            hostingPastDueAt: null,
-            hostingDunningReminderSentAt: null,
-          }
-        : {}),
-    },
-  });
+  try {
+    // T50: one transaction. The brand's status and period change only when
+    // the invoice row is saved too; any error rolls both back.
+    return await prisma.$transaction(async (tx) => {
+      const record = await tx.hostingInvoice.create({
+        data: {
+          hostId: host.id,
+          planId: plan.id,
+          amount,
+          currency: plan.currency,
+          pricingModel: plan.pricingModel,
+          unitPrice,
+          propertyCount,
+          periodStart,
+          periodEnd,
+          status,
+          dueDate,
+          paidAt,
+          stripeInvoiceId,
+          stripeHostedInvoiceUrl,
+          notes:
+            opts.notes ||
+            (chargedCardOnFile
+              ? `Card on file · ${lineDescription}`
+              : stripe
+                ? `Stripe invoice sent · ${lineDescription}`
+                : isStripeConfigured()
+                  ? `Stripe customer email missing - manual invoice · ${lineDescription}`
+                  : `Manual invoice (Stripe not enabled) · ${lineDescription}`),
+        },
+      });
 
-  return record;
+      await tx.host.update({
+        where: { id: host.id },
+        data: {
+          planId: plan.id,
+          // Only a paid invoice makes a brand ACTIVE. An open invoice leaves
+          // an ACTIVE brand ACTIVE and anything else PENDING_PAYMENT.
+          subscriptionStatus:
+            status === "PAID" || host.subscriptionStatus === "ACTIVE"
+              ? "ACTIVE"
+              : "PENDING_PAYMENT",
+          billingEmail: billingEmail || host.billingEmail,
+          ...(paidPeriod
+            ? {
+                currentPeriodStart: paidPeriod.start,
+                currentPeriodEnd: paidPeriod.end,
+                hostingPastDueAt: null,
+                hostingDunningReminderSentAt: null,
+              }
+            : {}),
+        },
+      });
+      return record;
+    });
+  } catch (err) {
+    // Saving failed: do not leave an unpaid Stripe invoice with no record.
+    // (A paid one is kept; the Stripe webhook records it.)
+    if (stripe && stripeInvoiceId && status !== "PAID") {
+      await undoStripeHostingInvoice(stripe, {
+        draftInvoiceId: null,
+        itemIds: [],
+        openInvoiceId: stripeInvoiceId,
+      });
+    }
+    throw err;
+  }
+}
+
+export const HOSTING_INVOICE_FAILED_ERROR =
+  "The hosting invoice could not be created. Nothing was billed and the brand was not changed.";
+
+function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+/** T50: best-effort cleanup of a hosting invoice that failed part way. */
+async function undoStripeHostingInvoice(
+  stripe: NonNullable<ReturnType<typeof getStripe>>,
+  made: { draftInvoiceId: string | null; itemIds: string[]; openInvoiceId: string | null },
+) {
+  try {
+    if (made.openInvoiceId) {
+      await stripe.invoices.voidInvoice(made.openInvoiceId);
+      return;
+    }
+    if (made.draftInvoiceId) {
+      // Deleting a draft also removes the items on it.
+      await stripe.invoices.del(made.draftInvoiceId);
+      return;
+    }
+    for (const id of made.itemIds) {
+      await stripe.invoiceItems.del(id);
+    }
+  } catch (cleanupErr) {
+    console.error("[hosting-invoice] cleanup after a failed invoice did not finish", {
+      draftInvoiceId: made.draftInvoiceId,
+      openInvoiceId: made.openInvoiceId,
+      itemIds: made.itemIds,
+      error: errorText(cleanupErr),
+    });
+  }
 }
 
 export async function markHostingInvoicePaid(

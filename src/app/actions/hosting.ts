@@ -175,12 +175,35 @@ export async function approveHost(formData: FormData) {
     redirect(invoiceSkippedHref("approved", host.slug));
   }
   if (issueInvoice) {
-    await createHostingInvoiceForHost({
+    const ok = await tryCreateHostingInvoice(host, {
       hostId,
       planId,
       notes: "First invoice after approval",
     });
     revalidateHosting(host.slug);
+    if (!ok) redirect(invoiceSkippedHref("failed-approved", host.slug));
+  }
+}
+
+/**
+ * T50: create the invoice, or log the error and report false. The admin sees
+ * a clear notice instead of an error page; createHostingInvoiceForHost has
+ * already rolled back, so the brand is unchanged.
+ */
+async function tryCreateHostingInvoice(
+  host: { id: string; slug: string },
+  opts: Parameters<typeof createHostingInvoiceForHost>[0],
+): Promise<boolean> {
+  try {
+    await createHostingInvoiceForHost(opts);
+    return true;
+  } catch (err) {
+    console.error("[hosting-invoice] invoice not created", {
+      hostId: host.id,
+      brand: host.slug,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return false;
   }
 }
 
@@ -246,8 +269,9 @@ export async function issueHostingInvoice(formData: FormData) {
   if (paysByCardMonthly(host)) {
     redirect(invoiceSkippedHref("invoice", host.slug));
   }
-  await createHostingInvoiceForHost({ hostId, planId, notes });
+  const ok = await tryCreateHostingInvoice(host, { hostId, planId, notes });
   revalidateHosting(host.slug);
+  if (!ok) redirect(invoiceSkippedHref("failed", host.slug));
 }
 
 /** T48: mark or unmark a brand as internal / QA (no live invoices or charges). */
@@ -544,7 +568,7 @@ export async function updateHostOps(formData: FormData) {
 
 /** Platform admin hosting page with the "invoice skipped" notice. */
 function invoiceSkippedHref(
-  kind: "approved" | "invoice" | "test-approved" | "test",
+  kind: "approved" | "invoice" | "test-approved" | "test" | "failed" | "failed-approved",
   slug: string,
 ): string {
   const q = new URLSearchParams({ invoiceSkipped: kind, brand: slug });
