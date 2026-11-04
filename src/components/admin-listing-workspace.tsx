@@ -2,6 +2,7 @@
 
 import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import { marketplaceListingHref } from "@/lib/marketplace-links";
+import { ListingLinkPair } from "@/components/listing-link-pair";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -147,6 +148,8 @@ type WorkspaceProperty = {
   displayTitle?: string;
   slug: string;
   hostSlug: string;
+  /** T58: signed host-preview URL when paused (server-made); else null. */
+  previewHref?: string | null;
   published: boolean;
   listOnMarketplace: boolean;
   hostMarketplaceOn: boolean;
@@ -1365,8 +1368,20 @@ export function AdminListingWorkspace({
   );
   // T58: plain new-tab links (a next/link with target=_blank opened a
   // blank tab from here). Public pages for this listing.
-  const findAPlaceHref = marketplaceListingHref(property.slug, property.hostSlug);
-  const websiteHref = `/h/${encodeURIComponent(property.hostSlug)}/properties/${encodeURIComponent(property.slug)}`;
+  const publicFindAPlaceHref = marketplaceListingHref(property.slug, property.hostSlug);
+  const publicWebsiteHref = `/h/${encodeURIComponent(property.hostSlug)}/properties/${encodeURIComponent(property.slug)}`;
+  // Paused: every listing link goes to the signed host preview (works
+  // without the session cookie reaching the new tab).
+  const paused = !property.published && !property.archivedAt;
+  const previewToken = property.previewHref
+    ? new URL(property.previewHref, "http://x").searchParams.get("preview")
+    : null;
+  const findAPlaceHref =
+    paused && property.previewHref ? property.previewHref : publicFindAPlaceHref;
+  const websiteHref =
+    paused && previewToken
+      ? `${publicWebsiteHref}?preview=${encodeURIComponent(previewToken)}`
+      : publicWebsiteHref;
 
   const tabs: { id: TabId; label: string }[] = [
     { id: "calendar", label: "Calendar" },
@@ -1516,46 +1531,34 @@ export function AdminListingWorkspace({
                   This stay is paused. Guests cannot book it on your website or
                   on Find a Place. Use <strong>Resume</strong> or{" "}
                   <strong>Taking bookings</strong> to turn it on.{" "}
-                  <a
+                  <ListingLinkPair
                     href={findAPlaceHref}
+                    testId="paused-preview-link"
                     className="font-medium text-bonnet underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid="paused-preview-link"
                   >
                     Preview (only you can see it)
-                  </a>
+                  </ListingLinkPair>
                 </>
               )}
             </p>
-          ) : (
+          ) : null}
+          {property.archivedAt ? null : (
             <p className="mt-1 text-xs text-stone-400">
-              {visibility === "website" || visibility === "both" ? (
+              {visibility === "website" || visibility === "both" || visibility === "off" ? (
                 <>
                   Website:{" "}
-                  <a
-                    href={websiteHref}
-                    className="text-bonnet hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <ListingLinkPair href={websiteHref} testId="website-link">
                     /h/{property.hostSlug}/properties/{property.slug}
-                  </a>
+                  </ListingLinkPair>
                 </>
               ) : null}
-              {visibility === "both" ? (
+              {visibility === "both" || visibility === "off" ? (
                 <>
                   <span className="mx-1.5 text-stone-300">·</span>
                   Find a Place:{" "}
-                  <a
-                    href={findAPlaceHref}
-                    className="text-bonnet hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid="find-a-place-link"
-                  >
+                  <ListingLinkPair href={findAPlaceHref} testId="find-a-place-link">
                     /marketplace/properties/{property.slug}
-                  </a>
+                  </ListingLinkPair>
                 </>
               ) : null}
             </p>
@@ -1607,14 +1610,15 @@ export function AdminListingWorkspace({
             canRemove={canRemoveListing}
           />
           {!property.archivedAt ? (
-            <a
-              href={visibility === "website" ? websiteHref : findAPlaceHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
-            >
-              View listing
-            </a>
+            <span className="inline-flex items-center gap-1">
+              <ListingLinkPair
+                href={visibility === "website" ? websiteHref : findAPlaceHref}
+                testId="view-listing-link"
+                className="inline-flex items-center justify-center rounded-lg bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+              >
+                View listing
+              </ListingLinkPair>
+            </span>
           ) : null}
         </div>
       </div>

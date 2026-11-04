@@ -153,6 +153,32 @@ describe("paused listing: the host (and admin) can preview", () => {
     });
   });
 
+  it("signed preview token works with NO session (new tab without cookie)", async () => {
+    process.env.AUTH_SECRET ||= "test-only-secret-not-real-0123456789";
+    const { createListingPreviewToken } = await import("@/lib/listing-preview-token");
+    store.session = null as never;
+    const t = createListingPreviewToken("p_qa");
+    expect(await pausedListingAccess("qa-test-listing-do-not-book", "qa-tester-two", t)).toEqual({
+      kind: "preview",
+      id: "p_qa",
+      hostSlug: "qa-tester-two",
+    });
+    // wrong listing's token, or junk: still "not available" for guests
+    const other = createListingPreviewToken("p_other");
+    expect((await pausedListingAccess("qa-test-listing-do-not-book", "qa-tester-two", other))?.kind).toBe("unavailable");
+    expect((await pausedListingAccess("qa-test-listing-do-not-book", "qa-tester-two", "1.x"))?.kind).toBe("unavailable");
+    // /h/ link carries the token through its redirect
+    const { default: Page } = await import("@/app/h/[hostSlug]/properties/[slug]/page");
+    await expect(
+      Page({
+        params: Promise.resolve({ hostSlug: "qa-tester-two", slug: "qa-test-listing-do-not-book" }),
+        searchParams: Promise.resolve({ preview: t }),
+      }),
+    ).rejects.toMatchObject({
+      url: `/marketplace/properties/qa-test-listing-do-not-book?host=qa-tester-two&preview=${encodeURIComponent(t)}`,
+    });
+  });
+
   it("published listings are not treated as paused", async () => {
     store.listing.published = true;
     expect(await pausedListingAccess("qa-test-listing-do-not-book", "qa-tester-two")).toBeNull();

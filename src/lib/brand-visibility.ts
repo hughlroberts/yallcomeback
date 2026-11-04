@@ -106,9 +106,15 @@ export async function findPausedListing(
 export async function pausedListingAccess(
   slug: string,
   hostSlug?: string | null,
+  previewToken?: string | null,
 ): Promise<{ kind: "preview"; id: string; hostSlug: string } | { kind: "unavailable" } | null> {
   const paused = await findPausedListing(slug, hostSlug);
   if (!paused) return null;
+  // Signed token from the admin page works without the session cookie.
+  const { verifyListingPreviewToken } = await import("@/lib/listing-preview-token");
+  if (previewToken && verifyListingPreviewToken(previewToken, paused.id)) {
+    return { kind: "preview", id: paused.id, hostSlug: paused.hostSlug };
+  }
   if (!(await canPreviewBrand(paused.hostId))) return { kind: "unavailable" };
   return { kind: "preview", id: paused.id, hostSlug: paused.hostSlug };
 }

@@ -18,6 +18,7 @@ import {
   uploadPropertyImage,
 } from "@/app/actions/properties";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
+import { pausedPreviewHref } from "@/lib/listing-preview-token";
 import { hostTodayYmd } from "@/lib/host-today";
 import { IcalSetupAgent } from "@/components/ical-setup-agent";
 import { AdminListingInsights } from "@/components/admin-listing-insights";
@@ -1066,6 +1067,10 @@ export default async function AdminPropertyDetailPage({
           displayTitle: listingDisplayTitle(property),
           slug: property.slug,
           hostSlug: property.host.slug,
+          previewHref:
+            !property.published && !property.archivedAt
+              ? pausedPreviewHref(property.slug, property.host.slug, property.id)
+              : null,
           published: property.published,
           archivedAt: property.archivedAt
             ? property.archivedAt.toISOString()

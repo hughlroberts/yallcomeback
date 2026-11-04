@@ -63,7 +63,7 @@ export async function generateMetadata({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ host?: string; via?: string }>;
+  searchParams: Promise<{ host?: string; via?: string; preview?: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
   const sp = await searchParams;
@@ -165,6 +165,7 @@ export default async function MarketplacePropertyPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{
     host?: string;
+    preview?: string;
     checkIn?: string;
     checkOut?: string;
     guests?: string;
@@ -311,7 +312,7 @@ export default async function MarketplacePropertyPage({
   // T58: paused listing. Guests: "not available". Host/admin: preview + banner.
   let pausedPreview = false;
   if (!property) {
-    const paused = await pausedListingAccess(slug, sp.host);
+    const paused = await pausedListingAccess(slug, sp.host, sp.preview);
     if (paused?.kind === "unavailable") return <ListingUnavailable />;
     if (paused?.kind === "preview") {
       property = await prisma.property.findFirst({

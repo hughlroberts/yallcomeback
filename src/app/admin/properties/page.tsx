@@ -1,3 +1,6 @@
+import { ListingLinkPair } from "@/components/listing-link-pair";
+import { marketplaceListingHref } from "@/lib/marketplace-links";
+import { pausedPreviewHref } from "@/lib/listing-preview-token";
 import Link from "next/link";
 import { listingDisplayTitle } from "@/lib/listing-display-title";
 import { redirect } from "next/navigation";
@@ -120,6 +123,15 @@ export default async function AdminPropertiesPage() {
           const calendarHref = `/admin/calendar?property=${p.id}`;
           const primaryHref = editHref;
           const vis = visibilityFromFlags(p.published, p.listOnMarketplace);
+          // T58: public links on the row; paused rows use the signed host preview.
+          const rowFindAPlaceHref =
+            vis === "off"
+              ? pausedPreviewHref(p.slug, p.host.slug, p.id)
+              : marketplaceListingHref(p.slug, p.host.slug);
+          const rowToken = vis === "off" ? new URL(rowFindAPlaceHref, "http://x").searchParams.get("preview") : null;
+          const rowWebsiteHref =
+            `/h/${encodeURIComponent(p.host.slug)}/properties/${encodeURIComponent(p.slug)}` +
+            (rowToken ? `?preview=${encodeURIComponent(rowToken)}` : "");
 
           return (
             <div
@@ -152,6 +164,28 @@ export default async function AdminPropertiesPage() {
                   bookings
                 </p>
               </Link>
+              {p.title === "Untitled listing" ? null : (
+                <p className="w-full text-xs text-slate-400" data-testid="row-public-links">
+                  {vis === "off" ? "Paused, preview only you can see: " : null}
+                  {vis === "website" || vis === "both" || vis === "off" ? (
+                    <>
+                      Website:{" "}
+                      <ListingLinkPair href={rowWebsiteHref} testId="row-website-link">
+                        /h/{p.host.slug}/properties/{p.slug}
+                      </ListingLinkPair>
+                    </>
+                  ) : null}
+                  {vis === "both" || vis === "off" ? (
+                    <>
+                      <span className="mx-1.5 text-slate-300">·</span>
+                      Find a Place:{" "}
+                      <ListingLinkPair href={rowFindAPlaceHref} testId="row-find-a-place-link">
+                        /marketplace/properties/{p.slug}
+                      </ListingLinkPair>
+                    </>
+                  ) : null}
+                </p>
+              )}
               <div className="flex w-full min-w-0 flex-wrap items-end gap-2 sm:w-auto">
                 <ListingVisibilityForm
                   propertyId={p.id}

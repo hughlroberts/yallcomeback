@@ -147,3 +147,29 @@ describe("T58: paused listing still links to the host preview", () => {
     expect(html).toMatch(/<a[^>]*href="\/marketplace\/properties\/lake-house\?host=hugh"[^>]*>View listing<\/a>/);
   });
 });
+
+describe("T58b: paused links use the signed preview and have an Open here twin", () => {
+  it("View listing, Preview, Website and Find a Place all point at the preview", () => {
+    const previewHref = "/marketplace/properties/lake-house?host=hugh&preview=123.sig";
+    const html = renderToString(
+      createElement(AdminListingWorkspace, {
+        ...props,
+        property: { ...props.property, published: false, previewHref } as Props["property"],
+        calendarOnly: false,
+        todayYmd: "2026-11-03",
+      } as Props),
+    );
+    const amp = previewHref.replace(/&/g, "&amp;");
+    for (const id of ["paused-preview-link", "view-listing-link", "find-a-place-link"]) {
+      const tab = new RegExp(`<a[^>]*data-testid="${id}"[^>]*>`).exec(html)?.[0] ?? "";
+      expect(tab, id).toContain(`href="${amp}"`);
+      expect(tab, id).toContain('target="_blank"');
+      expect(tab, id).toContain('rel="noopener noreferrer"');
+      const here = new RegExp(`<a[^>]*data-testid="${id}-here"[^>]*>`).exec(html)?.[0] ?? "";
+      expect(here, id).toContain(`href="${amp}"`);
+      expect(here, id).toContain('target="_self"');
+    }
+    const web = /<a[^>]*data-testid="website-link"[^>]*>/.exec(html)?.[0] ?? "";
+    expect(web).toContain('href="/h/hugh/properties/lake-house?preview=123.sig"');
+  });
+});

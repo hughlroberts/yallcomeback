@@ -36,10 +36,13 @@ export async function generateMetadata({
  */
 export default async function HostPropertyPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ hostSlug: string; slug: string }>;
+  searchParams?: Promise<{ preview?: string }>;
 }) {
   const { hostSlug, slug } = await params;
+  const previewToken = (await searchParams)?.preview;
   const host = await getHostForGuestSite(hostSlug);
   if (!host) {
     // Hidden brand (T46): clean "not available" page, not an error.
@@ -53,10 +56,13 @@ export default async function HostPropertyPage({
   });
   if (!property) {
     // T58: paused. Host/admin preview on the listing page; guests "not available".
-    const paused = await pausedListingAccess(slug, host.slug);
+    const paused = await pausedListingAccess(slug, host.slug, previewToken);
     if (!paused) notFound();
     if (paused.kind === "unavailable") return <ListingUnavailable />;
-    redirect(`/marketplace/properties/${slug}?host=${host.slug}`);
+    redirect(
+      `/marketplace/properties/${encodeURIComponent(slug)}?host=${encodeURIComponent(host.slug)}` +
+        (previewToken ? `&preview=${encodeURIComponent(previewToken)}` : ""),
+    );
   }
 
   // Preserve host brand context for chrome + attribution
