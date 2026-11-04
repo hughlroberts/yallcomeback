@@ -20,19 +20,14 @@ import { formatMoney } from "@/lib/utils";
 const SETUP_BUY_HREF =
   "/login?callbackUrl=%2Faccount%2Fsettings%2Fsubscription%23setup";
 
-import { pageMetadata, seoAbsoluteUrl, seoOrigin } from "@/lib/seo";
+import { seoAbsoluteUrl, seoOrigin } from "@/lib/seo";
+import { FOR_HOSTS_DESCRIPTION, forHostsMetadata } from "@/lib/for-hosts-copy";
 import { JsonLd } from "@/components/json-ld";
 import { forHostsServiceJsonLd } from "@/lib/json-ld";
 
 export const dynamic = "force-dynamic";
-const FOR_HOSTS_DESCRIPTION =
-  "Built by hosts at Cherokee Landing. Automate return-guest bookings, keep the familiar stay, and skip the giant platform bill.";
 
-export const metadata = pageMetadata({
-  title: "Host a Place",
-  description: FOR_HOSTS_DESCRIPTION,
-  path: "/for-hosts",
-});
+export const metadata = forHostsMetadata();
 
 const BENEFITS = [
   {
