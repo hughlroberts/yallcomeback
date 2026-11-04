@@ -50,8 +50,11 @@ import {
   brandListingsHidden,
   canPreviewBrand,
   findHiddenBrandListing,
+  findPausedListing,
   hiddenFromViewer,
+  pausedListingAccess,
 } from "@/lib/brand-visibility";
+import { PausedListingBanner } from "@/components/paused-listing-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -111,7 +114,8 @@ export async function generateMetadata({
 
   if (
     brandListingsHidden(property?.host) ||
-    (!property && (await findHiddenBrandListing(slug, sp.host)))
+    (!property && (await findHiddenBrandListing(slug, sp.host))) ||
+    (!property && (await findPausedListing(slug, sp.host)))
   ) {
     return pageMetadata({
       title: LISTING_UNAVAILABLE_TITLE,
@@ -304,6 +308,20 @@ export default async function MarketplacePropertyPage({
     return <ListingUnavailable />;
   }
 
+  // T58: paused listing. Guests: "not available". Host/admin: preview + banner.
+  let pausedPreview = false;
+  if (!property) {
+    const paused = await pausedListingAccess(slug, sp.host);
+    if (paused?.kind === "unavailable") return <ListingUnavailable />;
+    if (paused?.kind === "preview") {
+      property = await prisma.property.findFirst({
+        where: { id: paused.id },
+        include,
+      });
+      pausedPreview = Boolean(property);
+    }
+  }
+
   if (!property) notFound();
 
   const bookingChannel = resolveBookingChannel({
@@ -414,6 +432,7 @@ export default async function MarketplacePropertyPage({
 
   return (
     <div>
+      {pausedPreview ? <PausedListingBanner /> : null}
       <ListingJsonLd
         origin={origin}
         name={property.title}

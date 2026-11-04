@@ -124,8 +124,26 @@ describe("T58: Find a Place link opens the public listing page", () => {
     const tag = m![0];
     expect(tag).toContain('href="/marketplace/properties/lake-house?host=hugh"');
     expect(tag).toContain('target="_blank"');
-    expect(tag).toContain('rel="noopener"');
+    expect(tag).toContain('rel="noopener noreferrer"');
     expect(html).toMatch(/<a[^>]*href="\/marketplace\/properties\/lake-house\?host=hugh"[^>]*>View listing<\/a>/);
     expect(html).not.toContain("about:blank");
+  });
+});
+
+describe("T58: paused listing still links to the host preview", () => {
+  it("shows a new-tab preview link and View listing", () => {
+    const html = renderToString(
+      createElement(AdminListingWorkspace, {
+        ...props,
+        property: { ...props.property, published: false } as Props["property"],
+        calendarOnly: false,
+        todayYmd: "2026-11-03",
+      } as Props),
+    );
+    const m = /<a[^>]*data-testid="paused-preview-link"[^>]*>/.exec(html);
+    expect(m).not.toBeNull();
+    expect(m![0]).toContain('href="/marketplace/properties/lake-house?host=hugh"');
+    expect(m![0]).toContain('target="_blank"');
+    expect(html).toMatch(/<a[^>]*href="\/marketplace\/properties\/lake-house\?host=hugh"[^>]*>View listing<\/a>/);
   });
 });

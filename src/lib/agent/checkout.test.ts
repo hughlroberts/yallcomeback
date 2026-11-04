@@ -30,4 +30,21 @@ describe("agent stay checkout", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.status).toBe(400);
   });
+
+  it("T56b: pets over 4 is a 400 before any DB read", async () => {
+    const result = await createAgentStayCheckout({
+      slug: "any",
+      checkIn: "2027-08-15",
+      checkOut: "2027-08-18",
+      pets: 5,
+      guestName: "Guest",
+      guestEmail: "guest@example.com",
+      acceptTerms: true,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(400);
+      expect(result.error).toMatch(/0 to 4/);
+    }
+  });
 });

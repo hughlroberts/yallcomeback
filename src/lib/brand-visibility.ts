@@ -80,3 +80,37 @@ export async function findHiddenBrandListing(
     select: { id: true, hostId: true },
   });
 }
+
+/**
+ * T58: a paused listing (published=false, not archived) on an active host.
+ * Guests see the "not available" page; the brand's own host/admin get a
+ * preview with a "Paused, not visible to guests" banner.
+ */
+export async function findPausedListing(
+  slug: string,
+  hostSlug?: string | null,
+): Promise<{ id: string; hostId: string; hostSlug: string } | null> {
+  const row = await prisma.property.findFirst({
+    where: {
+      slug,
+      published: false,
+      archivedAt: null,
+      host: { active: true, ...(hostSlug ? { slug: hostSlug } : {}) },
+    },
+    select: { id: true, hostId: true, host: { select: { slug: true } } },
+  });
+  return row ? { id: row.id, hostId: row.hostId, hostSlug: row.host.slug } : null;
+}
+
+/** T58: what a direct link to a paused listing shows this viewer. */
+export async function pausedListingAccess(
+  slug: string,
+  hostSlug?: string | null,
+): Promise<{ kind: "preview"; id: string; hostSlug: string } | { kind: "unavailable" } | null> {
+  const paused = await findPausedListing(slug, hostSlug);
+  if (!paused) return null;
+  if (!(await canPreviewBrand(paused.hostId))) return { kind: "unavailable" };
+  return { kind: "preview", id: paused.id, hostSlug: paused.hostSlug };
+}
+
+export const PAUSED_PREVIEW_BANNER = "Paused, not visible to guests";

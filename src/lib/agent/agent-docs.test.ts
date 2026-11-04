@@ -85,6 +85,24 @@ describe("T56: docs say pets 0 to 4", () => {
       expect(`${pets.description} ${JSON.stringify(pets.schema ?? {})}`, path).toMatch(/0 to 4|0–4|"maximum":4/);
     }
   });
+  it("T56b: every pets schema in openapi.json (params and request bodies) is min 0 / max 4", () => {
+    const found: { at: string; schema: { minimum?: number; maximum?: number } }[] = [];
+    const walk = (node: unknown, at: string) => {
+      if (!node || typeof node !== "object") return;
+      const o = node as Record<string, unknown>;
+      if (o.name === "pets" && o.schema) found.push({ at, schema: o.schema as never });
+      const props = o.properties as Record<string, unknown> | undefined;
+      if (props && typeof props.pets === "object") found.push({ at: `${at}.properties`, schema: props.pets as never });
+      for (const [k, v] of Object.entries(o)) walk(v, `${at}.${k}`);
+    };
+    walk(doc, "doc");
+    expect(found.some((f) => f.at.includes("requestBody"))).toBe(true);
+    expect(found.length).toBeGreaterThanOrEqual(3);
+    for (const f of found) {
+      expect(f.schema.minimum, f.at).toBe(0);
+      expect(f.schema.maximum, f.at).toBe(4);
+    }
+  });
   it.each(["llms.txt/route.ts", "agents.md/route.ts"])("%s says 0 to 4", (p) => {
     const text = readFileSync(path.resolve(__dirname, "../../app", p), "utf8");
     expect(text).toMatch(/pets[^\n]*0 (to|–) ?4|pets must be 0–4/);

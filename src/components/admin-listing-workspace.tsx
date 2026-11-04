@@ -1515,7 +1515,16 @@ export function AdminListingWorkspace({
                 <>
                   This stay is paused. Guests cannot book it on your website or
                   on Find a Place. Use <strong>Resume</strong> or{" "}
-                  <strong>Taking bookings</strong> to turn it on.
+                  <strong>Taking bookings</strong> to turn it on.{" "}
+                  <a
+                    href={findAPlaceHref}
+                    className="font-medium text-bonnet underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="paused-preview-link"
+                  >
+                    Preview (only you can see it)
+                  </a>
                 </>
               )}
             </p>
@@ -1528,7 +1537,7 @@ export function AdminListingWorkspace({
                     href={websiteHref}
                     className="text-bonnet hover:underline"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                   >
                     /h/{property.hostSlug}/properties/{property.slug}
                   </a>
@@ -1542,7 +1551,7 @@ export function AdminListingWorkspace({
                     href={findAPlaceHref}
                     className="text-bonnet hover:underline"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     data-testid="find-a-place-link"
                   >
                     /marketplace/properties/{property.slug}
@@ -1597,11 +1606,11 @@ export function AdminListingWorkspace({
             archived={Boolean(property.archivedAt)}
             canRemove={canRemoveListing}
           />
-          {visibility !== "off" ? (
+          {!property.archivedAt ? (
             <a
-              href={visibility === "both" ? findAPlaceHref : websiteHref}
+              href={visibility === "website" ? websiteHref : findAPlaceHref}
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
             >
               View listing

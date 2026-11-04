@@ -1,3 +1,4 @@
+import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 /**
  * Pay-first agent stay checkout (public, rate limited per IP).
  * Stripe Checkout is created first. Calendar is written only after the
@@ -78,6 +79,13 @@ export async function createAgentStayCheckout(
 
   const guests = Math.max(1, Math.floor(Number(input.guests) || 1));
   const pets = Math.max(0, Math.floor(Number(input.pets) || 0));
+  if (pets > SEARCH_MAX_PETS) {
+    return {
+      ok: false,
+      status: 400,
+      error: `pets must be a whole number from 0 to ${SEARCH_MAX_PETS}.`,
+    };
+  }
   const checkInDate = new Date(checkIn + "T00:00:00");
   const checkOutDate = new Date(checkOut + "T00:00:00");
   if (!(checkOutDate > checkInDate)) {

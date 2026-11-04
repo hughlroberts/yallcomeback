@@ -500,7 +500,7 @@ export function buildOpenApiDocument(origin: string) {
                     checkIn: { type: "string", format: "date" },
                     checkOut: { type: "string", format: "date" },
                     guests: { type: "integer", minimum: 1 },
-                    pets: { type: "integer", minimum: 0 },
+                    pets: { type: "integer", minimum: 0, maximum: 4, description: "Whole number 0–4, else 400." },
                     guestName: { type: "string" },
                     guestEmail: { type: "string", format: "email" },
                     guestPhone: { type: "string" },

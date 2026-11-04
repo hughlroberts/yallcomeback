@@ -7,6 +7,7 @@ import { pageMetadata } from "@/lib/seo";
 import {
   LISTING_UNAVAILABLE_TITLE,
   findHiddenBrandListing,
+  pausedListingAccess,
 } from "@/lib/brand-visibility";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +51,13 @@ export default async function HostPropertyPage({
     where: { hostId: host.id, slug, published: true, archivedAt: null },
     select: { slug: true },
   });
-  if (!property) notFound();
+  if (!property) {
+    // T58: paused. Host/admin preview on the listing page; guests "not available".
+    const paused = await pausedListingAccess(slug, host.slug);
+    if (!paused) notFound();
+    if (paused.kind === "unavailable") return <ListingUnavailable />;
+    redirect(`/marketplace/properties/${slug}?host=${host.slug}`);
+  }
 
   // Preserve host brand context for chrome + attribution
   redirect(
