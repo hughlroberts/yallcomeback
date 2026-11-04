@@ -7,6 +7,7 @@ import { requirePlatformAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 import {
   createHostingInvoiceForHost,
+  HostingInvoiceRefusedError,
   markHostingInvoicePaid,
   paysByCardMonthly,
 } from "@/lib/hosting-billing";
@@ -175,13 +176,14 @@ export async function approveHost(formData: FormData) {
     redirect(invoiceSkippedHref("approved", host.slug));
   }
   if (issueInvoice) {
-    const ok = await tryCreateHostingInvoice(host, {
+    const result = await tryCreateHostingInvoice(host, {
       hostId,
       planId,
       notes: "First invoice after approval",
     });
     revalidateHosting(host.slug);
-    if (!ok) redirect(invoiceSkippedHref("failed-approved", host.slug));
+    if (result === "zero") redirect(invoiceSkippedHref("zero-approved", host.slug));
+    if (result === "failed") redirect(invoiceSkippedHref("failed-approved", host.slug));
   }
 }
 
@@ -193,17 +195,18 @@ export async function approveHost(formData: FormData) {
 async function tryCreateHostingInvoice(
   host: { id: string; slug: string },
   opts: Parameters<typeof createHostingInvoiceForHost>[0],
-): Promise<boolean> {
+): Promise<"ok" | "failed" | "zero"> {
   try {
     await createHostingInvoiceForHost(opts);
-    return true;
+    return "ok";
   } catch (err) {
     console.error("[hosting-invoice] invoice not created", {
       hostId: host.id,
       brand: host.slug,
       error: err instanceof Error ? err.message : String(err),
     });
-    return false;
+    // T50b: refused because the amount was $0 (or short) on a paid plan.
+    return err instanceof HostingInvoiceRefusedError ? "zero" : "failed";
   }
 }
 
@@ -269,9 +272,10 @@ export async function issueHostingInvoice(formData: FormData) {
   if (paysByCardMonthly(host)) {
     redirect(invoiceSkippedHref("invoice", host.slug));
   }
-  const ok = await tryCreateHostingInvoice(host, { hostId, planId, notes });
+  const result = await tryCreateHostingInvoice(host, { hostId, planId, notes });
   revalidateHosting(host.slug);
-  if (!ok) redirect(invoiceSkippedHref("failed", host.slug));
+  if (result === "zero") redirect(invoiceSkippedHref("zero", host.slug));
+  if (result === "failed") redirect(invoiceSkippedHref("failed", host.slug));
 }
 
 /** T48: mark or unmark a brand as internal / QA (no live invoices or charges). */
@@ -568,7 +572,15 @@ export async function updateHostOps(formData: FormData) {
 
 /** Platform admin hosting page with the "invoice skipped" notice. */
 function invoiceSkippedHref(
-  kind: "approved" | "invoice" | "test-approved" | "test" | "failed" | "failed-approved",
+  kind:
+    | "approved"
+    | "invoice"
+    | "test-approved"
+    | "test"
+    | "failed"
+    | "failed-approved"
+    | "zero"
+    | "zero-approved",
   slug: string,
 ): string {
   const q = new URLSearchParams({ invoiceSkipped: kind, brand: slug });

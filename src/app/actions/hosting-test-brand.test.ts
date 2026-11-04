@@ -121,4 +121,19 @@ describe("T50: a failed invoice shows a notice, not an error page", () => {
     expect(err).toHaveBeenCalledWith("[hosting-invoice] invoice not created", expect.objectContaining({ brand: "qa-tester-two" }));
     err.mockRestore();
   });
+
+  it("T50b: a $0 invoice on a paid plan is refused, redirect to invoiceSkipped=zero (brand not touched)", async () => {
+    vi.stubEnv("STRIPE_SECRET_KEY", TEST);
+    db.host.findUnique.mockResolvedValue(brand({ isTestBrand: false }));
+    const { HostingInvoiceRefusedError } = await import("@/lib/hosting-billing");
+    billing.createHostingInvoiceForHost.mockRejectedValueOnce(
+      new HostingInvoiceRefusedError("came to $0"),
+    );
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(issueHostingInvoice(form({ hostId: "h_qa" }))).rejects.toMatchObject({
+      url: "/ops/hosting?invoiceSkipped=zero&brand=qa-tester-two",
+    });
+    expect(db.host.update).not.toHaveBeenCalled();
+    err.mockRestore();
+  });
 });

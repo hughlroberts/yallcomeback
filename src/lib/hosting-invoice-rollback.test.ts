@@ -12,6 +12,12 @@ const state = vi.hoisted(() => ({
   invoices: [] as Record<string, unknown>[],
   failInvoiceCreate: false,
   failHostUpdate: false,
+  planPrice: 25,
+  published: 1,
+  /** Stripe's own view of each draft's lines (cents), to model real totals. */
+  lines: {} as Record<string, number[]>,
+  /** Simulate the 2026 Stripe default: lines left off the invoice. */
+  dropLines: false,
 }));
 
 const db = vi.hoisted(() => {
@@ -33,13 +39,13 @@ const db = vi.hoisted(() => {
         id: "plan_branded",
         name: "Branded website",
         isActive: true,
-        monthlyPrice: 25,
+        monthlyPrice: state.planPrice,
         pricingModel: "FLAT",
         minProperties: 1,
         currency: "USD",
       })),
     },
-    property: { count: vi.fn(async () => 1) },
+    property: { count: vi.fn(async () => state.published) },
     hostingInvoice: {
       create: vi.fn(async ({ data }: { data: Row }) => {
         if (state.failInvoiceCreate) throw new Error("db insert failed");
@@ -68,6 +74,7 @@ const stripe = vi.hoisted(() => ({
   invoiceItems: { create: vi.fn(), del: vi.fn(async (id: string) => ({ id, deleted: true })) },
   invoices: {
     create: vi.fn(),
+    retrieve: vi.fn(),
     finalizeInvoice: vi.fn(),
     sendInvoice: vi.fn(async () => ({})),
     voidInvoice: vi.fn(async () => ({})),
@@ -89,7 +96,11 @@ vi.mock("@/lib/platform-billing", () => ({
   stripeObjectId: (v: unknown) => (typeof v === "string" ? v : null),
 }));
 
-import { createHostingInvoiceForHost, HOSTING_INVOICE_FAILED_ERROR } from "@/lib/hosting-billing";
+import {
+  createHostingInvoiceForHost,
+  HOSTING_INVOICE_FAILED_ERROR,
+  HostingInvoiceRefusedError,
+} from "@/lib/hosting-billing";
 import { invoiceSkippedNotice } from "@/lib/hosting-billing-notice";
 
 const OLD_START = new Date("2026-10-04T05:00:00Z");
@@ -128,11 +139,27 @@ beforeEach(() => {
   seed();
   card.onFile = false;
   itemN = 0;
-  stripe.invoiceItems.create.mockImplementation(async () => ({ id: `ii_${++itemN}` }));
+  state.planPrice = 25;
+  state.published = 1;
+  state.lines = {};
+  state.dropLines = false;
+  const total = (id: string) => (state.lines[id] || []).reduce((a, b) => a + b, 0);
+  stripe.invoiceItems.create.mockImplementation(
+    async (p: { invoice?: string; amount: number }) => {
+      // Like Stripe: an item with no invoice stays pending (not on any invoice).
+      if (p.invoice && !state.dropLines) {
+        (state.lines[p.invoice] ||= []).push(p.amount);
+      }
+      return { id: `ii_${++itemN}` };
+    },
+  );
   stripe.invoices.create.mockImplementation(async () => ({ id: "in_draft" }));
+  stripe.invoices.retrieve.mockImplementation(async (id: string) => ({ id, total: total(id) }));
   stripe.invoices.finalizeInvoice.mockImplementation(async (id: string) => ({
     id,
-    status: card.onFile ? "paid" : "open",
+    total: total(id),
+    // Stripe marks a $0 invoice paid on finalize, whatever the method.
+    status: card.onFile || total(id) === 0 ? "paid" : "open",
     hosted_invoice_url: "https://invoice.example/x",
   }));
 });
@@ -145,7 +172,7 @@ const unchanged = () => {
 };
 
 describe("a failed renewal invoice leaves the brand unchanged", () => {
-  it("Stripe fails on a line item: error, brand not ACTIVE, period not moved, item removed", async () => {
+  it("Stripe fails on a line item: error, brand not ACTIVE, period not moved, draft deleted", async () => {
     stripe.invoiceItems.create
       .mockImplementationOnce(async () => ({ id: "ii_1" }))
       .mockRejectedValueOnce(new Error("stripe down"));
@@ -154,16 +181,17 @@ describe("a failed renewal invoice leaves the brand unchanged", () => {
     );
     unchanged();
     expect(db.host.update).not.toHaveBeenCalled();
-    expect(stripe.invoiceItems.del).toHaveBeenCalledWith("ii_1");
+    expect(stripe.invoices.del).toHaveBeenCalledWith("in_draft");
+    expect(stripe.invoices.finalizeInvoice).not.toHaveBeenCalled();
   });
 
-  it("Stripe fails to create the invoice: pending items removed, brand unchanged", async () => {
+  it("Stripe fails to create the invoice: no line items made, brand unchanged", async () => {
     stripe.invoices.create.mockRejectedValueOnce(new Error("bad request"));
     await expect(createHostingInvoiceForHost({ hostId: "h_qa2" })).rejects.toThrow(
       HOSTING_INVOICE_FAILED_ERROR,
     );
     unchanged();
-    expect(stripe.invoiceItems.del.mock.calls.map((c) => c[0])).toEqual(["ii_1", "ii_2"]);
+    expect(stripe.invoiceItems.create).not.toHaveBeenCalled();
   });
 
   it("Stripe fails to finalize: the draft is deleted, nothing sent, brand unchanged", async () => {
@@ -215,6 +243,96 @@ describe("successful invoices", () => {
     expect(rec.status).toBe("PAID");
     expect(state.host.subscriptionStatus).toBe("ACTIVE");
     expect((state.host.currentPeriodEnd as Date).getTime()).toBeGreaterThan(OLD_END.getTime());
+  });
+});
+
+describe("T50b: a $0 invoice never activates a paid plan", () => {
+  it("line items go on the draft invoice itself (not left pending)", async () => {
+    await createHostingInvoiceForHost({ hostId: "h_qa2" });
+    expect(stripe.invoices.create.mock.calls[0][0]).toMatchObject({
+      pending_invoice_items_behavior: "exclude",
+    });
+    for (const [p] of stripe.invoiceItems.create.mock.calls) {
+      expect(p).toMatchObject({ invoice: "in_draft" });
+    }
+    // Branded $25 plus the card processing line, so Stripe's total is > $25.
+    expect(state.lines.in_draft[0]).toBe(2500);
+    expect(state.lines.in_draft.reduce((a, b) => a + b, 0)).toBeGreaterThan(2500);
+  });
+
+  it("the 6:07 PM case: Stripe total is $0 on Branded $25 — refused before finalize, nothing emailed, brand unchanged", async () => {
+    state.dropLines = true;
+    await expect(createHostingInvoiceForHost({ hostId: "h_qa2" })).rejects.toBeInstanceOf(
+      HostingInvoiceRefusedError,
+    );
+    unchanged();
+    expect(stripe.invoices.finalizeInvoice).not.toHaveBeenCalled();
+    expect(stripe.invoices.sendInvoice).not.toHaveBeenCalled();
+    expect(stripe.invoices.del).toHaveBeenCalledWith("in_draft");
+  });
+
+  it("an ACTIVE brand stays ACTIVE with the same period when the total is $0", async () => {
+    seed({ subscriptionStatus: "ACTIVE" });
+    state.dropLines = true;
+    await expect(createHostingInvoiceForHost({ hostId: "h_qa2" })).rejects.toBeInstanceOf(
+      HostingInvoiceRefusedError,
+    );
+    expect(state.host.currentPeriodEnd).toEqual(OLD_END);
+    expect(state.invoices).toHaveLength(0);
+  });
+
+  it("Stripe says paid but for less than owed: not treated as paid, brand unchanged", async () => {
+    stripe.invoices.finalizeInvoice.mockImplementationOnce(async (id: string) => ({
+      id,
+      total: 0,
+      status: "paid",
+      hosted_invoice_url: null,
+    }));
+    await expect(createHostingInvoiceForHost({ hostId: "h_qa2" })).rejects.toBeInstanceOf(
+      HostingInvoiceRefusedError,
+    );
+    unchanged();
+    expect(stripe.invoices.voidInvoice).not.toHaveBeenCalled();
+  });
+
+  it("a paid plan that works out to $0 is refused before Stripe is called", async () => {
+    // e.g. a per-listing price with no billable listings
+    const { calculateHostingAmount } = await import("@/lib/hosting");
+    expect(
+      calculateHostingAmount({ monthlyPrice: 12, pricingModel: "PER_PROPERTY", minProperties: 0 }, 0)
+        .amount,
+    ).toBe(0);
+    db.hostingPlan.findUnique.mockImplementationOnce(async () => ({
+      id: "plan_market",
+      name: "Marketplace",
+      isActive: true,
+      monthlyPrice: 12,
+      pricingModel: "PER_PROPERTY",
+      minProperties: 0,
+      currency: "USD",
+    }));
+    state.published = 0;
+    await expect(createHostingInvoiceForHost({ hostId: "h_qa2" })).rejects.toBeInstanceOf(
+      HostingInvoiceRefusedError,
+    );
+    unchanged();
+    expect(stripe.invoices.create).not.toHaveBeenCalled();
+    expect(stripe.invoiceItems.create).not.toHaveBeenCalled();
+  });
+
+  it("a genuinely free (complimentary) plan is still recorded paid with no Stripe call", async () => {
+    state.planPrice = 0;
+    const rec = await createHostingInvoiceForHost({ hostId: "h_qa2" });
+    expect(rec.status).toBe("PAID");
+    expect(state.host.subscriptionStatus).toBe("ACTIVE");
+    expect(stripe.invoices.create).not.toHaveBeenCalled();
+  });
+
+  it("notice for a refused $0 invoice", () => {
+    expect(invoiceSkippedNotice("zero", "qa-tester-two")).toMatch(
+      /^No invoice was sent for qa-tester-two: it came to \$0 .*Nothing was billed and the brand's status and billing period were not changed\./,
+    );
+    expect(invoiceSkippedNotice("zero-approved", "qa-tester-two")).toMatch(/^qa-tester-two is approved\. No invoice/);
   });
 });
 

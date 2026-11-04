@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { addMonths, calculateHostingAmount } from "@/lib/hosting";
+import { addMonths, calculateHostingAmount, isComplimentaryPlan } from "@/lib/hosting";
 import {
   hostHasPricingIntelligenceAddon,
   PRICING_INTELLIGENCE_ADDON_LABEL,
@@ -137,6 +137,15 @@ export async function createHostingInvoiceForHost(opts: {
     : "";
   const lineDescription = `${hostingLine}${addonLine}`;
 
+  // T50b: $0 of hosting only counts as paid when the plan really is free
+  // (complimentary). A paid plan that works out to $0 (e.g. no billable
+  // listings) is refused here, before Stripe, and the brand is not touched.
+  if (hostingAmount <= 0 && !isComplimentaryPlan(plan)) {
+    throw new HostingInvoiceRefusedError(
+      `${plan.name} costs $${plan.monthlyPrice}/mo but this invoice came to $0. Nothing was billed and the brand was not changed.`,
+    );
+  }
+
   // Complimentary / $0 plans: keep host as a customer; still charge add-on if active
   if (amount <= 0) {
     // T50: invoice row and brand update land together or not at all.
@@ -200,39 +209,14 @@ export async function createHostingInvoiceForHost(opts: {
       });
       const chargeCard = await customerHasCardOnFile(customerId);
 
-      // Separate Stripe line items so hosting and the $35 add-on stay distinct
-      if (hostingAmount > 0) {
-        const item = await stripe.invoiceItems.create({
-          customer: customerId,
-          amount: toStripeAmount(hostingAmount),
-          currency: plan.currency.toLowerCase(),
-          description: hostingLine,
-        });
-        createdItemIds.push(item.id);
-      }
-      if (addonAmount > 0) {
-        const item = await stripe.invoiceItems.create({
-          customer: customerId,
-          amount: toStripeAmount(addonAmount),
-          currency: plan.currency.toLowerCase(),
-          description: `${PRICING_INTELLIGENCE_ADDON_LABEL} — $${addonAmount}/mo add-on (not included in hosting)`,
-        });
-        createdItemIds.push(item.id);
-      }
-      const processingCents = processingFeeToNetCents(toStripeAmount(amount));
-      if (processingCents > 0) {
-        const item = await stripe.invoiceItems.create({
-          customer: customerId,
-          amount: processingCents,
-          currency: plan.currency.toLowerCase(),
-          description: `${CARD_PROCESSING_LINE} — so Yall Come Back nets the listed hosting price`,
-        });
-        createdItemIds.push(item.id);
-      }
-
+      // T50b: make the draft invoice first and put each line straight on it.
+      // (Since Stripe API 2022-08-01, invoices.create EXCLUDES pending invoice
+      // items by default, so items made first were left off and the invoice
+      // came out $0 — Stripe marks a $0 invoice paid when it is finalized.)
       const invoice = await stripe.invoices.create({
         customer: customerId,
         auto_advance: true,
+        pending_invoice_items_behavior: "exclude",
         metadata: {
           hostId: host.id,
           planId: plan.id,
@@ -248,10 +232,62 @@ export async function createHostingInvoiceForHost(opts: {
       });
       draftInvoiceId = invoice.id;
 
+      // Separate Stripe line items so hosting and the $35 add-on stay distinct
+      let expectedCents = 0;
+      if (hostingAmount > 0) {
+        const item = await stripe.invoiceItems.create({
+          customer: customerId,
+          invoice: invoice.id,
+          amount: toStripeAmount(hostingAmount),
+          currency: plan.currency.toLowerCase(),
+          description: hostingLine,
+        });
+        createdItemIds.push(item.id);
+        expectedCents += toStripeAmount(hostingAmount);
+      }
+      if (addonAmount > 0) {
+        const item = await stripe.invoiceItems.create({
+          customer: customerId,
+          invoice: invoice.id,
+          amount: toStripeAmount(addonAmount),
+          currency: plan.currency.toLowerCase(),
+          description: `${PRICING_INTELLIGENCE_ADDON_LABEL} — $${addonAmount}/mo add-on (not included in hosting)`,
+        });
+        createdItemIds.push(item.id);
+        expectedCents += toStripeAmount(addonAmount);
+      }
+      const processingCents = processingFeeToNetCents(toStripeAmount(amount));
+      if (processingCents > 0) {
+        const item = await stripe.invoiceItems.create({
+          customer: customerId,
+          invoice: invoice.id,
+          amount: processingCents,
+          currency: plan.currency.toLowerCase(),
+          description: `${CARD_PROCESSING_LINE} — so Yall Come Back nets the listed hosting price`,
+        });
+        createdItemIds.push(item.id);
+        expectedCents += processingCents;
+      }
+
+      // Never finalize (or email) an invoice whose total is not what we billed.
+      const draft = await stripe.invoices.retrieve(invoice.id);
+      if ((draft.total ?? 0) !== expectedCents) {
+        throw new HostingInvoiceRefusedError(
+          `The Stripe invoice total was $${((draft.total ?? 0) / 100).toFixed(2)}, expected $${(expectedCents / 100).toFixed(2)}. Nothing was billed and the brand was not changed.`,
+        );
+      }
+
       const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
       draftInvoiceId = null;
       stripeInvoiceId = finalized.id;
       finalizedOpen = finalized.status !== "paid";
+      // A "paid" invoice counts only if it was paid for the full amount.
+      if (finalized.status === "paid" && (finalized.total ?? 0) < expectedCents) {
+        createdItemIds.length = 0; // a paid invoice cannot be undone here
+        throw new HostingInvoiceRefusedError(
+          `Stripe marked the invoice paid at $${((finalized.total ?? 0) / 100).toFixed(2)}, expected $${(expectedCents / 100).toFixed(2)}. The brand was not changed.`,
+        );
+      }
       if (!chargeCard) {
         try {
           await stripe.invoices.sendInvoice(finalized.id);
@@ -269,6 +305,7 @@ export async function createHostingInvoiceForHost(opts: {
         itemIds: createdItemIds,
         openInvoiceId: finalizedOpen ? stripeInvoiceId : null,
       });
+      if (err instanceof HostingInvoiceRefusedError) throw err;
       throw new Error(
         `${HOSTING_INVOICE_FAILED_ERROR} (${errorText(err)})`,
       );
@@ -355,6 +392,18 @@ export async function createHostingInvoiceForHost(opts: {
       });
     }
     throw err;
+  }
+}
+
+/**
+ * T50b: the invoice was refused because its amount did not match the plan's
+ * price (e.g. $0 on a paid plan). Nothing was billed, the brand is unchanged.
+ */
+export class HostingInvoiceRefusedError extends Error {
+  readonly code = "zero-amount" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "HostingInvoiceRefusedError";
   }
 }
 

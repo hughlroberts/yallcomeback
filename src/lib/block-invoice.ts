@@ -94,20 +94,11 @@ export async function sendStripeInvoiceForBlock(opts: {
     onAccount,
   );
 
-  await stripe.invoiceItems.create(
-    {
-      customer: customer.id,
-      amount: toStripeAmount(amount),
-      currency,
-      description: lineDescription,
-    },
-    onAccount,
-  );
-
   const invoice = await stripe.invoices.create(
     {
       customer: customer.id,
       collection_method: "send_invoice",
+      pending_invoice_items_behavior: "exclude",
       days_until_due: 14,
       auto_advance: true,
       metadata: {
@@ -123,6 +114,28 @@ export async function sendStripeInvoiceForBlock(opts: {
   );
 
   if (!invoice.id) throw new Error("Stripe did not return an invoice id");
+
+  await stripe.invoiceItems.create(
+    {
+      customer: customer.id,
+      invoice: invoice.id,
+      amount: toStripeAmount(amount),
+      currency,
+      description: lineDescription,
+    },
+    onAccount,
+  );
+
+  // T50b: since Stripe API 2022-08-01 invoices.create leaves pending items
+  // off by default, so the line goes straight onto this draft, and the draft
+  // is never finalized or emailed unless its total is the amount owed.
+  const draft = await stripe.invoices.retrieve(invoice.id, undefined, onAccount);
+  if ((draft.total ?? 0) !== toStripeAmount(amount)) {
+    await stripe.invoices.del(invoice.id, undefined, onAccount).catch(() => {});
+    throw new Error(
+      `Stripe invoice total $${((draft.total ?? 0) / 100).toFixed(2)} does not match $${amount.toFixed(2)}; nothing was sent.`,
+    );
+  }
 
   const finalized = await stripe.invoices.finalizeInvoice(
     invoice.id,

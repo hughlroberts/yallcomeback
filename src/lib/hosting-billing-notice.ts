@@ -17,6 +17,12 @@ export function invoiceSkippedNotice(
     const lead = kind === "failed-approved" ? `${who} is approved. ` : "";
     return `${lead}The invoice for ${who} was not created. Nothing was billed and the brand's status and billing period were not changed. Try again, or check the server log for "hosting-invoice".`;
   }
+  // T50b: refused before billing — a paid plan came out to $0 (or Stripe's
+  // total did not match). Nothing was billed or changed.
+  if (kind === "zero-approved" || kind === "zero") {
+    const lead = kind === "zero-approved" ? `${who} is approved. ` : "";
+    return `${lead}No invoice was sent for ${who}: it came to $0 (or not the plan's price) on a paid plan, so it was refused. Nothing was billed and the brand's status and billing period were not changed. Check the plan and published listings, or the server log for "hosting-invoice".`;
+  }
   if (kind !== "approved" && kind !== "invoice") return null;
   const lead = kind === "approved" ? `${who} is approved. ` : "";
   return `${lead}No invoice was sent: ${who} already pays by card each month, so an invoice would bill it twice.`;
