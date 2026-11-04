@@ -110,15 +110,39 @@ describe("GET /api/v1/search", () => {
     expect(host.searchMarketplace).not.toHaveBeenCalled();
   });
 
-  it("caps guests at the search max in the query echo, filter and humanSearchUrl", async () => {
+  it("400s guests over the search max instead of clamping (R1104-13)", async () => {
     const res = await get("location=Malakoff&guests=99");
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.query.guests).toBe(50);
-    expect(new URL(body.humanSearchUrl).searchParams.get("guests")).toBe("50");
-    expect(host.searchMarketplace.mock.calls[0][0]).toMatchObject({
-      guests: 50,
-    });
+    expect(body).toMatchObject({ ok: false, code: "invalid_guests" });
+    expect(body.error).toContain("1 to 50");
+    expect((await get("location=Malakoff&guests=50")).status).toBe(200);
+  });
+
+  it("400s bad price range, flexibility, lone dates, long location and long stays (R1104-8/13)", async () => {
+    host.searchMarketplace.mockClear();
+    const cases: [string, string][] = [
+      ["minNightly=300&maxNightly=100", "invalid_price_range"],
+      ["checkIn=2026-12-01&checkOut=2026-12-04&flexibilityDays=-1", "invalid_flexibility_days"],
+      ["checkIn=2026-12-01&checkOut=2026-12-04&flexibilityDays=15", "invalid_flexibility_days"],
+      ["checkIn=2026-12-01&checkOut=2026-12-04&flexibilityDays=abc", "invalid_flexibility_days"],
+      ["checkIn=2026-12-01", "incomplete_dates"],
+      ["checkOut=2026-12-04", "incomplete_dates"],
+      [`location=${"a".repeat(201)}`, "invalid_location"],
+      ["checkIn=2026-12-01&checkOut=2029-08-27", "stay_too_long"],
+    ];
+    for (const [q, code] of cases) {
+      const res = await get(q);
+      expect(res.status, q).toBe(400);
+      expect(res.headers.get("Access-Control-Allow-Origin"), q).toBe("*");
+      expect(await res.json(), q).toMatchObject({ ok: false, code });
+    }
+    expect(host.searchMarketplace).not.toHaveBeenCalled();
+    expect((await get(`location=${"a".repeat(200)}`)).status).toBe(200);
+    expect((await get("minNightly=100&maxNightly=100")).status).toBe(200);
+    expect(
+      (await get("checkIn=2026-12-01&checkOut=2027-03-01&flexibilityDays=0")).status,
+    ).toBe(200);
   });
 
   it("keeps a normal party as sent and 400s junk guests / pets (T54)", async () => {

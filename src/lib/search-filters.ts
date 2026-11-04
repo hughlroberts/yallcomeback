@@ -166,6 +166,11 @@ export function clampGuestsInput(raw: string): string {
 export const SEARCH_DEFAULT_LIMIT = 20;
 export const SEARCH_MAX_LIMIT = 50;
 
+/** R1104-13: longest location/where text accepted (API 400s; page trims). */
+export const SEARCH_MAX_LOCATION_CHARS = 200;
+/** Flexible-date window, whole days. */
+export const SEARCH_MAX_FLEXIBILITY_DAYS = 14;
+
 /**
  * Results per response from `take` (alias `limit`): default 20, max 50.
  * Missing, 0, negative or non-numeric values get the default (20).
@@ -250,11 +255,11 @@ export function partyFromParams(
   let pets: number | undefined;
   if (g) {
     const n = plainWholeNumber(g);
-    if (n == null || n < 1) {
+    if (n == null || n < 1 || n > SEARCH_MAX_GUESTS) {
       return {
         ok: false,
         code: "invalid_guests",
-        error: `guests must be a whole number of 1 or more (got "${g.slice(0, 40)}").`,
+        error: `guests must be a whole number from 1 to ${SEARCH_MAX_GUESTS} (got "${g.slice(0, 40)}").`,
       };
     }
     guests = n;

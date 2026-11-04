@@ -32,6 +32,13 @@ export async function createBooking(formData: FormData) {
   if (!propertyId || !checkIn || !checkOut) {
     throw new Error("Missing required fields");
   }
+  // R1104-8: same max stay length as search, quote and agent checkout.
+  {
+    const { MAX_STAY_NIGHTS, nightsBetweenYmd } = await import("@/lib/search-dates");
+    if (nightsBetweenYmd(checkIn, checkOut) > MAX_STAY_NIGHTS) {
+      throw new Error(`Stays can be up to ${MAX_STAY_NIGHTS} nights. Pick a shorter range.`);
+    }
+  }
 
   const session = await auth();
   let guestName = String(formData.get("guestName") || "").trim();

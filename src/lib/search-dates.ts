@@ -45,11 +45,22 @@ export function isValidYmd(s: string): boolean {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
 }
 
+/**
+ * R1104-8: longest bookable/searchable stay. 90 nights rather than 30
+ * because monthly discounts and long-stay cancellation rules start at 28
+ * nights, so month-plus stays are a supported case.
+ */
+export const MAX_STAY_NIGHTS = 90;
+
 export type SearchDatesCheck =
   | { ok: true; checkIn?: string; checkOut?: string }
   | {
       ok: false;
-      code: "invalid_date" | "past_dates" | "checkout_not_after_checkin";
+      code:
+        | "invalid_date"
+        | "past_dates"
+        | "checkout_not_after_checkin"
+        | "stay_too_long";
       /** API error text. */
       error: string;
       /** Friendly line for the search page. */
@@ -90,6 +101,14 @@ export function checkSearchDates(
       code: "checkout_not_after_checkin",
       error: "checkOut must be at least one day after checkIn",
       message: "Check-out has to be after check-in (1 night minimum).",
+    };
+  }
+  if (ci && co && nightsBetweenYmd(ci, co) > MAX_STAY_NIGHTS) {
+    return {
+      ok: false,
+      code: "stay_too_long",
+      error: `Stays are limited to ${MAX_STAY_NIGHTS} nights (got ${nightsBetweenYmd(ci, co)}).`,
+      message: `Stays can be up to ${MAX_STAY_NIGHTS} nights. Pick a shorter range.`,
     };
   }
   return { ok: true, checkIn: ci, checkOut: co };

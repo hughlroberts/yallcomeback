@@ -22,8 +22,7 @@ import {
   hasListingFilters,
   listingFilterLabels,
   listingFiltersFromParams,
-  type ListingFilters,
-} from "@/lib/search-filters";
+  type ListingFilters, SEARCH_MAX_LOCATION_CHARS } from "@/lib/search-filters";
 
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
@@ -67,7 +66,10 @@ export default async function MarketplacePage({
   const params = await searchParams;
 
   // where preferred; legacy ?q= still works
-  const where = (params.where ?? params.q)?.trim() || undefined;
+  // R1104-13: an over-long where is cut to SEARCH_MAX_LOCATION_CHARS.
+  const where =
+    (params.where ?? params.q)?.trim().slice(0, SEARCH_MAX_LOCATION_CHARS).trim() ||
+    undefined;
   const guests = parsePositiveInt(params.guests);
   const pets = parsePositiveInt(params.pets);
   // Past, inverted or malformed dates: say so and search without dates

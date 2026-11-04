@@ -3,6 +3,9 @@ import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import { agentSearch, SearchInputError } from "@/lib/agent/search";
 import {
+  SEARCH_MAX_FLEXIBILITY_DAYS,
+  SEARCH_MAX_LOCATION_CHARS,
+  plainWholeNumber,
   partyFromParams,
   strictSearchLimitFromParams,
 } from "@/lib/search-filters";
@@ -29,6 +32,26 @@ export async function GET(req: NextRequest) {
   const checkIn = sp.get("checkIn")?.trim() || undefined;
   const checkOut = sp.get("checkOut")?.trim() || undefined;
 
+  const bad = (code: string, error: string) =>
+    NextResponse.json(
+      { ok: false, code, error },
+      { status: 400, headers: { "Access-Control-Allow-Origin": "*" } },
+    );
+  if (location && location.length > SEARCH_MAX_LOCATION_CHARS) {
+    return bad(
+      "invalid_location",
+      `location must be ${SEARCH_MAX_LOCATION_CHARS} characters or fewer (got ${location.length}).`,
+    );
+  }
+  // R1104-12: dates come as a pair. A lone checkIn/checkOut is a 400
+  // rather than being silently ignored.
+  if (Boolean(checkIn) !== Boolean(checkOut)) {
+    return bad(
+      "incomplete_dates",
+      "checkIn and checkOut must be sent together (or neither, for any dates).",
+    );
+  }
+
   const flexibleRaw = sp.get("flexible")?.trim().toLowerCase();
   const flexible =
     flexibleRaw === "1" ||
@@ -39,9 +62,17 @@ export async function GET(req: NextRequest) {
 
   const flexibilityDaysRaw =
     sp.get("flexibilityDays") || sp.get("dateFlex") || sp.get("flex");
-  const flexibilityDays = flexibilityDaysRaw
-    ? Number(flexibilityDaysRaw)
-    : undefined;
+  let flexibilityDays: number | undefined;
+  if (flexibilityDaysRaw?.trim()) {
+    const n = plainWholeNumber(flexibilityDaysRaw.trim());
+    if (n == null || n < 0 || n > SEARCH_MAX_FLEXIBILITY_DAYS) {
+      return bad(
+        "invalid_flexibility_days",
+        `flexibilityDays must be a whole number from 0 to ${SEARCH_MAX_FLEXIBILITY_DAYS} (got "${flexibilityDaysRaw.slice(0, 40)}").`,
+      );
+    }
+    flexibilityDays = n;
+  }
 
   // guests / pets: whole numbers or 400 invalid_guests / invalid_pets
   // (shared with /api/marketplace/stays and /api/v1/listings/{slug}).
@@ -60,6 +91,18 @@ export async function GET(req: NextRequest) {
   const maxNightly = sp.get("maxNightly")
     ? Number(sp.get("maxNightly"))
     : undefined;
+  if (
+    minNightly != null &&
+    maxNightly != null &&
+    Number.isFinite(minNightly) &&
+    Number.isFinite(maxNightly) &&
+    minNightly > maxNightly
+  ) {
+    return bad(
+      "invalid_price_range",
+      `minNightly (${minNightly}) must not be greater than maxNightly (${maxNightly}).`,
+    );
+  }
   // Default 20; otherwise a whole number 1–50 or 400 invalid_limit (same
   // parser as /api/marketplace/stays).
   const limit = strictSearchLimitFromParams((k) => sp.get(k));

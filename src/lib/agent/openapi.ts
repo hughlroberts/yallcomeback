@@ -7,7 +7,7 @@ import {
 /** 400 for bad dates, shared by search and listing detail. */
 const badDatesResponse = {
   description:
-    "Bad input: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn), invalid_date (not YYYY-MM-DD), invalid_guests (guests not a whole number ≥ 1) or invalid_pets (pets not a whole number from 0 to 4).",
+    "Bad input: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn), invalid_date (not YYYY-MM-DD), stay_too_long (more than 90 nights), invalid_guests (guests not a whole number from 1 to 50) or invalid_pets (pets not a whole number from 0 to 4).",
   content: {
     "application/json": {
       schema: {
@@ -20,6 +20,7 @@ const badDatesResponse = {
               "past_dates",
               "checkout_not_after_checkin",
               "invalid_date",
+              "stay_too_long",
               "invalid_guests",
               "invalid_pets",
             ],
@@ -33,7 +34,7 @@ const badDatesResponse = {
 
 const badSearchResponse = {
   description:
-    "Bad search input: past_dates, checkout_not_after_checkin or invalid_date for dates, invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number ≥ 1) or invalid_pets (pets not a whole number from 0 to 4).",
+    "Bad search input: past_dates, checkout_not_after_checkin, invalid_date or stay_too_long (more than 90 nights) for dates, incomplete_dates (only one of checkIn/checkOut sent; send both or neither), invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number from 1 to 50; values above 50 are a 400, not clamped), invalid_pets (pets not a whole number from 0 to 4), invalid_price_range (minNightly greater than maxNightly), invalid_flexibility_days (flexibilityDays not a whole number from 0 to 14) or invalid_location (location/where/q/lake longer than 200 characters).",
   content: {
     "application/json": {
       schema: {
@@ -46,9 +47,14 @@ const badSearchResponse = {
               "past_dates",
               "checkout_not_after_checkin",
               "invalid_date",
+              "stay_too_long",
+              "incomplete_dates",
               "invalid_limit",
               "invalid_guests",
               "invalid_pets",
+              "invalid_price_range",
+              "invalid_flexibility_days",
+              "invalid_location",
             ],
           },
           error: { type: "string" },
@@ -514,7 +520,10 @@ export function buildOpenApiDocument(origin: string) {
             "200": {
               description: "Checkout URL (calendar not held until paid)",
             },
-            "400": { description: "Invalid request" },
+            "400": {
+              description:
+                "Invalid request ({ok:false, code, error}); stays longer than 90 nights get code stay_too_long.",
+            },
             "404": { description: "Listing not on marketplace" },
             "409": {
               description:

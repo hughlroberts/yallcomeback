@@ -47,4 +47,16 @@ describe("agent stay checkout", () => {
       expect(result.error).toMatch(/0 to 4/);
     }
   });
+
+  it("R1104-8: a stay over 90 nights is a 400 stay_too_long before any DB read", async () => {
+    const result = await createAgentStayCheckout({
+      slug: "any",
+      checkIn: "2027-01-01",
+      checkOut: "2027-04-02",
+      guestName: "Guest",
+      guestEmail: "guest@example.com",
+      acceptTerms: true,
+    });
+    expect(result).toMatchObject({ ok: false, status: 400, code: "stay_too_long" });
+  });
 });

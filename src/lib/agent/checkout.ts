@@ -9,7 +9,7 @@ import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import { prisma } from "@/lib/db";
 import { calculateQuote } from "@/lib/pricing";
 import { isRangeAvailable, lockPropertyBookings } from "@/lib/availability";
-import { isYmd } from "@/lib/search-dates";
+import { isYmd, MAX_STAY_NIGHTS, nightsBetweenYmd } from "@/lib/search-dates";
 import { marketplacePropertyWhere } from "@/lib/host";
 import { isStripeConfigured } from "@/lib/stripe";
 import { canHostAddFutureWork } from "@/lib/hosting";
@@ -93,6 +93,14 @@ export async function createAgentStayCheckout(
       ok: false,
       status: 400,
       error: "checkOut must be after checkIn.",
+    };
+  }
+  if (nightsBetweenYmd(checkIn, checkOut) > MAX_STAY_NIGHTS) {
+    return {
+      ok: false,
+      status: 400,
+      code: "stay_too_long",
+      error: `Stays are limited to ${MAX_STAY_NIGHTS} nights.`,
     };
   }
 
