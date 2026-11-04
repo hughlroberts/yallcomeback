@@ -53,6 +53,7 @@ import {
   findPausedListing,
   hiddenFromViewer,
   pausedListingAccess,
+  pausedPreviewTitle,
 } from "@/lib/brand-visibility";
 import { PausedListingBanner } from "@/components/paused-listing-banner";
 
@@ -111,6 +112,24 @@ export async function generateMetadata({
       },
     },
   });
+
+  // T59: the owner's paused preview gets the listing's own title.
+  if (!property) {
+    const paused = await pausedListingAccess(slug, sp.host, sp.preview);
+    if (paused?.kind === "preview") {
+      const row = await prisma.property.findFirst({
+        where: { id: paused.id },
+        select: { title: true },
+      });
+      const name = row?.title?.trim() || "Your listing";
+      return pageMetadata({
+        title: pausedPreviewTitle(name),
+        description: "Paused, not visible to guests.",
+        path: `/marketplace/properties/${encodeURIComponent(slug)}`,
+        noIndex: true,
+      });
+    }
+  }
 
   if (
     brandListingsHidden(property?.host) ||

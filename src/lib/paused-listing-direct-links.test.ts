@@ -190,3 +190,35 @@ describe("paused listing: the host (and admin) can preview", () => {
     expect(html).toContain("Paused, not visible to guests");
   });
 });
+
+describe("T59: paused preview <title>", () => {
+  async function meta(sp: Record<string, string> = { host: "qa-tester-two" }) {
+    const { generateMetadata } = await import("@/app/marketplace/properties/[slug]/page");
+    const m = await generateMetadata({
+      params: Promise.resolve({ slug: "qa-test-listing-do-not-book" }),
+      searchParams: Promise.resolve(sp),
+    });
+    const t = m.title as unknown;
+    return {
+      title: typeof t === "string" ? t : ((t as { absolute?: string })?.absolute ?? String(t)),
+      robots: JSON.stringify(m.robots ?? ""),
+    };
+  }
+
+  it("owner sees '<listing name> · Paused preview', still noindex", async () => {
+    (store.listing as Record<string, unknown>).title = "QA Test Listing";
+    asOwnHost();
+    const m = await meta();
+    expect(m.title).toContain("QA Test Listing · Paused preview");
+    expect(m.title).not.toMatch(/isn't available/);
+    expect(m.robots).toMatch(/false|noindex/i);
+  });
+
+  it("guests keep the not-available title", async () => {
+    (store.listing as Record<string, unknown>).title = "QA Test Listing";
+    const m = await meta();
+    expect(m.title).toMatch(/isn't available right now/);
+    expect(m.title).not.toContain("QA Test Listing");
+  });
+});
+

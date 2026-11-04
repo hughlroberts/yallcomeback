@@ -120,3 +120,8 @@ export async function pausedListingAccess(
 }
 
 export const PAUSED_PREVIEW_BANNER = "Paused, not visible to guests";
+
+/** T59: browser title for the owner's paused preview. */
+export function pausedPreviewTitle(name: string): string {
+  return `${name} · Paused preview`;
+}
