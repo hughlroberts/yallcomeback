@@ -28,7 +28,7 @@ export function SiteFooter() {
           </div>
 
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-buttermilk/50">
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-buttermilk/75">
               Find a place
             </p>
             <ul className="mt-3 space-y-2 text-sm">
@@ -56,7 +56,7 @@ export function SiteFooter() {
           </div>
 
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-buttermilk/50">
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-buttermilk/75">
               Host a place
             </p>
             <ul className="mt-3 space-y-2 text-sm">
@@ -75,7 +75,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-5 text-xs text-buttermilk/50 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-5 text-xs text-buttermilk/75 sm:px-6">
           <p>© {new Date().getFullYear()} {PRODUCT_DOMAIN}</p>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <Link href="/terms" className="hover:text-honey">

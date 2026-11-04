@@ -44,6 +44,12 @@
 }
 
 @theme inline {
+  /* R1104-15: shared muted grays darkened just enough for WCAG AA
+     (>= 4.5:1 on white and the cream page/card backgrounds). */
+  --color-stone-400: #736b65;
+  --color-stone-500: #6b645e;
+  --color-slate-400: #5d6d85;
+  --color-slate-500: #56657c;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);

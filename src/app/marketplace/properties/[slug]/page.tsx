@@ -523,7 +523,7 @@ export default async function MarketplacePropertyPage({
             >
               Stays
             </Link>
-            <span className="text-stone-300">/</span>
+            <span className="text-stone-400" aria-hidden="true">/</span>
             <span className="font-medium text-stone-800 line-clamp-1">
               {property.title}
             </span>
