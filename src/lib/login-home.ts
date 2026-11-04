@@ -48,3 +48,15 @@ export function homeAfterLogin(
   if (next && !GENERIC_LANDING.has(path)) return next;
   return "/marketplace";
 }
+
+/**
+ * Pure: the /login URL for a signed-out visit to an admin page, keeping that
+ * page (e.g. /admin/messages/<id> from a host notification email) as the
+ * callback. Anything that is not a safe /admin path falls back to Calendar.
+ */
+export function adminLoginRedirect(path: string | null | undefined): string {
+  const safe = safeInternalPath(path ?? "", "");
+  const p = pathOnly(safe);
+  const dest = p === "/admin" || p.startsWith("/admin/") ? safe : "/admin/calendar";
+  return `/login?callbackUrl=${encodeURIComponent(dest)}`;
+}

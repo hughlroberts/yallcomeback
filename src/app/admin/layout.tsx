@@ -17,6 +17,7 @@ import {
   resolveHostAccessInfo,
 } from "@/lib/host-access";
 import { DASHBOARD_NEST_PREFIXES } from "@/lib/dashboard-nest";
+import { adminLoginRedirect } from "@/lib/login-home";
 import {
   adminBrandSwitchPath,
   shouldShowPickBrandOnly,
@@ -30,7 +31,10 @@ export default async function AdminLayout({
 }) {
   const session = await auth();
   if (!session?.user) {
-    redirect("/login?callbackUrl=/admin/calendar");
+    // Middleware normally sends signed-out visits to /login with the exact
+    // page; this backstop keeps it too (e.g. a thread link from an email).
+    const h = await headers();
+    redirect(adminLoginRedirect(h.get("x-pathname")));
   }
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },

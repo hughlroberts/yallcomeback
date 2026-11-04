@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { homeAfterLogin } from "@/lib/login-home";
+import { adminLoginRedirect, homeAfterLogin } from "@/lib/login-home";
 
 describe("homeAfterLogin", () => {
   it("sends hosts to Calendar from the homepage or a bare login", () => {
@@ -61,5 +61,26 @@ describe("homeAfterLogin", () => {
       "/marketplace",
     );
     expect(homeAfterLogin("HOST", "//evil.example")).toBe("/admin/calendar");
+  });
+});
+
+describe("notification email deep links survive sign-in (#8)", () => {
+  it("keeps the admin thread as the login callback", () => {
+    expect(adminLoginRedirect("/admin/messages/c123")).toBe(
+      "/login?callbackUrl=%2Fadmin%2Fmessages%2Fc123",
+    );
+    expect(adminLoginRedirect(null)).toBe("/login?callbackUrl=%2Fadmin%2Fcalendar");
+    expect(adminLoginRedirect("//evil.example/admin")).toBe(
+      "/login?callbackUrl=%2Fadmin%2Fcalendar",
+    );
+    expect(adminLoginRedirect("/marketplace")).toBe(
+      "/login?callbackUrl=%2Fadmin%2Fcalendar",
+    );
+  });
+
+  it("returns hosts and guests to the thread after sign-in", () => {
+    expect(homeAfterLogin("HOST", "/admin/messages/c123")).toBe("/admin/messages/c123");
+    expect(homeAfterLogin("ADMIN", "/admin/messages/c123")).toBe("/admin/messages/c123");
+    expect(homeAfterLogin("GUEST", "/messages/c123")).toBe("/messages/c123");
   });
 });
