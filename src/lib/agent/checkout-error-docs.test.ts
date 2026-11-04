@@ -28,3 +28,13 @@ describe("T61c: checkout error codes are documented", () => {
     }
   });
 });
+
+describe("T61c docs sentence joins", () => {
+  it("no sentence starts lowercase after a period in the checkout error text", () => {
+    for (const f of ["llms.txt/route.ts", "agents.md/route.ts"]) {
+      const s = readFileSync(path.join(path.resolve(__dirname, "../../app"), f), "utf8");
+      expect(s).not.toMatch(/\. with \\`code\\`/);
+      expect(s).toContain("When the host's payments are not ready, the 409 also includes \\`code\\`: connect_no_account");
+    }
+  });
+});

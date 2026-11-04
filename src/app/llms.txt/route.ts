@@ -123,7 +123,7 @@ Content-Type: application/json
 - Returns checkoutUrl. Send the human there to pay with a card.
 - Dates are not held. Calendar is not written until Stripe confirms the deposit is paid.
 - If another guest pays for overlapping nights first, this payment is refunded in full automatically and the booking is cancelled. Tell the guest this can happen.
-- 409 means the dates are taken or the host is not ready to take a card deposit yet; the response includes \`bookUrl\`; send the guest there instead. with \`code\` connect_no_account, connect_details_not_submitted or connect_charges_not_enabled when the host's payments are not ready (the host fixes it at /admin/payments). A 503 with code connect_status_unavailable means Stripe status could not be confirmed; nothing was booked or charged, retry later.
+- 409 means the dates are taken or the host is not ready to take a card deposit yet; the response includes \`bookUrl\`; send the guest there instead. When the host's payments are not ready, the 409 also includes \`code\`: connect_no_account, connect_details_not_submitted or connect_charges_not_enabled (the host fixes it at /admin/payments). A 503 with code connect_status_unavailable means Stripe status could not be confirmed; nothing was booked or charged, retry later.
 - Checkout expires in 30 minutes. Abandoned sessions never hold nights.
 - Never send paid: true. Agents cannot mark a stay paid.
 
