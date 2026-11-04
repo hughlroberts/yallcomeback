@@ -140,4 +140,17 @@ describe("GET /api/v1/search", () => {
     }
     expect(host.searchMarketplace).not.toHaveBeenCalled();
   });
+
+  it("?lake= is an alias for location; location wins when both are sent", async () => {
+    await get("lake=Cedar%20Creek%20Lake");
+    await get("location=Malakoff");
+    expect(JSON.stringify(host.searchMarketplace.mock.calls[0])).toContain("Cedar Creek Lake");
+    expect(JSON.stringify(host.searchMarketplace.mock.calls[0])).toEqual(
+      JSON.stringify(host.searchMarketplace.mock.calls[1]).replace("Malakoff", "Cedar Creek Lake"),
+    );
+    host.searchMarketplace.mockClear();
+    await get("location=Malakoff&lake=Cedar");
+    expect(JSON.stringify(host.searchMarketplace.mock.calls[0])).toContain("Malakoff");
+    expect(JSON.stringify(host.searchMarketplace.mock.calls[0])).not.toContain("Cedar");
+  });
 });

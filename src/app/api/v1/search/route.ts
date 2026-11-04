@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     sp.get("location")?.trim() ||
     sp.get("where")?.trim() ||
     sp.get("q")?.trim() ||
+    sp.get("lake")?.trim() ||
     undefined;
 
   const checkIn = sp.get("checkIn")?.trim() || undefined;
