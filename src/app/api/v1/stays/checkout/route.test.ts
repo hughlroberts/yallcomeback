@@ -151,4 +151,14 @@ describe("public agent checkout route", () => {
     const res = await POST(req("203.0.113.3", body(3)));
     expect(res.status).toBe(409);
   });
+  it("rejects a JSON null body with 400 instead of crashing", async () => {
+    const r = new NextRequest("https://www.yallcomeback.app/api/v1/stays/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-real-ip": "9.9.9.77" },
+      body: "null",
+    });
+    const res = await POST(r);
+    expect(res.status).toBe(400);
+    expect(checkout.createAgentStayCheckout).not.toHaveBeenCalled();
+  });
 });

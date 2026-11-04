@@ -35,8 +35,11 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "bad_json" }, { status: 400 });
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "bad_json" }, { status: 400 });
+  }
 
-  if (!body.name || !isSignupStartedName(body.name)) {
+  if (typeof body.name !== "string" || !isSignupStartedName(body.name)) {
     return NextResponse.json({ error: "unsupported_event" }, { status: 400 });
   }
 

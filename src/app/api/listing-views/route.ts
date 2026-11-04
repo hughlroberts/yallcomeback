@@ -27,8 +27,12 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "bad_json" }, { status: 400 });
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "bad_json" }, { status: 400 });
+  }
 
-  const propertyId = body.propertyId?.trim();
+  const propertyId =
+    typeof body.propertyId === "string" ? body.propertyId.trim() : "";
   if (!propertyId) {
     return NextResponse.json({ error: "missing_id" }, { status: 400 });
   }

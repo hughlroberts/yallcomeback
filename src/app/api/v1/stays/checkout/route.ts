@@ -89,6 +89,12 @@ export async function POST(req: NextRequest) {
       { status: 400, headers: CORS },
     );
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json(
+      { ok: false, error: "JSON body required" },
+      { status: 400, headers: CORS },
+    );
+  }
 
   const guestEmail = String(body.guestEmail || "")
     .trim()
