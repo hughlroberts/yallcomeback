@@ -195,6 +195,20 @@ describe("recordSetupServicePayment (T46)", () => {
     });
   });
 
+  it("no PLATFORM_ALERT_EMAIL: goes to yallcomebackapp@gmail.com, not ADMIN accounts", async () => {
+    vi.stubEnv("PLATFORM_ALERT_EMAIL", "");
+    db.prisma.user.findMany.mockResolvedValue([{ email: "someadmin@example.com", hostId: null }] as never);
+    db.prisma.setupServicePayment.create.mockResolvedValue({});
+    db.prisma.host.updateMany.mockResolvedValue({ count: 1 });
+    expect(await recordSetupServicePayment(paid)).toBe("recorded");
+    expect(mail.dispatchPlatformEmail).toHaveBeenCalledTimes(1);
+    expect(mail.dispatchPlatformEmail.mock.calls[0][0]).toMatchObject({
+      to: "yallcomebackapp@gmail.com",
+      subject: "Full setup purchased: QA Marketplace Test",
+      replyTo: "qa@example.com",
+    });
+  });
+
   it("webhook replay of the same session: nothing recorded twice, no email", async () => {
     db.prisma.setupServicePayment.create.mockRejectedValue(Object.assign(new Error("dup"), { code: "P2002" }));
     expect(await recordSetupServicePayment(paid)).toBe("already");

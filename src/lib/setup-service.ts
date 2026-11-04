@@ -15,7 +15,7 @@ import { CARD_PROCESSING_LINE, processingFeeToNetCents } from "@/lib/card-proces
 import { requireStripeClient } from "@/lib/stripe";
 import { dispatchPlatformEmail } from "@/lib/messaging";
 import { canSendEmailTo } from "@/lib/notification-prefs";
-import { platformAlertRecipients } from "@/lib/domain-setup";
+import { platformAlertRecipients } from "@/lib/platform-alerts";
 import {
   HostingBillingError,
   ensurePlatformCustomer,
@@ -353,16 +353,9 @@ async function setupEmailContext(hostId: string, session: SetupSessionLike) {
     },
   });
   if (!host) return null;
-  const admins = await prisma.user.findMany({
-    where: { role: "ADMIN", emailNotifications: true, email: { contains: "@" } },
-    select: { email: true, hostId: true },
-  });
-  const preferred = admins.filter((u) => !u.hostId);
-  const list = preferred.length > 0 ? preferred : admins;
-  const recipients = platformAlertRecipients(
-    list.map((u) => u.email!),
-    process.env.PLATFORM_ALERT_EMAIL,
-  );
+  // Platform alert inbox (yallcomebackapp@gmail.com unless
+  // PLATFORM_ALERT_EMAIL overrides it), not individual ADMIN accounts.
+  const recipients = platformAlertRecipients();
   const contact =
     host.contactEmail || host.billingEmail || host.users[0]?.email || null;
   const totalUsd =
