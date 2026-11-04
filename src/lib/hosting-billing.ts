@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { invoicePaymentActivatesHosting, statusWithoutActivation } from "@/lib/hosting-activation";
 import { addMonths, calculateHostingAmount, isComplimentaryPlan } from "@/lib/hosting";
 import {
   hostHasPricingIntelligenceAddon,
@@ -173,9 +174,9 @@ export async function createHostingInvoiceForHost(opts: {
       where: { id: host.id },
       data: {
         planId: plan.id,
-        subscriptionStatus: "ACTIVE",
-        currentPeriodStart: periodStart,
-        currentPeriodEnd: periodEnd,
+        // T48(2): a $0 invoice never makes a brand ACTIVE or advances its
+        // paid-up period.
+        subscriptionStatus: statusWithoutActivation(host.subscriptionStatus),
         billingEmail: billingEmail || host.billingEmail,
       },
     });
@@ -315,8 +316,10 @@ export async function createHostingInvoiceForHost(opts: {
   // Card on file charged at once: the paid webhook then finds the invoice
   // already PAID, so advance the billing period here too.
   const paidAt = status === "PAID" ? new Date() : undefined;
+  const activates =
+    status === "PAID" && invoicePaymentActivatesHosting({ amount }, host);
   const paidPeriod =
-    status === "PAID"
+    activates
       ? hostingPeriodAfterPayment({
           currentPeriodStart: host.currentPeriodStart,
           currentPeriodEnd: host.currentPeriodEnd,
@@ -365,9 +368,9 @@ export async function createHostingInvoiceForHost(opts: {
           // Only a paid invoice makes a brand ACTIVE. An open invoice leaves
           // an ACTIVE brand ACTIVE and anything else PENDING_PAYMENT.
           subscriptionStatus:
-            status === "PAID" || host.subscriptionStatus === "ACTIVE"
+            activates
               ? "ACTIVE"
-              : "PENDING_PAYMENT",
+              : statusWithoutActivation(host.subscriptionStatus),
           billingEmail: billingEmail || host.billingEmail,
           ...(paidPeriod
             ? {
@@ -471,8 +474,15 @@ export async function markHostingInvoicePaid(
     // creation, or synced first) before its period was applied to the host.
     const host = await tx.host.findUnique({
       where: { id: invoice.hostId },
-      select: { currentPeriodStart: true, currentPeriodEnd: true },
+      select: {
+        currentPeriodStart: true,
+        currentPeriodEnd: true,
+        isTestBrand: true,
+      },
     });
+    // T48(2): record the invoice as paid, but a $0 invoice or a test brand
+    // never activates the brand or advances its paid-up period.
+    if (!invoicePaymentActivatesHosting(invoice, host)) return updated;
     const period = hostingPeriodAfterPayment({
       currentPeriodStart: host?.currentPeriodStart,
       currentPeriodEnd: host?.currentPeriodEnd,
@@ -644,7 +654,10 @@ export async function recordStripePlatformInvoice(inv: StripeInvoiceLike) {
       ? (inv.amount_paid ?? inv.amount_due ?? 0)
       : (inv.amount_due ?? inv.amount_paid ?? 0);
   const amount = Math.round(Number(cents) || 0) / 100;
-  if (invoiceStatusFromStripe(inv.status) === "PAID" && amount > 0) {
+  if (
+    invoiceStatusFromStripe(inv.status) === "PAID" &&
+    invoicePaymentActivatesHosting({ amount }, host)
+  ) {
     const promoted = await promoteComplimentaryHostIfPaid(host.id);
     if (promoted) host = promoted;
   }
@@ -720,7 +733,7 @@ export async function recordStripePlatformInvoice(inv: StripeInvoiceLike) {
       })
     : await prisma.hostingInvoice.create({ data: payload });
 
-  if (status === "PAID" && amount > 0) {
+  if (status === "PAID" && invoicePaymentActivatesHosting({ amount }, host)) {
     const period = hostingPeriodAfterPayment({
       currentPeriodStart: host.currentPeriodStart,
       currentPeriodEnd: host.currentPeriodEnd,

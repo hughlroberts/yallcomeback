@@ -76,7 +76,7 @@ describe("markHostingInvoicePaid", () => {
     vi.useFakeTimers();
     vi.setSystemTime(d("2026-10-30"));
     db.hostingInvoice.findUnique.mockResolvedValue({
-      id: "inv1", hostId: "host_cherokee", status: "OPEN", paidAt: null,
+      id: "inv1", hostId: "host_cherokee", status: "OPEN", paidAt: null, amount: 30,
       periodStart: d("2026-08-30"), periodEnd: d("2026-09-30"),
     });
     await markHostingInvoicePaid("inv1");
@@ -87,7 +87,7 @@ describe("markHostingInvoicePaid", () => {
 
   it("an invoice already PAID still applies its period (idempotent, no second invoice write)", async () => {
     db.hostingInvoice.findUnique.mockResolvedValue({
-      id: "inv2", hostId: "host_cherokee", status: "PAID", paidAt: d("2026-10-30"),
+      id: "inv2", hostId: "host_cherokee", status: "PAID", paidAt: d("2026-10-30"), amount: 30,
       periodStart: d("2026-10-30"), periodEnd: d("2026-11-30"),
     });
     await markHostingInvoicePaid("inv2");

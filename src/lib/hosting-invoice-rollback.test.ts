@@ -320,11 +320,12 @@ describe("T50b: a $0 invoice never activates a paid plan", () => {
     expect(stripe.invoiceItems.create).not.toHaveBeenCalled();
   });
 
-  it("a genuinely free (complimentary) plan is still recorded paid with no Stripe call", async () => {
+  it("a genuinely free (complimentary) plan is recorded with no Stripe call but never activates (T48)", async () => {
     state.planPrice = 0;
+    const before = state.host.subscriptionStatus;
     const rec = await createHostingInvoiceForHost({ hostId: "h_qa2" });
     expect(rec.status).toBe("PAID");
-    expect(state.host.subscriptionStatus).toBe("ACTIVE");
+    expect(state.host.subscriptionStatus).toBe(before === "ACTIVE" ? "ACTIVE" : "PENDING_PAYMENT");
     expect(stripe.invoices.create).not.toHaveBeenCalled();
   });
 

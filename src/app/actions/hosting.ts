@@ -479,7 +479,9 @@ export async function updateHostOps(formData: FormData) {
     tagline,
     planId,
     hostingMode,
-    subscriptionStatus: isComplimentary ? "ACTIVE" : subscriptionStatus,
+    // T48(2): a $0 (complimentary) plan no longer forces ACTIVE; the status
+    // ops picks is kept, so a brand can be set back to Pending payment.
+    subscriptionStatus,
     sitePresence: opted.sitePresence,
     websiteUrl,
     billingEmail,
