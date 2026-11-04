@@ -440,32 +440,12 @@ export type NearbyListing = PropertyWithHost & {
 };
 
 /**
- * May a stay from `candidate`'s brand show under "More places nearby" on a
- * listing from `originHostId`'s brand? Always for the same brand and for
- * marketplace-only brands (sitePresence STAYLOCAL). A brand with its own
- * branded site (CUSTOM or BOTH — e.g. a resort like Cherokee Landing) is
- * its own resort inventory, so its stays are never promoted on another
- * brand's listing page.
- */
-export function nearbyBrandAllowed(
-  originHostId: string | null | undefined,
-  candidate: { hostId: string; host: { sitePresence?: string | null } },
-): boolean {
-  if (originHostId && candidate.hostId === originHostId) return true;
-  return (candidate.host.sitePresence ?? "STAYLOCAL") === "STAYLOCAL";
-}
-
-/**
  * Marketplace stays near a listing, ordered by map distance (closest first).
  * Falls back to same city / region when coordinates are missing.
- * Other brands' stays are left out when that brand has its own branded site
- * (see nearbyBrandAllowed).
  */
 export async function getNearbyMarketplaceListings(
   origin: {
     id: string;
-    /** The listing's brand; other branded-site brands are left out. */
-    hostId?: string | null;
     latitude: number | null;
     longitude: number | null;
     city: string | null;
@@ -486,7 +466,6 @@ export async function getNearbyMarketplaceListings(
           slug: true,
           listOnMarketplace: true,
           active: true,
-          sitePresence: true,
         },
       },
       images: {
@@ -498,12 +477,9 @@ export async function getNearbyMarketplaceListings(
     take: 200,
   });
 
-  const allowed = candidates.filter((p) =>
-    nearbyBrandAllowed(origin.hostId, p),
-  );
   const originHasCoords = hasCoordinates(origin.latitude, origin.longitude);
 
-  const ranked = allowed.map((p) => {
+  const ranked = candidates.map((p) => {
     let distanceMiles: number | null = null;
     if (
       originHasCoords &&

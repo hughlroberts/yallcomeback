@@ -391,7 +391,6 @@ export default async function MarketplacePropertyPage({
   const nearby = await getNearbyMarketplaceListings(
     {
       id: property.id,
-      hostId: property.hostId,
       latitude: property.latitude,
       longitude: property.longitude,
       city: property.city,
