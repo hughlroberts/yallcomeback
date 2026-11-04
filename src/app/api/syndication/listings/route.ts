@@ -4,6 +4,8 @@ import {
   hostFromSyndicationKey,
   marketplacePublicUrl,
   upsertSyndicatedListing,
+  syndicationInputError,
+  SyndicationInputError,
   type SyndicationListingInput,
 } from "@/lib/syndication";
 
@@ -69,12 +71,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: SyndicationListingInput;
+  let raw: unknown;
   try {
-    body = (await req.json()) as SyndicationListingInput;
+    raw = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+  const shapeError = syndicationInputError(raw);
+  if (shapeError) {
+    return NextResponse.json({ error: shapeError }, { status: 400 });
+  }
+  const body = raw as SyndicationListingInput;
 
   try {
     const property = await upsertSyndicatedListing(host, body);
@@ -109,7 +116,11 @@ export async function POST(req: Request) {
             : "Listing is live on the marketplace when discovery includes it.",
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Upsert failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+    if (e instanceof SyndicationInputError) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
+    // Server-side failure (e.g. database): don't leak internals.
+    console.error("[syndication] upsert failed", e);
+    return NextResponse.json({ error: "Upsert failed" }, { status: 500 });
   }
 }

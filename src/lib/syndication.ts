@@ -72,6 +72,77 @@ export type SyndicationListingInput = {
   images?: { url: string; alt?: string | null; isCover?: boolean }[];
 };
 
+/** A caller-fixable problem with a syndication body (route returns 400). */
+export class SyndicationInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SyndicationInputError";
+  }
+}
+
+const STRING_FIELDS = [
+  "tagline", "description", "propertyType", "spaceType", "address", "city",
+  "region", "country", "postalCode", "checkInTime", "checkOutTime", "houseRules",
+] as const;
+const NUMBER_FIELDS = [
+  "latitude", "longitude", "bedrooms", "bathrooms", "maxGuests", "beds",
+  "defaultMinNights", "cleaningFee", "petFee", "maxPets", "depositPercent",
+] as const;
+const BOOLEAN_FIELDS = ["petsAllowed", "published", "listOnMarketplace"] as const;
+
+/**
+ * Shape check for an untrusted POST body. Returns an error message for a
+ * malformed body (null, array, non-object, wrong-typed field), else null.
+ * Optional fields may be omitted or null.
+ */
+export function syndicationInputError(body: unknown): string | null {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return "JSON object body required";
+  }
+  const b = body as Record<string, unknown>;
+  if (typeof b.slug !== "string") return "slug must be a string";
+  if (typeof b.title !== "string") return "title must be a string";
+  if (typeof b.baseNightlyRate !== "number" || !Number.isFinite(b.baseNightlyRate)) {
+    return "baseNightlyRate must be a number";
+  }
+  for (const k of STRING_FIELDS) {
+    if (b[k] != null && typeof b[k] !== "string") return `${k} must be a string`;
+  }
+  for (const k of NUMBER_FIELDS) {
+    const v = b[k];
+    if (v != null && (typeof v !== "number" || !Number.isFinite(v))) {
+      return `${k} must be a number`;
+    }
+  }
+  for (const k of BOOLEAN_FIELDS) {
+    if (b[k] != null && typeof b[k] !== "boolean") return `${k} must be true or false`;
+  }
+  const a = b.amenities;
+  if (
+    a != null &&
+    typeof a !== "string" &&
+    !(Array.isArray(a) && a.every((x) => typeof x === "string"))
+  ) {
+    return "amenities must be a string or an array of strings";
+  }
+  const imgs = b.images;
+  if (imgs != null) {
+    if (!Array.isArray(imgs)) return "images must be an array";
+    for (const img of imgs) {
+      if (!img || typeof img !== "object" || Array.isArray(img)) {
+        return "each image must be an object";
+      }
+      const i = img as Record<string, unknown>;
+      if (typeof i.url !== "string") return "image url must be a string";
+      if (i.alt != null && typeof i.alt !== "string") return "image alt must be a string";
+      if (i.isCover != null && typeof i.isCover !== "boolean") {
+        return "image isCover must be true or false";
+      }
+    }
+  }
+  return null;
+}
+
 function asAmenitiesJson(raw: SyndicationListingInput["amenities"]): string {
   if (Array.isArray(raw)) return JSON.stringify(raw);
   if (typeof raw === "string" && raw.trim()) {
@@ -93,20 +164,22 @@ export async function upsertSyndicatedListing(
   host: Host,
   input: SyndicationListingInput,
 ): Promise<Property> {
+  const shapeError = syndicationInputError(input);
+  if (shapeError) throw new SyndicationInputError(shapeError);
   const slug = input.slug
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
     .replace(/^-|-$/g, "");
   if (!slug || slug.length < 2) {
-    throw new Error("slug is required (2+ chars, a-z 0-9 hyphen)");
+    throw new SyndicationInputError("slug is required (2+ chars, a-z 0-9 hyphen)");
   }
-  if (!input.title?.trim()) throw new Error("title is required");
+  if (!input.title?.trim()) throw new SyndicationInputError("title is required");
   if (
     !Number.isFinite(input.baseNightlyRate) ||
     input.baseNightlyRate < 0
   ) {
-    throw new Error("baseNightlyRate must be a non-negative number");
+    throw new SyndicationInputError("baseNightlyRate must be a non-negative number");
   }
 
   // Host must opt into marketplace for any syndicated listing to show there
