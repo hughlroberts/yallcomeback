@@ -65,7 +65,7 @@ function ymdUtc(d: Date): string {
 
 /**
  * A manual calendar block counts as a direct booking when it is a guest
- * stay (Offline / Friends & family) or carries booking data (payment
+ * stay (Guest booking / Friends & family) or carries booking data (payment
  * method or amount). Owner and maintenance holds without money stay off.
  */
 export function isDirectBookingBlock(b: {
@@ -115,7 +115,7 @@ export function directPaymentLabel(m: string | null | undefined): string {
 export function blockTypeLabel(t: string | null | undefined): string {
   switch (t) {
     case "OFFLINE":
-      return "Guest booking (offline)";
+      return "Guest booking";
     case "FRIENDS":
       return "Friends & family";
     case "OWNER":

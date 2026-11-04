@@ -58,7 +58,7 @@ export function blockSavedMessage(
 ): string {
   const what =
     blockType === "OFFLINE"
-      ? "Guest booking (offline) saved"
+      ? "Guest booking saved"
       : blockType === "FRIENDS"
         ? "Friends & family stay saved"
         : blockType === "OWNER"
@@ -371,7 +371,7 @@ export function AdminBlockSheet({
                   How is this stay paid?
                 </legend>
                 <p className="text-xs text-stone-500">
-                  Required for an offline booking. Owner or maintenance can be
+                  Required for a guest booking. Owner or maintenance can be
                   unpaid.
                 </p>
                 <label className="flex items-start gap-2 text-sm">

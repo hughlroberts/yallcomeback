@@ -1,6 +1,6 @@
 /**
  * T49: "Block or log a stay" Type defaults to a guest booking (OFFLINE,
- * shown as "Guest booking (offline)") every time the form opens, and only
+ * shown as "Guest booking") every time the form opens, and only
  * changes when the host picks another type. Enum values are unchanged.
  */
 import { createElement } from "react";
@@ -45,22 +45,29 @@ function selectedType(html: string): string | null {
 describe("Block or log a stay: Type default", () => {
   it("the default is the guest booking type (OFFLINE)", () => {
     expect(DEFAULT_BLOCK_TYPE).toBe("OFFLINE");
-    expect(BLOCK_TYPE_OPTIONS[0]).toEqual({ value: "OFFLINE", label: "Guest booking (offline)" });
+    expect(BLOCK_TYPE_OPTIONS[0]).toEqual({ value: "OFFLINE", label: "Guest booking" });
   });
 
   it("labels change only; the stored values stay the same five", () => {
     expect(BLOCK_TYPE_OPTIONS.map((o) => o.value).sort()).toEqual(
       ["FRIENDS", "MAINTENANCE", "OFFLINE", "OTHER", "OWNER"],
     );
-    expect(blockTypeLabel("OFFLINE")).toBe("Guest booking (offline)");
+    expect(blockTypeLabel("OFFLINE")).toBe("Guest booking");
     expect(blockTypeLabel("FRIENDS")).toBe("Friends & family");
   });
 
-  it("the opened sheet shows Guest booking (offline) selected, not Friends & family", () => {
+  it("no visible text says offline (only the stored value OFFLINE)", () => {
+    const html = renderSheet("2026-11-06", "2026-11-08");
+    expect(html).not.toMatch(/offline|Offline/);
+    for (const o of BLOCK_TYPE_OPTIONS) expect(o.label).not.toMatch(/offline/i);
+    expect(blockTypeLabel("OFFLINE")).not.toMatch(/offline/i);
+  });
+
+  it("the opened sheet shows Guest booking selected, not Friends & family", () => {
     const html = renderSheet("2026-11-06", "2026-11-08");
     expect(html).toContain("Block or log a stay");
     expect(selectedType(html)).toBe("OFFLINE");
-    expect(html).toContain(">Guest booking (offline)</option>");
+    expect(html).toContain(">Guest booking</option>");
     expect(html).not.toMatch(/value="FRIENDS" selected/);
   });
 

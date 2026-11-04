@@ -17,7 +17,7 @@ describe("blockSavedMessage", () => {
       "Owner block saved: 2 nights, Nov 6 → Nov 8.",
     );
     expect(blockSavedMessage("OFFLINE", "1 night", "Nov 6 → Nov 7")).toMatch(
-      /^Guest booking \(offline\) saved/,
+      /^Guest booking saved/,
     );
     expect(blockSavedMessage("OTHER", "1 night", "x")).toMatch(
       /^Dates blocked/,

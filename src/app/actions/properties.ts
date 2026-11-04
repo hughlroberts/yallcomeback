@@ -1373,7 +1373,7 @@ export async function addCalendarBlock(
     if (blockType === "OFFLINE" && !paymentMethod) {
       return {
         ok: false,
-        error: "For an offline booking, choose how the stay is paid. Owner use and maintenance can stay unpaid.",
+        error: "For a guest booking, choose how the stay is paid. Owner use and maintenance can stay unpaid.",
       };
     }
 

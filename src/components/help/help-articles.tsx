@@ -988,7 +988,7 @@ function Calendar({ article }: { article: HelpArticle }) {
       <HelpSection title="Manual blocks">
         <HelpUl>
           <li>
-            In Admin, block dates for owner use, maintenance, or offline
+            In Admin, block dates for owner use, maintenance, or guest
             bookings. Add a type, optional occupant name, and private notes.
           </li>
           <li>

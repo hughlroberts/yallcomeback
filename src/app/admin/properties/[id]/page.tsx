@@ -751,7 +751,7 @@ export default async function AdminPropertyDetailPage({
       <h2 className="text-lg font-semibold">Calendar blocks</h2>
       <p className="mt-1 text-sm text-stone-500">
         Block dates yourself and note who is staying. Guests only see unavailable
-        dates - never these notes. For offline bookings, send a Stripe invoice
+        dates - never these notes. For guest bookings, send a Stripe invoice
         they can pay online or you can collect on your POS.
       </p>
       <p className="mt-1 text-xs text-stone-400">
@@ -813,7 +813,7 @@ export default async function AdminPropertyDetailPage({
             How is this stay paid?
           </legend>
           <p className="text-xs text-stone-500">
-            Required for an offline booking. Owner or maintenance can be unpaid.
+            Required for a guest booking. Owner or maintenance can be unpaid.
           </p>
           <label className="flex items-start gap-2 text-sm">
             <input
