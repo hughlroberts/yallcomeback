@@ -1,3 +1,8 @@
+import { MAX_STAY_NIGHTS } from "@/lib/search-dates";
+
+/** Widget / mobile bar message for a stay over MAX_STAY_NIGHTS. */
+export const MAX_STAY_ERROR = `Stays are limited to ${MAX_STAY_NIGHTS} nights`;
+
 /**
  * Guest-facing live quote used by the listing page booking widget.
  * Pure (no server or browser deps) so the server can pre-render the same
@@ -109,6 +114,10 @@ export function computeBookingQuote(input: BookingQuoteInput): BookingQuote | nu
   const nights = nightsBetween(checkIn, checkOut);
   if (!Number.isFinite(nights)) return { error: "Choose valid dates" };
   if (nights < 1) return { error: "Check-out must be after check-in" };
+  // R1104-18: same cap as the search, quote and checkout APIs.
+  if (nights > MAX_STAY_NIGHTS) {
+    return { error: MAX_STAY_ERROR, nights };
+  }
 
   const petPolicy = {
     petsAllowed: input.petsAllowed,

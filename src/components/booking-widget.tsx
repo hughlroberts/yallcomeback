@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_STAY_ERROR } from "@/lib/booking-quote";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
@@ -149,6 +150,10 @@ export function BookingWidget({
     taxLines,
     taxLiabilityAcknowledged,
   });
+
+  const overMaxStay = Boolean(
+    quote && "error" in quote && quote.error === MAX_STAY_ERROR,
+  );
 
   function onBook() {
     setError(null);
@@ -449,7 +454,9 @@ export function BookingWidget({
         <button
           type="button"
           onClick={onBook}
-          className="mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
+          disabled={overMaxStay}
+          aria-disabled={overMaxStay}
+          className="disabled:cursor-not-allowed disabled:opacity-50 mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
         >
           {depositDueNow ? "Reserve" : "Request to book"}
         </button>

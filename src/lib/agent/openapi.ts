@@ -129,7 +129,7 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "integer", minimum: 1 },
               description:
-                "Party size. Values above 50 (the search form's max) are capped at 50 in query, the results and humanSearchUrl.",
+                "Party size: a whole number from 1 to 50. Anything else (0, negative, above 50, 2.5, non-numeric) returns 400 with code invalid_guests; values are never clamped.",
             },
             {
               name: "pets",
