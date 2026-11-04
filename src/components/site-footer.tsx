@@ -77,7 +77,7 @@ export function SiteFooter() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-5 text-xs text-buttermilk/75 sm:px-6">
           <p>© {new Date().getFullYear()} {PRODUCT_DOMAIN}</p>
-          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <Link href="/terms" className="hover:text-honey">
               Terms
             </Link>

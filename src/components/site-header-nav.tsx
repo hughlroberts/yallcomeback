@@ -50,7 +50,7 @@ export function SiteHeaderNav(props: Props) {
     : activeFor(pathname, "/for-hosts");
 
   return (
-    <nav className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:gap-3">
+    <nav aria-label="Main" className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:gap-3">
       {/* Guest side */}
       <div className="flex items-center">
         <Link

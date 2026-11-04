@@ -298,6 +298,8 @@ async function StaysPanel({
         ) : null}
       </div>
       <FlexibleDatesPanel flexibleDates={flexibleDates} className="mt-4" />
+      {/* R1104-17: card titles are h3, so give them an h2 parent. */}
+      <h2 className="sr-only">Stays</h2>
       <div className="mt-6 grid gap-6 sm:mt-8 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-10">
         {listings.map((p) => (
           <PropertyCard

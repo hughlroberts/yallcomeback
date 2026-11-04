@@ -89,7 +89,7 @@ export function PhotoGallery({
               className="relative hidden aspect-square bg-stone-100 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet sm:block"
               aria-label={
                 isLastGrid
-                  ? `View all ${photos.length} photos`
+                  ? `+${extra} more, view all ${photos.length} photos`
                   : `View photo ${photoIndex + 1} of ${photos.length}: ${listingPhotoAlt(title, img.alt, photoIndex)}`
               }
             >
