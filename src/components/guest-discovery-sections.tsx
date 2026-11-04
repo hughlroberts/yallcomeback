@@ -27,7 +27,7 @@ import { listingHrefWithSearch } from "@/lib/listing-href";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { formatMoney } from "@/lib/utils";
 import { checkSearchDates } from "@/lib/search-dates";
-import { plainWholeNumber } from "@/lib/search-filters";
+import { SEARCH_MAX_PETS, plainWholeNumber } from "@/lib/search-filters";
 
 const emptyViews: RecentView[] = [];
 const emptySearches: RecentSearch[] = [];
@@ -259,7 +259,9 @@ export function GuestDiscoverySections({
     const g = plainWholeNumber(lastSearch.guests);
     if (g != null && g >= 1) params.set("guests", String(g));
     const pt = plainWholeNumber(lastSearch.pets);
-    if (pt != null && pt >= 1) params.set("pets", String(pt));
+    if (pt != null && pt >= 1 && pt <= SEARCH_MAX_PETS) {
+      params.set("pets", String(pt));
+    }
     params.set("take", "12");
 
     fetch(`/api/marketplace/stays?${params.toString()}`)

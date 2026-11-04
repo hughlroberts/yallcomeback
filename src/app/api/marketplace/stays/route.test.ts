@@ -74,14 +74,18 @@ describe("GET /api/marketplace/stays", () => {
       expect(res.status, q).toBe(400);
       expect(await res.json(), q).toMatchObject({ code: "invalid_guests" });
     }
-    for (const q of ["pets=abc", "pets=-1", "pets=1.5", "pets=99"]) {
+    for (const q of ["pets=abc", "pets=-1", "pets=1.5", "pets=5", "pets=99"]) {
       const res = await get(q);
       expect(res.status, q).toBe(400);
-      expect(await res.json(), q).toMatchObject({ code: "invalid_pets" });
+      const body = await res.json();
+      expect(body, q).toMatchObject({ code: "invalid_pets" });
+      if (q === "pets=5") expect(JSON.stringify(body)).toContain("0 to 4");
     }
     expect(host.searchMarketplace).not.toHaveBeenCalled();
     await get("guests=6&pets=1");
     expect(host.searchMarketplace.mock.calls[0][0]).toMatchObject({ guests: 6, pets: 1 });
+    await get("guests=6&pets=4");
+    expect(host.searchMarketplace.mock.calls[1][0]).toMatchObject({ guests: 6, pets: 4 });
   });
 
   it("returns count (full total), returned and currentCount", async () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -202,7 +203,9 @@ function PricingSidebar({
   const [petFeeUnit, setPetFeeUnit] = useState(
     property.petFeeUnit === "PER_PET" ? "PER_PET" : "PER_STAY",
   );
-  const [maxPets, setMaxPets] = useState(String(property.maxPets ?? 0));
+  const [maxPets, setMaxPets] = useState(
+    String(Math.min(property.maxPets ?? 0, SEARCH_MAX_PETS)),
+  );
   const [minNights, setMinNights] = useState(String(property.defaultMinNights));
   // Inline errors for the two extra-guest inputs. badInput is the browser's
   // flag for text a number input cannot read (value is "" then).
@@ -484,14 +487,14 @@ function PricingSidebar({
               id="ws-max-pets"
               type="number"
               min={0}
-              max={20}
+              max={SEARCH_MAX_PETS}
               step={1}
               className="h-11"
               value={maxPets}
               onChange={(e) => setMaxPets(e.target.value)}
             />
             <p className="mt-1 text-[11px] text-stone-400">
-              Default is 2. Raise above 3 if you allow more. 0 = no fixed cap.
+              Default is 2. Up to 4 (the site-wide limit). 0 = up to 4.
               Pets allowed is set on the listing form.
               {property.petsAllowed
                 ? " Pets are currently allowed."

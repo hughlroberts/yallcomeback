@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SEARCH_MAX_GUESTS, clampGuestsInput } from "@/lib/search-filters";
+import { SEARCH_MAX_GUESTS, SEARCH_MAX_PETS, clampGuestsInput } from "@/lib/search-filters";
 import { WhereAutocomplete } from "@/components/where-autocomplete";
 import { SearchDateRangePicker } from "@/components/search-date-range-picker";
 import { formatYmd, isYmd, nightsBetweenYmd } from "@/lib/search-dates";
@@ -219,7 +219,7 @@ export function StaySearchForm({
                   name="pets"
                   type="number"
                   min={0}
-                  max={10}
+                  max={SEARCH_MAX_PETS}
                   defaultValue={defaultPets}
                   placeholder="0"
                   className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"

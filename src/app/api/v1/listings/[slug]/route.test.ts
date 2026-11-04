@@ -97,7 +97,7 @@ describe("GET /api/v1/listings/{slug} guests / pets (T54)", () => {
     },
   );
 
-  it.each(["abc", "-1", "1.5", "1e1", "99"])(
+  it.each(["abc", "-1", "1.5", "1e1", "5", "99"])(
     "returns 400 invalid_pets for pets=%s, so no bookUrl carries it",
     async (p) => {
       const res = await get(`checkIn=${ymd(30)}&checkOut=${ymd(32)}&guests=2&pets=${p}`);

@@ -137,7 +137,7 @@ export function listingFilterLabels(f: ListingFilters): string[] {
 /** Largest party the search form takes (its guests input max). */
 export const SEARCH_MAX_GUESTS = 50;
 /** Most pets any search or listing link carries (the search form max). */
-export const SEARCH_MAX_PETS = 10;
+export const SEARCH_MAX_PETS = 4;
 
 /** Whole guests from 1 to SEARCH_MAX_GUESTS, or undefined for none/junk. */
 export function searchGuests(
@@ -236,7 +236,7 @@ export type PartyParams =
  * Shared `guests` / `pets` parser for the public search and listing APIs
  * (/api/v1/search, /api/v1/listings/{slug}, /api/marketplace/stays).
  * Missing or empty = not sent. guests must be a whole number ≥ 1 and pets a
- * whole number from 0 to SEARCH_MAX_PETS (10); anything else (-5, abc, 2.5,
+ * whole number from 0 to SEARCH_MAX_PETS (4); anything else (-5, abc, 2.5,
  * 1e1, 99) is a 400
  * invalid_guests / invalid_pets, so a bad value is never quietly dropped
  * or carried into bookUrl.

@@ -305,10 +305,10 @@ describe("T54b: pets over the listing max never reach url / bookUrl", () => {
     expect(d?.bookUrl ?? "").not.toContain("pets=");
   });
 
-  it("rejects pets=99 (over the global max of 10) before any lookup", async () => {
+  it.each([5, 99])("rejects pets=%s (over the global max of 4) before any lookup", async (p) => {
     await expect(
-      getAgentListingDetail("https://x.test", "motel-room-2", { ...dates, pets: 99 }),
-    ).rejects.toMatchObject({ code: "invalid_pets", message: expect.stringContaining("0 to 10") });
+      getAgentListingDetail("https://x.test", "motel-room-2", { ...dates, pets: p }),
+    ).rejects.toMatchObject({ code: "invalid_pets", message: expect.stringContaining("0 to 4") });
     expect(db.prisma.property.findFirst).not.toHaveBeenCalled();
   });
 });

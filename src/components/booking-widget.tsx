@@ -235,7 +235,7 @@ export function BookingWidget({
             ? ` · pet fee ${formatPetFeeRate(petFee, petFeeUnit, money)}`
             : petsAllowed
               ? maxPets > 0
-                ? ` · pets OK (max ${maxPets})`
+                ? ` · pets OK (max ${petCap})`
                 : " · pets OK"
               : ""}
         </p>
@@ -296,7 +296,7 @@ export function BookingWidget({
             <label className="block border-t border-stone-300 p-3">
               <span className="block text-[11px] font-semibold uppercase tracking-wide text-stone-500">
                 Pets (dogs)
-                {maxPets > 0 ? ` · max ${maxPets}` : ""}
+                {maxPets > 0 ? ` · max ${petCap}` : ""}
               </span>
               <select
                 name="pets"

@@ -1,3 +1,4 @@
+import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import Image from "next/image";
 import { BLOCK_TYPE_OPTIONS, DEFAULT_BLOCK_TYPE } from "@/lib/block-types";
 import { listingDisplayTitle } from "@/lib/listing-display-title";
@@ -357,13 +358,13 @@ export default async function AdminPropertyDetailPage({
             name="maxPets"
             type="number"
             min={0}
-            max={20}
+            max={SEARCH_MAX_PETS}
             step={1}
-            defaultValue={property.maxPets}
+            defaultValue={Math.min(property.maxPets, SEARCH_MAX_PETS)}
           />
           <p className="mt-1 text-xs text-stone-400">
-            Default is 2. Use 1–20 to set a cap (hosts may allow 3+). 0 = no
-            fixed cap.
+            Default is 2. Use 1–4 to set a cap (4 is the site-wide limit). 0 = up to
+            4.
           </p>
         </div>
         <div>

@@ -75,7 +75,7 @@ describe("agentSearch priceEstimate.extraGuests", () => {
 describe("T54b: search url / bookUrl only carry pets a listing takes", () => {
   beforeEach(() => host.searchMarketplace.mockReset());
 
-  it("guards pets per result and rejects pets over 10", async () => {
+  it("guards pets per result and rejects pets over 4 (T56)", async () => {
     const takesTwo = { ...motel, id: "p2", slug: "pets-two", petsAllowed: true, maxPets: 2 };
     const takesOne = { ...motel, id: "p3", slug: "pets-one", petsAllowed: true, maxPets: 1 };
     host.searchMarketplace.mockResolvedValue({
@@ -95,8 +95,10 @@ describe("T54b: search url / bookUrl only carry pets a listing takes", () => {
     expect(bySlug["pets-one"].url).not.toContain("pets=");
     expect(bySlug["pets-one"].bookUrl ?? "").not.toContain("pets=");
 
-    await expect(
-      agentSearch("https://x.test", { guests: 2, pets: 99 }),
-    ).rejects.toMatchObject({ code: "invalid_pets" });
+    for (const pets of [5, 99]) {
+      await expect(
+        agentSearch("https://x.test", { guests: 2, pets }),
+      ).rejects.toMatchObject({ code: "invalid_pets", message: expect.stringContaining("0 to 4") });
+    }
   });
 });

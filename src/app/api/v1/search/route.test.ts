@@ -131,10 +131,12 @@ describe("GET /api/v1/search", () => {
       expect(res.status, g).toBe(400);
       expect(await res.json(), g).toMatchObject({ ok: false, code: "invalid_guests" });
     }
-    for (const p of ["abc", "-1", "1.5", "99", "11"]) {
+    for (const p of ["abc", "-1", "1.5", "99", "11", "5"]) {
       const res = await get(`guests=2&pets=${p}`);
       expect(res.status, p).toBe(400);
-      expect(await res.json(), p).toMatchObject({ ok: false, code: "invalid_pets" });
+      const body = await res.json();
+      expect(body, p).toMatchObject({ ok: false, code: "invalid_pets" });
+      if (p === "5") expect(JSON.stringify(body)).toContain("0 to 4");
     }
     expect(host.searchMarketplace).not.toHaveBeenCalled();
   });

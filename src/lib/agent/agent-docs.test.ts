@@ -71,6 +71,27 @@ describe("llms.txt and agents.md mention the extra-guest fields", () => {
   });
 });
 
+describe("T56: docs say pets 0 to 4", () => {
+  it("OpenAPI pets params say 0 to 4, never 10", () => {
+    const json = JSON.stringify(doc);
+    expect(json).not.toMatch(/0 to 10|0–10/);
+    type P = { name: string; description?: string; schema?: { maximum?: number } };
+    const ops = {
+      "/api/v1/search": doc.paths["/api/v1/search"].get,
+      "/api/v1/listings/{slug}": doc.paths["/api/v1/listings/{slug}"].get,
+    };
+    for (const [path, op] of Object.entries(ops)) {
+      const pets = (op.parameters as P[]).find((x) => x.name === "pets")!;
+      expect(`${pets.description} ${JSON.stringify(pets.schema ?? {})}`, path).toMatch(/0 to 4|0–4|"maximum":4/);
+    }
+  });
+  it.each(["llms.txt/route.ts", "agents.md/route.ts"])("%s says 0 to 4", (p) => {
+    const text = readFileSync(path.resolve(__dirname, "../../app", p), "utf8");
+    expect(text).toMatch(/pets[^\n]*0 (to|–) ?4|pets must be 0–4/);
+    expect(text).not.toMatch(/pets[^\n]*0 to 10/);
+  });
+});
+
 describe("search bookUrl keeps the party", () => {
   it("builds bookUrl with agentCheckoutBookPath from the search selection", () => {
     const src = readFileSync(path.resolve(__dirname, "search.ts"), "utf8");

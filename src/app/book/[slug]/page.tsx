@@ -1,3 +1,4 @@
+import { effectiveMaxPets } from "@/lib/pets";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -137,7 +138,7 @@ export default async function BookPage({
     ? Math.max(
         0,
         Math.min(
-          property.maxPets > 0 ? property.maxPets : 10,
+          effectiveMaxPets(property),
           Number(sp.pets || 0) || 0,
         ),
       )

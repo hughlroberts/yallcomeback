@@ -19,7 +19,10 @@ export type PetPolicyInput = {
   maxPets?: number | null;
 };
 
-/** Practical upper bound when maxPets is 0 (unlimited): the search max. */
+/**
+ * Global pets limit (T56: 4). A listing's maxPets of 0 ("no fixed cap") or
+ * above 4 still means at most 4; a lower listing max wins.
+ */
 export const PET_SELECT_FALLBACK_MAX = SEARCH_MAX_PETS;
 
 /**
@@ -45,7 +48,7 @@ export function normalizePetFeeUnit(
 export function effectiveMaxPets(policy: PetPolicyInput): number {
   if (!policy.petsAllowed) return 0;
   const cap = Math.floor(Number(policy.maxPets ?? 0));
-  if (Number.isFinite(cap) && cap > 0) return cap;
+  if (Number.isFinite(cap) && cap > 0) return Math.min(cap, PET_SELECT_FALLBACK_MAX);
   return PET_SELECT_FALLBACK_MAX;
 }
 
@@ -79,7 +82,10 @@ export function resolvePetCharges(
   }
 
   const max = effectiveMaxPets(policy);
-  const configuredCap = Math.floor(Number(policy.maxPets ?? 0));
+  const configuredCap = Math.min(
+    Math.floor(Number(policy.maxPets ?? 0)),
+    PET_SELECT_FALLBACK_MAX,
+  );
   if (Number.isFinite(configuredCap) && configuredCap > 0 && pets > configuredCap) {
     return {
       pets,
@@ -124,7 +130,10 @@ export function formatPetFeeRate(
 export function petRuleLine(policy: PetPolicyInput): string | null {
   if (policy.petsAllowed === false) return "No pets";
   if (!policy.petsAllowed) return null;
-  const cap = Math.floor(Number(policy.maxPets ?? 0));
+  const cap = Math.min(
+    Math.floor(Number(policy.maxPets ?? 0)),
+    PET_SELECT_FALLBACK_MAX,
+  );
   if (Number.isFinite(cap) && cap > 0) {
     return `Pets allowed · max ${cap} dog${cap === 1 ? "" : "s"} / pet${cap === 1 ? "" : "s"}`;
   }

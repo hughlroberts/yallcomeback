@@ -1,5 +1,6 @@
 "use server";
 
+import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { PaymentMethod } from "@prisma/client";
@@ -908,8 +909,10 @@ export async function updatePropertyPricing(
   if (!Number.isFinite(petFee) || petFee < 0) {
     throw new Error("Pet fee must be 0 or more");
   }
-  if (!Number.isFinite(maxPets) || maxPets < 0 || maxPets > 20) {
-    throw new Error("Max pets must be between 0 and 20 (0 = no fixed cap)");
+  if (!Number.isFinite(maxPets) || maxPets < 0 || maxPets > SEARCH_MAX_PETS) {
+    throw new Error(
+      `Max pets must be between 0 and ${SEARCH_MAX_PETS} (0 = up to ${SEARCH_MAX_PETS})`,
+    );
   }
   if (
     !Number.isFinite(defaultMinNights) ||
@@ -996,7 +999,7 @@ export async function updateProperty(formData: FormData) {
       maxPets: Math.max(
         0,
         Math.min(
-          20,
+          SEARCH_MAX_PETS,
           Math.round(
             Number(
               formData.get("maxPets") != null &&
