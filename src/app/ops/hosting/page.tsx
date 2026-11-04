@@ -345,7 +345,7 @@ export default async function OpsHostingPage({
                     ) : null}
                   </p>
                   <p className="text-sm text-stone-500">
-                    {subscriptionLabel(host.subscriptionStatus)}
+                    {subscriptionLabel(host.subscriptionStatus, host.plan)}
                     {host.plan
                       ? ` · ${host.plan.name} ${formatPlanPrice(host.plan, formatMoney)}`
                       : ""}
@@ -430,7 +430,7 @@ export default async function OpsHostingPage({
                   </td>
                   <td className="px-4 py-3">{approvalLabel(h.approvalStatus)}</td>
                   <td className="px-4 py-3">
-                    {subscriptionLabel(h.subscriptionStatus)}
+                    {subscriptionLabel(h.subscriptionStatus, h.plan)}
                   </td>
                   <td className="px-4 py-3">
                     {h.plan

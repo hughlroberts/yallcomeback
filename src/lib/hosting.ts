@@ -217,7 +217,26 @@ export function approvalLabel(status: HostApprovalStatus): string {
   }
 }
 
-export function subscriptionLabel(status: HostingSubStatus): string {
+/** Shown instead of "awaiting payment" when the brand's plan costs $0. */
+export const FREE_PLAN_NO_PAYMENT_LABEL = "Free plan, no payment needed";
+
+/**
+ * True when a brand is PENDING_PAYMENT only because a $0 plan never
+ * activates (T48). Nothing is owed, so no "awaiting payment" wording.
+ * Display only: activation rules are unchanged.
+ */
+export function isFreePlanNoPaymentDue(
+  status: string | null | undefined,
+  plan: { monthlyPrice: number } | null | undefined,
+): boolean {
+  return status === "PENDING_PAYMENT" && Boolean(plan) && plan!.monthlyPrice <= 0;
+}
+
+export function subscriptionLabel(
+  status: HostingSubStatus,
+  plan?: { monthlyPrice: number } | null,
+): string {
+  if (isFreePlanNoPaymentDue(status, plan)) return FREE_PLAN_NO_PAYMENT_LABEL;
   switch (status) {
     case "NONE":
       return "No subscription";

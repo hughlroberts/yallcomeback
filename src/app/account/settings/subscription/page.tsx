@@ -45,12 +45,21 @@ import { hostingPriceId, isStripeConfigured } from "@/lib/stripe";
 import { formatMoney } from "@/lib/utils";
 import type { Host, HostingPlan } from "@prisma/client";
 
+import {
+  FREE_PLAN_NO_PAYMENT_LABEL,
+  isFreePlanNoPaymentDue,
+} from "@/lib/hosting";
+
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Subscription" };
 
 type HostWithPlan = Host & { plan: HostingPlan | null };
 
-function statusLabel(status: string): string {
+function statusLabel(
+  status: string,
+  plan?: { monthlyPrice: number } | null,
+): string {
+  if (isFreePlanNoPaymentDue(status, plan)) return FREE_PLAN_NO_PAYMENT_LABEL;
   switch (status) {
     case "ACTIVE":
       return "Active";
@@ -518,7 +527,7 @@ function BrandHostingCard({
             <div>
               <dt className="text-stone-500">Hosting status</dt>
               <dd className="font-medium text-stone-900">
-                {statusLabel(host.subscriptionStatus)}
+                {statusLabel(host.subscriptionStatus, host.plan)}
                 {host.stripeSubscriptionStatus
                   ? ` · Stripe ${host.stripeSubscriptionStatus}`
                   : ""}

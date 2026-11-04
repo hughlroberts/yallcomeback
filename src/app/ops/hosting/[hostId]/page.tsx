@@ -122,7 +122,7 @@ export default async function OpsHostDetailPage({
               {approvalLabel(host.approvalStatus)}
             </span>
             <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700">
-              {subscriptionLabel(host.subscriptionStatus)}
+              {subscriptionLabel(host.subscriptionStatus, host.plan)}
             </span>
             {isComplimentary ? (
               <span className="rounded-full bg-sage/30 px-3 py-1 text-xs font-medium text-sage-ink">
