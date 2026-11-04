@@ -129,6 +129,36 @@ describe("API listing quote: extra-guest fee", () => {
     });
   });
 
+  it("T52: lakefront prices ($285/night, $150 cleaning) at guests=6 for 2 nights", async () => {
+    const lakefront = (fee: number) => ({
+      ...motel(fee),
+      slug: "lakefront-with-private-dock-deep-sandy-bottom",
+      maxGuests: 9,
+      baseNightlyRate: 285,
+      cleaningFee: 150,
+    });
+    // Live data today: fee $0 → 570 + 150 = 720, as the API returned.
+    db.prisma.property.findFirst.mockResolvedValue(lakefront(0));
+    let d = await getAgentListingDetail("https://x.test", "lakefront", { ...dates, guests: 6 });
+    expect(d?.availability.quote).toMatchObject({
+      guests: 6,
+      extraGuests: 4,
+      extraGuestFee: 0,
+      nightlySubtotal: 570,
+      totalAmount: 720,
+    });
+    // If the host sets $10/guest/night beyond 2: 4 × $10 × 2 nights = $80.
+    db.prisma.property.findFirst.mockResolvedValue(lakefront(10));
+    d = await getAgentListingDetail("https://x.test", "lakefront", { ...dates, guests: 6 });
+    expect(d?.availability.quote).toMatchObject({
+      guests: 6,
+      extraGuests: 4,
+      extraGuestFee: 80,
+      nightlySubtotal: 570,
+      totalAmount: 800,
+    });
+  });
+
   it("has no extra guests at or below the included count", async () => {
     db.prisma.property.findFirst.mockResolvedValue(motel(0));
     for (const guests of [1, 2]) {
