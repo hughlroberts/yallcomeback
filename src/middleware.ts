@@ -23,7 +23,7 @@ import {
   ADMIN_BRAND_COOKIE,
   ADMIN_BRAND_SLUG_COOKIE,
 } from "./lib/admin-brand-cookie";
-import { bareDomainRedirect } from "./lib/canonical-host";
+import { bareDomainRedirect, httpsRedirect } from "./lib/canonical-host";
 
 const { auth } = NextAuth(authConfig);
 
@@ -188,6 +188,16 @@ function requestHostname(req: NextRequest): string | null {
 export default auth(async (req) => {
   // Deploy health check: no host lookup, no redirects (any Host header)
   if (req.nextUrl.pathname === "/api/health") return NextResponse.next();
+
+  // R1/T2: plain http on the product domain → https://www, same path (308).
+  // /api/* is exempt inside httpsRedirect (webhooks and cron don't follow).
+  const toHttps = httpsRedirect({
+    hostname: requestHostname(req),
+    forwardedProto: req.headers.get("x-forwarded-proto"),
+    pathname: req.nextUrl.pathname,
+    search: req.nextUrl.search,
+  });
+  if (toHttps) return NextResponse.redirect(toHttps, 308);
 
   // Bare product domain → https://www, same path (301; 308 keeps POST bodies)
   const canonical = bareDomainRedirect({
