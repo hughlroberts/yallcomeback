@@ -7,6 +7,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { statusWithoutActivation } from "@/lib/hosting-activation";
 import { canonicalSiteOrigin } from "@/lib/features";
 import { hostProductPath, planSlugForSitePresence } from "@/lib/hosting";
 import { marketplaceGracePatchForStatus } from "@/lib/marketplace-billing-plan";
@@ -611,7 +612,10 @@ export async function applyHostingSubscriptionFromStripe(opts: {
   const gracePatch = paused
     ? {}
     : marketplaceGracePatchForStatus(host, raw);
-  if (raw === "active" || raw === "trialing") {
+  if ((raw === "active" || raw === "trialing") && host.isTestBrand) {
+    // T48(2): an internal/QA brand is never made ACTIVE by Stripe.
+    subscriptionStatus = statusWithoutActivation(host.subscriptionStatus);
+  } else if (raw === "active" || raw === "trialing") {
     subscriptionStatus = "ACTIVE";
     hostingPastDueAt = null;
     hostingDunningReminderSentAt = null;
@@ -655,7 +659,7 @@ export async function applyHostingSubscriptionFromStripe(opts: {
       ...gracePatch,
     },
   });
-  if (subscriptionStatus === "ACTIVE" && !paused) {
+  if (subscriptionStatus === "ACTIVE" && !paused && !host.isTestBrand) {
     await promoteComplimentaryHostIfPaid(updated.id);
   }
   return updated;

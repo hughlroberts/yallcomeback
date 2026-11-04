@@ -236,3 +236,23 @@ describe("T46: grace date follows the card subscription", () => {
     expect("marketplaceGraceEndsAt" in data).toBe(false);
   });
 });
+
+describe("T48(2): Stripe subscription webhook never activates a test brand", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.prisma.host.update.mockImplementation(async ({ data }) => ({ ...marketHost, ...data }));
+  });
+  for (const stripeStatus of ["active", "trialing"]) {
+    it(`test brand, Stripe "${stripeStatus}": stays PENDING_PAYMENT, no plan promotion`, async () => {
+      db.prisma.host.findUnique.mockResolvedValue({ ...marketHost, isTestBrand: true, subscriptionStatus: "PENDING_PAYMENT" });
+      await applyHostingSubscriptionFromStripe({ hostId: "h1", subscriptionId: "sub_t", stripeStatus });
+      expect(db.prisma.host.update.mock.calls[0][0].data.subscriptionStatus).toBe("PENDING_PAYMENT");
+      expect(db.prisma.host.update).toHaveBeenCalledTimes(1);
+    });
+  }
+  it("real brand, Stripe active: ACTIVE (control)", async () => {
+    db.prisma.host.findUnique.mockResolvedValue({ ...marketHost, isTestBrand: false, subscriptionStatus: "PENDING_PAYMENT" });
+    await applyHostingSubscriptionFromStripe({ hostId: "h1", subscriptionId: "sub_r", stripeStatus: "active" });
+    expect(db.prisma.host.update.mock.calls[0][0].data.subscriptionStatus).toBe("ACTIVE");
+  });
+});
