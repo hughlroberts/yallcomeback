@@ -1,4 +1,5 @@
 import { ListingLinkPair } from "@/components/listing-link-pair";
+import { PRIVATE_PREVIEW_LABEL } from "@/lib/private-preview-label";
 import { marketplaceListingHref } from "@/lib/marketplace-links";
 import { pausedPreviewHref } from "@/lib/listing-preview-token";
 import Link from "next/link";
@@ -166,7 +167,7 @@ export default async function AdminPropertiesPage() {
               </Link>
               {p.title === "Untitled listing" ? null : (
                 <p className="w-full text-xs text-slate-400" data-testid="row-public-links">
-                  {vis === "off" ? "Paused, preview only you can see: " : null}
+                  {vis === "off" ? `Paused, ${PRIVATE_PREVIEW_LABEL.toLowerCase()}: ` : null}
                   {vis === "website" || vis === "both" || vis === "off" ? (
                     <>
                       Website:{" "}

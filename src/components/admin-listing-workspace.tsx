@@ -1,5 +1,6 @@
 "use client";
 
+import { PRIVATE_PREVIEW_LABEL } from "@/lib/private-preview-label";
 import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import { marketplaceListingHref } from "@/lib/marketplace-links";
 import { ListingLinkPair } from "@/components/listing-link-pair";
@@ -1536,7 +1537,7 @@ export function AdminListingWorkspace({
                     testId="paused-preview-link"
                     className="font-medium text-bonnet underline"
                   >
-                    Preview (only you can see it)
+                    {PRIVATE_PREVIEW_LABEL}
                   </ListingLinkPair>
                 </>
               )}
