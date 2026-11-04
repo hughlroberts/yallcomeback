@@ -8,7 +8,6 @@ import {
 } from "@/lib/hosting-prices";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { HostSignupForm } from "@/components/HostSignupForm";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
@@ -94,18 +93,17 @@ export default async function ForHostsPage({
         select: { name: true, email: true, role: true, hostId: true },
       })
     : null;
-  if (
+  // R1104-2: a signed-in host can still read this page; the signup form is
+  // swapped for a link to their dashboard instead of a redirect.
+  const hostDashboardHref =
     signedInUser &&
     (signedInUser.role === "HOST" || signedInUser.role === "ADMIN") &&
     signedInUser.hostId
-  ) {
-    redirect(
-      await destAfterHostAuth({
-        role: signedInUser.role,
-        hostId: signedInUser.hostId,
-      }),
-    );
-  }
+      ? await destAfterHostAuth({
+          role: signedInUser.role,
+          hostId: signedInUser.hostId,
+        })
+      : null;
 
   // Public catalog only — complimentary ($0) plans are platform-assigned in Ops
   const plans = await prisma.hostingPlan.findMany({
@@ -113,7 +111,22 @@ export default async function ForHostsPage({
     orderBy: { sortOrder: "asc" },
   });
 
-  const signupForm = (
+  const signupForm = hostDashboardHref ? (
+    <div
+      className="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-sm"
+      data-testid="for-hosts-dashboard-link"
+    >
+      <p className="text-sm text-stone-700">
+        You already host with Yall Come Back.
+      </p>
+      <Link
+        href={hostDashboardHref}
+        className="mt-4 inline-flex rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover"
+      >
+        Go to dashboard
+      </Link>
+    </div>
+  ) : (
     <HostSignupForm
       brandedPrice={brandedPriceLabel()}
       key={`${initialPath}-${initialPlan}`}

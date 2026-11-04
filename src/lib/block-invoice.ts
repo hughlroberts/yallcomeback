@@ -1,6 +1,23 @@
 import { prisma } from "@/lib/db";
 import { getStripe, toStripeAmount } from "@/lib/stripe";
 import { nightsBetween } from "@/lib/utils";
+import {
+  checkBrandConnectReady,
+  type ConnectGateCode,
+} from "@/lib/connect-readiness";
+
+/** Thrown when the brand's Connect account cannot take a card invoice yet.
+ * `status` matches the checkout gate: 409 not ready, 503 Stripe unavailable. */
+export class BlockInvoiceConnectError extends Error {
+  constructor(
+    readonly status: 409 | 503,
+    readonly code: ConnectGateCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = "BlockInvoiceConnectError";
+  }
+}
 
 /**
  * Create + send a Stripe Invoice for a calendar block on the host's
@@ -60,12 +77,14 @@ export async function sendStripeInvoiceForBlock(opts: {
     );
   }
 
-  const accountId = block.property.host.stripeAccountId;
-  if (!accountId) {
-    throw new Error(
-      "This host must finish card onboarding before you can send a card invoice. Cash and in-person stays do not need this.",
-    );
+  // T61/fe6d7b6: same live Connect gate as guest checkout (details_submitted,
+  // charges_enabled read from Stripe, 409 not ready / 503 Stripe unreachable).
+  // Runs before any Stripe write, so nothing is created on an unready account.
+  const connect = await checkBrandConnectReady(block.property.host);
+  if (!connect.ok) {
+    throw new BlockInvoiceConnectError(connect.status, connect.code, connect.error);
   }
+  const accountId = connect.accountId;
   const onAccount = { stripeAccount: accountId };
 
   const currency = (opts.currency || block.invoiceCurrency || "USD").toLowerCase();

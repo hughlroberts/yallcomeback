@@ -145,7 +145,7 @@ export default async function AdminLayout({
               ? activeBrandId
                 ? "Admin · brand scope"
                 : "Admin · pick brand"
-              : "Calendar"
+              : null
           }
           links={links}
         />
