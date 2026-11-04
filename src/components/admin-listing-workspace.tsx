@@ -1,6 +1,7 @@
 "use client";
 
 import { SEARCH_MAX_PETS } from "@/lib/search-filters";
+import { marketplaceListingHref } from "@/lib/marketplace-links";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -1362,6 +1363,10 @@ export function AdminListingWorkspace({
     property.published,
     property.listOnMarketplace,
   );
+  // T58: plain new-tab links (a next/link with target=_blank opened a
+  // blank tab from here). Public pages for this listing.
+  const findAPlaceHref = marketplaceListingHref(property.slug, property.hostSlug);
+  const websiteHref = `/h/${encodeURIComponent(property.hostSlug)}/properties/${encodeURIComponent(property.slug)}`;
 
   const tabs: { id: TabId; label: string }[] = [
     { id: "calendar", label: "Calendar" },
@@ -1519,26 +1524,29 @@ export function AdminListingWorkspace({
               {visibility === "website" || visibility === "both" ? (
                 <>
                   Website:{" "}
-                  <Link
-                    href={`/h/${property.hostSlug}/properties/${property.slug}`}
+                  <a
+                    href={websiteHref}
                     className="text-bonnet hover:underline"
                     target="_blank"
+                    rel="noopener"
                   >
                     /h/{property.hostSlug}/properties/{property.slug}
-                  </Link>
+                  </a>
                 </>
               ) : null}
               {visibility === "both" ? (
                 <>
                   <span className="mx-1.5 text-stone-300">·</span>
                   Find a Place:{" "}
-                  <Link
-                    href={`/marketplace/properties/${property.slug}?host=${property.hostSlug}`}
+                  <a
+                    href={findAPlaceHref}
                     className="text-bonnet hover:underline"
                     target="_blank"
+                    rel="noopener"
+                    data-testid="find-a-place-link"
                   >
                     /marketplace/properties/{property.slug}
-                  </Link>
+                  </a>
                 </>
               ) : null}
             </p>
@@ -1590,17 +1598,14 @@ export function AdminListingWorkspace({
             canRemove={canRemoveListing}
           />
           {visibility !== "off" ? (
-            <Link
-              href={
-                visibility === "both"
-                  ? `/marketplace/properties/${property.slug}?host=${property.hostSlug}`
-                  : `/h/${property.hostSlug}/properties/${property.slug}`
-              }
+            <a
+              href={visibility === "both" ? findAPlaceHref : websiteHref}
               target="_blank"
+              rel="noopener"
               className="inline-flex items-center justify-center rounded-lg bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
             >
               View listing
-            </Link>
+            </a>
           ) : null}
         </div>
       </div>

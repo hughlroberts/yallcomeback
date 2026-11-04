@@ -109,3 +109,23 @@ describe("AdminListingWorkspace hydration", () => {
     expect(renderIn("America/Chicago", false)).toBe(renderIn("UTC", false));
   });
 });
+
+describe("T58: Find a Place link opens the public listing page", () => {
+  it("is a real new-tab link to /marketplace/properties/[slug]", () => {
+    const html = renderToString(
+      createElement(AdminListingWorkspace, {
+        ...props,
+        calendarOnly: false,
+        todayYmd: "2026-11-03",
+      } as Props),
+    );
+    const m = /<a[^>]*data-testid="find-a-place-link"[^>]*>/.exec(html);
+    expect(m, "Find a Place link rendered").not.toBeNull();
+    const tag = m![0];
+    expect(tag).toContain('href="/marketplace/properties/lake-house?host=hugh"');
+    expect(tag).toContain('target="_blank"');
+    expect(tag).toContain('rel="noopener"');
+    expect(html).toMatch(/<a[^>]*href="\/marketplace\/properties\/lake-house\?host=hugh"[^>]*>View listing<\/a>/);
+    expect(html).not.toContain("about:blank");
+  });
+});
