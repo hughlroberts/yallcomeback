@@ -11,6 +11,7 @@ const db = vi.hoisted(() => ({
   booking: { findUnique: vi.fn() },
   conversation: {
     findMany: vi.fn(async () => []),
+    findFirst: vi.fn(async () => null),
     count: vi.fn<(args: { where: Record<string, unknown> }) => Promise<number>>(async () => 0),
     create: vi.fn(async () => ({ id: "conv_api" })),
     updateMany: vi.fn(async () => ({ count: 1 })),

@@ -83,6 +83,11 @@ export type InquiryResult =
       ok: true;
       conversationId: string;
       duplicate: boolean;
+      /**
+       * T57: true when the question was added to the guest's open thread on
+       * this listing instead of starting a new one.
+       */
+      continued: boolean;
       hostNotification: NotifyOutcome;
       /** The guest's receipt email (none for a duplicate; error if it threw). */
       guestConfirmation: GuestConfirmOutcome | "none" | "error";
@@ -314,6 +319,7 @@ export async function submitInquiry(
       ok: true,
       conversationId: dup.id,
       duplicate: true,
+      continued: false,
       hostNotification: "none",
       guestConfirmation: "none",
     };
@@ -449,7 +455,93 @@ export async function submitInquiry(
       ? `Question about ${propertyTitle}`
       : `Message for ${hostName}`);
 
-  const conversation = await prisma.conversation.create({
+  // T57: a repeat question from the same email on the same listing (same
+  // brand) continues the guest's most recent open thread, unless it is about
+  // a materially different stay (see datesDifferMaterially) or a different
+  // booking. Archived threads are never reopened.
+  const openThread = propertyId
+    ? await prisma.conversation.findFirst({
+        where: {
+          hostId,
+          propertyId,
+          status: "OPEN",
+          opsAlert: false,
+          guestEmail: { equals: guestEmail, mode: "insensitive" },
+        },
+        orderBy: [
+          { lastMessageAt: { sort: "desc", nulls: "last" } },
+          { createdAt: "desc" },
+        ],
+        select: {
+          id: true,
+          bookingId: true,
+          guestUserId: true,
+          guestPhone: true,
+          messages: {
+            where: { senderRole: "GUEST" },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+            select: { body: true },
+          },
+        },
+      })
+    : null;
+  const continueThread =
+    openThread &&
+    !(bookingId && openThread.bookingId && bookingId !== openThread.bookingId) &&
+    !datesDifferMaterially(
+      tripFromMessages(openThread.messages.map((m) => m.body)),
+      trip,
+    )
+      ? openThread
+      : null;
+
+  if (continueThread) {
+    // Keep the per-email hourly cap meaningful for follow-ups too.
+    const recentInThread = await prisma.message.count({
+      where: {
+        conversationId: continueThread.id,
+        senderRole: "GUEST",
+        createdAt: { gte: since1h },
+      },
+    });
+    if (recentInThread >= INQUIRY_RATE_LIMITS.emailPerHour) {
+      return tooMany(
+        {
+          name: "email_per_hour",
+          max: INQUIRY_RATE_LIMITS.emailPerHour,
+          windowSeconds: HOUR / 1000,
+        },
+        HOUR / 1000,
+      );
+    }
+    await prisma.conversation.update({
+      where: { id: continueThread.id },
+      data: {
+        lastMessageAt: now,
+        ...(bookingId && !continueThread.bookingId ? { bookingId } : {}),
+        ...(ctx.sessionUserId && !continueThread.guestUserId
+          ? { guestUserId: ctx.sessionUserId }
+          : {}),
+        ...(guestPhone && !continueThread.guestPhone ? { guestPhone } : {}),
+        messages: {
+          create: {
+            senderRole: "GUEST",
+            senderUserId: ctx.sessionUserId || undefined,
+            body,
+            channel: "IN_APP",
+            // The host is emailed for the follow-up like any guest reply.
+            hostNotifyPending: true,
+          },
+        },
+      },
+      select: { id: true },
+    });
+  }
+
+  const conversation = continueThread
+    ? { id: continueThread.id }
+    : await prisma.conversation.create({
     data: {
       hostId,
       propertyId,
@@ -506,12 +598,54 @@ export async function submitInquiry(
     ok: true,
     conversationId: conversation.id,
     duplicate: false,
+    continued: Boolean(continueThread),
     hostNotification,
     guestConfirmation,
   };
 }
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Days either end of a stay may move and still be "the same trip" (T57). */
+export const SAME_TRIP_TOLERANCE_DAYS = 3;
+
+/**
+ * Pure: the latest trip dates a guest gave in a thread, from the
+ * "Dates: A to B" / "Check-in: A" context line. Newest message first.
+ */
+export function tripFromMessages(bodiesNewestFirst: string[]): InquiryTrip | null {
+  for (const b of bodiesNewestFirst) {
+    const range = /Dates: (\d{4}-\d{2}-\d{2}) to (\d{4}-\d{2}-\d{2})/.exec(b);
+    if (range) return { checkIn: range[1]!, checkOut: range[2]!, guests: null };
+    const ci = /Check-in: (\d{4}-\d{2}-\d{2})/.exec(b);
+    if (ci) return { checkIn: ci[1]!, checkOut: null, guests: null };
+  }
+  return null;
+}
+
+const dayDiff = (a: string, b: string) =>
+  Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / DAY;
+
+/**
+ * Pure (T57): true when two trips are clearly different stays: check-in, or
+ * check-out when both have one, moved more than SAME_TRIP_TOLERANCE_DAYS.
+ * Unknown dates on either side never split a thread.
+ */
+export function datesDifferMaterially(
+  previous: InquiryTrip | null,
+  next: InquiryTrip | null,
+): boolean {
+  if (!previous?.checkIn || !next?.checkIn) return false;
+  if (dayDiff(previous.checkIn, next.checkIn) > SAME_TRIP_TOLERANCE_DAYS) return true;
+  if (
+    previous.checkOut &&
+    next.checkOut &&
+    dayDiff(previous.checkOut, next.checkOut) > SAME_TRIP_TOLERANCE_DAYS
+  ) {
+    return true;
+  }
+  return false;
+}
 
 /** Pure: keep only valid trip details (YYYY-MM-DD dates, 1-50 guests). */
 export function parseTrip(b: {

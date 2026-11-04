@@ -8,7 +8,9 @@ const db = vi.hoisted(() => ({
     findFirst: vi.fn(),
     count: vi.fn(),
     create: vi.fn(),
+    update: vi.fn(),
   },
+  message: { count: vi.fn() },
   booking: { findUnique: vi.fn() },
 }));
 const notify = vi.hoisted(() => ({
@@ -26,7 +28,9 @@ vi.mock("@/lib/inquiries/guest-confirm", () => guestConfirm);
 
 import {
   INQUIRY_RATE_LIMITS,
+  datesDifferMaterially,
   parseTrip,
+  tripFromMessages,
   submitInquiry,
   tripContextLine,
 } from "./submit";
@@ -58,6 +62,8 @@ beforeEach(() => {
   db.conversation.count.mockResolvedValue(0);
   db.conversation.findFirst.mockResolvedValue(null);
   db.conversation.create.mockResolvedValue({ id: "conv1" });
+  db.conversation.update.mockResolvedValue({ id: "open1" });
+  db.message.count.mockResolvedValue(0);
 });
 
 describe("submitInquiry", () => {
@@ -67,6 +73,7 @@ describe("submitInquiry", () => {
       ok: true,
       conversationId: "conv1",
       duplicate: false,
+      continued: false,
       hostNotification: "emailed",
       guestConfirmation: "sent",
     });
@@ -131,6 +138,7 @@ describe("submitInquiry", () => {
       ok: true,
       conversationId: "old",
       duplicate: true,
+      continued: false,
       hostNotification: "none",
       guestConfirmation: "none",
     });
@@ -327,5 +335,123 @@ describe("tripContextLine", () => {
       }),
     ).toBe("Dates: 2026-12-08 to 2026-12-10 · Guests: 4");
     expect(tripContextLine({ checkIn: "soon", guests: "lots" })).toBeNull();
+  });
+});
+
+describe("repeat inquiry continues the open thread (T57)", () => {
+  const openThread = (over: object = {}) => ({
+    id: "open1",
+    bookingId: null,
+    guestUserId: null,
+    guestPhone: null,
+    messages: [{ body: "Dates: 2026-12-10 to 2026-12-13 · Guests: 2\n\nIs there a crib?" }],
+    ...over,
+  });
+  const follow = { ...input, body: "Also, is the kayak free to use?" };
+
+  it("looks up the same brand + listing + email (case-insensitive), open only", async () => {
+    await submitInquiry(follow, ctx());
+    const q = db.conversation.findFirst.mock.calls[0]![0];
+    expect(q.where).toEqual({
+      hostId: "h1",
+      propertyId: "p1",
+      status: "OPEN",
+      opsAlert: false,
+      guestEmail: { equals: "jo@example.com", mode: "insensitive" },
+    });
+    expect(q.orderBy[0]).toEqual({ lastMessageAt: { sort: "desc", nulls: "last" } });
+  });
+
+  it("appends to the open thread, marks it for the host email, no new thread", async () => {
+    db.conversation.findFirst.mockResolvedValue(openThread());
+    const r = await submitInquiry(follow, ctx());
+    expect(r).toMatchObject({ ok: true, conversationId: "open1", duplicate: false, continued: true });
+    expect(db.conversation.create).not.toHaveBeenCalled();
+    const upd = db.conversation.update.mock.calls[0]![0];
+    expect(upd.where).toEqual({ id: "open1" });
+    expect(upd.data.lastMessageAt).toBeInstanceOf(Date);
+    expect(upd.data.messages.create).toMatchObject({
+      senderRole: "GUEST",
+      body: "Also, is the kayak free to use?",
+      hostNotifyPending: true,
+    });
+    expect(notify.flushHostInquiryEmails).toHaveBeenCalledWith("h1", expect.any(Date));
+    expect(guestConfirm.sendGuestInquiryConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({ conversationId: "open1" }),
+    );
+  });
+
+  it("works the same for the web form (WEB source, propertyId)", async () => {
+    db.conversation.findFirst.mockResolvedValue(openThread());
+    const r = await submitInquiry(
+      { propertyId: "p1", guestName: "Jo", guestEmail: "JO@example.com", body: follow.body },
+      ctx({ source: "WEB" }),
+    );
+    expect(r).toMatchObject({ ok: true, conversationId: "open1", continued: true });
+    expect(db.conversation.create).not.toHaveBeenCalled();
+  });
+
+  it("small date tweaks stay in the thread", async () => {
+    db.conversation.findFirst.mockResolvedValue(openThread());
+    const r = await submitInquiry(
+      { ...follow, trip: { checkIn: "2026-12-11", checkOut: "2026-12-14", guests: 2 } },
+      ctx(),
+    );
+    expect(r).toMatchObject({ continued: true });
+  });
+
+  it("a materially different stay starts a new thread", async () => {
+    db.conversation.findFirst.mockResolvedValue(openThread());
+    const r = await submitInquiry(
+      { ...follow, trip: { checkIn: "2027-03-01", checkOut: "2027-03-04", guests: 2 } },
+      ctx(),
+    );
+    expect(r).toMatchObject({ conversationId: "conv1", continued: false });
+    expect(db.conversation.update).not.toHaveBeenCalled();
+    expect(db.conversation.create).toHaveBeenCalled();
+  });
+
+  it("no open thread (none, or closed/archived) starts a new one", async () => {
+    db.conversation.findFirst.mockResolvedValue(null);
+    expect(await submitInquiry(follow, ctx())).toMatchObject({ conversationId: "conv1", continued: false });
+    expect(db.conversation.create).toHaveBeenCalled();
+  });
+
+  it("host-site contact without a listing never continues", async () => {
+    db.host.findUnique.mockResolvedValue({ id: "h1", name: "Hugh", active: true });
+    const r = await submitInquiry(
+      { hostId: "h1", guestName: "Jo", guestEmail: "jo@example.com", body: follow.body },
+      ctx({ source: "WEB" }),
+    );
+    expect(r).toMatchObject({ continued: false });
+    expect(db.conversation.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("follow-ups still respect the per-email hourly cap", async () => {
+    db.conversation.findFirst.mockResolvedValue(openThread());
+    db.message.count.mockResolvedValue(INQUIRY_RATE_LIMITS.emailPerHour);
+    const r = await submitInquiry(follow, ctx());
+    expect(r).toMatchObject({ ok: false, status: 429, limit: { name: "email_per_hour" } });
+    expect(db.conversation.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("T57 date helpers", () => {
+  it("reads the newest Dates / Check-in line", () => {
+    expect(tripFromMessages(["no dates", "Dates: 2026-12-10 to 2026-12-13 · Guests: 2"])).toEqual({
+      checkIn: "2026-12-10",
+      checkOut: "2026-12-13",
+      guests: null,
+    });
+    expect(tripFromMessages(["Check-in: 2026-12-10\n\nhi"])).toMatchObject({ checkIn: "2026-12-10", checkOut: null });
+    expect(tripFromMessages(["hello"])).toBeNull();
+  });
+  it("only clearly different stays (> 3 days at either end) split", () => {
+    const a = { checkIn: "2026-12-10", checkOut: "2026-12-13", guests: null };
+    expect(datesDifferMaterially(a, { checkIn: "2026-12-13", checkOut: "2026-12-16", guests: 2 })).toBe(false);
+    expect(datesDifferMaterially(a, { checkIn: "2026-12-14", checkOut: "2026-12-16", guests: 2 })).toBe(true);
+    expect(datesDifferMaterially(a, { checkIn: "2026-12-10", checkOut: "2026-12-20", guests: 2 })).toBe(true);
+    expect(datesDifferMaterially(a, null)).toBe(false);
+    expect(datesDifferMaterially(null, a)).toBe(false);
   });
 });

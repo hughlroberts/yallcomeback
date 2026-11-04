@@ -532,7 +532,7 @@ export function buildOpenApiDocument(origin: string) {
           operationId: "askHostQuestion",
           summary: "Ask a host a question before booking",
           description:
-            "Sends a pre-booking question to the host of a marketplace listing, on behalf of a real person who wants the reply. No token required; AI agents are welcome. The host replies by email to guestEmail. Limits: per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day. Repeating the same (or nearly the same) question from the same email within 24 hours returns the existing inquiry with duplicate:true and nothing is re-sent. Messages with more than one link, links in the name or subject, HTML, link shorteners, or spam wording are rejected. Hosts and co-hosts get an email for every question right away; only during a flood (more than 10 emails to one host in 10 minutes) are later messages grouped into one email when that window ends.",
+            "Sends a pre-booking question to the host of a marketplace listing, on behalf of a real person who wants the reply. No token required; AI agents are welcome. The host replies by email to guestEmail. Limits: per IP 5 per 10 minutes and 20 per day; per guest email 3 per hour and 10 per day; per listing 20 per hour; per host 60 per hour and 300 per day. Repeating the same (or nearly the same) question from the same email within 24 hours returns the existing inquiry with duplicate:true and nothing is re-sent. A new question from the same email about the same listing is added to that guest's open conversation (same inquiryId, continued:true, the host is emailed) unless the stay dates move by more than 3 days; then a new conversation starts. Messages with more than one link, links in the name or subject, HTML, link shorteners, or spam wording are rejected. Hosts and co-hosts get an email for every question right away; only during a flood (more than 10 emails to one host in 10 minutes) are later messages grouped into one email when that window ends.",
           requestBody: {
             required: true,
             content: {
@@ -568,7 +568,7 @@ export function buildOpenApiDocument(origin: string) {
           responses: {
             "201": {
               description:
-                "Sent: { ok, inquiryId, duplicate:false, hostNotification: emailed|queued|none, guestConfirmation: sent|capped|opted_out|not_sent|skipped|error }. hostNotification queued means held by the flood guard or the email will be retried; guestConfirmation is the guest's receipt email (at most 1 per hour and 3 per day per address).",
+                "Sent: { ok, inquiryId, duplicate:false, continued (true when added to the guest's open conversation on this listing), hostNotification: emailed|queued|none, guestConfirmation: sent|capped|opted_out|not_sent|skipped|error }. hostNotification queued means held by the flood guard or the email will be retried; guestConfirmation is the guest's receipt email (at most 1 per hour and 3 per day per address).",
             },
             "200": {
               description:
