@@ -246,6 +246,29 @@ describe("successful invoices", () => {
   });
 });
 
+describe("T48(2): test brands and $0 at creation never activate", () => {
+  it("charged at creation, test brand: invoice PAID but brand stays PENDING_PAYMENT, period not moved", async () => {
+    seed({ isTestBrand: true });
+    card.onFile = true;
+    const rec = await createHostingInvoiceForHost({ hostId: "h_qa2" });
+    expect(rec.status).toBe("PAID");
+    expect(state.host.subscriptionStatus).toBe("PENDING_PAYMENT");
+    expect(state.host.currentPeriodEnd).toEqual(OLD_END);
+  });
+  it("$0 at creation (free plan): brand stays PENDING_PAYMENT, period not moved", async () => {
+    state.planPrice = 0;
+    await createHostingInvoiceForHost({ hostId: "h_qa2" });
+    expect(state.host.subscriptionStatus).toBe("PENDING_PAYMENT");
+    expect(state.host.currentPeriodEnd).toEqual(OLD_END);
+  });
+  it("$0 at creation, test brand: brand stays PENDING_PAYMENT", async () => {
+    seed({ isTestBrand: true });
+    state.planPrice = 0;
+    await createHostingInvoiceForHost({ hostId: "h_qa2" });
+    expect(state.host.subscriptionStatus).toBe("PENDING_PAYMENT");
+  });
+});
+
 describe("T50b: a $0 invoice never activates a paid plan", () => {
   it("line items go on the draft invoice itself (not left pending)", async () => {
     await createHostingInvoiceForHost({ hostId: "h_qa2" });
