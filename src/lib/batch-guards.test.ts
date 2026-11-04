@@ -61,6 +61,15 @@ describe("Cherokee Landing wording", () => {
       "not part of Cherokee Landing resort inventory",
     );
   });
+
+  it("T51: the seed's lakefront listing (Hugh's own home) has no Cherokee Landing resort/pontoon wording", () => {
+    const seed = read("prisma/seed.ts");
+    const start = seed.indexOf('slug: "lakefront-private-dock"');
+    expect(start).toBeGreaterThan(-1);
+    const block = seed.slice(start, seed.indexOf("amenities:", start));
+    expect(block).not.toMatch(/Cherokee Landing/);
+    expect(block).not.toMatch(/pontoon/i);
+  });
 });
 
 describe("cancel wording", () => {

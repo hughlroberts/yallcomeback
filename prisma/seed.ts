@@ -262,11 +262,11 @@ Questions? Message us in-app from your listing or booking.`,
       title: "Lakefront with Private Dock",
       slug: "lakefront-private-dock",
       tagline: "Deep water, sandy bottom, and a private dock on Cedar Creek",
-      description: `Enjoy a private home right on Cedar Creek Lake with your family. Located within Cherokee Landing Resort.
+      description: `Enjoy a private home right on Cedar Creek Lake with your family.
 
 Not many rentals in the area have a sandy bottom off their dock - or this open lake view. The home is spacious with private parking and a game room for ping pong, air hockey, and rainy-day fun.
 
-Don't have a boat? Next door, Cherokee Landing rents pontoon boats for fishing, cruising, and tubing.
+Bring your boat, kayaks or fishing gear - the private dock is yours for the stay.
 
 The space
 Three unique spaces for guests: the entire house with a huge living room of windows; a covered front deck for morning coffee; a private dock for swimming, fishing, kayaking, or parking your boat; and a game room in the garage. Light a fire or BBQ by the lake.
@@ -278,7 +278,6 @@ Highlights from guests
 • Rated 5.0 from 20 reviews (Guest Favorite)
 • Peaceful setting, comfortable beds, and sunsets from the covered porch
 • Superhost: Hugh - 7 years hosting, responds within an hour`,
-      address: "Cherokee Landing Resort",
       city: "Log Cabin",
       region: "Texas",
       postalCode: "75148",
@@ -298,7 +297,7 @@ Highlights from guests
       checkInTime: "15:00",
       checkOutTime: "11:00",
       houseRules:
-        "Check-in after 3:00 PM\nCheckout before 11:00 AM\n9 guests maximum\nPets allowed with fee\nNo parties\nQuiet hours after 10pm\nRespect the dock and lake access for all Cherokee Landing guests",
+        "Check-in after 3:00 PM\nCheckout before 11:00 AM\n9 guests maximum\nPets allowed with fee\nNo parties\nQuiet hours after 10pm",
       amenities: JSON.stringify([
         "Lake view",
         "Waterfront",
