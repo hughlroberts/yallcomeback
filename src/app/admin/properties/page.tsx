@@ -1,4 +1,5 @@
 import { ListingLinkPair } from "@/components/listing-link-pair";
+import { listingStatusBadgeClass, listingStatusLabel } from "@/lib/listing-status-label";
 import { PRIVATE_PREVIEW_LABEL } from "@/lib/private-preview-label";
 import { marketplaceListingHref } from "@/lib/marketplace-links";
 import { pausedPreviewHref } from "@/lib/listing-preview-token";
@@ -19,9 +20,7 @@ import {
 import { ListingVisibilityForm } from "@/components/listing-visibility-form";
 import { ListingLifecycleActions } from "@/components/listing-lifecycle-actions";
 import {
-  visibilityBadgeClass,
   visibilityFromFlags,
-  visibilityLabel,
 } from "@/lib/listing-visibility";
 import { cn } from "@/lib/utils";
 import { viewerCanPublishListings } from "@/lib/email-verified";
@@ -147,10 +146,10 @@ export default async function AdminPropertiesPage() {
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                      visibilityBadgeClass(vis),
+                      listingStatusBadgeClass(p),
                     )}
                   >
-                    {vis === "off" ? "Inactive" : visibilityLabel(vis)}
+                    {listingStatusLabel(p)}
                   </span>
                   {p.featured && (
                     <span className="rounded-full bg-petal px-2.5 py-0.5 text-xs font-semibold text-bonnet ring-1 ring-inset ring-petal">

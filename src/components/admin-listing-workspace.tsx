@@ -1,5 +1,6 @@
 "use client";
 
+import { listingStatusBadgeClass, listingStatusLabel } from "@/lib/listing-status-label";
 import { PRIVATE_PREVIEW_LABEL } from "@/lib/private-preview-label";
 import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import { marketplaceListingHref } from "@/lib/marketplace-links";
@@ -45,9 +46,7 @@ import {
 import { rateWithWeekend } from "@/lib/listing-discounts";
 import { pickSeasonForNight } from "@/lib/season-pick";
 import {
-  visibilityBadgeClass,
   visibilityFromFlags,
-  visibilityLabel,
 } from "@/lib/listing-visibility";
 import { ListingVisibilityForm } from "@/components/listing-visibility-form";
 import { ListingLifecycleActions } from "@/components/listing-lifecycle-actions";
@@ -1488,16 +1487,10 @@ export function AdminListingWorkspace({
             <span
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                property.archivedAt
-                  ? "bg-stone-200 text-stone-700"
-                  : visibilityBadgeClass(visibility),
+                listingStatusBadgeClass(property),
               )}
             >
-              {property.archivedAt
-                ? "Archived"
-                : visibility === "off"
-                  ? "Inactive"
-                  : visibilityLabel(visibility)}
+              {listingStatusLabel(property)}
             </span>
           </div>
           <p className="mt-1 text-sm text-stone-500">

@@ -1,4 +1,5 @@
 import { brandedPriceLabel } from "@/lib/hosting-prices";
+import { listingStatusBadgeClass, listingStatusLabel } from "@/lib/listing-status-label";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -67,6 +68,7 @@ export default async function OpsHostDetailPage({
             slug: true,
             published: true,
             listOnMarketplace: true,
+            archivedAt: true,
             city: true,
             baseNightlyRate: true,
             _count: { select: { images: true, bookings: true } },
@@ -577,20 +579,12 @@ export default async function OpsHostDetailPage({
                 </p>
               </div>
               <div className="flex gap-2">
-                {p.published ? (
-                  <span className="rounded-full bg-sage/25 px-2.5 py-0.5 text-xs text-sage-ink">
-                    Published
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-600">
-                    Draft
-                  </span>
-                )}
-                {p.listOnMarketplace ? (
-                  <span className="rounded-full bg-petal px-2.5 py-0.5 text-xs text-bonnet">
-                    Marketplace
-                  </span>
-                ) : null}
+                <span
+                  data-testid="ops-listing-status"
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${listingStatusBadgeClass(p)}`}
+                >
+                  {listingStatusLabel(p)}
+                </span>
               </div>
             </li>
           ))}
