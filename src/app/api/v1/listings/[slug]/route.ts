@@ -3,6 +3,7 @@ import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import { getAgentListingDetail } from "@/lib/agent/listing";
 import { SearchInputError } from "@/lib/agent/search";
+import { partyFromParams } from "@/lib/search-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +23,22 @@ export async function GET(
   const sp = req.nextUrl.searchParams;
   const origin = publicOrigin(req);
 
+  // guests / pets: same parser and 400 codes as /api/v1/search, so a bad
+  // value is never priced as 1 guest or carried into bookUrl.
+  const party = partyFromParams((k) => sp.get(k));
+  if (!party.ok) {
+    return NextResponse.json(
+      { ok: false, code: party.code, error: party.error },
+      { status: 400, headers: { "Access-Control-Allow-Origin": "*" } },
+    );
+  }
+
   try {
     const listing = await getAgentListingDetail(origin, slug, {
       checkIn: sp.get("checkIn")?.trim() || undefined,
       checkOut: sp.get("checkOut")?.trim() || undefined,
-      guests: sp.get("guests") ? Number(sp.get("guests")) : undefined,
-      pets: sp.get("pets") ? Number(sp.get("pets")) : undefined,
+      guests: party.guests,
+      pets: party.pets,
     });
 
     if (!listing) {

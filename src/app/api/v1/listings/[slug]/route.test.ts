@@ -78,3 +78,34 @@ describe("GET /api/v1/listings/{slug} date validation", () => {
     expect(db.prisma.property.findFirst).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("GET /api/v1/listings/{slug} guests / pets (T54)", () => {
+  beforeAll(() => vi.stubEnv("AGENT_API_ENABLED", "true"));
+  afterAll(() => vi.unstubAllEnvs());
+  beforeEach(() => {
+    db.prisma.property.findFirst.mockReset();
+    db.prisma.property.findFirst.mockResolvedValue(null);
+  });
+
+  it.each(["-5", "abc", "0", "2.5", "1e1"])(
+    "returns 400 invalid_guests for guests=%s",
+    async (g) => {
+      const res = await get(`checkIn=${ymd(30)}&checkOut=${ymd(32)}&guests=${g}`);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ ok: false, code: "invalid_guests" });
+      expect(db.prisma.property.findFirst).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["abc", "-1", "1.5", "1e1"])(
+    "returns 400 invalid_pets for pets=%s, so no bookUrl carries it",
+    async (p) => {
+      const res = await get(`checkIn=${ymd(30)}&checkOut=${ymd(32)}&guests=2&pets=${p}`);
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body).toMatchObject({ ok: false, code: "invalid_pets" });
+      expect(body.listing).toBeUndefined();
+      expect(db.prisma.property.findFirst).not.toHaveBeenCalled();
+    },
+  );
+});

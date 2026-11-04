@@ -79,7 +79,8 @@ Homepage-style flexibility:
 - Use amenities=lake_view,wifi for amenity filters (comma-separated ids).
 - limit (alias take): a whole number from 1 to 50, default 20 when omitted. Non-integer (e.g. 2.5), non-numeric, 0, negative or above-50 values return HTTP 400 {ok:false, code:"invalid_limit", error}.
 - count is every matching stay (not limited by limit; returned is how many are in this response; currentCount equals count). It matches flexibleDates.currentCount for exact dates; both are counted over at most 200 candidate stays.
-- GET ${origin}/api/marketplace/stays takes the same where, checkIn, checkOut, guests, pets, filters and limit/take (default 20, max 50) and returns the same count, returned and currentCount (that browser endpoint clamps limit instead of returning 400).
+- GET ${origin}/api/marketplace/stays takes the same where, checkIn, checkOut, guests, pets, filters and limit/take (default 20, max 50) and returns the same count, returned and currentCount with the same 400 invalid_limit for anything but a whole number 1–50 (2.5, 1e1, abc).
+- guests must be a whole number ≥ 1 and pets a whole number ≥ 0 on /api/v1/search, /api/v1/listings/{slug} and /api/marketplace/stays; otherwise HTTP 400 with code invalid_guests or invalid_pets (never silently dropped or carried into bookUrl).
 - Past dates (checkIn before today) or checkOut on/before checkIn return HTTP 400 with {ok:false, code, error}; code is past_dates, checkout_not_after_checkin or invalid_date. Same on GET /api/marketplace/stays.
 - humanSearchUrl and each flexibleDates searchUrl keep every active filter (guests, pets, bedrooms, price, amenities).
 - guests above 50 (the search form max) are capped at 50; query.guests and humanSearchUrl show the capped number.

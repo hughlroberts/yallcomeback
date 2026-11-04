@@ -97,6 +97,7 @@ describe("GET /api/v1/search", () => {
       "limit=51",
       "limit=500",
       "limit=abc",
+      "limit=1e1",
       "take=2.5&limit=5",
     ]) {
       const res = await get(`location=Malakoff&${q}`);
@@ -120,12 +121,21 @@ describe("GET /api/v1/search", () => {
     });
   });
 
-  it("keeps a normal party as sent and drops junk guests", async () => {
+  it("keeps a normal party as sent and 400s junk guests / pets (T54)", async () => {
     const two = await (await get("guests=2")).json();
     expect(two.query.guests).toBe(2);
     expect(new URL(two.humanSearchUrl).searchParams.get("guests")).toBe("2");
-    const junk = await (await get("guests=abc")).json();
-    expect(junk.query.guests).toBeUndefined();
-    expect(new URL(junk.humanSearchUrl).searchParams.has("guests")).toBe(false);
+    host.searchMarketplace.mockClear();
+    for (const g of ["abc", "-5", "0", "2.5"]) {
+      const res = await get(`guests=${g}`);
+      expect(res.status, g).toBe(400);
+      expect(await res.json(), g).toMatchObject({ ok: false, code: "invalid_guests" });
+    }
+    for (const p of ["abc", "-1", "1.5"]) {
+      const res = await get(`guests=2&pets=${p}`);
+      expect(res.status, p).toBe(400);
+      expect(await res.json(), p).toMatchObject({ ok: false, code: "invalid_pets" });
+    }
+    expect(host.searchMarketplace).not.toHaveBeenCalled();
   });
 });

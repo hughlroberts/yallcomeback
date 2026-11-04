@@ -2,26 +2,43 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchMarketplace } from "@/lib/host";
 import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 import { checkSearchDates } from "@/lib/search-dates";
-import { listingFiltersFromParams, searchLimitFromParams } from "@/lib/search-filters";
+import {
+  listingFiltersFromParams,
+  partyFromParams,
+  strictSearchLimitFromParams,
+} from "@/lib/search-filters";
 
 /**
  * JSON marketplace search for guest discovery carousels
  * (based on your previous search, stay in place, etc.).
- * limit (alias take): default 20, max 50 — same as /api/v1/search.
+ * limit (alias take): default 20, max 50 — same parser and 400 invalid_limit
+ * as /api/v1/search; guests / pets: 400 invalid_guests / invalid_pets.
  */
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const where = sp.get("where")?.trim() || undefined;
   const checkIn = sp.get("checkIn")?.trim() || undefined;
   const checkOut = sp.get("checkOut")?.trim() || undefined;
-  const guestsRaw = sp.get("guests");
-  const petsRaw = sp.get("pets");
   const dateFlexRaw = sp.get("dateFlex") || sp.get("flexibilityDays");
 
-  const guests = guestsRaw ? Number(guestsRaw) : undefined;
-  const pets = petsRaw ? Number(petsRaw) : undefined;
-  // take / limit: same default (20) and max (50) as /api/v1/search.
-  const take = searchLimitFromParams((k) => sp.get(k));
+  // take / limit: same strict parser as /api/v1/search (default 20, whole
+  // number 1–50, else 400 invalid_limit).
+  const limit = strictSearchLimitFromParams((k) => sp.get(k));
+  if (!limit.ok) {
+    return NextResponse.json(
+      { ok: false, code: "invalid_limit", error: limit.error },
+      { status: 400 },
+    );
+  }
+  const take = limit.take;
+  const party = partyFromParams((k) => sp.get(k));
+  if (!party.ok) {
+    return NextResponse.json(
+      { ok: false, code: party.code, error: party.error },
+      { status: 400 },
+    );
+  }
+  const { guests, pets } = party;
   const dateFlex = dateFlexRaw ? Number(dateFlexRaw) : undefined;
 
   // Past, inverted or malformed dates are a client error, never ignored.
@@ -43,14 +60,8 @@ export async function GET(req: NextRequest) {
         dateFlex != null && Number.isFinite(dateFlex) && dateFlex > 0
           ? Math.min(14, Math.floor(dateFlex))
           : undefined,
-      guests:
-        guests != null && Number.isFinite(guests) && guests > 0
-          ? Math.floor(guests)
-          : undefined,
-      pets:
-        pets != null && Number.isFinite(pets) && pets > 0
-          ? Math.floor(pets)
-          : undefined,
+      guests,
+      pets: pets != null && pets > 0 ? pets : undefined,
       take,
     },
     { withFlexibleDates: true, withTotal: true, filters },

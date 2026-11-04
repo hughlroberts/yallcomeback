@@ -27,6 +27,7 @@ import { listingHrefWithSearch } from "@/lib/listing-href";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { formatMoney } from "@/lib/utils";
 import { checkSearchDates } from "@/lib/search-dates";
+import { plainWholeNumber } from "@/lib/search-filters";
 
 const emptyViews: RecentView[] = [];
 const emptySearches: RecentSearch[] = [];
@@ -254,8 +255,11 @@ export function GuestDiscoverySections({
       if (lastSearch.checkIn) params.set("checkIn", lastSearch.checkIn);
       if (lastSearch.checkOut) params.set("checkOut", lastSearch.checkOut);
     }
-    if (lastSearch.guests) params.set("guests", String(lastSearch.guests));
-    if (lastSearch.pets) params.set("pets", String(lastSearch.pets));
+    // The API 400s junk guests/pets: only send plain whole numbers.
+    const g = plainWholeNumber(lastSearch.guests);
+    if (g != null && g >= 1) params.set("guests", String(g));
+    const pt = plainWholeNumber(lastSearch.pets);
+    if (pt != null && pt >= 1) params.set("pets", String(pt));
     params.set("take", "12");
 
     fetch(`/api/marketplace/stays?${params.toString()}`)

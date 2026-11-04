@@ -199,8 +199,8 @@ export function strictSearchLimitFromParams(
   const param: "take" | "limit" = take ? "take" : "limit";
   const raw = take || get("limit")?.trim();
   if (!raw) return { ok: true, take: SEARCH_DEFAULT_LIMIT };
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < 1 || n > SEARCH_MAX_LIMIT) {
+  const n = plainWholeNumber(raw);
+  if (n == null || n < 1 || n > SEARCH_MAX_LIMIT) {
     return {
       ok: false,
       param,
@@ -208,4 +208,64 @@ export function strictSearchLimitFromParams(
     };
   }
   return { ok: true, take: n };
+}
+
+/**
+ * A query value written as plain digits ("12"), else null. Rejects what
+ * Number() would quietly accept: "2.5", "1e1", "0x10", "-5", "", "abc".
+ */
+export function plainWholeNumber(
+  raw: string | number | null | undefined,
+): number | null {
+  const t = raw == null ? "" : String(raw).trim();
+  if (!/^\d{1,9}$/.test(t)) return null;
+  return Number(t);
+}
+
+export type PartyParams =
+  | { ok: true; guests: number | undefined; pets: number | undefined }
+  | {
+      ok: false;
+      code: "invalid_guests" | "invalid_pets";
+      error: string;
+    };
+
+/**
+ * Shared `guests` / `pets` parser for the public search and listing APIs
+ * (/api/v1/search, /api/v1/listings/{slug}, /api/marketplace/stays).
+ * Missing or empty = not sent. guests must be a whole number ≥ 1 and pets a
+ * whole number ≥ 0; anything else (-5, abc, 2.5, 1e1) is a 400
+ * invalid_guests / invalid_pets, so a bad value is never quietly dropped
+ * or carried into bookUrl.
+ */
+export function partyFromParams(
+  get: (key: string) => string | null | undefined,
+): PartyParams {
+  const g = get("guests")?.trim();
+  const p = get("pets")?.trim();
+  let guests: number | undefined;
+  let pets: number | undefined;
+  if (g) {
+    const n = plainWholeNumber(g);
+    if (n == null || n < 1) {
+      return {
+        ok: false,
+        code: "invalid_guests",
+        error: `guests must be a whole number of 1 or more (got "${g.slice(0, 40)}").`,
+      };
+    }
+    guests = n;
+  }
+  if (p) {
+    const n = plainWholeNumber(p);
+    if (n == null) {
+      return {
+        ok: false,
+        code: "invalid_pets",
+        error: `pets must be a whole number of 0 or more (got "${p.slice(0, 40)}").`,
+      };
+    }
+    pets = n;
+  }
+  return { ok: true, guests, pets };
 }

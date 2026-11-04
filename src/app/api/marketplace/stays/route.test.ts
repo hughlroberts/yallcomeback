@@ -54,20 +54,34 @@ describe("GET /api/marketplace/stays", () => {
   const takeOf = (i = 0) => host.searchMarketplace.mock.calls[i][0].take;
 
   it("honors limit like /api/v1/search: default 20, max 50, take wins", async () => {
-    const qs = [
-      "where=Malakoff",
-      "limit=5",
-      "limit=500",
-      "limit=0",
-      "limit=-4",
-      "limit=abc",
-      "take=0",
-      "take=7&limit=30",
-      "take=12",
-      "limit=1",
-    ];
-    for (const q of qs) await get(q);
-    expect(qs.map((_, i) => takeOf(i))).toEqual([20, 5, 50, 20, 20, 20, 20, 7, 12, 1]);
+    const qs = ["where=Malakoff", "limit=5", "take=7&limit=30", "take=12", "limit=1", "limit=50"];
+    for (const q of qs) expect((await get(q)).status, q).toBe(200);
+    expect(qs.map((_, i) => takeOf(i))).toEqual([20, 5, 7, 12, 1, 50]);
+  });
+
+  it("returns 400 invalid_limit like /api/v1/search (T53)", async () => {
+    for (const q of ["limit=2.5", "limit=1e1", "limit=abc", "limit=0", "limit=-4", "limit=500", "take=0"]) {
+      const res = await get(q);
+      expect(res.status, q).toBe(400);
+      expect(await res.json(), q).toMatchObject({ ok: false, code: "invalid_limit" });
+    }
+    expect(host.searchMarketplace).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 invalid_guests / invalid_pets for junk party values (T54)", async () => {
+    for (const q of ["guests=-5", "guests=abc", "guests=2.5"]) {
+      const res = await get(q);
+      expect(res.status, q).toBe(400);
+      expect(await res.json(), q).toMatchObject({ code: "invalid_guests" });
+    }
+    for (const q of ["pets=abc", "pets=-1", "pets=1.5"]) {
+      const res = await get(q);
+      expect(res.status, q).toBe(400);
+      expect(await res.json(), q).toMatchObject({ code: "invalid_pets" });
+    }
+    expect(host.searchMarketplace).not.toHaveBeenCalled();
+    await get("guests=6&pets=1");
+    expect(host.searchMarketplace.mock.calls[0][0]).toMatchObject({ guests: 6, pets: 1 });
   });
 
   it("returns count (full total), returned and currentCount", async () => {

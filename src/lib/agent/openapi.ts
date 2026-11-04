@@ -7,7 +7,7 @@ import {
 /** 400 for bad dates, shared by search and listing detail. */
 const badDatesResponse = {
   description:
-    "Bad dates: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn) or invalid_date (not YYYY-MM-DD).",
+    "Bad input: code past_dates (checkIn before today), checkout_not_after_checkin (checkOut on or before checkIn), invalid_date (not YYYY-MM-DD), invalid_guests (guests not a whole number ≥ 1) or invalid_pets (pets not a whole number ≥ 0).",
   content: {
     "application/json": {
       schema: {
@@ -16,7 +16,13 @@ const badDatesResponse = {
           ok: { type: "boolean", const: false },
           code: {
             type: "string",
-            enum: ["past_dates", "checkout_not_after_checkin", "invalid_date"],
+            enum: [
+              "past_dates",
+              "checkout_not_after_checkin",
+              "invalid_date",
+              "invalid_guests",
+              "invalid_pets",
+            ],
           },
           error: { type: "string" },
         },
@@ -27,7 +33,7 @@ const badDatesResponse = {
 
 const badSearchResponse = {
   description:
-    "Bad search input: past_dates, checkout_not_after_checkin or invalid_date for dates, or invalid_limit (take/limit is not a whole number from 1 to 50).",
+    "Bad search input: past_dates, checkout_not_after_checkin or invalid_date for dates, invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number ≥ 1) or invalid_pets (pets not a whole number ≥ 0).",
   content: {
     "application/json": {
       schema: {
@@ -41,6 +47,8 @@ const badSearchResponse = {
               "checkout_not_after_checkin",
               "invalid_date",
               "invalid_limit",
+              "invalid_guests",
+              "invalid_pets",
             ],
           },
           error: { type: "string" },

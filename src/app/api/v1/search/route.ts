@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
 import { agentSearch, SearchInputError } from "@/lib/agent/search";
-import { strictSearchLimitFromParams } from "@/lib/search-filters";
+import {
+  partyFromParams,
+  strictSearchLimitFromParams,
+} from "@/lib/search-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -39,8 +42,16 @@ export async function GET(req: NextRequest) {
     ? Number(flexibilityDaysRaw)
     : undefined;
 
-  const guests = sp.get("guests") ? Number(sp.get("guests")) : undefined;
-  const pets = sp.get("pets") ? Number(sp.get("pets")) : undefined;
+  // guests / pets: whole numbers or 400 invalid_guests / invalid_pets
+  // (shared with /api/marketplace/stays and /api/v1/listings/{slug}).
+  const party = partyFromParams((k) => sp.get(k));
+  if (!party.ok) {
+    return NextResponse.json(
+      { ok: false, code: party.code, error: party.error },
+      { status: 400, headers: { "Access-Control-Allow-Origin": "*" } },
+    );
+  }
+  const { guests, pets } = party;
   const bedrooms = sp.get("bedrooms") ? Number(sp.get("bedrooms")) : undefined;
   const minNightly = sp.get("minNightly")
     ? Number(sp.get("minNightly"))
@@ -48,8 +59,8 @@ export async function GET(req: NextRequest) {
   const maxNightly = sp.get("maxNightly")
     ? Number(sp.get("maxNightly"))
     : undefined;
-  // Default 20; otherwise a whole number 1–50 or 400 invalid_limit (the
-  // browser-facing /api/marketplace/stays stays lenient and clamps instead).
+  // Default 20; otherwise a whole number 1–50 or 400 invalid_limit (same
+  // parser as /api/marketplace/stays).
   const limit = strictSearchLimitFromParams((k) => sp.get(k));
   if (!limit.ok) {
     return NextResponse.json(
@@ -77,14 +88,8 @@ export async function GET(req: NextRequest) {
         flexibilityDays != null && Number.isFinite(flexibilityDays)
           ? flexibilityDays
           : undefined,
-      guests:
-        guests != null && Number.isFinite(guests) && guests > 0
-          ? Math.floor(guests)
-          : undefined,
-      pets:
-        pets != null && Number.isFinite(pets) && pets > 0
-          ? Math.floor(pets)
-          : undefined,
+      guests,
+      pets: pets != null && pets > 0 ? pets : undefined,
       bedrooms:
         bedrooms != null && Number.isFinite(bedrooms) && bedrooms > 0
           ? Math.floor(bedrooms)
