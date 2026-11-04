@@ -135,7 +135,12 @@ export async function POST(req: NextRequest) {
     });
     if (!result.ok) {
       return NextResponse.json(
-        { ok: false, error: result.error, ...conflictExtras(result.status) },
+        {
+          ok: false,
+          error: result.error,
+          ...(result.code ? { code: result.code } : {}),
+          ...conflictExtras(result.status),
+        },
         { status: result.status, headers: CORS },
       );
     }

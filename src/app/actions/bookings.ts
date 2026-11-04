@@ -176,6 +176,16 @@ export async function createBooking(formData: FormData) {
         "Online card is not available for this host. Choose another payment method, or message the host.",
       );
     }
+    // T61: brand's own Connect account must be live-ready (details + charges).
+    const { checkBrandConnectReady } = await import("@/lib/connect-readiness");
+    const connect = await checkBrandConnectReady(property.host);
+    if (!connect.ok) {
+      throw new Error(
+        connect.status === 503
+          ? "Card deposits are temporarily unavailable. Try again in a few minutes, choose another payment method, or message the host."
+          : "Online card is not available for this host yet. Choose another payment method, or message the host.",
+      );
+    }
   }
 
   const btcAddress = method === "BITCOIN" ? getBitcoinAddress() : null;

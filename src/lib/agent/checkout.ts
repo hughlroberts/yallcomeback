@@ -37,7 +37,7 @@ export type AgentCheckoutResult =
       bookingId: string;
       quote: { nights: number; depositAmount: number; totalAmount: number };
     }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; code?: string };
 
 export async function createAgentStayCheckout(
   input: AgentCheckoutInput,
@@ -134,12 +134,18 @@ export async function createAgentStayCheckout(
         "This listing is not ready to take a card deposit: online card is not on for the platform yet.",
     };
   }
-  if (!property.host.stripeAccountId) {
+  // T61: the listing brand's OWN Connect account, checked live with Stripe.
+  const { checkBrandConnectReady } = await import("@/lib/connect-readiness");
+  const connect = await checkBrandConnectReady(property.host);
+  if (!connect.ok) {
     return {
       ok: false,
-      status: 409,
+      status: connect.status,
+      code: connect.code,
       error:
-        "This listing is not ready to take a card deposit: the host has not finished Stripe card onboarding. Send the guest to bookUrl or have them message the host.",
+        connect.status === 409
+          ? `${connect.error} Send the guest to bookUrl or have them message the host.`
+          : connect.error,
     };
   }
 
@@ -238,7 +244,7 @@ export async function createAgentStayCheckout(
 
   const expiresAt = Math.floor(Date.now() / 1000) + AGENT_CHECKOUT_TTL_SEC;
   const session = await createDirectChargeCheckout({
-    accountId: property.host.stripeAccountId,
+    accountId: connect.accountId,
     name: depositCheckoutName(property.title),
     amountCents: toStripeAmount(quote.depositAmount),
     successPath: `/book/confirmation/${booking.id}?${confirmParams.toString()}`,
