@@ -1537,23 +1537,27 @@ export function AdminListingWorkspace({
             </p>
           ) : null}
           {property.archivedAt ? null : (
-            <p className="mt-1 text-xs text-stone-400">
+            // R1104-6: each "label: link (Open here)" is its own group so
+            // narrow screens stack whole groups instead of splitting them.
+            <p
+              className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs text-stone-400"
+              data-testid="listing-url-line"
+            >
               {visibility === "website" || visibility === "both" || visibility === "off" ? (
-                <>
+                <span className="min-w-0 break-all">
                   Website:{" "}
                   <ListingLinkPair href={websiteHref} testId="website-link">
                     /h/{property.hostSlug}/properties/{property.slug}
                   </ListingLinkPair>
-                </>
+                </span>
               ) : null}
               {visibility === "both" || visibility === "off" ? (
-                <>
-                  <span className="mx-1.5 text-stone-300">·</span>
+                <span className="min-w-0 break-all">
                   Find a Place:{" "}
                   <ListingLinkPair href={findAPlaceHref} testId="find-a-place-link">
                     /marketplace/properties/{property.slug}
                   </ListingLinkPair>
-                </>
+                </span>
               ) : null}
             </p>
           )}

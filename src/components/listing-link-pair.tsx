@@ -28,7 +28,7 @@ export function ListingLinkPair({
       <a
         href={href}
         target="_self"
-        className="text-xs text-stone-500 underline hover:text-bonnet"
+        className="whitespace-nowrap text-xs text-stone-500 underline hover:text-bonnet"
         data-testid={`${testId}-here`}
       >
         (Open here)
