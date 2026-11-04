@@ -518,7 +518,11 @@ export function buildOpenApiDocument(origin: string) {
             "404": { description: "Listing not on marketplace" },
             "409": {
               description:
-                "Dates unavailable, or host not ready to take a card deposit (Stripe card onboarding not finished). Body: { ok: false, error, bookUrl } — send the guest to bookUrl (the human booking page for this stay) or have them message the host.",
+                "Dates unavailable, or host not ready to take a card deposit. Body: { ok: false, error, code?, bookUrl } — send the guest to bookUrl (the human booking page for this stay) or have them message the host. When the host's payments are not ready, code is connect_no_account (no Stripe account for this brand), connect_details_not_submitted (Stripe onboarding not finished) or connect_charges_not_enabled (Stripe has not enabled card charges); the host fixes it at /admin/payments. Dates-taken conflicts have no connect_* code.",
+            },
+            "503": {
+              description:
+                "Card deposits temporarily unavailable: the host's Stripe account status could not be confirmed. Body: { ok: false, error, code: \"connect_status_unavailable\" }. Nothing was booked or charged; retry in a few minutes or send the guest to the listing's booking page.",
             },
             "429": {
               description:

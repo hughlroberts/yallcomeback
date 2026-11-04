@@ -96,7 +96,7 @@ Content-Type: application/json
 }
 \`\`\`
 
-Public: no token or API key, rate limited per IP (10 per 15 minutes, 40 per day) and per guest email (5 per hour); a 429 has a \`Retry-After\` header and names the limit in the body. Returns \`checkoutUrl\`. Dates are not held; the calendar is written only after the card is paid. If another guest pays for overlapping nights first, this payment is refunded in full automatically and the booking is cancelled. A 409 means the dates are taken or the host is not ready to take a card deposit yet. Do not send \`paid: true\`. Sessions expire in 30 minutes.
+Public: no token or API key, rate limited per IP (10 per 15 minutes, 40 per day) and per guest email (5 per hour); a 429 has a \`Retry-After\` header and names the limit in the body. Returns \`checkoutUrl\`. Dates are not held; the calendar is written only after the card is paid. If another guest pays for overlapping nights first, this payment is refunded in full automatically and the booking is cancelled. A 409 means the dates are taken or the host is not ready to take a card deposit yet. with \`code\` connect_no_account, connect_details_not_submitted or connect_charges_not_enabled when the host's payments are not ready (the host fixes it at /admin/payments). A 503 with code connect_status_unavailable means Stripe status could not be confirmed; nothing was booked or charged, retry later. Do not send \`paid: true\`. Sessions expire in 30 minutes.
 
 ### Ask the host a question (before booking)
 
