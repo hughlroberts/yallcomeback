@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
       inquiryId: result.conversationId,
       duplicate: result.duplicate,
       hostNotification: result.hostNotification,
+      guestConfirmation: result.guestConfirmation,
       message: result.duplicate
         ? "The host already has this question from this email; it was not sent again."
         : "Sent. The host replies by email to guestEmail.",

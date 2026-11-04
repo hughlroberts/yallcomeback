@@ -162,21 +162,11 @@ export async function dispatchPlatformEmail(opts: {
     };
   }
   if (!isEmailMessagingEnabled()) {
-    return {
-      attempted: false,
-      status: "not_configured",
-      channel: "EMAIL",
-      detail: "Email not configured",
-    };
+    return emailNotConfigured("Email not configured");
   }
   const from = platformFromHeader();
   if (!from) {
-    return {
-      attempted: false,
-      status: "not_configured",
-      channel: "EMAIL",
-      detail: "MESSAGING_EMAIL_FROM missing",
-    };
+    return emailNotConfigured("MESSAGING_EMAIL_FROM missing");
   }
   const platformReplyTo = safeReplyTo(opts.replyTo, to);
   const text = withPlatformFooter(opts.text, Boolean(platformReplyTo));
@@ -217,12 +207,60 @@ export async function dispatchPlatformEmail(opts: {
       headers: platformHeaders(),
     });
   }
+  return emailNotConfigured("No email transport");
+}
+
+/**
+ * Which email settings are present (booleans only, never values), for logs
+ * and the ops status, so a "not sent" can be traced without exposing keys.
+ */
+export function emailConfigPresence(): {
+  fromSet: boolean;
+  messagingEmailApiKeySet: boolean;
+  resendApiKeySet: boolean;
+  smtpHostSet: boolean;
+  enabledFlag: "true" | "false" | "unset" | "other";
+  dryRun: boolean;
+} {
+  const flag = process.env.MESSAGING_EMAIL_ENABLED;
+  return {
+    fromSet: Boolean(emailFromAddress()),
+    messagingEmailApiKeySet: Boolean(process.env.MESSAGING_EMAIL_API_KEY?.trim()),
+    resendApiKeySet: Boolean(process.env.RESEND_API_KEY?.trim()),
+    smtpHostSet: smtpConfigured(),
+    enabledFlag:
+      flag === undefined || flag === ""
+        ? "unset"
+        : flag === "true" || flag === "false"
+          ? flag
+          : "other",
+    dryRun: process.env.MESSAGING_EMAIL_DRY_RUN === "true",
+  };
+}
+
+let lastNotConfiguredWarn = 0;
+
+/** not_configured result, with a throttled presence-only warning. */
+function emailNotConfigured(detail: string): DispatchResult {
+  const now = Date.now();
+  if (now - lastNotConfiguredWarn > 10 * 60_000) {
+    lastNotConfiguredWarn = now;
+    console.warn("[messaging:email:not-configured]", {
+      detail,
+      ...emailConfigPresence(),
+    });
+  }
   return {
     attempted: false,
     status: "not_configured",
     channel: "EMAIL",
-    detail: "No email transport",
+    detail,
   };
+}
+
+/** Test hook: reset the not-configured warning throttle. */
+export function __resetEmailWarnThrottle(): void {
+  lastNotConfiguredWarn = 0;
 }
 
 function resendApiKey(): string | null {
@@ -519,12 +557,7 @@ async function sendViaSmtp(opts: {
     const mod = await load("nodemailer");
     const createTransport = mod.createTransport || mod.default?.createTransport;
     if (!createTransport) {
-      return {
-        attempted: false,
-        status: "not_configured",
-        channel: "EMAIL",
-        detail: "nodemailer not installed — use RESEND_API_KEY instead",
-      };
+      return emailNotConfigured("nodemailer not installed — use RESEND_API_KEY instead");
     }
     const transport = createTransport({
       host,
@@ -618,25 +651,14 @@ export async function dispatchEmail(opts: {
   }
 
   if (!isEmailMessagingEnabled()) {
-    return {
-      attempted: false,
-      status: "not_configured",
-      channel: "EMAIL",
-      detail:
-        "Email not configured. Set MESSAGING_EMAIL_FROM + RESEND_API_KEY (or SMTP).",
-    };
+    return emailNotConfigured("Email not configured. Set MESSAGING_EMAIL_FROM + RESEND_API_KEY (or SMTP).");
   }
 
   const from = opts.fromPartyName
     ? stayFromHeader(opts.fromPartyName)
     : platformFromHeader();
   if (!from) {
-    return {
-      attempted: false,
-      status: "not_configured",
-      channel: "EMAIL",
-      detail: "MESSAGING_EMAIL_FROM missing",
-    };
+    return emailNotConfigured("MESSAGING_EMAIL_FROM missing");
   }
 
   const threadReplyTo = opts.threadRole
@@ -703,14 +725,7 @@ export async function dispatchEmail(opts: {
     });
   }
 
-  // Enabled flag but no transport — log so ops can fix
-  console.warn("[messaging:email] enabled but no Resend key or SMTP host");
-  return {
-    attempted: false,
-    status: "not_configured",
-    channel: "EMAIL",
-    detail: "No email transport (RESEND_API_KEY or MESSAGING_SMTP_HOST)",
-  };
+  return emailNotConfigured("No email transport (RESEND_API_KEY or MESSAGING_SMTP_HOST)");
 }
 
 /**

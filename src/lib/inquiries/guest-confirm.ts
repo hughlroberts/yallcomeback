@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { canonicalSiteOrigin } from "@/lib/features";
 import { dispatchPlatformEmail } from "@/lib/messaging";
+import { guestThreadUrl } from "@/lib/guest-thread-access";
+import { maskEmail } from "@/lib/host-recipients";
 import { canSendEmailTo } from "@/lib/notification-prefs";
 import { listingCanonicalPath } from "@/lib/site-url";
 import { formatDateUS } from "@/lib/utils";
@@ -60,6 +62,8 @@ export function guestConfirmEmail(opts: {
   hostName: string;
   propertyTitle: string | null;
   listingUrl: string | null;
+  /** The guest's conversation (signed no-login link, or sign-in thread page). */
+  conversationUrl?: string | null;
   reference?: string | null;
   trip?: GuestConfirmTrip | null;
   message?: string | null;
@@ -75,6 +79,9 @@ export function guestConfirmEmail(opts: {
     "You'll get an email at this address when they reply.",
     "",
   ];
+  if (opts.conversationUrl) {
+    lines.push(`View your conversation: ${opts.conversationUrl}`, "");
+  }
   if (about) lines.push(`Listing: ${about}`);
   if (opts.listingUrl) lines.push(`Listing page: ${opts.listingUrl}`);
   const ci = formatDateUS(opts.trip?.checkIn);
@@ -110,6 +117,8 @@ export async function sendGuestInquiryConfirmation(opts: {
   hostName: string;
   propertyTitle: string | null;
   propertySlug: string | null;
+  /** Signed-in guest who sent it (their link opens the sign-in thread page). */
+  guestUserId?: string | null;
   trip?: GuestConfirmTrip | null;
   /** The question as saved for the host (copied with links removed). */
   message?: string | null;
@@ -117,7 +126,19 @@ export async function sendGuestInquiryConfirmation(opts: {
 }): Promise<GuestConfirmOutcome> {
   const now = opts.now ?? new Date();
   const email = opts.guestEmail.trim().toLowerCase();
-  if (!email.includes("@")) return "skipped";
+  // Every outcome is logged (masked address) so a missing receipt is traceable.
+  const done = (outcome: GuestConfirmOutcome, detail?: string) => {
+    const line = {
+      conversationId: opts.conversationId,
+      to: maskEmail(email),
+      outcome,
+      ...(detail ? { detail } : {}),
+    };
+    if (outcome === "sent") console.info("[inquiry:guest-confirm]", line);
+    else console.warn("[inquiry:guest-confirm]", line);
+    return outcome;
+  };
+  if (!email.includes("@")) return done("skipped", "invalid_address");
 
   const recent = (since: Date) =>
     prisma.conversation.count({
@@ -134,16 +155,16 @@ export async function sendGuestInquiryConfirmation(opts: {
     hour >= GUEST_CONFIRM_LIMITS.perHour ||
     day >= GUEST_CONFIRM_LIMITS.perDay
   ) {
-    return "capped";
+    return done("capped", `last_hour=${hour} last_day=${day}`);
   }
-  if (!(await canSendEmailTo(email))) return "opted_out";
+  if (!(await canSendEmailTo(email))) return done("opted_out");
 
   // Claim the slot before sending so two parallel submits can't both send.
   const claimed = await prisma.conversation.updateMany({
     where: { id: opts.conversationId, guestConfirmSentAt: null },
     data: { guestConfirmSentAt: now },
   });
-  if (claimed.count === 0) return "skipped";
+  if (claimed.count === 0) return done("skipped", "already_sent");
 
   const listingUrl = opts.propertySlug
     ? `${canonicalSiteOrigin()}${listingCanonicalPath(opts.propertySlug)}`
@@ -152,12 +173,23 @@ export async function sendGuestInquiryConfirmation(opts: {
     hostName: opts.hostName,
     propertyTitle: opts.propertyTitle,
     listingUrl,
+    conversationUrl: guestThreadUrl({
+      id: opts.conversationId,
+      guestEmail: email,
+      guestUserId: opts.guestUserId ?? null,
+    }),
     reference: opts.conversationId,
     trip: opts.trip,
     message: opts.message,
   });
   const result = await dispatchPlatformEmail({ to: email, subject, text });
-  if (result.status === "sent") return "sent";
-  console.warn("[inquiry:guest-confirm]", result.status, result.detail);
-  return "not_sent";
+  if (result.status === "sent") return done("sent");
+  // Not delivered: release the claim so it doesn't use up this address's cap.
+  await prisma.conversation
+    .updateMany({
+      where: { id: opts.conversationId, guestConfirmSentAt: now },
+      data: { guestConfirmSentAt: null },
+    })
+    .catch(() => {});
+  return done("not_sent", `${result.status}:${result.detail ?? "?"}`);
 }

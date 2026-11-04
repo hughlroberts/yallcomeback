@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { dispatchEmail } from "@/lib/messaging";
-import { hostEmailRecipients } from "@/lib/host-recipients";
+import { hostEmailRecipients, maskEmail } from "@/lib/host-recipients";
 
 /**
  * Host emails for guest messages (new questions and guest replies):
@@ -27,7 +27,16 @@ export async function hostNotifyEmails(hostId: string): Promise<string[]> {
   return hostEmailRecipients(hostId);
 }
 
+/**
+ * emailed: at least one host or co-host email went out.
+ * queued: held by the flood guard / daily cap, or every send failed and the
+ *   cron runner will try again (see NOTIFY_RETRY_HOURS).
+ * none: nothing pending, or the brand has no host email to send to.
+ */
 export type NotifyOutcome = "emailed" | "queued" | "none";
+
+/** A guest message whose host email failed is retried by the cron this long. */
+export const NOTIFY_RETRY_HOURS = 24;
 
 /** Pure: may this host get an email now? */
 export function notifyDecision(opts: {
@@ -293,6 +302,7 @@ async function flushOnce(
   const recipients = await hostNotifyEmails(hostId);
   let status: string | null = null;
   let externalId: string | null = null;
+  const results: { to: string; status: string; detail?: string }[] = [];
   for (const to of recipients) {
     const r = await dispatchEmail({
       to,
@@ -304,18 +314,69 @@ async function flushOnce(
       // One thread: replies to a single-message email land in that thread.
       threadRole: email.single ? "HOST" : undefined,
     });
+    results.push({ to, status: r.status, detail: r.detail });
     if (r.attempted) {
       status = `email:${r.status}${email.single ? "" : ":digest"}`;
       if (r.externalId) externalId = r.externalId;
     }
   }
-  if (status) {
-    await prisma.message.updateMany({
-      where: { id: { in: pending.map((m) => m.id) } },
-      data: { externalStatus: status, externalId },
+  const outcome = hostSendOutcome(results);
+  // One line per host email batch (masked addresses, never keys or bodies)
+  // so the logs show who was emailed and why a send did not go out.
+  const line = {
+    hostId,
+    conversationId: first.id,
+    messages: pending.length,
+    outcome,
+    recipients: results.map(
+      (r) => `${maskEmail(r.to)}=${r.status}${r.status === "sent" ? "" : `(${r.detail ?? "?"})`}`,
+    ),
+  };
+  if (outcome === "emailed") console.info("[inquiry-notify]", line);
+  else console.warn("[inquiry-notify]", line);
+
+  if (outcome === "retry") {
+    // Nothing reached any host: put the still-fresh messages back so the cron
+    // runner tries again, and give back the slot this attempt used.
+    const cutoff = new Date(now.getTime() - NOTIFY_RETRY_HOURS * 60 * 60_000);
+    const retryIds = pending
+      .filter((m) => m.createdAt.getTime() >= cutoff.getTime())
+      .map((m) => m.id);
+    if (retryIds.length > 0) {
+      await prisma.message.updateMany({
+        where: { id: { in: retryIds } },
+        data: { hostNotifyPending: true },
+      });
+    }
+    await prisma.inquiryNotifyState.updateMany({
+      where: { hostId, emailsToday: { gt: 0 }, windowCount: { gt: 0 } },
+      data: { emailsToday: { decrement: 1 }, windowCount: { decrement: 1 } },
     });
   }
-  return recipients.length > 0 ? "emailed" : "none";
+  if (status || recipients.length === 0) {
+    await prisma.message.updateMany({
+      where: { id: { in: pending.map((m) => m.id) } },
+      data: {
+        externalStatus: status ?? "email:no_host_recipients",
+        externalId,
+      },
+    });
+  }
+  return outcome === "retry" ? "queued" : outcome;
+}
+
+/**
+ * Pure: emailed when any host got it; none when there was nobody to email
+ * (or everyone opted out); retry when every send failed or email is not set up.
+ */
+export function hostSendOutcome(
+  results: { status: string }[],
+): "emailed" | "none" | "retry" {
+  if (results.some((r) => r.status === "sent")) return "emailed";
+  if (results.some((r) => r.status === "failed" || r.status === "not_configured")) {
+    return "retry";
+  }
+  return "none";
 }
 
 /** Cron: send anything held by the flood guard or daily cap. */

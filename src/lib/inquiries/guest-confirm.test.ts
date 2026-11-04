@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const db = vi.hoisted(() => ({
   conversation: { count: vi.fn(), updateMany: vi.fn() },
@@ -158,5 +158,71 @@ describe("sendGuestInquiryConfirmation", () => {
     db.conversation.updateMany.mockResolvedValue({ count: 0 });
     expect(await sendGuestInquiryConfirmation(base)).toBe("skipped");
     expect(messaging.dispatchPlatformEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("guest receipt: conversation link and logging (#7, #8)", () => {
+  const KEY = "test-only-not-a-real-secret";
+  let prev: string | undefined;
+  beforeEach(() => {
+    prev = process.env.AUTH_SECRET;
+    process.env.AUTH_SECRET = KEY;
+  });
+  afterEach(() => {
+    if (prev === undefined) delete process.env.AUTH_SECRET;
+    else process.env.AUTH_SECRET = prev;
+  });
+
+  it("links a guest without an account to the signed no-login thread", async () => {
+    await sendGuestInquiryConfirmation(base);
+    const call = messaging.dispatchPlatformEmail.mock.calls[0] as unknown as [
+      { text: string },
+    ];
+    expect(call[0].text).toMatch(
+      /View your conversation: https:\/\/www\.yallcomeback\.app\/messages\/c1\/guest\?t=\S+/,
+    );
+    expect(call[0].text).not.toContain(KEY);
+  });
+
+  it("links a signed-in guest to the sign-in thread page", async () => {
+    await sendGuestInquiryConfirmation({ ...base, guestUserId: "u1" });
+    const call = messaging.dispatchPlatformEmail.mock.calls[0] as unknown as [
+      { text: string },
+    ];
+    expect(call[0].text).toContain(
+      "View your conversation: https://www.yallcomeback.app/messages/c1\n",
+    );
+  });
+
+  it("logs a capped receipt with a masked address", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    db.conversation.count.mockResolvedValueOnce(GUEST_CONFIRM_LIMITS.perHour);
+    await sendGuestInquiryConfirmation(base);
+    expect(warn).toHaveBeenCalledWith(
+      "[inquiry:guest-confirm]",
+      expect.objectContaining({ conversationId: "c1", to: "jo***@example.com", outcome: "capped" }),
+    );
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("jo@example.com");
+    warn.mockRestore();
+  });
+
+  it("releases the cap slot when the send fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    messaging.dispatchPlatformEmail.mockResolvedValueOnce({
+      attempted: true,
+      status: "failed",
+      channel: "EMAIL",
+      detail: "domain not verified",
+    } as never);
+    expect(await sendGuestInquiryConfirmation(base)).toBe("not_sent");
+    expect(db.conversation.updateMany).toHaveBeenLastCalledWith({
+      where: { id: "c1", guestConfirmSentAt: base.now },
+      data: { guestConfirmSentAt: null },
+    });
+    expect(warn).toHaveBeenCalledWith(
+      "[inquiry:guest-confirm]",
+      expect.objectContaining({ outcome: "not_sent", detail: "failed:domain not verified" }),
+    );
+    warn.mockRestore();
   });
 });

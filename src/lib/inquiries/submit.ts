@@ -14,7 +14,10 @@ import {
   flushHostInquiryEmails,
   type NotifyOutcome,
 } from "@/lib/inquiries/notify";
-import { sendGuestInquiryConfirmation } from "@/lib/inquiries/guest-confirm";
+import {
+  sendGuestInquiryConfirmation,
+  type GuestConfirmOutcome,
+} from "@/lib/inquiries/guest-confirm";
 
 /**
  * One path for every pre-booking question, from the listing page form or
@@ -81,6 +84,8 @@ export type InquiryResult =
       conversationId: string;
       duplicate: boolean;
       hostNotification: NotifyOutcome;
+      /** The guest's receipt email (none for a duplicate; error if it threw). */
+      guestConfirmation: GuestConfirmOutcome | "none" | "error";
     }
   | {
       ok: false;
@@ -310,6 +315,7 @@ export async function submitInquiry(
       conversationId: dup.id,
       duplicate: true,
       hostNotification: "none",
+      guestConfirmation: "none",
     };
   }
 
@@ -479,10 +485,12 @@ export async function submitInquiry(
   }
 
   // Short receipt to the guest (capped per address; see guest-confirm.ts).
+  let guestConfirmation: GuestConfirmOutcome | "error" = "error";
   try {
-    await sendGuestInquiryConfirmation({
+    guestConfirmation = await sendGuestInquiryConfirmation({
       conversationId: conversation.id,
       guestEmail,
+      guestUserId: ctx.sessionUserId || null,
       hostName,
       propertyTitle,
       propertySlug,
@@ -499,6 +507,7 @@ export async function submitInquiry(
     conversationId: conversation.id,
     duplicate: false,
     hostNotification,
+    guestConfirmation,
   };
 }
 

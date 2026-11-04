@@ -568,7 +568,7 @@ export function buildOpenApiDocument(origin: string) {
           responses: {
             "201": {
               description:
-                "Sent: { ok, inquiryId, duplicate:false, hostNotification: emailed|queued|none }",
+                "Sent: { ok, inquiryId, duplicate:false, hostNotification: emailed|queued|none, guestConfirmation: sent|capped|opted_out|not_sent|skipped|error }. hostNotification queued means held by the flood guard or the email will be retried; guestConfirmation is the guest's receipt email (at most 1 per hour and 3 per day per address).",
             },
             "200": {
               description:

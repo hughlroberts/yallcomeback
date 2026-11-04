@@ -11,14 +11,19 @@ const hostEmailRecipients = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/db", () => ({ prisma: db }));
 vi.mock("@/lib/messaging", () => ({ dispatchEmail }));
-vi.mock("@/lib/host-recipients", () => ({ hostEmailRecipients }));
+vi.mock("@/lib/host-recipients", () => ({
+  hostEmailRecipients,
+  maskEmail: (e: string) => `${e.slice(0, 2)}***@${e.split("@")[1]}`,
+}));
 
 import {
   DAILY_EMAIL_CAP,
   FLOOD_INSTANT_MAX,
   FLOOD_WINDOW_MINUTES,
+  NOTIFY_RETRY_HOURS,
   composeInquiryEmail,
   flushHostInquiryEmails,
+  hostSendOutcome,
   notifyDecision,
 } from "./notify";
 
@@ -246,5 +251,100 @@ describe("flushHostInquiryEmails", () => {
         data: expect.objectContaining({ windowCount: 1 }),
       }),
     );
+  });
+});
+
+describe("host email failures are not swallowed (#7)", () => {
+  const fresh = () => ({
+    hostId: "h1",
+    windowStartedAt: ago(2),
+    windowCount: 1,
+    dayStartedAt: ago(60),
+    emailsToday: 1,
+  });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.host.findUnique.mockResolvedValue({ id: "h1", name: "Hugh" });
+    db.message.count.mockResolvedValue(1);
+    db.message.updateMany.mockResolvedValue({ count: 1 });
+    db.inquiryNotifyState.updateMany.mockResolvedValue({ count: 1 });
+    db.inquiryNotifyState.upsert.mockResolvedValue(fresh());
+    db.message.findMany.mockResolvedValue([row(1, "m1")]);
+    hostEmailRecipients.mockResolvedValue(["host@x.com", "cohost@x.com"]);
+  });
+
+  it("hostSendOutcome: emailed if any sent, retry if all failed, none otherwise", () => {
+    expect(hostSendOutcome([{ status: "failed" }, { status: "sent" }])).toBe("emailed");
+    expect(hostSendOutcome([{ status: "failed" }, { status: "not_configured" }])).toBe("retry");
+    expect(hostSendOutcome([{ status: "skipped" }])).toBe("none");
+    expect(hostSendOutcome([])).toBe("none");
+  });
+
+  it("puts the message back for the cron and reports queued when every send fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    dispatchEmail.mockResolvedValue({
+      attempted: true,
+      status: "failed",
+      detail: "The example.com domain is not verified",
+    });
+    await expect(flushHostInquiryEmails("h1", now)).resolves.toBe("queued");
+    expect(db.message.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["m1"] } },
+      data: { hostNotifyPending: true },
+    });
+    // The failed attempt gives back its flood/daily slot.
+    expect(db.inquiryNotifyState.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { emailsToday: { decrement: 1 }, windowCount: { decrement: 1 } },
+      }),
+    );
+    const line = warn.mock.calls.find((c) => c[0] === "[inquiry-notify]")?.[1];
+    expect(line).toMatchObject({ hostId: "h1", conversationId: "c1", outcome: "retry" });
+    const logged = JSON.stringify(line);
+    expect(logged).toContain("ho***@x.com=failed(The example.com domain is not verified)");
+    expect(logged).not.toContain("host@x.com");
+    expect(logged).not.toContain("Question number 1?");
+    warn.mockRestore();
+  });
+
+  it("does not retry messages older than the retry window", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    dispatchEmail.mockResolvedValue({ attempted: false, status: "not_configured", detail: "No email transport" });
+    const old = row(1, "m1");
+    old.createdAt = new Date(now.getTime() - (NOTIFY_RETRY_HOURS + 1) * 3_600_000);
+    db.message.findMany.mockResolvedValue([old]);
+    await flushHostInquiryEmails("h1", now);
+    expect(db.message.updateMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: { hostNotifyPending: true } }),
+    );
+    warn.mockRestore();
+  });
+
+  it("reports emailed and logs info when one recipient gets it", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    dispatchEmail
+      .mockResolvedValueOnce({ attempted: true, status: "failed", detail: "x" })
+      .mockResolvedValueOnce({ attempted: true, status: "sent" });
+    await expect(flushHostInquiryEmails("h1", now)).resolves.toBe("emailed");
+    expect(db.message.updateMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: { hostNotifyPending: true } }),
+    );
+    expect(info).toHaveBeenCalledWith(
+      "[inquiry-notify]",
+      expect.objectContaining({ outcome: "emailed" }),
+    );
+    info.mockRestore();
+  });
+
+  it("returns none and marks the message when the brand has no host email", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    hostEmailRecipients.mockResolvedValue([]);
+    await expect(flushHostInquiryEmails("h1", now)).resolves.toBe("none");
+    expect(dispatchEmail).not.toHaveBeenCalled();
+    expect(db.message.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["m1"] } },
+      data: { externalStatus: "email:no_host_recipients", externalId: null },
+    });
+    warn.mockRestore();
   });
 });

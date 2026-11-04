@@ -28,6 +28,7 @@ describe("POST /api/v1/inquiries", () => {
       conversationId: "c1",
       duplicate: false,
       hostNotification: "emailed",
+      guestConfirmation: "capped",
     });
     const res = await POST(
       req({
@@ -46,6 +47,7 @@ describe("POST /api/v1/inquiries", () => {
     expect(await res.json()).toMatchObject({
       ok: true,
       inquiryId: "c1",
+      guestConfirmation: "capped",
       duplicate: false,
       hostNotification: "emailed",
     });

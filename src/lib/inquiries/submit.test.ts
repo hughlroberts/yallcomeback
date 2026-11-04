@@ -68,6 +68,7 @@ describe("submitInquiry", () => {
       conversationId: "conv1",
       duplicate: false,
       hostNotification: "emailed",
+      guestConfirmation: "sent",
     });
     expect(guestConfirm.sendGuestInquiryConfirmation).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -131,6 +132,7 @@ describe("submitInquiry", () => {
       conversationId: "old",
       duplicate: true,
       hostNotification: "none",
+      guestConfirmation: "none",
     });
     expect(db.conversation.create).not.toHaveBeenCalled();
     expect(notify.flushHostInquiryEmails).not.toHaveBeenCalled();
@@ -219,6 +221,35 @@ describe("submitInquiry", () => {
       hostNotification: "queued",
     });
     err.mockRestore();
+  });
+});
+
+describe("guest receipt outcome (#7)", () => {
+  it("reports a capped receipt instead of hiding it", async () => {
+    guestConfirm.sendGuestInquiryConfirmation.mockResolvedValueOnce("capped");
+    const r = await submitInquiry(input, ctx());
+    expect(r).toMatchObject({ ok: true, guestConfirmation: "capped" });
+  });
+
+  it("reports error when the receipt throws, and still saves the question", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    guestConfirm.sendGuestInquiryConfirmation.mockRejectedValueOnce(
+      new Error("boom"),
+    );
+    const r = await submitInquiry(input, ctx());
+    expect(r).toMatchObject({
+      ok: true,
+      conversationId: "conv1",
+      guestConfirmation: "error",
+    });
+    err.mockRestore();
+  });
+
+  it("passes the signed-in guest so the receipt links to their thread", async () => {
+    await submitInquiry(input, ctx({ sessionUserId: "u9" }));
+    expect(guestConfirm.sendGuestInquiryConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({ guestUserId: "u9" }),
+    );
   });
 });
 
