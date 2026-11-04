@@ -16,6 +16,7 @@ import { OpsHostEditForm } from "@/components/ops-host-edit-form";
 import {
   approvalLabel,
   formatPlanPrice,
+  planSummaryLabel,
   hostingModeLabel,
   SETUP_SERVICE_FEE_USD,
   SETUP_SERVICE_LABEL,
@@ -156,7 +157,7 @@ export default async function OpsHostDetailPage({
           </p>
           <p className="mt-1 text-xs text-ink-muted">
             {host.plan
-              ? `${host.plan.name} · ${formatPlanPrice(host.plan, formatMoney)}`
+              ? planSummaryLabel(host.plan, formatMoney)
               : "No plan"}
             {isComplimentary ? " · $0 always" : ""}
           </p>

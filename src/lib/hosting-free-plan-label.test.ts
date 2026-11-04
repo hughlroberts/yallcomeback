@@ -27,3 +27,31 @@ describe("free-plan subscription label", () => {
     expect(isFreePlanNoPaymentDue("ACTIVE", { monthlyPrice: 0 })).toBe(false);
   });
 });
+
+import { planSummaryLabel } from "./hosting";
+
+describe("planSummaryLabel (R1104-7)", () => {
+  const fm = (n: number) => `$${n.toFixed(2)}`;
+  it("complimentary reads plainly, no nested parens or trailing badge", () => {
+    const s = planSummaryLabel(
+      { name: "Complimentary", monthlyPrice: 0, pricingModel: "FLAT", currency: "usd" } as never,
+      fm,
+    );
+    expect(s).toBe("Complimentary (never billed)");
+    expect(s).not.toMatch(/\(.*\(|free$/i);
+  });
+  it("paid plans keep name and price", () => {
+    expect(
+      planSummaryLabel(
+        { name: "Branded", monthlyPrice: 25, pricingModel: "FLAT", currency: "usd" } as never,
+        fm,
+      ),
+    ).toBe("Branded · $25.00/mo total (whole website)");
+    expect(
+      planSummaryLabel(
+        { name: "Per stay", monthlyPrice: 10, pricingModel: "PER_PROPERTY", currency: "usd" } as never,
+        fm,
+      ),
+    ).toBe("Per stay · $10.00/listing/mo");
+  });
+});

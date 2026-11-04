@@ -305,6 +305,18 @@ export function formatPlanPrice(
     : `${money}/mo total (whole website)`;
 }
 
+/**
+ * R1104-7: one plain line for a host's plan in ops tables.
+ * Free: "Complimentary (never billed)". Paid: "Branded · $25.00/mo total …".
+ */
+export function planSummaryLabel(
+  plan: Pick<HostingPlan, "name" | "monthlyPrice" | "pricingModel" | "currency">,
+  formatMoney: (n: number, symbol?: string) => string,
+): string {
+  if (plan.monthlyPrice <= 0) return `${plan.name} (never billed)`;
+  return `${plan.name} · ${formatPlanPrice(plan, formatMoney)}`;
+}
+
 export function isComplimentaryPlan(
   plan: Pick<HostingPlan, "monthlyPrice"> | null | undefined,
 ): boolean {

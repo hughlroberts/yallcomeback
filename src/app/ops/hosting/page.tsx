@@ -14,6 +14,7 @@ import {
   approvalLabel,
   daysUntil,
   formatPlanPrice,
+  planSummaryLabel,
   hostingModeLabel,
   setupServiceLabel,
   sitePresenceLabel,
@@ -347,7 +348,7 @@ export default async function OpsHostingPage({
                   <p className="text-sm text-stone-500">
                     {subscriptionLabel(host.subscriptionStatus, host.plan)}
                     {host.plan
-                      ? ` · ${host.plan.name} ${formatPlanPrice(host.plan, formatMoney)}`
+                      ? ` · ${planSummaryLabel(host.plan, formatMoney)}`
                       : ""}
                     {host.currentPeriodEnd
                       ? ` · period ends ${host.currentPeriodEnd.toISOString().slice(0, 10)}`
@@ -433,14 +434,7 @@ export default async function OpsHostingPage({
                     {subscriptionLabel(h.subscriptionStatus, h.plan)}
                   </td>
                   <td className="px-4 py-3">
-                    {h.plan
-                      ? `${h.plan.name} (${formatPlanPrice(h.plan, formatMoney)})`
-                      : " - "}
-                    {h.plan && h.plan.monthlyPrice <= 0 ? (
-                      <span className="ml-1 text-xs text-emerald-700">
-                        free
-                      </span>
-                    ) : null}
+                    {h.plan ? planSummaryLabel(h.plan, formatMoney) : " - "}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link
