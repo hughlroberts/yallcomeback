@@ -52,6 +52,8 @@ type SearchFields = {
   maxNightly?: string;
   amenities?: string;
   amenity?: string;
+  /** Not applied yet — surfaced as a visible ignore notice (E1104-D5). */
+  sort?: string;
 };
 
 function parsePositiveInt(raw: string | undefined): number | undefined {
@@ -96,9 +98,37 @@ export default async function MarketplacePage({
     incompleteDates || !dateCheck.ok ? undefined : dateCheck.checkIn;
   const checkOut =
     incompleteDates || !dateCheck.ok ? undefined : dateCheck.checkOut;
-  const filters = listingFiltersFromParams(
+  let filters = listingFiltersFromParams(
     (k) => params[k as keyof SearchFields],
   );
+  // E1104-D5: min > max nightly — notice and drop the price filters.
+  const priceOrderMessage =
+    filters.minNightly != null &&
+    filters.maxNightly != null &&
+    filters.minNightly > filters.maxNightly
+      ? `Min nightly ($${filters.minNightly}) is above max ($${filters.maxNightly}). Showing stays for any price.`
+      : undefined;
+  if (priceOrderMessage) {
+    filters = {
+      ...filters,
+      minNightly: undefined,
+      maxNightly: undefined,
+    };
+  }
+  const bedroomsRaw = params.bedrooms?.trim();
+  const bedroomsIgnored =
+    bedroomsRaw && filters.bedrooms == null
+      ? `Bedrooms “${bedroomsRaw}” isn’t a valid filter — showing any bedroom count.`
+      : undefined;
+  const amenitiesRaw = (params.amenities ?? params.amenity)?.trim();
+  const amenitiesIgnored =
+    amenitiesRaw && !filters.amenities?.length
+      ? `Amenities “${amenitiesRaw}” aren’t a valid filter — showing stays with any amenities.`
+      : undefined;
+  const sortRaw = params.sort?.trim();
+  const sortIgnored = sortRaw
+    ? `Sort “${sortRaw}” isn’t available yet — showing the default order.`
+    : undefined;
   // Resubmitting the form keeps bedrooms / price / amenity filters.
   const filterParams = new URLSearchParams();
   appendListingFilterParams(filterParams, filters);
@@ -173,6 +203,38 @@ export default async function MarketplacePage({
               className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
             >
               {guestMessage}
+            </p>
+          ) : null}
+          {priceOrderMessage ? (
+            <p
+              role="status"
+              className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              {priceOrderMessage}
+            </p>
+          ) : null}
+          {bedroomsIgnored ? (
+            <p
+              role="status"
+              className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              {bedroomsIgnored}
+            </p>
+          ) : null}
+          {amenitiesIgnored ? (
+            <p
+              role="status"
+              className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              {amenitiesIgnored}
+            </p>
+          ) : null}
+          {sortIgnored ? (
+            <p
+              role="status"
+              className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              {sortIgnored}
             </p>
           ) : null}
         </div>
@@ -341,9 +403,12 @@ async function StaysPanel({
         ))}
       </div>
       {listings.length === 0 ? (
-        <p className="mt-16 text-center text-slate-500">
-          No stays match these filters. Try a shorter memory, different dates,
-          or fewer guests.
+        <p
+          role="status"
+          className="mt-16 text-center text-slate-500"
+        >
+          No stays match these filters. Try clearing bedrooms, amenities, or
+          price, picking different dates, or a shorter memory.
         </p>
       ) : null}
 

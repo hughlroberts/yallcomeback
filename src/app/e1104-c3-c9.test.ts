@@ -123,3 +123,13 @@ describe("E1104-D4 test brands sitemap + noindex", () => {
     );
   });
 });
+
+describe("E1104-D5 marketplace sort/filters notices", () => {
+  it("visibly ignores sort and min>max; messages for 0 results", () => {
+    const page = src("app/marketplace/page.tsx");
+    expect(page).toMatch(/sortIgnored/);
+    expect(page).toMatch(/priceOrderMessage/);
+    expect(page).toMatch(/No stays match these filters/);
+    expect(page).toMatch(/role="status"/);
+  });
+});
