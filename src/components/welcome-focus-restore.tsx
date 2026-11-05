@@ -14,37 +14,55 @@ export function markWelcomeEscFocusRestore() {
   }
 }
 
-/**
- * After Esc closes the first-visit dialog (browse → redirect `/`), restore
- * focus to the opener when it still exists; otherwise the header logo / page
- * top so the next Tab starts in the site chrome.
- */
-export function WelcomeFocusRestore() {
-  useEffect(() => {
-    let openerId = "";
-    try {
-      if (sessionStorage.getItem(WELCOME_ESC_FOCUS_KEY) !== "1") return;
-      sessionStorage.removeItem(WELCOME_ESC_FOCUS_KEY);
-      openerId = sessionStorage.getItem(OPENER_KEY) || "";
-      sessionStorage.removeItem(OPENER_KEY);
-    } catch {
-      return;
-    }
+function restoreWelcomeFocus(): boolean {
+  try {
+    if (sessionStorage.getItem(WELCOME_ESC_FOCUS_KEY) !== "1") return false;
+    sessionStorage.removeItem(WELCOME_ESC_FOCUS_KEY);
+    const openerId = sessionStorage.getItem(OPENER_KEY) || "";
+    sessionStorage.removeItem(OPENER_KEY);
 
     if (openerId) {
       const opener = document.getElementById(openerId);
       if (opener instanceof HTMLElement) {
         opener.focus({ preventScroll: true });
-        return;
+        return true;
       }
     }
 
     const logo = document.querySelector<HTMLElement>("a.ycb-logo");
     if (logo) {
       logo.focus({ preventScroll: true });
-      return;
+      return true;
     }
     document.getElementById("ycb-page-top")?.focus({ preventScroll: true });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * After Esc closes the first-visit dialog (browse → redirect `/`), restore
+ * focus to the opener when it still exists; otherwise the header logo / page
+ * top so the next Tab starts in the site chrome.
+ *
+ * The dialog opens on `/` and browse also lands on `/`, so the layout client
+ * often stays mounted — poll briefly for the sessionStorage flag instead of
+ * relying on a one-shot mount effect.
+ */
+export function WelcomeFocusRestore() {
+  useEffect(() => {
+    if (restoreWelcomeFocus()) return;
+
+    let tries = 0;
+    const id = window.setInterval(() => {
+      tries += 1;
+      if (restoreWelcomeFocus() || tries > 40) {
+        window.clearInterval(id);
+      }
+    }, 50);
+
+    return () => window.clearInterval(id);
   }, []);
 
   return (

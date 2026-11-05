@@ -47,6 +47,10 @@ export function FirstVisitIntentGate() {
           } catch {
             /* ignore */
           }
+        } else {
+          document.querySelector<HTMLElement>("a.ycb-logo")?.focus({
+            preventScroll: true,
+          });
         }
         browseFormRef.current?.requestSubmit();
       }
