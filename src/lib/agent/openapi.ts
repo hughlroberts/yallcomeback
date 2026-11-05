@@ -461,7 +461,8 @@ export function buildOpenApiDocument(origin: string) {
               name: "nights",
               in: "query",
               schema: { type: "integer", minimum: 1 },
-              description: "Stay length (default max(2, listing min nights))",
+              description:
+                "Stay length (default max(2, listing min nights)). Windows honor the same seasonal/date-specific minimum-stay rules as the listing quote — never offered when the quote would reject for min stay.",
             },
             {
               name: "from",
@@ -473,7 +474,8 @@ export function buildOpenApiDocument(origin: string) {
               name: "days",
               in: "query",
               schema: { type: "integer" },
-              description: "Look-ahead days (default 90, max 180)",
+              description:
+                "Look-ahead days (default 90, max 180). Values above 180 are capped at 180; the 200 response then includes warnings[{code:days_capped}] and note stating the cap (alias: lookAhead).",
             },
             {
               name: "maxWindows",
@@ -483,7 +485,50 @@ export function buildOpenApiDocument(origin: string) {
             },
           ],
           responses: {
-            "200": { description: "Availability payload" },
+            "200": {
+              description:
+                "Availability payload. availableWindows only includes stays free on the calendar that meet seasonal/default minimum nights (same rule as the quote). When days/lookAhead exceeds 180, lookAheadDays is 180 and warnings/note explain the cap.",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok: { type: "boolean", const: true },
+                      lookAheadDays: { type: "integer" },
+                      note: {
+                        type: "string",
+                        description:
+                          "Present when days were capped; human-readable summary of warnings.",
+                      },
+                      warnings: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            code: {
+                              type: "string",
+                              enum: ["days_capped"],
+                            },
+                            message: { type: "string" },
+                          },
+                        },
+                      },
+                      availableWindows: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            checkIn: { type: "string", format: "date" },
+                            checkOut: { type: "string", format: "date" },
+                            nights: { type: "integer" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
             "404": { description: "Not found" },
           },
         },
