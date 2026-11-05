@@ -62,7 +62,7 @@ export const SHORT_STAY_POLICIES: ShortStayPolicy[] = [
       "Guests can cancel until 5 days before check-in.",
       "If they cancel in that time, they get a full refund, including taxes.",
       "You are not paid for that stay.",
-      "If they cancel later, they get a refund of pro-rated taxes.",
+      "If they cancel later, they get a refund of 50% of unused nights after one night is kept, including taxes on that refund.",
       "You are paid for each night they stay, plus one more night, plus 50% for unused nights.",
     ],
   },
