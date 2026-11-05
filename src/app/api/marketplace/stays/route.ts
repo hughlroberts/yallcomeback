@@ -3,6 +3,7 @@ import { searchMarketplace } from "@/lib/host";
 import { ambiguousMarketplaceSlugs } from "@/lib/marketplace-slugs";
 import { checkSearchDates } from "@/lib/search-dates";
 import {
+  SEARCH_MAX_LOCATION_CHARS,
   listingFiltersFromParams,
   partyFromParams,
   strictSearchLimitFromParams,
@@ -16,7 +17,11 @@ import {
  */
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
-  const where = sp.get("where")?.trim() || undefined;
+  // Same 200-char cut as the /marketplace page (UI carousels replay saved
+  // searches, so trim instead of a 400).
+  const where =
+    sp.get("where")?.trim().slice(0, SEARCH_MAX_LOCATION_CHARS).trim() ||
+    undefined;
   const checkIn = sp.get("checkIn")?.trim() || undefined;
   const checkOut = sp.get("checkOut")?.trim() || undefined;
   const dateFlexRaw = sp.get("dateFlex") || sp.get("flexibilityDays");

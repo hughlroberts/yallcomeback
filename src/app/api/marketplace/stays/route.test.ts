@@ -123,4 +123,11 @@ describe("GET /api/marketplace/stays", () => {
     expect(exact).toMatchObject({ count: 4, returned: 0, currentCount: 4 });
     expect(exact.flexibleDates.currentCount).toBe(exact.count);
   });
+
+  it("trims an over-long where to 200 characters instead of erroring", async () => {
+    const res = await get(`where=${"a".repeat(5000)}`);
+    expect(res.status).toBe(200);
+    const q = host.searchMarketplace.mock.calls[0][0].q as string;
+    expect(q).toHaveLength(200);
+  });
 });
