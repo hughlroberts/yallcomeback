@@ -170,7 +170,7 @@ export default async function LoginPage({
           </p>
         ) : null}
 
-        <form action={loginAction} className="mt-6 space-y-4" noValidate>
+        <form action={loginAction} className="mt-6 space-y-4">
           <input type="hidden" name="callbackUrl" value={callbackUrl} />
           <div>
             <Label htmlFor="email">Email</Label>
@@ -179,6 +179,7 @@ export default async function LoginPage({
               name="email"
               type="email"
               autoComplete="email"
+              required
               defaultValue={emailPrefill}
               aria-invalid={errors.email ? true : undefined}
               aria-describedby={errors.email ? "email-error" : undefined}
@@ -201,6 +202,7 @@ export default async function LoginPage({
               name="password"
               type="password"
               autoComplete="current-password"
+              required
               aria-invalid={errors.password ? true : undefined}
               aria-describedby={errors.password ? "password-error" : undefined}
               className={
