@@ -159,8 +159,16 @@ describe("E1104-D7 register autocomplete", () => {
 describe("E1104-D8 message host a11y", () => {
   it("labels fields, hides honeypot, names the close button", () => {
     const form = src("components/message-host-form.tsx");
-    expect(form).toMatch(/htmlFor="guestName"/);
-    expect(form).toMatch(/htmlFor="guestEmail"/);
+    const contact = src("components/message-host-contact-fields.tsx");
+    // Unique ids via useId + htmlFor so SRs get accessible names.
+    expect(contact).toMatch(/useId\(\)/);
+    expect(contact).toMatch(/htmlFor=\{guestNameId\}/);
+    expect(contact).toMatch(/htmlFor=\{guestEmailId\}/);
+    expect(contact).toMatch(/htmlFor=\{guestPhoneId\}/);
+    expect(contact).toMatch(/>Your name</);
+    expect(contact).toMatch(/>Email</);
+    expect(contact).toMatch(/>Phone \(optional\)</);
+    expect(form).toMatch(/MessageHostContactFields/);
     expect(form).toMatch(/aria-hidden="true"/);
     expect(form).toMatch(/tabIndex=\{-1\}/);
     expect(form).toMatch(/-left-\[10000px\]/);

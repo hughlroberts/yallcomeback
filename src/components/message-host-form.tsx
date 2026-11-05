@@ -23,6 +23,7 @@ import {
   TURNSTILE_ACTION,
 } from "@/lib/inquiries/fields";
 import { Button, Input, Label, Textarea } from "@/components/ui";
+import { MessageHostContactFields } from "@/components/message-host-contact-fields";
 import { cn } from "@/lib/utils";
 import {
   fetchInquiryFormConfig,
@@ -131,6 +132,8 @@ function MessageHostFields({
     hideContactFields && Boolean(defaultName.trim() && defaultEmail.trim());
   const aboutLabel = propertyTitle?.trim() || hostName?.trim() || "this host";
   const widgetId = useRef<string | null>(null);
+  const subjectId = useId();
+  const bodyId = useId();
 
   const submit = useCallback(
     async (prev: GuestInquiryState | undefined, formData: FormData) => {
@@ -247,44 +250,16 @@ function MessageHostFields({
       ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         {!hideContact ? (
-          <>
-            <div>
-              <Label htmlFor="guestName">Your name</Label>
-              <Input
-                id="guestName"
-                name="guestName"
-                required
-                maxLength={80}
-                defaultValue={defaultName}
-              />
-            </div>
-            <div>
-              <Label htmlFor="guestEmail">Email</Label>
-              <Input
-                id="guestEmail"
-                name="guestEmail"
-                type="email"
-                required
-                maxLength={254}
-                defaultValue={defaultEmail}
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <Label htmlFor="guestPhone">Phone (optional)</Label>
-              <Input
-                id="guestPhone"
-                name="guestPhone"
-                type="tel"
-                maxLength={40}
-                defaultValue={defaultPhone}
-              />
-            </div>
-          </>
+          <MessageHostContactFields
+            defaultName={defaultName}
+            defaultEmail={defaultEmail}
+            defaultPhone={defaultPhone}
+          />
         ) : null}
         <div className="sm:col-span-2">
-          <Label htmlFor="subject">Subject</Label>
+          <Label htmlFor={subjectId}>Subject</Label>
           <Input
-            id="subject"
+            id={subjectId}
             name="subject"
             maxLength={150}
             placeholder="Dates, boats, arrival…"
@@ -292,9 +267,9 @@ function MessageHostFields({
           />
         </div>
         <div className="sm:col-span-2">
-          <Label htmlFor="body">Message</Label>
+          <Label htmlFor={bodyId}>Message</Label>
           <Textarea
-            id="body"
+            id={bodyId}
             name="body"
             rows={4}
             required
