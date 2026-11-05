@@ -77,7 +77,7 @@ export default async function HostSiteHomePage({
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-stone-900/35" />
-        <div className="relative z-10 mx-auto flex min-h-[44vh] max-w-6xl flex-col justify-end px-4 pb-10 pt-10 sm:min-h-[46vh] sm:px-6 sm:pb-12 sm:pt-12">
+        <header className="relative z-10 mx-auto flex min-h-[44vh] max-w-6xl flex-col justify-end px-4 pb-10 pt-10 sm:min-h-[46vh] sm:px-6 sm:pb-12 sm:pt-12">
           {logoUrl ? (
             <div className="mb-5 sm:mb-6">
               {/* Full circular seal — no crop, transparent bg, soft ring only */}
@@ -110,7 +110,10 @@ export default async function HostSiteHomePage({
               Come stay with us again. Book directly with the host you know.
             </p>
           )}
-          <div className="mt-8 flex flex-wrap gap-2.5 sm:gap-3">
+          <nav
+            aria-label="Site"
+            className="mt-8 flex flex-wrap gap-2.5 sm:gap-3"
+          >
             {pageButtons.map((item) => {
               const isBook = item.primary;
               return (
@@ -134,8 +137,8 @@ export default async function HostSiteHomePage({
                 </Link>
               );
             })}
-          </div>
-        </div>
+          </nav>
+        </header>
       </section>
 
       <section
