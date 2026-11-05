@@ -221,3 +221,22 @@ select {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* G3: /book print — booking summary only (hide chrome + message form) */
+@media print {
+  body:has([data-book-print]) header,
+  body:has([data-book-print]) nav,
+  body:has([data-book-print]) footer,
+  body:has([data-book-print]) .no-print,
+  [data-book-print] .no-print {
+    display: none !important;
+  }
+
+  body:has([data-book-print]) {
+    background: white !important;
+  }
+
+  body:has([data-book-print]) main {
+    display: block !important;
+  }
+}

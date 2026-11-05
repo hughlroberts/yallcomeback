@@ -238,7 +238,7 @@ export default async function BookPage({
     : `/marketplace/properties/${property.slug}`;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <div data-book-print className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
         {paysNow ? "Confirm and pay deposit" : "Request to book"}
       </h1>
@@ -513,7 +513,7 @@ export default async function BookPage({
       </section>
 
       {/* Optional: message host after Reserve (does not block booking) */}
-      <section className="mt-8 rounded-3xl border border-blue-100 bg-petal/60 p-6 sm:p-8">
+      <section className="no-print mt-8 rounded-3xl border border-blue-100 bg-petal/60 p-6 sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-bonnet">
