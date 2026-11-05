@@ -91,9 +91,11 @@ export function AdminHostGuestMessages({
           Message templates
         </h1>
         <p className="mt-1 text-sm text-stone-500">
-          Set default messages for <strong>{host.name}</strong>. These apply to
-          all {listingCount} listing{listingCount === 1 ? "" : "s"} unless a
-          listing sets its own override under Properties → Messages.
+          Set default messages for <strong>{host.name}</strong>. These apply to{" "}
+          {listingCount === 1
+            ? "your listing"
+            : `all ${listingCount} listings`}{" "}
+          unless a listing sets its own override under Properties → Messages.
         </p>
         <p className="mt-2 text-xs text-stone-400">
           Click a placeholder chip under a message to insert it where your

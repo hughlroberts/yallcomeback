@@ -83,7 +83,7 @@ export default async function PersonalInfoPage({
                 <p className="text-base font-semibold text-stone-900">
                   {user.name || user.preferredName || "Your profile"}
                 </p>
-                <p className="mt-0.5 text-sm text-stone-500">{user.email}</p>
+                <p className="mt-0.5 text-sm text-stone-500">{maskEmail(user.email)}</p>
               </div>
             </div>
             <Link

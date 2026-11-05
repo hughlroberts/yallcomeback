@@ -39,9 +39,19 @@ export function AdminNav({
             excludePrefixes={l.excludePrefixes}
             variant="solid"
           >
-            {l.label}
+            {/* H2: shorter label on narrow so Dashboard is not clipped by travel icons */}
+            {l.label === "Dashboard" ? (
+              <>
+                <span className="sm:hidden">Home</span>
+                <span className="hidden sm:inline">Dashboard</span>
+              </>
+            ) : (
+              l.label
+            )}
           </NavLink>
         ))}
+        {/* Trailing spacer so the last link can scroll fully clear of icons */}
+        <span className="inline-block w-3 shrink-0 sm:hidden" aria-hidden />
       </div>
       {/* Hosts can travel too: same account, no second sign-up. */}
       <div

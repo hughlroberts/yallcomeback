@@ -1,6 +1,7 @@
 import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import Image from "next/image";
+import Link from "next/link";
 import { BLOCK_TYPE_OPTIONS, DEFAULT_BLOCK_TYPE } from "@/lib/block-types";
 import { listingDisplayTitle } from "@/lib/listing-display-title";
 import { redirect } from "next/navigation";
@@ -30,6 +31,7 @@ import { AdminCancellationPolicy } from "@/components/admin-cancellation-policy"
 import { ConfirmRemovePhotoButton } from "@/components/confirm-remove-photo-button";
 import { ConfirmDeleteProperty } from "@/components/confirm-delete-property";
 import { ConfirmSendInvoiceButton } from "@/components/confirm-send-invoice-button";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { SubmitButton } from "@/components/submit-button";
 import { randomUUID } from "node:crypto";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
@@ -478,10 +480,10 @@ export default async function AdminPropertyDetailPage({
           <div>
             <h3 className="text-sm font-semibold text-stone-900">Peak holidays</h3>
             <p className="mt-1 text-xs text-stone-600">
-              US long weekends for this year and next.{" "}
-              <strong>Uncheck</strong> any holiday that should not be a peak.
-              Or apply with <strong>default only</strong> (no extra peak min —
-              your year-round default still applies).
+              US long weekends for this year and next. Add missing holidays
+              below, or manage peaks already on this listing in the table.
+              Apply with <strong>default only</strong> for no extra peak min —
+              your year-round default still applies.
             </p>
           </div>
           {peakSeasons.length > 0 ? (
@@ -638,9 +640,14 @@ export default async function AdminPropertyDetailPage({
                   <form action={deleteSeason}>
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="propertyId" value={property.id} />
-                    <button type="submit" className={`text-xs text-red-600 ${PRIMARY_CTA_FOCUS_CLASS}`}>
-                      Remove
-                    </button>
+                    <ConfirmSubmitButton
+                      label="Remove"
+                      question="Remove this peak date range?"
+                      detail="Guests will no longer see this peak minimum for these dates."
+                      confirmLabel="Remove peak"
+                      keepLabel="Keep peak"
+                      className="!px-2 !py-1 !text-xs"
+                    />
                   </form>
                 </td>
               </tr>
@@ -880,12 +887,32 @@ export default async function AdminPropertyDetailPage({
             you take card on POS)
           </label>
         </div>
-        <div>
-          <SubmitButton>Block dates</SubmitButton>
+        <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+          <ConfirmSubmitButton
+            label="Block dates"
+            question="Block these dates on the calendar?"
+            detail="Guests will see the nights as unavailable. You can remove the block later."
+            confirmLabel="Confirm block"
+            keepLabel="Back"
+            pendingLabel="Saving…"
+            variant="primary"
+          />
+          <Link
+            href={`/admin/properties/${property.id}?tab=calendar`}
+            className={`inline-flex items-center rounded-lg border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
+          >
+            Cancel
+          </Link>
         </div>
       </form>
 
       <div className="mt-6 space-y-3">
+        {property.calendarBlocks.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-center text-sm text-stone-500">
+            No calendar blocks yet. Add dates above to hold the calendar, or
+            block from the Calendar tab.
+          </p>
+        ) : null}
         {property.calendarBlocks.map((b) => {
           const nights = nightsBetween(b.startDate, b.endDate);
           const suggested =

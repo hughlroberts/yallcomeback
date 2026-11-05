@@ -1469,7 +1469,8 @@ export function AdminListingWorkspace({
             </Link>
           </div>
         </div>
-        <div className="flex gap-1 overflow-x-auto border-b border-stone-200 px-1 py-1.5">
+        <div className="relative">
+        <div className="flex gap-1 overflow-x-auto border-b border-stone-200 px-1 py-1.5 [scrollbar-width:thin]">
           {(
             [
               { id: "calendar", label: "Calendar" },
@@ -1510,6 +1511,11 @@ export function AdminListingWorkspace({
               </Link>
             ),
           )}
+        </div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent sm:hidden"
+          />
         </div>
         </>
       ) : (
@@ -1658,8 +1664,9 @@ export function AdminListingWorkspace({
         </div>
       </div>
 
-      {/* Sub-nav */}
-      <div className="flex gap-1 overflow-x-auto border-b border-stone-200 px-1 py-1.5">
+      {/* Sub-nav — H3: fade hint on narrow that more tabs scroll */}
+      <div className="relative">
+      <div className="flex gap-1 overflow-x-auto border-b border-stone-200 px-1 py-1.5 [scrollbar-width:thin]">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -1677,6 +1684,11 @@ export function AdminListingWorkspace({
             {t.label}
           </button>
         ))}
+      </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent sm:hidden"
+        />
       </div>
       </>
       )}

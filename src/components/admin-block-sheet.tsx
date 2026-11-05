@@ -88,6 +88,8 @@ export function AdminBlockSheet({
   const [pricePending, startPriceTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
+  const [confirmPrice, setConfirmPrice] = useState(false);
+  const [confirmBlock, setConfirmBlock] = useState(false);
   // One idempotency key per opened sheet; the server saves it once.
   const [requestId, setRequestId] = useState(() => newClientRequestId());
   const inFlight = useRef(false);
@@ -106,6 +108,8 @@ export function AdminBlockSheet({
       setRequestId(newClientRequestId());
       setError(null);
       setPriceError(null);
+      setConfirmPrice(false);
+      setConfirmBlock(false);
     }
   }
   const nights = nightsBetween(startDate, endDate);
@@ -271,10 +275,36 @@ export function AdminBlockSheet({
                   )}
                 />
               </div>
-              <Button type="submit" variant="secondary" disabled={busy}>
-                {pricePending ? "Saving…" : "Set price"}
-              </Button>
+              {confirmPrice ? (
+                <div className="flex flex-col gap-1">
+                  <Button type="submit" variant="secondary" disabled={busy}>
+                    {pricePending ? "Saving…" : "Confirm price"}
+                  </Button>
+                  <button
+                    type="button"
+                    className="text-xs text-stone-500 hover:underline"
+                    onClick={() => setConfirmPrice(false)}
+                    disabled={busy}
+                  >
+                    Back
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() => setConfirmPrice(true)}
+                >
+                  Set price
+                </Button>
+              )}
             </div>
+            {confirmPrice ? (
+              <p className="mt-2 text-xs text-stone-600">
+                This updates the nightly rate for the selected nights.
+              </p>
+            ) : null}
             {priceError ? (
               <p className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                 {priceError}
@@ -470,9 +500,29 @@ export function AdminBlockSheet({
             ) : null}
 
             <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-stone-100 pt-4">
-              <Button type="submit" disabled={busy} aria-busy={pending}>
-                {pending ? "Saving…" : "Block dates"}
-              </Button>
+              {confirmBlock ? (
+                <>
+                  <Button type="submit" disabled={busy} aria-busy={pending}>
+                    {pending ? "Saving…" : "Confirm block"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => setConfirmBlock(false)}
+                  >
+                    Back
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setConfirmBlock(true)}
+                >
+                  Block dates
+                </Button>
+              )}
               <Button type="button" variant="secondary" onClick={onClose}>
                 Cancel
               </Button>
