@@ -1666,6 +1666,7 @@ export function AdminListingWorkspace({
             onClick={() => setTab(t.id)}
             className={cn(
               "shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
+              PRIMARY_CTA_FOCUS_CLASS,
               tab === t.id
                 ? "border-bonnet text-bonnet"
                 : "border-transparent text-stone-500 hover:text-stone-800",

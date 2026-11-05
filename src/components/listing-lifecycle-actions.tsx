@@ -12,6 +12,7 @@ import {
 } from "@/app/actions/listing-lifecycle";
 import { deleteConfirmMatches } from "@/lib/listing-lifecycle";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Action = "pause" | "resume" | "archive" | "restore" | "delete";
 
@@ -27,12 +28,12 @@ const ACTIONS: Record<
 };
 
 const btn =
-  "inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60";
+  `inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60 ${PRIMARY_CTA_FOCUS_CLASS}`;
 /** Resume / restore: positive action, distinct from Archive (neutral) and Delete (danger). */
 const resumeBtn =
-  "inline-flex items-center justify-center rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60";
+  `inline-flex items-center justify-center rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 ${PRIMARY_CTA_FOCUS_CLASS}`;
 const dangerBtn =
-  "inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-60";
+  `inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-60 ${PRIMARY_CTA_FOCUS_CLASS}`;
 
 /**
  * Pause / Resume, Archive / Restore and Delete for one listing.

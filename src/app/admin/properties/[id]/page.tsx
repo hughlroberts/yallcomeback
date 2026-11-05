@@ -305,7 +305,7 @@ export default async function AdminPropertyDetailPage({
             id="petFeeUnit"
             name="petFeeUnit"
             defaultValue={property.petFeeUnit}
-            className={`w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
+            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-bonnet"
           >
             <option value="PER_STAY">Per stay (flat, any number of pets)</option>
             <option value="PER_PET">Per pet (amount × pet count)</option>

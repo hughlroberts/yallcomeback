@@ -8,6 +8,7 @@ import {
   type DashboardNestId,
 } from "@/lib/dashboard-nest";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Item = {
   id: DashboardNestId;
@@ -69,9 +70,10 @@ export function DashboardNestNav({
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "inline-flex min-h-11 items-center rounded-full px-3 py-1.5 text-sm font-medium transition",
+              PRIMARY_CTA_FOCUS_CLASS,
               isActive
-                ? "bg-petal text-bonnet"
-                : "border border-stone-200 bg-white text-stone-700 hover:bg-stone-50",
+                ? "bg-petal text-bonnet ring-1 ring-inset ring-bonnet/40"
+                : "border border-stone-300 bg-white text-stone-700 hover:bg-stone-50",
             )}
           >
             {item.label}

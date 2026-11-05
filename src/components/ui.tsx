@@ -43,7 +43,7 @@ export function Input({
   return (
     <input
       className={cn(
-        `h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-porcelain px-3.5 text-base text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-bonnet ${BOOKING_CTA_FOCUS_CLASS}`,
+        "h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-porcelain px-3.5 text-base text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-bonnet",
         className,
       )}
       {...props}
@@ -59,7 +59,7 @@ export const Textarea = forwardRef<
     <textarea
       ref={ref}
       className={cn(
-        `w-full rounded-[var(--radius-control)] border border-hairline bg-porcelain px-3.5 py-2.5 text-base text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-bonnet ${BOOKING_CTA_FOCUS_CLASS}`,
+        "w-full rounded-[var(--radius-control)] border border-hairline bg-porcelain px-3.5 py-2.5 text-base text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-bonnet",
         className,
       )}
       {...props}
@@ -74,7 +74,7 @@ export function Select({
   return (
     <select
       className={cn(
-        `h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-porcelain px-3.5 text-base text-ink outline-none transition focus:border-bonnet ${BOOKING_CTA_FOCUS_CLASS}`,
+        "h-11 w-full rounded-[var(--radius-control)] border border-hairline bg-porcelain px-3.5 text-base text-ink outline-none transition focus:border-bonnet",
         className,
       )}
       {...props}
