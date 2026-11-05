@@ -288,6 +288,22 @@ export default auth(async (req) => {
     return withTenant(req, hMatch[1].toLowerCase(), { mode: "path" });
   }
 
+  // F3: /h/{brand}/properties/{slug} redirects to the marketplace listing with
+  // ?host=&via=host_site. Keep that host's chrome on the marketplace URL so
+  // guests stay in the brand (canonical listing URL is marketplace; branding
+  // follows via=host_site).
+  if (/^\/marketplace\/properties\//i.test(path)) {
+    const via = req.nextUrl.searchParams.get("via");
+    const host = req.nextUrl.searchParams.get("host")?.trim().toLowerCase();
+    if (
+      via === "host_site" &&
+      host &&
+      /^[a-z0-9-]+$/.test(host)
+    ) {
+      return withTenant(req, host, { mode: "path" });
+    }
+  }
+
   return passthrough(req);
 });
 

@@ -98,3 +98,9 @@ When the hosted product is on (`isAgentApiEnabled()`):
 | Plugin hint | `/.well-known/ai-plugin.json` |
 
 Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`. Keep those files in sync with marketplace search when you change hosted search/listing fields. Do not advertise this surface in the open-source product.
+
+## Listing URLs and brand chrome (F3)
+
+- **Canonical** guest listing URL: `/marketplace/properties/{slug}` (SEO canonical/og omit `?host=`).
+- Brand path `/h/{hostSlug}/properties/{slug}` redirects to that marketplace URL with `?host={hostSlug}&via=host_site` and **keeps the host's header/branding** (middleware tenant when `via=host_site`).
+- Plain marketplace links (search, "more stays" from other hosts) use marketplace chrome. Front-end brand mixing in discovery is allowed; do not mix brands on admin/back-end surfaces.
