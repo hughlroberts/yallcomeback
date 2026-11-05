@@ -91,7 +91,7 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "string" },
               description:
-                "Free text: city, region, lake name, host, title (aliases: where, q)",
+                "Free text: city, region, lake name, host, title (aliases: where, q, lake). Up to 200 characters; longer is 400 invalid_location.",
               examples: {
                 cedar: { value: "Cedar Creek Lake" },
                 athens: { value: "Athens, TX" },
@@ -102,13 +102,15 @@ export function buildOpenApiDocument(origin: string) {
               name: "checkIn",
               in: "query",
               schema: { type: "string", format: "date" },
-              description: "YYYY-MM-DD preferred check-in",
+              description:
+                "YYYY-MM-DD preferred check-in. Send with checkOut (one without the other is 400 incomplete_dates). Past dates are 400 past_dates; over 90 nights is 400 stay_too_long.",
             },
             {
               name: "checkOut",
               in: "query",
               schema: { type: "string", format: "date" },
-              description: "YYYY-MM-DD checkout (exclusive end)",
+              description:
+                "YYYY-MM-DD checkout (exclusive end). Must be after checkIn (else 400 checkout_not_after_checkin) and at most 90 nights later (else 400 stay_too_long).",
             },
             {
               name: "flexible",
@@ -122,7 +124,7 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "integer", minimum: 0, maximum: 14 },
               description:
-                "± days on check-in for same-length stays (aliases: dateFlex, flex)",
+                "± days on check-in for same-length stays (aliases: dateFlex, flex). Whole number 0–14; anything else is 400 invalid_flexibility_days.",
             },
             {
               name: "guests",
@@ -147,11 +149,15 @@ export function buildOpenApiDocument(origin: string) {
               name: "minNightly",
               in: "query",
               schema: { type: "number" },
+              description:
+                "Lowest nightly price. Greater than maxNightly is 400 invalid_price_range.",
             },
             {
               name: "maxNightly",
               in: "query",
               schema: { type: "number" },
+              description:
+                "Highest nightly price. Less than minNightly is 400 invalid_price_range.",
             },
             {
               name: "amenities",
