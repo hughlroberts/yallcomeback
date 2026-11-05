@@ -7,6 +7,10 @@ describe("MobileReserveBar focus / inert (N2)", () => {
     join(process.cwd(), "src/components/mobile-reserve-bar.tsx"),
     "utf8",
   );
+  const page = readFileSync(
+    join(process.cwd(), "src/app/marketplace/properties/[slug]/page.tsx"),
+    "utf8",
+  );
   const focusHelper = readFileSync(
     join(process.cwd(), "src/lib/booking-cta-focus.ts"),
     "utf8",
@@ -21,6 +25,14 @@ describe("MobileReserveBar focus / inert (N2)", () => {
       /if\s*\(\s*!show\s*\|\|\s*modalOpen\s*\)\s*return\s+null/,
     );
     expect(src).toMatch(/visible\s*\?\s*"fixed[\s\S]*:\s*"hidden lg:hidden"/);
+  });
+
+  it("listing page renders the bar before #reserve / BookingWidget (tab order)", () => {
+    const barAt = page.indexOf("<MobileReserveBar");
+    const widgetAt = page.indexOf("<BookingWidget");
+    expect(barAt).toBeGreaterThan(0);
+    expect(widgetAt).toBeGreaterThan(0);
+    expect(barAt).toBeLessThan(widgetAt);
   });
 
   it("moves focus to the inline CTA before hiding", () => {

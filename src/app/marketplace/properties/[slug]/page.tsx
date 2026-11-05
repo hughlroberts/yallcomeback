@@ -487,6 +487,13 @@ export default async function MarketplacePropertyPage({
         imageUrl={property.images[0]?.url ?? null}
       />
       <TrackListingView propertyId={property.id} />
+
+      {/* Early in tree (fixed visually): Tab reaches sticky CTA before #reserve (N2). */}
+      <MobileReserveBar
+        nightlyRate={property.baseNightlyRate}
+        depositDueNow={depositDueNow}
+        initialState={initialBarState}
+      />
       <div className="relative h-[38vh] min-h-[240px] overflow-hidden bg-stone-900 md:h-[44vh]">
         {cover ? (
           <Image
@@ -650,11 +657,6 @@ export default async function MarketplacePropertyPage({
           </div>
         </div>
 
-        <MobileReserveBar
-          nightlyRate={property.baseNightlyRate}
-          depositDueNow={depositDueNow}
-          initialState={initialBarState}
-        />
 
         {/* Full-width bottom stack: map → meet host → things to know */}
         <ListingLocationMap

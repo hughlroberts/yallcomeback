@@ -44,6 +44,8 @@ type Props = {
  *
  * N2: stays mounted while hidden (inert + hidden) so Tab never hits a remount
  * race or drops to BODY. If it hides while focused, focus moves to the inline CTA.
+ * Render this early in the listing page tree (before #reserve) so Tab can reach
+ * it while visible without scrolling the reserve card into view first.
  */
 export function MobileReserveBar({
   nightlyRate,
