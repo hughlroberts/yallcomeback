@@ -113,11 +113,11 @@ export default async function RegisterPage({
         <form action={registerAction} className="mt-6 space-y-4">
           <div>
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" />
+            <Input id="name" name="name" autoComplete="name" />
           </div>
           <div>
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required />
+            <Input id="email" name="email" type="email" autoComplete="email" required />
           </div>
           <div>
             <Label htmlFor="password">Password (min 8 characters)</Label>
@@ -125,6 +125,7 @@ export default async function RegisterPage({
               id="password"
               name="password"
               type="password"
+              autoComplete="new-password"
               minLength={8}
               required
             />
