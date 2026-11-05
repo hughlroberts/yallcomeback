@@ -36,14 +36,15 @@ describe("seo", () => {
       url?: string;
       title?: string;
       description?: string;
-      images?: { url: string }[];
+      type?: string;
+      images?: { url: string; width?: number; height?: number }[];
     };
     expect(og.url).toBe(`${PRODUCT_ORIGIN}/about`);
     expect(og.title).toBe(`About · ${PRODUCT_NAME}`);
     expect(og.description).toBe("Built by hosts.");
     expect(og.images?.[0]?.url).toBe(seoAbsoluteImageUrl(DEFAULT_OG_IMAGE));
-    expect((og.images?.[0] as { width?: number }).width).toBe(1200);
-    expect((og.images?.[0] as { height?: number }).height).toBe(630);
+    expect(og.images?.[0]?.width).toBe(1200);
+    expect(og.images?.[0]?.height).toBe(630);
     expect(og.type).toBe("website");
     const tw = meta.twitter as {
       card?: string;
