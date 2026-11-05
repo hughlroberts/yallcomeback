@@ -462,10 +462,12 @@ export default async function AdminPropertyDetailPage({
       >
         <input type="hidden" name="propertyId" value={property.id} />
         <div>
-          <Label htmlFor="file">Upload image</Label>
+          <Label htmlFor="file" className="sr-only">
+            Choose photo files
+          </Label>
           <Input id="file" name="file" type="file" accept="image/*" required />
         </div>
-        <Button type="submit">Upload</Button>
+        <Button type="submit">Upload photos</Button>
       </form>
     </Card>
   );
@@ -757,9 +759,11 @@ export default async function AdminPropertyDetailPage({
         they can pay online or you can collect on your POS.
       </p>
       <p className="mt-1 text-xs text-stone-400">
-        {isStripeConfigured()
-          ? "Stripe is on - invoices email a pay link and show in your Stripe Dashboard."
-          : "Stripe is off - turn on STRIPE_ENABLED and keys in .env to send invoices."}
+        {!isStripeConfigured()
+          ? "Stripe is off - turn on STRIPE_ENABLED and keys in .env to send invoices."
+          : property.host.stripeAccountId
+            ? "Stripe Connect is linked for this brand — invoices can email a pay link when the account can take payments (shows in your Stripe Dashboard)."
+            : "Platform Stripe is on, but this brand still needs to finish card onboarding before invoices can email a pay link."}
       </p>
       <form action={addCalendarBlockForm} className="mt-4 grid gap-3 sm:grid-cols-2">
         <input type="hidden" name="propertyId" value={property.id} />
