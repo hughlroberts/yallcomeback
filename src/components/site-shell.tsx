@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { SiteFooterGate } from "@/components/site-footer-gate";
 import { HostSiteHeader } from "@/components/host-site-header";
 import { HostSiteHeaderGate } from "@/components/host-site-header-gate";
 import { HostSiteFooter } from "@/components/host-site-footer";
@@ -27,7 +28,9 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
         <TrackPageView />
         <SiteHeader />
         <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <SiteFooterGate>
+          <SiteFooter />
+        </SiteFooterGate>
       </>
     );
   }

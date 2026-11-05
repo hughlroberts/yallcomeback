@@ -4,15 +4,9 @@ import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { guestOwnConversationOr } from "@/lib/guest-scope";
 
-export type MessagesViewer = {
-  userId: string;
-  email: string | null;
-  emailVerifiedAt: Date | null;
-  role: string;
-  hostId: string | null;
-  isHost: boolean;
-  isPlatform: boolean;
-};
+export type { MessagesViewer } from "@/lib/messages-viewer";
+export { isViewerHostOnConversation } from "@/lib/messages-viewer";
+import type { MessagesViewer } from "@/lib/messages-viewer";
 
 export async function getMessagesViewer(): Promise<MessagesViewer | null> {
   const session = await auth();
@@ -85,14 +79,6 @@ export function conversationAccessWhere(
   }
 
   return { OR: asGuest };
-}
-
-export function isViewerHostOnConversation(
-  viewer: MessagesViewer,
-  hostId: string,
-): boolean {
-  if (viewer.isPlatform) return true;
-  return viewer.isHost && viewer.hostId === hostId;
 }
 
 export const conversationListInclude = {

@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { format } from "date-fns";
 import {
   Phone,
@@ -18,7 +20,7 @@ import type {
   ConversationThread,
   MessagesViewer,
 } from "@/lib/messages-access";
-import { isViewerHostOnConversation } from "@/lib/messages-access";
+import { isViewerHostOnConversation } from "@/lib/messages-viewer";
 import { cn, formatTime12h } from "@/lib/utils";
 import {
   LocalDayDivider,
@@ -241,11 +243,13 @@ function ThreadPanel({
   viewer,
   canReply,
   basePath,
+  onOpenDetails,
 }: {
   conversation: ConversationThread;
   viewer: MessagesViewer;
   canReply: boolean;
   basePath: string;
+  onOpenDetails?: () => void;
 }) {
   const viewingAsHost = isViewerHostOnConversation(
     viewer,
@@ -259,8 +263,9 @@ function ThreadPanel({
   );
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col bg-white">
-      <div className="flex items-center gap-3 border-b border-stone-100 px-4 py-3 sm:px-5">
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
+      {/* H6: sticky thread chrome — bubbles scroll underneath with padding */}
+      <div className="sticky top-0 z-20 flex shrink-0 items-center gap-3 border-b border-stone-100 bg-white px-4 py-3 sm:px-5">
         <Link
           href={basePath}
           className="text-sm font-medium text-stone-500 hover:text-stone-800 lg:hidden"
@@ -278,9 +283,18 @@ function ThreadPanel({
             </p>
           ) : null}
         </div>
+        {onOpenDetails ? (
+          <button
+            type="button"
+            onClick={onOpenDetails}
+            className="shrink-0 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 shadow-sm hover:bg-stone-50 lg:hidden"
+          >
+            Details
+          </button>
+        ) : null}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto scroll-pt-4 px-4 py-5 sm:px-6">
             <div className="space-y-3">
               {conversation.messages.map((m, i) => {
                 const divider = (
@@ -339,7 +353,7 @@ function ThreadPanel({
             </div>
       </div>
 
-      <div className="border-t border-stone-100 p-3 sm:p-4">
+      <div className="sticky bottom-0 z-20 shrink-0 border-t border-stone-100 bg-white p-3 sm:p-4">
         {canReply ? (
           <form
             action={replyToConversation}
@@ -385,10 +399,12 @@ function DetailsPanel({
   conversation,
   viewer,
   basePath,
+  onCloseMobile,
 }: {
   conversation: ConversationThread;
   viewer: MessagesViewer;
   basePath: string;
+  onCloseMobile?: () => void;
 }) {
   const viewingAsHost = isViewerHostOnConversation(
     viewer,
@@ -431,13 +447,24 @@ function DetailsPanel({
         <p className="text-[15px] font-semibold text-stone-900">
           {booking ? "Reservation" : "Details"}
         </p>
-        <Link
-          href={basePath}
-          className="inline-flex size-8 items-center justify-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-700 lg:hidden"
-          title="Close"
-        >
-          <X className="size-4" />
-        </Link>
+        {onCloseMobile ? (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="inline-flex size-8 items-center justify-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-700 lg:hidden"
+            title="Close"
+          >
+            <X className="size-4" />
+          </button>
+        ) : (
+          <Link
+            href={basePath}
+            className="inline-flex size-8 items-center justify-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-700 lg:hidden"
+            title="Close"
+          >
+            <X className="size-4" />
+          </Link>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
@@ -636,13 +663,15 @@ export function MessagesWorkspace({
   deliveryPrefs?: MessageDeliveryPrefs | null;
   prefsSaved?: boolean;
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
   return (
     <div
       className={cn(
-        "flex min-h-[20rem] overflow-hidden border-t border-stone-200 bg-white",
+        "relative flex min-h-[20rem] overflow-hidden border-t border-stone-200 bg-white",
         fillHeight
           ? "h-full"
-          : "h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] sm:h-[calc(100dvh-4.75rem-env(safe-area-inset-top,0px))] md:h-[calc(100dvh-5.25rem-env(safe-area-inset-top,0px))]",
+          : "h-[calc(100dvh-var(--site-header-h,3.5rem)-env(safe-area-inset-top,0px))] sm:h-[calc(100dvh-var(--site-header-h,4.75rem)-env(safe-area-inset-top,0px))]",
       )}
     >
       <div
@@ -662,21 +691,38 @@ export function MessagesWorkspace({
       </div>
 
       {active ? (
-        <div className="flex h-full min-w-0 flex-1 flex-col lg:flex-row">
+        <div className="relative flex h-full min-w-0 flex-1 flex-col lg:flex-row">
           <ThreadPanel
             conversation={active}
             viewer={viewer}
             canReply={Boolean(canReply)}
             basePath={basePath}
+            onOpenDetails={() => setDetailsOpen(true)}
           />
-          {/* Details: under chat on small screens; right column on large */}
-          <div className="max-h-[42vh] shrink-0 border-t border-stone-200 lg:max-h-none lg:h-full lg:border-t-0">
+          {/* H6: details pinned as right column on large screens */}
+          <div className="hidden h-full shrink-0 lg:flex lg:border-l lg:border-stone-200">
             <DetailsPanel
               conversation={active}
               viewer={viewer}
               basePath={basePath}
             />
           </div>
+          {/* H7: mobile Details sheet above composer — full height, Contact visible */}
+          {detailsOpen ? (
+            <div
+              className="absolute inset-0 z-30 flex flex-col bg-white lg:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Details"
+            >
+              <DetailsPanel
+                conversation={active}
+                viewer={viewer}
+                basePath={basePath}
+                onCloseMobile={() => setDetailsOpen(false)}
+              />
+            </div>
+          ) : null}
         </div>
       ) : (
         <EmptyThread />
