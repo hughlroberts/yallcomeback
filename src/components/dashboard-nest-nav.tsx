@@ -70,10 +70,11 @@ export function DashboardNestNav({
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "inline-flex min-h-11 items-center rounded-full px-3 py-1.5 text-sm font-medium transition",
+              // E1104-C11: no thin grey border/ring — only the full shared focus ring.
               PRIMARY_CTA_FOCUS_CLASS,
               isActive
-                ? "bg-petal text-bonnet ring-1 ring-inset ring-bonnet/40"
-                : "border border-stone-300 bg-white text-stone-700 hover:bg-stone-50",
+                ? "bg-petal text-bonnet"
+                : "bg-white text-stone-700 hover:bg-stone-50",
             )}
           >
             {item.label}
