@@ -39,7 +39,7 @@ export function SavedStaysClient({ isSignedIn }: Props) {
         </div>
         <Link
           href="/marketplace"
-          className={`text-sm font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
+          className={`inline-flex min-h-6 items-center text-sm font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Browse stays →
         </Link>

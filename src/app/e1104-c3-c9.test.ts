@@ -98,3 +98,14 @@ describe("E1104-D3 listing prefill warnings", () => {
     expect(quote).toMatch(/!isValidYmd\(checkIn\)/);
   });
 });
+
+describe("E1104-C7 leftovers tap targets ≥24px", () => {
+  it("View all stays / Learn more / Terms / Free self-host use min-h-6", () => {
+    expect(src("app/page.tsx")).toMatch(/View all stays[\s\S]{0,80}min-h-6|min-h-6[\s\S]{0,120}View all stays/);
+    expect(src("components/things-to-know.tsx")).toMatch(/inline-flex min-h-6[\s\S]*Learn more/);
+    expect(src("app/register/page.tsx")).toMatch(/inline-flex min-h-6 items-center font-medium text-bonnet underline/);
+    expect(src("components/HostSignupForm.tsx")).toMatch(/min-h-6[\s\S]{0,80}Free self-host|Free self-host[\s\S]{0,5}\n[\s\S]{0,120}min-h-6/);
+    expect(src("components/HostSignupForm.tsx")).toMatch(/inline-flex min-h-6 items-center rounded-sm font-medium text-bonnet/);
+    expect(src("components/mobile-reserve-bar.tsx")).toMatch(/line-clamp-2 min-h-6 text-xs/);
+  });
+});

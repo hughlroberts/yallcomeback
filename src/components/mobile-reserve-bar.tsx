@@ -168,7 +168,7 @@ export function MobileReserveBar({
             </p>
           )}
           {/* Wrap (max 2 lines) so "Minimum stay is N nights" isn't cut off at ~400px. */}
-          <p className="line-clamp-2 text-xs leading-snug text-stone-500">
+          <p className="line-clamp-2 min-h-6 text-xs leading-snug text-stone-500">
             {dateLabel
               ? bar.error
                 ? `${dateLabel} · ${bar.error}`

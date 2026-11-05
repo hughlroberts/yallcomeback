@@ -293,7 +293,7 @@ export default async function HomePage({
           </div>
           <Link
             href="/marketplace"
-            className={`text-sm font-semibold text-bonnet hover:text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
+            className={`inline-flex min-h-6 items-center text-sm font-semibold text-bonnet hover:text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             View all stays →
           </Link>

@@ -138,11 +138,11 @@ export default async function RegisterPage({
             />
             <span>
               I agree to the{" "}
-              <a href="/terms" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
+              <a href="/terms" className={`inline-flex min-h-6 items-center font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="/privacy" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
+              <a href="/privacy" className={`inline-flex min-h-6 items-center font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
                 Privacy Policy
               </a>
               . Bookings are a contract with the host, not Yall Come Back.
