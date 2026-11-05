@@ -35,7 +35,9 @@ describe("dialogs on listing and book pages sit above the sticky reserve bar", (
 
   it("the bar hides itself while any dialog is open", () => {
     expect(bar).toContain("subscribeModalOpen");
-    expect(bar).toMatch(/if \(!show \|\| modalOpen\) return null;/);
+    expect(bar).toContain("const visible = show && !modalOpen");
+    expect(bar).toContain("inert={!visible}");
+    expect(bar).not.toMatch(/if \(!show \|\| modalOpen\) return null;/);
   });
 
   it.each([

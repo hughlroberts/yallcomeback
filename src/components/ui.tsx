@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
+import { BOOKING_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -8,7 +9,7 @@ import type {
 } from "react";
 
 const buttonBase =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] px-5 py-2.5 text-sm font-medium transition-[color,background-color,transform,box-shadow,opacity] duration-100 ease-out will-change-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] active:brightness-95";
+  `inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] px-5 py-2.5 text-sm font-medium transition-[color,background-color,transform,box-shadow,opacity] duration-100 ease-out will-change-transform ${BOOKING_CTA_FOCUS_CLASS} disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] active:brightness-95`;
 
 export function Button({
   className,

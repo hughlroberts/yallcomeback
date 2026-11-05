@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MAX_STAY_ERROR } from "@/lib/booking-quote";
 import { formatMoney } from "@/lib/utils";
 import {
@@ -18,7 +18,10 @@ import {
   isAnyModalOpenServer,
   subscribeModalOpen,
 } from "@/lib/modal-open";
-import { BOOKING_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
+import {
+  BOOKING_CTA_FOCUS_CLASS,
+  focusInlineReserveCta,
+} from "@/lib/booking-cta-focus";
 
 type Props = {
   nightlyRate: number;
@@ -38,6 +41,9 @@ type Props = {
 /**
  * Sticky bottom bar on phone/tablet portrait when the main reserve card is off-screen.
  * Hidden from lg up (desktop side card). Desktop unchanged.
+ *
+ * N2: stays mounted while hidden (inert + hidden) so Tab never hits a remount
+ * race or drops to BODY. If it hides while focused, focus moves to the inline CTA.
  */
 export function MobileReserveBar({
   nightlyRate,
@@ -47,6 +53,7 @@ export function MobileReserveBar({
   initialState,
 }: Props) {
   const [show, setShow] = useState(true);
+  const barRef = useRef<HTMLDivElement>(null);
   // Live dates/total from the booking widget; server-computed state until it publishes.
   const live = useSyncExternalStore(
     subscribeBookingBar,
@@ -64,6 +71,7 @@ export function MobileReserveBar({
   const ready = Boolean(dateLabel && bar.total != null && !bar.error);
   // R1104-18: same 90-night check as the widget button.
   const overMaxStay = bar.error === MAX_STAY_ERROR;
+  const visible = show && !modalOpen;
 
   useEffect(() => {
     const el = document.getElementById(targetId);
@@ -71,8 +79,17 @@ export function MobileReserveBar({
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        // Hide bar when the full reserve card is visible
-        setShow(!entry?.isIntersecting);
+        // Hide bar when the full reserve card is visible.
+        if (entry?.isIntersecting) {
+          // Move focus before inert/hidden so Tab never drops to BODY (N2).
+          const root = barRef.current;
+          if (root && root.contains(document.activeElement)) {
+            focusInlineReserveCta(targetId);
+          }
+          setShow(false);
+        } else {
+          setShow(true);
+        }
       },
       {
         // Account for sticky header
@@ -83,6 +100,24 @@ export function MobileReserveBar({
     io.observe(el);
     return () => io.disconnect();
   }, [targetId]);
+
+  // Modal open: same focus handoff without unmounting.
+  useLayoutEffect(() => {
+    if (!modalOpen) return;
+    const root = barRef.current;
+    if (root && root.contains(document.activeElement)) {
+      focusInlineReserveCta(targetId);
+    }
+  }, [modalOpen, targetId]);
+
+  // Safety net: if inert/hidden applied while focus was still inside, recover.
+  useLayoutEffect(() => {
+    if (visible) return;
+    const root = barRef.current;
+    if (root && root.contains(document.activeElement)) {
+      focusInlineReserveCta(targetId);
+    }
+  }, [visible, targetId]);
 
   function scrollToReserve() {
     const el = document.getElementById(targetId);
@@ -96,15 +131,26 @@ export function MobileReserveBar({
     }
   }
 
-  if (!show || modalOpen) return null;
-
   return (
     <div
+      ref={barRef}
       data-testid="mobile-reserve-bar"
-      className="fixed inset-x-0 bottom-0 z-[150] overflow-visible border-t border-stone-200/90 bg-white/95 shadow-[0_-8px_30px_rgba(42,53,102,0.12)] backdrop-blur-md lg:hidden"
-      style={{
-        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
-      }}
+      data-visible={visible ? "true" : "false"}
+      // inert when not shown: skipped by Tab and AT; keep mounted (N2).
+      inert={!visible}
+      aria-hidden={visible ? undefined : true}
+      className={
+        visible
+          ? "fixed inset-x-0 bottom-0 z-[150] overflow-visible border-t border-stone-200/90 bg-white/95 shadow-[0_-8px_30px_rgba(42,53,102,0.12)] backdrop-blur-md lg:hidden"
+          : "hidden lg:hidden"
+      }
+      style={
+        visible
+          ? {
+              paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+            }
+          : undefined
+      }
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="min-w-0">
@@ -130,6 +176,7 @@ export function MobileReserveBar({
         </div>
         <button
           type="button"
+          tabIndex={visible ? undefined : -1}
           onClick={() => {
             // Dates chosen and valid → same flow as the widget button.
             if (ready && runBookingBarAction()) return;
