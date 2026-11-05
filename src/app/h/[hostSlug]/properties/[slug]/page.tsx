@@ -34,15 +34,42 @@ export async function generateMetadata({
  * Tenant chrome still applies via x-tenant-slug on custom domains, so guests
  * stay in the host brand while completing the book flow.
  */
+function listingRedirectQuery(
+  hostSlug: string,
+  sp: {
+    preview?: string;
+    checkIn?: string;
+    checkOut?: string;
+    guests?: string;
+    pets?: string;
+  },
+  extras: Record<string, string> = {},
+) {
+  const q = new URLSearchParams({ host: hostSlug, ...extras });
+  if (sp.preview) q.set("preview", sp.preview);
+  if (sp.checkIn) q.set("checkIn", sp.checkIn);
+  if (sp.checkOut) q.set("checkOut", sp.checkOut);
+  if (sp.guests) q.set("guests", sp.guests);
+  if (sp.pets) q.set("pets", sp.pets);
+  return q.toString();
+}
+
 export default async function HostPropertyPage({
   params,
   searchParams,
 }: {
   params: Promise<{ hostSlug: string; slug: string }>;
-  searchParams?: Promise<{ preview?: string }>;
+  searchParams?: Promise<{
+    preview?: string;
+    checkIn?: string;
+    checkOut?: string;
+    guests?: string;
+    pets?: string;
+  }>;
 }) {
   const { hostSlug, slug } = await params;
-  const previewToken = (await searchParams)?.preview;
+  const sp = (await searchParams) ?? {};
+  const previewToken = sp.preview;
   const host = await getHostForGuestSite(hostSlug);
   if (!host) {
     // Hidden brand (T46): clean "not available" page, not an error.
@@ -60,13 +87,13 @@ export default async function HostPropertyPage({
     if (!paused) notFound();
     if (paused.kind === "unavailable") return <ListingUnavailable />;
     redirect(
-      `/marketplace/properties/${encodeURIComponent(slug)}?host=${encodeURIComponent(host.slug)}` +
-        (previewToken ? `&preview=${encodeURIComponent(previewToken)}` : ""),
+      `/marketplace/properties/${encodeURIComponent(slug)}?${listingRedirectQuery(host.slug, sp)}`,
     );
   }
 
-  // Preserve host brand context for chrome + attribution
+  // Preserve host brand context for chrome + attribution, and keep trip
+  // params so the listing widget prefills checkIn/checkOut/guests (E1104-C6).
   redirect(
-    `/marketplace/properties/${property.slug}?host=${host.slug}&via=host_site#reserve`,
+    `/marketplace/properties/${property.slug}?${listingRedirectQuery(host.slug, sp, { via: "host_site" })}#reserve`,
   );
 }

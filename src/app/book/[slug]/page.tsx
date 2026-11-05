@@ -135,15 +135,13 @@ export default async function BookPage({
   const checkOut = sp.checkOut;
   const guestCount = clampGuests(sp.guests, property.maxGuests);
   const guests = guestCount.guests;
+  const petCap = effectiveMaxPets(property);
+  const requestedPets = Math.max(0, Math.floor(Number(sp.pets || 0) || 0));
   const pets = property.petsAllowed
-    ? Math.max(
-        0,
-        Math.min(
-          effectiveMaxPets(property),
-          Number(sp.pets || 0) || 0,
-        ),
-      )
+    ? Math.max(0, Math.min(petCap, requestedPets))
     : 0;
+  const petsClamped =
+    property.petsAllowed && requestedPets > 0 && requestedPets > pets;
   const channel = resolveBookingChannel({
     tenantHostSlug: tenant?.slug ?? null,
     listingHostSlug: property.host.slug,
@@ -351,6 +349,15 @@ export default async function BookPage({
               >
                 This place sleeps up to {property.maxGuests}, so we set guests
                 to {guests}.
+              </p>
+            ) : null}
+            {petsClamped ? (
+              <p
+                role="status"
+                className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 ring-1 ring-amber-200"
+              >
+                This place allows up to {petCap} pet{petCap === 1 ? "" : "s"},
+                so we set pets to {pets}.
               </p>
             ) : null}
           </div>
@@ -695,13 +702,13 @@ export default async function BookPage({
               <span>
                 I have read and accept the cancellation policy
                 {disclaimer ? " and host disclaimer" : ""}, and the{" "}
-                <a href="/terms" className="font-medium text-bonnet underline">
+                <a href="/terms" className="inline-flex min-h-6 items-center font-medium text-bonnet underline">
                   Terms of Service
                 </a>{" "}
                 and{" "}
                 <a
                   href="/privacy"
-                  className="font-medium text-bonnet underline"
+                  className="inline-flex min-h-6 items-center font-medium text-bonnet underline"
                 >
                   Privacy Policy
                 </a>

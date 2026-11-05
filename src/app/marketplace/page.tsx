@@ -75,12 +75,27 @@ export default async function MarketplacePage({
     undefined;
   const guests = parsePositiveInt(params.guests);
   const pets = parsePositiveInt(params.pets);
-  // Past, inverted or malformed dates: say so and search without dates
-  // (the APIs answer 400 for the same input).
+  // E1104-C4: guests=0 (or other non-positive junk) — notice, search any party.
+  const guestsRaw = params.guests?.trim();
+  const guestMessage =
+    guestsRaw && guests === undefined
+      ? "Guests must be a whole number of at least 1. Showing stays for any party size."
+      : undefined;
+  // Past, inverted, malformed, or half-filled dates: say so and search without
+  // dates (APIs answer 400 for the same input; incomplete_dates for one side).
+  const checkInRaw = params.checkIn?.trim() || undefined;
+  const checkOutRaw = params.checkOut?.trim() || undefined;
+  const incompleteDates = Boolean(checkInRaw) !== Boolean(checkOutRaw);
   const dateCheck = checkSearchDates(params.checkIn, params.checkOut);
-  const dateMessage = dateCheck.ok ? undefined : dateCheck.message;
-  const checkIn = dateCheck.ok ? dateCheck.checkIn : undefined;
-  const checkOut = dateCheck.ok ? dateCheck.checkOut : undefined;
+  const dateMessage = incompleteDates
+    ? "Add both check-in and check-out, or clear the dates."
+    : dateCheck.ok
+      ? undefined
+      : dateCheck.message;
+  const checkIn =
+    incompleteDates || !dateCheck.ok ? undefined : dateCheck.checkIn;
+  const checkOut =
+    incompleteDates || !dateCheck.ok ? undefined : dateCheck.checkOut;
   const filters = listingFiltersFromParams(
     (k) => params[k as keyof SearchFields],
   );
@@ -150,6 +165,14 @@ export default async function MarketplacePage({
               className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
             >
               {dateMessage} Showing stays for any dates.
+            </p>
+          ) : null}
+          {guestMessage ? (
+            <p
+              role="status"
+              className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              {guestMessage}
             </p>
           ) : null}
         </div>
@@ -293,7 +316,7 @@ async function StaysPanel({
         {hasActiveSearch ? (
           <Link
             href="/marketplace"
-            className="text-sm font-medium text-bonnet hover:underline"
+            className="inline-flex min-h-6 items-center text-sm font-medium text-bonnet hover:underline"
           >
             Clear search
           </Link>
