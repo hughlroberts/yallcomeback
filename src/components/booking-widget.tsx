@@ -218,7 +218,7 @@ export function BookingWidget({
     <div
       id="reserve"
       data-testid="booking-card"
-      className="scroll-mt-24 min-w-0 overflow-x-clip rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5 lg:flex lg:max-h-[calc(100vh-var(--site-header-h,calc(5.5rem+1px))-3rem)] lg:flex-col lg:overflow-hidden lg:p-0"
+      className="scroll-mt-24 min-w-0 overflow-x-clip rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5 lg:flex lg:max-h-[calc(100vh-var(--site-header-h,calc(5.5rem+1px))-3rem)] lg:flex-col lg:overflow-x-clip lg:overflow-y-hidden lg:p-0"
     >
       <div className="lg:shrink-0 lg:border-b lg:border-stone-100 lg:px-5 lg:pb-3 lg:pt-4">
         <p className="text-xl font-semibold text-stone-900">
@@ -279,7 +279,7 @@ export function BookingWidget({
           ) : null}
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-xl border border-stone-300">
+        <div className="mt-3 rounded-xl border border-stone-300">
           <label className="block p-3">
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-stone-500">
               Guests
@@ -288,7 +288,7 @@ export function BookingWidget({
               name="guests"
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
-              className="mt-1 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
+              className="mt-1 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bonnet"
             >
               {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
@@ -307,7 +307,7 @@ export function BookingWidget({
                 name="pets"
                 value={Math.min(pets, petCap)}
                 onChange={(e) => setPets(Number(e.target.value))}
-                className="mt-1 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
+                className="mt-1 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bonnet"
               >
                 {Array.from({ length: petCap + 1 }, (_, n) => n).map((n) => {
                   const feeHint =
@@ -456,7 +456,7 @@ export function BookingWidget({
           onClick={onBook}
           disabled={overMaxStay}
           aria-disabled={overMaxStay}
-          className="disabled:cursor-not-allowed disabled:opacity-50 mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          className="disabled:cursor-not-allowed disabled:opacity-50 mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
         >
           {depositDueNow ? "Reserve" : "Request to book"}
         </button>

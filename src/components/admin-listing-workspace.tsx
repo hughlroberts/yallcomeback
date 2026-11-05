@@ -309,6 +309,11 @@ function PricingSidebar({
                     baseNightlyRate: undefined,
                   }));
                 }}
+                onBlur={(e) => {
+                  setNightlyBad(e.target.validity.badInput);
+                  // Re-read value so empty/partial blur still runs the $1 check.
+                  setNightly(e.target.value);
+                }}
               />
             </div>
             {nightlyError ? (

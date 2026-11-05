@@ -991,6 +991,16 @@ export async function updateProperty(formData: FormData) {
     if (!loc) throw new Error("Invalid location");
   }
 
+  const nightlyErr = baseNightlyRateFieldError(
+    formData.get("baseNightlyRate") == null
+      ? ""
+      : String(formData.get("baseNightlyRate")),
+  );
+  if (nightlyErr) {
+    throw new Error(nightlyErr);
+  }
+  const baseNightlyRate = Math.round(Number(formData.get("baseNightlyRate")) * 100) / 100;
+
   const property = await prisma.property.update({
     where: { id },
     data: {
@@ -1006,7 +1016,7 @@ export async function updateProperty(formData: FormData) {
       bathrooms: Number(formData.get("bathrooms") || 1),
       maxGuests: Number(formData.get("maxGuests") || 2),
       beds: Number(formData.get("beds") || 1),
-      baseNightlyRate: Number(formData.get("baseNightlyRate") || 0),
+      baseNightlyRate,
       defaultMinNights: Number(formData.get("defaultMinNights") || 1),
       cleaningFee: Number(formData.get("cleaningFee") || 0),
       petFee: Number(formData.get("petFee") || 0),

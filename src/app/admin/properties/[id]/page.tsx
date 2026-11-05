@@ -51,6 +51,7 @@ import { canUseIcalSetupAgent } from "@/lib/platform-features";
 import { viewerCanPublishListings } from "@/lib/email-verified";
 import { paymentMethodLabel, WEBSITE_PAY_CHOICES } from "@/lib/host-payments";
 import { ListingPaymentMethodFields } from "@/components/listing-payment-method-fields";
+import { ListingBaseNightlyField } from "@/components/listing-base-nightly-field";
 import {
   DEFAULT_PEAK_MIN_NIGHTS,
   upcomingPeakHolidays,
@@ -262,16 +263,7 @@ export default async function AdminPropertyDetailPage({
             defaultValue={property.maxGuests}
           />
         </div>
-        <div>
-          <Label htmlFor="baseNightlyRate">Base nightly rate</Label>
-          <Input
-            id="baseNightlyRate"
-            name="baseNightlyRate"
-            type="number"
-            step="0.01"
-            defaultValue={property.baseNightlyRate}
-          />
-        </div>
+        <ListingBaseNightlyField defaultValue={property.baseNightlyRate} />
         <div>
           <Label htmlFor="defaultMinNights">Default min nights</Label>
           <Input

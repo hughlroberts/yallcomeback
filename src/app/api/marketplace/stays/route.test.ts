@@ -149,4 +149,19 @@ describe("GET /api/marketplace/stays", () => {
     }
   });
 
+
+  it("drops invalid minNightly/maxNightly and never applies them as filters", async () => {
+    for (const q of ["minNightly=abc", "maxNightly=-5", "minNightly=-3&maxNightly=xyz"]) {
+      host.searchMarketplace.mockClear();
+      expect((await get(q)).status, q).toBe(200);
+      expect(host.searchMarketplace.mock.calls[0][1].filters, q).toEqual({});
+    }
+    host.searchMarketplace.mockClear();
+    expect((await get("minNightly=90&maxNightly=220")).status).toBe(200);
+    expect(host.searchMarketplace.mock.calls[0][1].filters).toEqual({
+      minNightly: 90,
+      maxNightly: 220,
+    });
+  });
+
 });

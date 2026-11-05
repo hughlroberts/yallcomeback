@@ -47,6 +47,22 @@ describe("listing filters", () => {
     expect(hasListingFilters({ amenities: ["wifi"] })).toBe(true);
   });
 
+
+  it("drops invalid minNightly/maxNightly (abc, negative) instead of applying them", () => {
+    expect(listingFiltersFromParams(params("minNightly=abc"))).toEqual({});
+    expect(listingFiltersFromParams(params("maxNightly=-5"))).toEqual({});
+    expect(listingFiltersFromParams(params("minNightly=-5&maxNightly=abc"))).toEqual(
+      {},
+    );
+    expect(
+      listingFiltersFromParams(params("minNightly=0&maxNightly=0")),
+    ).toEqual({});
+    // Valid prices still apply.
+    expect(
+      listingFiltersFromParams(params("minNightly=80&maxNightly=200")),
+    ).toEqual({ minNightly: 80, maxNightly: 200 });
+  });
+
   it("matches listings like the agent API did", () => {
     const p = {
       bedrooms: 3,
