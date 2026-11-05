@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { requiredMinNights } from "@/lib/flexible-dates";
 import { addDaysYmd, formatYmd, nightsBetweenYmd } from "@/lib/search-dates";
 
 export type AvailableWindow = {
@@ -7,9 +8,22 @@ export type AvailableWindow = {
   nights: number;
 };
 
+export type AvailabilitySeason = {
+  startDate: Date;
+  endDate: Date;
+  minNights: number;
+};
+
+/** Max look-ahead for /api/v1/listings/{slug}/availability (and findAvailableWindows). */
+export const AVAILABILITY_MAX_LOOKAHEAD_DAYS = 180;
+
 /**
  * Find free stay windows of `nights` length in [fromYmd, fromYmd+lookAheadDays).
  * Uses calendar blocks (blocked if any overlap with [start, end)).
+ *
+ * G1: also enforces the same seasonal/date-specific minimum-stay rule as the
+ * booking quote (`requiredMinNights` / computeBookingQuote) — never return a
+ * window the quote would reject for min stay.
  */
 export async function findAvailableWindows(opts: {
   propertyId: string;
@@ -17,13 +31,20 @@ export async function findAvailableWindows(opts: {
   fromYmd?: string;
   lookAheadDays?: number;
   maxWindows?: number;
+  /** Listing default min nights (used for seasonal raise). */
   minNights?: number;
+  defaultMinNights?: number;
+  /** Inject seasons in tests; otherwise loaded from SeasonalPrice. */
+  seasons?: AvailabilitySeason[];
 }): Promise<AvailableWindow[]> {
   const nights = Math.max(
     1,
     Math.floor(opts.nights ?? opts.minNights ?? 2),
   );
-  const lookAhead = Math.min(180, Math.max(14, opts.lookAheadDays ?? 90));
+  const lookAhead = Math.min(
+    AVAILABILITY_MAX_LOOKAHEAD_DAYS,
+    Math.max(14, opts.lookAheadDays ?? 90),
+  );
   const maxWindows = Math.min(20, Math.max(1, opts.maxWindows ?? 5));
   const today = formatYmd(new Date());
   const fromYmd =
@@ -32,6 +53,18 @@ export async function findAvailableWindows(opts: {
         ? today
         : opts.fromYmd
       : today;
+
+  const defaultMinNights = Math.max(
+    1,
+    opts.defaultMinNights ?? opts.minNights ?? 1,
+  );
+
+  const seasons: AvailabilitySeason[] =
+    opts.seasons ??
+    (await prisma.seasonalPrice.findMany({
+      where: { propertyId: opts.propertyId },
+      select: { startDate: true, endDate: true, minNights: true },
+    }));
 
   const rangeEnd = addDaysYmd(fromYmd, lookAhead + nights);
   const blocks = await prisma.calendarBlock.findMany({
@@ -52,16 +85,18 @@ export async function findAvailableWindows(opts: {
     return true;
   }
 
+  const listing = { defaultMinNights, seasons };
   const windows: AvailableWindow[] = [];
   for (let i = 0; i <= lookAhead; i++) {
     const checkIn = addDaysYmd(fromYmd, i);
     const checkOut = addDaysYmd(checkIn, nights);
-    if (isFree(checkIn, checkOut)) {
-      windows.push({ checkIn, checkOut, nights });
-      if (windows.length >= maxWindows) break;
-      // Skip ahead a bit so windows aren't all consecutive overlaps
-      i += Math.max(0, nights - 1);
-    }
+    if (!isFree(checkIn, checkOut)) continue;
+    // Same min-stay rule as quote / flexible-dates stayFit.
+    if (nights < requiredMinNights(listing, checkIn, checkOut)) continue;
+    windows.push({ checkIn, checkOut, nights });
+    if (windows.length >= maxWindows) break;
+    // Skip ahead a bit so windows aren't all consecutive overlaps
+    i += Math.max(0, nights - 1);
   }
   return windows;
 }

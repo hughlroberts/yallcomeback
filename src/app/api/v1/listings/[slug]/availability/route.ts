@@ -3,7 +3,10 @@ import { prisma } from "@/lib/db";
 import { marketplacePropertyWhere } from "@/lib/host";
 import { agentApiDisabledResponse } from "@/lib/agent/guard";
 import { publicOrigin } from "@/lib/agent/origin";
-import { findAvailableWindows } from "@/lib/agent/availability";
+import {
+  AVAILABILITY_MAX_LOOKAHEAD_DAYS,
+  findAvailableWindows,
+} from "@/lib/agent/availability";
 import { addDaysYmd, formatYmd, isYmd } from "@/lib/search-dates";
 
 export const dynamic = "force-dynamic";
@@ -50,9 +53,17 @@ export async function GET(
     sp.get("from") && isYmd(sp.get("from")!)
       ? sp.get("from")!
       : formatYmd(new Date());
+  const daysRaw = sp.get("days") ?? sp.get("lookAhead");
+  const requestedDays =
+    daysRaw != null && daysRaw.trim() !== ""
+      ? Number(daysRaw)
+      : 90;
+  const requestedFinite = Number.isFinite(requestedDays);
+  const daysCapped =
+    requestedFinite && requestedDays > AVAILABILITY_MAX_LOOKAHEAD_DAYS;
   const lookAhead = Math.min(
-    180,
-    Math.max(14, Number(sp.get("days") || sp.get("lookAhead") || 90)),
+    AVAILABILITY_MAX_LOOKAHEAD_DAYS,
+    Math.max(14, requestedFinite ? requestedDays : 90),
   );
   const maxWindows = Math.min(
     30,
@@ -66,7 +77,16 @@ export async function GET(
     lookAheadDays: lookAhead,
     maxWindows,
     minNights: property.defaultMinNights,
+    defaultMinNights: property.defaultMinNights,
   });
+
+  const warnings: { code: string; message: string }[] = [];
+  if (daysCapped) {
+    warnings.push({
+      code: "days_capped",
+      message: `days/lookAhead was capped at ${AVAILABILITY_MAX_LOOKAHEAD_DAYS} (requested ${Math.floor(requestedDays)}).`,
+    });
+  }
 
   const rangeEnd = addDaysYmd(from, lookAhead);
   const blocks = await prisma.calendarBlock.findMany({
@@ -89,6 +109,12 @@ export async function GET(
       nights,
       from,
       lookAheadDays: lookAhead,
+      ...(warnings.length
+        ? {
+            warnings,
+            note: warnings.map((w) => w.message).join(" "),
+          }
+        : {}),
       availableWindows: windows,
       blockedRanges: blocks.map((b) => ({
         start: formatYmd(b.startDate),
