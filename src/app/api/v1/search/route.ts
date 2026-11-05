@@ -91,6 +91,18 @@ export async function GET(req: NextRequest) {
   const maxNightly = sp.get("maxNightly")
     ? Number(sp.get("maxNightly"))
     : undefined;
+  // Non-numeric or negative prices used to be dropped silently.
+  for (const [name, v] of [
+    ["minNightly", minNightly],
+    ["maxNightly", maxNightly],
+  ] as const) {
+    if (v != null && (!Number.isFinite(v) || v < 0)) {
+      return bad(
+        "invalid_price_range",
+        `${name} must be a number of 0 or more (got "${String(sp.get(name)).slice(0, 40)}").`,
+      );
+    }
+  }
   if (
     minNightly != null &&
     maxNightly != null &&

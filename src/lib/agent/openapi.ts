@@ -34,7 +34,7 @@ const badDatesResponse = {
 
 const badSearchResponse = {
   description:
-    "Bad search input: past_dates, checkout_not_after_checkin, invalid_date or stay_too_long (more than 90 nights) for dates, incomplete_dates (only one of checkIn/checkOut sent; send both or neither), invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number from 1 to 50; values above 50 are a 400, not clamped), invalid_pets (pets not a whole number from 0 to 4), invalid_price_range (minNightly greater than maxNightly), invalid_flexibility_days (flexibilityDays not a whole number from 0 to 14) or invalid_location (location/where/q/lake longer than 200 characters).",
+    "Bad search input: past_dates, checkout_not_after_checkin, invalid_date or stay_too_long (more than 90 nights) for dates, incomplete_dates (only one of checkIn/checkOut sent; send both or neither), invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number from 1 to 50; values above 50 are a 400, not clamped), invalid_pets (pets not a whole number from 0 to 4), invalid_price_range (minNightly/maxNightly non-numeric, negative, or min greater than max), invalid_flexibility_days (flexibilityDays not a whole number from 0 to 14) or invalid_location (location/where/q/lake longer than 200 characters).",
   content: {
     "application/json": {
       schema: {
@@ -150,14 +150,14 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "number" },
               description:
-                "Lowest nightly price. Greater than maxNightly is 400 invalid_price_range.",
+                "Lowest nightly price, a number of 0 or more. Non-numeric, negative or greater than maxNightly is 400 invalid_price_range.",
             },
             {
               name: "maxNightly",
               in: "query",
               schema: { type: "number" },
               description:
-                "Highest nightly price. Less than minNightly is 400 invalid_price_range.",
+                "Highest nightly price, a number of 0 or more. Non-numeric, negative or less than minNightly is 400 invalid_price_range.",
             },
             {
               name: "amenities",

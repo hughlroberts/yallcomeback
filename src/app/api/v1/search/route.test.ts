@@ -123,6 +123,8 @@ describe("GET /api/v1/search", () => {
     host.searchMarketplace.mockClear();
     const cases: [string, string][] = [
       ["minNightly=300&maxNightly=100", "invalid_price_range"],
+      ["minNightly=abc", "invalid_price_range"],
+      ["maxNightly=-5", "invalid_price_range"],
       ["checkIn=2026-12-01&checkOut=2026-12-04&flexibilityDays=-1", "invalid_flexibility_days"],
       ["checkIn=2026-12-01&checkOut=2026-12-04&flexibilityDays=15", "invalid_flexibility_days"],
       ["checkIn=2026-12-01&checkOut=2026-12-04&flexibilityDays=abc", "invalid_flexibility_days"],
