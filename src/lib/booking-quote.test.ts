@@ -81,7 +81,7 @@ describe("computeBookingQuote", () => {
     ).toBe("Check-out must be after check-in");
     expect(
       computeBookingQuote({ ...base, checkIn: "nope" })!.error,
-    ).toBe("Choose valid dates");
+    ).toBe("Those dates don't look right. Pick dates in the calendar.");
   });
 });
 

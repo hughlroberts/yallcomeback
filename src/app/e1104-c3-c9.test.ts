@@ -32,9 +32,9 @@ describe("E1104-C5 book clamp notices", () => {
 describe("E1104-C6 listing URL prefill", () => {
   it("marketplace listing passes checkIn/checkOut/guests into the widget", () => {
     const page = src("app/marketplace/properties/[slug]/page.tsx");
-    expect(page).toMatch(/initialCheckIn=\{sp\.checkIn\}/);
-    expect(page).toMatch(/initialCheckOut=\{sp\.checkOut\}/);
-    expect(page).toMatch(/initialGuests=/);
+    expect(page).toMatch(/initialCheckIn=\{initialCheckIn/);
+    expect(page).toMatch(/initialCheckOut=\{initialCheckOut/);
+    expect(page).toMatch(/initialGuests=\{guestCount\.guests\}/);
   });
 
   it("host listing redirect keeps trip params for the widget", () => {
@@ -104,7 +104,7 @@ describe("E1104-C7 leftovers tap targets ≥24px", () => {
     expect(src("app/page.tsx")).toMatch(/View all stays[\s\S]{0,80}min-h-6|min-h-6[\s\S]{0,120}View all stays/);
     expect(src("components/things-to-know.tsx")).toMatch(/inline-flex min-h-6[\s\S]*Learn more/);
     expect(src("app/register/page.tsx")).toMatch(/inline-flex min-h-6 items-center font-medium text-bonnet underline/);
-    expect(src("components/HostSignupForm.tsx")).toMatch(/min-h-6[\s\S]{0,80}Free self-host|Free self-host[\s\S]{0,5}\n[\s\S]{0,120}min-h-6/);
+    expect(src("components/HostSignupForm.tsx")).toMatch(/min-h-6[\s\S]{0,200}Free self-host/);
     expect(src("components/HostSignupForm.tsx")).toMatch(/inline-flex min-h-6 items-center rounded-sm font-medium text-bonnet/);
     expect(src("components/mobile-reserve-bar.tsx")).toMatch(/line-clamp-2 min-h-6 text-xs/);
   });
@@ -182,9 +182,9 @@ describe("E1104-C8 invalid_date over incomplete_dates", () => {
     const route = src("app/api/v1/search/route.ts");
     expect(route).toMatch(/E1104-C8/);
     expect(route).toMatch(/!isValidYmd\(checkIn\)/);
-    const invalidIdx = route.indexOf("invalid_date");
-    const incompleteIdx = route.indexOf("incomplete_dates");
-    expect(invalidIdx).toBeGreaterThan(-1);
-    expect(incompleteIdx).toBeGreaterThan(invalidIdx);
+    const invalidReturn = route.indexOf('return bad(\n      "invalid_date"');
+    const incompleteReturn = route.indexOf('return bad(\n      "incomplete_dates"');
+    expect(invalidReturn).toBeGreaterThan(-1);
+    expect(incompleteReturn).toBeGreaterThan(invalidReturn);
   });
 });

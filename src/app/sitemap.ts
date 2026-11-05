@@ -93,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         approvalStatus: "APPROVED",
         sitePublishState: { in: ["DEMO", "LIVE"] },
         slug: { notIn: [...MARKETPLACE_EXCLUDED_HOST_SLUGS] },
-        // E1104-D4: never sitemap test brands (Cherokee and real hosts untouched).
+        // E1104-D4: never sitemap test brands (real hosts untouched).
         isTestBrand: false,
         OR: [
           { hostingMode: "SELF" },
