@@ -61,6 +61,10 @@ describe("G2 host tap targets ≥24px", () => {
     const footer = src("components/host-site-footer.tsx");
     expect(footer).toMatch(/min-h-6[\s\S]{0,120}Terms/);
     expect(footer).toMatch(/min-h-6[\s\S]{0,120}Privacy/);
+    // Contact-list mailto in footer (second about-page target via HostSiteFooter)
+    expect(footer).toMatch(
+      /mailto:\$\{host\.contactEmail\}[\s\S]{0,160}min-h-6|min-h-6[\s\S]{0,160}mailto:\$\{host\.contactEmail\}/,
+    );
     const about = src("app/h/[hostSlug]/about/page.tsx");
     expect(about).toMatch(
       /mailto:\$\{host\.contactEmail\}[\s\S]{0,120}min-h-6|min-h-6[\s\S]{0,120}mailto:\$\{host\.contactEmail\}/,
@@ -69,11 +73,16 @@ describe("G2 host tap targets ≥24px", () => {
 });
 
 describe("G3 /book print styles", () => {
-  it("book page marks print root and message form no-print; globals hide chrome", () => {
+  it("book page marks print root; message + Your details/terms/CTA no-print; globals hide chrome", () => {
     const book = src("app/book/[slug]/page.tsx");
     expect(book).toMatch(/data-book-print/);
     expect(book).toMatch(/className="no-print /);
     expect(book).toMatch(/Message the host\?/);
+    // G3 partial: hide guest form, accept-terms, Request to book; keep trip + price
+    expect(book).toMatch(/className="no-print mt-10 max-w-xl"/);
+    expect(book).toMatch(/Your details/);
+    expect(book).toMatch(/Request to book/);
+    expect(book).toMatch(/acceptDisclaimer/);
     const css = src("app/globals.css");
     expect(css).toMatch(/G3: \/book print/);
     expect(css).toMatch(/body:has\(\[data-book-print\]\) header/);

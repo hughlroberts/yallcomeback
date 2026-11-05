@@ -116,7 +116,7 @@ export function HostSiteFooter({
                 <li>
                   <a
                     href={`mailto:${host.contactEmail}`}
-                    className="hover:text-[var(--color-brand)]"
+                    className="inline-flex min-h-6 items-center hover:text-[var(--color-brand)]"
                   >
                     {host.contactEmail}
                   </a>

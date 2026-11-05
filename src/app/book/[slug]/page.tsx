@@ -548,7 +548,7 @@ export default async function BookPage({
         </div>
       </section>
 
-      <div className="mt-10 max-w-xl">
+      <div className="no-print mt-10 max-w-xl">
         <h2 className="text-xl font-semibold text-stone-900">
           {requestOnly ? "Your details" : <>Payment &amp; contact</>}
         </h2>
