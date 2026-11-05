@@ -18,6 +18,7 @@ import {
   isAnyModalOpenServer,
   subscribeModalOpen,
 } from "@/lib/modal-open";
+import { BOOKING_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   nightlyRate: number;
@@ -100,7 +101,7 @@ export function MobileReserveBar({
   return (
     <div
       data-testid="mobile-reserve-bar"
-      className="fixed inset-x-0 bottom-0 z-[150] border-t border-stone-200/90 bg-white/95 shadow-[0_-8px_30px_rgba(42,53,102,0.12)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-[150] overflow-visible border-t border-stone-200/90 bg-white/95 shadow-[0_-8px_30px_rgba(42,53,102,0.12)] backdrop-blur-md lg:hidden"
       style={{
         paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
       }}
@@ -136,7 +137,7 @@ export function MobileReserveBar({
           }}
           disabled={overMaxStay}
           aria-disabled={overMaxStay}
-          className="disabled:cursor-not-allowed disabled:opacity-50 inline-flex min-h-12 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          className={`disabled:cursor-not-allowed disabled:opacity-50 inline-flex min-h-12 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active ${BOOKING_CTA_FOCUS_CLASS}`}
         >
           {bookingBarCta(depositDueNow)}
         </button>

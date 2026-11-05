@@ -1,6 +1,7 @@
 "use client";
 
 import { MAX_STAY_ERROR } from "@/lib/booking-quote";
+import { BOOKING_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils";
@@ -218,7 +219,7 @@ export function BookingWidget({
     <div
       id="reserve"
       data-testid="booking-card"
-      className="scroll-mt-24 min-w-0 overflow-x-clip rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5 lg:flex lg:max-h-[calc(100vh-var(--site-header-h,calc(5.5rem+1px))-3rem)] lg:flex-col lg:overflow-x-clip lg:overflow-y-hidden lg:p-0"
+      className="scroll-mt-24 min-w-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-lg sm:scroll-mt-28 sm:p-5 lg:flex lg:max-h-[calc(100vh-var(--site-header-h,calc(5.5rem+1px))-3rem)] lg:flex-col lg:overflow-visible lg:p-0"
     >
       <div className="lg:shrink-0 lg:border-b lg:border-stone-100 lg:px-5 lg:pb-3 lg:pt-4">
         <p className="text-xl font-semibold text-stone-900">
@@ -449,14 +450,14 @@ export function BookingWidget({
 
       <div
         data-testid="booking-card-footer"
-        className="lg:shrink-0 lg:border-t lg:border-stone-100 lg:bg-white lg:px-5 lg:pb-4 lg:pt-3"
+        className="overflow-visible lg:shrink-0 lg:border-t lg:border-stone-100 lg:bg-white lg:px-5 lg:pb-5 lg:pt-3"
       >
         <button
           type="button"
           onClick={onBook}
           disabled={overMaxStay}
           aria-disabled={overMaxStay}
-          className="disabled:cursor-not-allowed disabled:opacity-50 mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+          className={`disabled:cursor-not-allowed disabled:opacity-50 mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active ${BOOKING_CTA_FOCUS_CLASS}`}
         >
           {depositDueNow ? "Reserve" : "Request to book"}
         </button>
