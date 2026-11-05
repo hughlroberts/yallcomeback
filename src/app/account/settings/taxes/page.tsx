@@ -110,7 +110,7 @@ export default async function AccountTaxesPage() {
         {!isHost ? (
           <p className="text-sm text-stone-500">
             Host brands set lodging tax. Guests do not configure rates. See{" "}
-            <Link href="/help/taxes" className="font-semibold text-bonnet underline">
+            <Link href="/help/taxes" className={`font-semibold text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
               taxes help
             </Link>
             .

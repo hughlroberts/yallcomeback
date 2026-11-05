@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { updatePrivacySettings } from "@/app/actions/account";
 import {
   AccountSettingsShell,
@@ -79,7 +80,7 @@ export default async function PrivacyPage({
             Yall Come Back stores the profile and booking data you provide so hosts
             can confirm stays. You can update or clear optional fields anytime.
             For deletion of your account, use the Contact page. Read the full{" "}
-            <a href="/privacy" className="font-medium text-bonnet underline">
+            <a href="/privacy" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
               Privacy Policy
             </a>
             .

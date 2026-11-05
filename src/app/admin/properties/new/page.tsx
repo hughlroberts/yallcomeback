@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { ListingImportAgent } from "@/components/listing-import-agent";
 import { ListingWizardTypeStep } from "@/components/listing-wizard-type-step";
@@ -69,7 +70,7 @@ export default async function NewListingWizardPage({
     <div className="mx-auto max-w-3xl space-y-10 px-4 py-8 sm:px-6">
       <div>
         <p className="text-sm text-ink-muted">
-          <Link href="/admin/properties" className="text-bonnet hover:underline">
+          <Link href="/admin/properties" className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             ← Properties
           </Link>
         </p>

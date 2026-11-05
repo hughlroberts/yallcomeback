@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { Card } from "@/components/ui";
@@ -31,14 +32,14 @@ export default async function AdminHostingPage() {
         <div className="flex flex-wrap gap-4 text-sm font-semibold">
           <Link
             href="/account/settings/subscription"
-            className="text-bonnet hover:underline"
+            className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Subscription
           </Link>
-          <Link href="/admin/payments" className="text-bonnet hover:underline">
+          <Link href="/admin/payments" className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Guest payments
           </Link>
-          <Link href="/admin/properties" className="text-bonnet hover:underline">
+          <Link href="/admin/properties" className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             ← Back to properties
           </Link>
         </div>

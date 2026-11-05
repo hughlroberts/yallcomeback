@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { AuthError } from "next-auth";
 import { auth, signIn } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -144,11 +145,11 @@ export default async function LoginPage({
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           Guests and hosts use the same login. By signing in you agree to the{" "}
-          <a href="/terms" className="font-medium text-bonnet underline">
+          <a href="/terms" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Terms
           </a>{" "}
           and{" "}
-          <a href="/privacy" className="font-medium text-bonnet underline">
+          <a href="/privacy" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Privacy Policy
           </a>
           .
@@ -218,7 +219,7 @@ export default async function LoginPage({
               </p>
             ) : null}
             <p className="mt-2 text-right text-sm">
-              <a href="/forgot-password" className="font-medium text-bonnet">
+              <a href="/forgot-password" className={`font-medium text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}>
                 Forgot password?
               </a>
             </p>
@@ -230,13 +231,13 @@ export default async function LoginPage({
 
         <p className="mt-6 text-center text-sm text-stone-500">
           No account?{" "}
-          <a href="/register" className="font-medium text-bonnet">
+          <a href="/register" className={`font-medium text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Create one
           </a>
         </p>
         <p className="mt-3 text-center text-sm text-stone-500">
           Are you a host?{" "}
-          <a href="/signup" className="font-medium text-bonnet">
+          <a href="/signup" className={`font-medium text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Apply here
           </a>
         </p>

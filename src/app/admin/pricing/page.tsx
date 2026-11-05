@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { Card } from "@/components/ui";
@@ -26,7 +27,7 @@ export default async function AdminPricingRedirect() {
         </p>
         <Link
           href="/admin/properties"
-          className="text-sm font-semibold text-bonnet hover:underline"
+          className={`text-sm font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Properties
         </Link>

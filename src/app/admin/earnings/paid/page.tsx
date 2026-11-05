@@ -82,7 +82,7 @@ export default async function EarningsPaidPage({
           </p>
           <Link
             href="/admin/bookings"
-            className="mt-6 inline-block text-sm font-semibold text-bonnet underline-offset-2 hover:underline"
+            className={`mt-6 inline-block text-sm font-semibold text-bonnet underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             View bookings
           </Link>

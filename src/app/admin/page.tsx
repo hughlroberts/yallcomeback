@@ -179,7 +179,7 @@ export default async function AdminDashboard({
               {" · "}
               <a
                 href={`/marketplace?q=${encodeURIComponent(host.name)}`}
-                className="text-bonnet hover:underline"
+                className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 View stays
               </a>
@@ -237,7 +237,7 @@ export default async function AdminDashboard({
             </h2>
             <Link
               href="/admin/bookings"
-              className="text-sm font-medium text-bonnet hover:text-bonnet"
+              className={`text-sm font-medium text-bonnet hover:text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               View all →
             </Link>

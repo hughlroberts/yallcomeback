@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { prisma } from "@/lib/db";
 import { auth, signIn } from "@/lib/auth";
 import { Button, Input, Label, Card } from "@/components/ui";
@@ -137,11 +138,11 @@ export default async function RegisterPage({
             />
             <span>
               I agree to the{" "}
-              <a href="/terms" className="font-medium text-bonnet underline">
+              <a href="/terms" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="/privacy" className="font-medium text-bonnet underline">
+              <a href="/privacy" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
                 Privacy Policy
               </a>
               . Bookings are a contract with the host, not Yall Come Back.
@@ -153,13 +154,13 @@ export default async function RegisterPage({
         </form>
         <p className="mt-6 text-center text-sm text-stone-500">
           Already have an account?{" "}
-          <a href="/login" className="font-medium text-bonnet">
+          <a href="/login" className={`font-medium text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Sign in
           </a>
         </p>
         <p className="mt-3 text-center text-sm text-stone-500">
           Are you a host?{" "}
-          <a href="/signup" className="font-medium text-bonnet">
+          <a href="/signup" className={`font-medium text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Apply here
           </a>
         </p>

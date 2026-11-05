@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import {
   inviteCoHost,
@@ -53,7 +54,7 @@ export default async function AdminTeamPage({
           Only the brand owner can invite or remove co-hosts. You have{" "}
           <strong>{hostAccessLabel(info.level)}</strong> access.
         </p>
-        <Link href="/admin" className="text-sm font-semibold text-bonnet hover:underline">
+        <Link href="/admin" className={`text-sm font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           ← Dashboard
         </Link>
       </div>

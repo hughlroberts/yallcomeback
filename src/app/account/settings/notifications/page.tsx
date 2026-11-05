@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { updateNotificationSettings } from "@/app/actions/account";
 import { AccountSettingsShell } from "@/components/account-settings-shell";
@@ -101,7 +102,7 @@ export default async function NotificationsSettingsPage({
                   —{" "}
                   <Link
                     href="/account/settings/personal"
-                    className="font-medium text-bonnet hover:underline"
+                    className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     add a phone number
                   </Link>
@@ -134,7 +135,7 @@ export default async function NotificationsSettingsPage({
             <Button type="submit">Save preferences</Button>
             <Link
               href="/messages"
-              className="text-sm font-medium text-bonnet hover:underline"
+              className={`text-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Open messages →
             </Link>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -239,7 +240,7 @@ export default async function AdminTaxesPage({
             <a
               key={e.kind}
               href={`/admin/taxes/export/${e.kind}?year=${year}`}
-              className="rounded-2xl border border-stone-200 bg-white p-4 transition hover:border-bonnet hover:bg-petal/40"
+              className={`rounded-2xl border border-stone-200 bg-white p-4 transition hover:border-bonnet hover:bg-petal/40 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               <p className="font-semibold text-stone-900">{e.title}</p>
               <p className="mt-1 text-xs leading-relaxed text-stone-500">
@@ -257,7 +258,7 @@ export default async function AdminTaxesPage({
         Card payments on your connected account may also produce a Form 1099-K
         from the card processor. Cash, bank, in-person card, and Bitcoin do
         not.{" "}
-        <Link href="/help/taxes" className="text-bonnet underline">
+        <Link href="/help/taxes" className={`text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Taxes help
         </Link>
         .

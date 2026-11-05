@@ -139,7 +139,7 @@ export default async function AdminPropertiesPage() {
               key={p.id}
               className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
             >
-              <Link href={primaryHref} className="min-w-0 flex-1 hover:opacity-90">
+              <Link href={primaryHref} className={`min-w-0 flex-1 hover:opacity-90 ${PRIMARY_CTA_FOCUS_CLASS}`}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-slate-900">
                     {listingDisplayTitle(p)}
@@ -260,7 +260,7 @@ export default async function AdminPropertiesPage() {
               >
                 <Link
                   href={`/admin/properties/${p.id}`}
-                  className="min-w-0 flex-1 hover:opacity-90"
+                  className={`min-w-0 flex-1 hover:opacity-90 ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-slate-700">

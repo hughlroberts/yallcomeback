@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { AccountSettingsShell } from "@/components/account-settings-shell";
 import { auth } from "@/lib/auth";
@@ -127,8 +128,7 @@ function PaymentLink({
   external?: boolean;
   badge?: string;
 }) {
-  const className =
-    "flex items-start justify-between gap-4 rounded-2xl border border-stone-200 bg-white px-4 py-4 transition hover:border-stone-300 hover:bg-stone-50";
+  const className = `flex items-start justify-between gap-4 rounded-2xl border border-stone-200 bg-white px-4 py-4 transition hover:border-stone-300 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`;
 
   const body = (
     <>

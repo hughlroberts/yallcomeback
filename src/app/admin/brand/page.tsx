@@ -285,7 +285,7 @@ export default async function AdminBrandPage({
           DNS is live.{" "}
           <Link
             href="/help/branded-website"
-            className="font-semibold underline"
+            className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Domain help
           </Link>
@@ -364,13 +364,13 @@ export default async function AdminBrandPage({
                   </p>
                   <p className="mt-2 text-xs">
                     Guide:{" "}
-                    <Link href="/self-host" className="font-semibold underline">
+                    <Link href="/self-host" className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
                       /self-host
                     </Link>
                     {" · "}
                     <Link
                       href="/help/syndication-api-key"
-                      className="font-semibold underline"
+                      className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
                       Syndication key
                     </Link>
@@ -479,7 +479,7 @@ export default async function AdminBrandPage({
                   No listings yet.{" "}
                   <Link
                     href="/admin/properties"
-                    className="font-medium text-bonnet hover:underline"
+                    className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     Add a stay →
                   </Link>
@@ -513,7 +513,7 @@ export default async function AdminBrandPage({
                           <Link
                             href={path}
                             target="_blank"
-                            className="text-xs font-semibold text-bonnet hover:underline"
+                            className={`text-xs font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                           >
                             Open →
                           </Link>
@@ -580,7 +580,7 @@ export default async function AdminBrandPage({
                       </p>
                       <Link
                         href="/account/settings/personal?edit=1"
-                        className="mt-2 inline-block text-sm font-semibold text-bonnet hover:underline"
+                        className={`mt-2 inline-block text-sm font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                       >
                         Edit profile photo →
                       </Link>
@@ -766,7 +766,7 @@ export default async function AdminBrandPage({
                   <button
                     type="submit"
                     form="logo-clear-form"
-                    className="text-sm font-medium text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline"
+                    className={`text-sm font-medium text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     Remove logo (use profile photo on site)
                   </button>
@@ -815,7 +815,7 @@ export default async function AdminBrandPage({
               <p className="text-sm">
                 <Link
                   href={previewPath}
-                  className="font-semibold text-bonnet hover:underline"
+                  className={`font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                   target="_blank"
                 >
                   Preview guest site →
@@ -980,7 +980,7 @@ export default async function AdminBrandPage({
                 After save, open{" "}
                 <Link
                   href={`/h/${host.slug}/about#contact`}
-                  className="font-medium text-bonnet hover:underline"
+                  className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   /h/{host.slug}/about#contact
                 </Link>{" "}
@@ -1135,7 +1135,7 @@ export default async function AdminBrandPage({
                   <Link
                     href={previewPath}
                     target="_blank"
-                    className="font-semibold text-bonnet hover:underline"
+                    className={`font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     {previewPath} →
                   </Link>
@@ -1190,7 +1190,7 @@ export default async function AdminBrandPage({
                       forward the apex to www. Full guide:{" "}
                       <Link
                         href="/help/branded-website"
-                        className="font-semibold text-bonnet underline"
+                        className={`font-semibold text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                       >
                         Help · Branded website
                       </Link>
@@ -1366,7 +1366,7 @@ export default async function AdminBrandPage({
               <Link
                 href={previewPath}
                 target="_blank"
-                className="text-sm font-medium text-bonnet hover:underline"
+                className={`text-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Preview site →
               </Link>
@@ -1374,14 +1374,14 @@ export default async function AdminBrandPage({
               <Link
                 href={marketplaceListingPath(listings[0].slug, host.slug)}
                 target="_blank"
-                className="text-sm font-medium text-bonnet hover:underline"
+                className={`text-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Open a listing →
               </Link>
             ) : null}
             <Link
               href="/admin"
-              className="text-sm font-medium text-stone-600 hover:text-stone-900"
+              className={`text-sm font-medium text-stone-600 hover:text-stone-900 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               ← Host dashboard
             </Link>
@@ -1438,7 +1438,7 @@ export default async function AdminBrandPage({
             className="order-14 scroll-mt-28 p-6 text-sm text-stone-500"
           >
             Turn on <strong>Other services</strong> under{" "}
-            <a href="#pages" className="font-medium text-bonnet hover:underline">
+            <a href="#pages" className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
               Pages
             </a>
             , save, then open the guest services page to add boat cards, photos,
@@ -1463,7 +1463,7 @@ export default async function AdminBrandPage({
                   <Link
                     href="/help/syndication-api-key"
                     target="_blank"
-                    className="inline-flex size-7 items-center justify-center rounded-full border border-stone-300 bg-white text-xs font-bold text-stone-600 hover:border-bonnet hover:text-bonnet"
+                    className={`inline-flex size-7 items-center justify-center rounded-full border border-stone-300 bg-white text-xs font-bold text-stone-600 hover:border-bonnet hover:text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
                     title="What is this key?"
                     aria-label="About the syndication API key"
                   >
@@ -1512,7 +1512,7 @@ export default async function AdminBrandPage({
               </Button>
               <Link
                 href="/help/syndication-api-key"
-                className="text-sm font-medium text-bonnet hover:underline"
+                className={`text-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 How this works →
               </Link>

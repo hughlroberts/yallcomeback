@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { CalendarDays } from "lucide-react";
@@ -84,7 +85,7 @@ export default async function EarningsUpcomingPage({
           </p>
           <Link
             href="/admin/bookings"
-            className="mt-6 text-sm font-semibold text-bonnet underline-offset-2 hover:underline"
+            className={`mt-6 text-sm font-semibold text-bonnet underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             View bookings
           </Link>
@@ -120,7 +121,7 @@ export default async function EarningsUpcomingPage({
                     <td className="px-4 py-3.5 text-stone-700">
                       <Link
                         href={`/admin/properties/${r.propertyId}`}
-                        className="hover:underline"
+                        className={`hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                       >
                         {r.propertyTitle}
                       </Link>

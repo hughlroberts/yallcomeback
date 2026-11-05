@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -82,7 +83,7 @@ export default async function AdminPaymentsPage({
           the stay. Your hosting plan and card for Yall Come Back live under{" "}
           <Link
             href="/account/settings/subscription"
-            className="font-semibold text-bonnet hover:underline"
+            className={`font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Account → Subscription
           </Link>
@@ -98,7 +99,7 @@ export default async function AdminPaymentsPage({
           and <code className="rounded bg-amber-100 px-1">STRIPE_SECRET_KEY</code>{" "}
           from{" "}
           <a
-            className="underline"
+            className={`underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             href="https://dashboard.stripe.com/apikeys"
             target="_blank"
             rel="noreferrer"
@@ -188,7 +189,7 @@ export default async function AdminPaymentsPage({
             {needsOnboarding ? (
               <Link
                 href="/admin"
-                className="text-sm font-medium text-stone-600 underline-offset-2 hover:text-bonnet hover:underline"
+                className={`text-sm font-medium text-stone-600 underline-offset-2 hover:text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Skip for now
               </Link>

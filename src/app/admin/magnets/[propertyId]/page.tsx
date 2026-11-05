@@ -120,7 +120,7 @@ export default async function AdminMagnetPrintPage({
           <p className="text-sm text-slate-500">
             <Link
               href="/admin/magnets"
-              className="font-medium text-bonnet hover:underline"
+              className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               ← Fridge magnets
             </Link>
@@ -178,7 +178,7 @@ export default async function AdminMagnetPrintPage({
         {!hasHostWebsite && effectiveTarget === "host" ? (
           <p className="mt-3 text-xs text-slate-500">
             Tip: set your website under{" "}
-            <Link href="/admin/brand" className="font-medium text-bonnet hover:underline">
+            <Link href="/admin/brand" className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
               Brand & website
             </Link>{" "}
             so the QR uses your real domain (e.g. cherokeelanding.net).

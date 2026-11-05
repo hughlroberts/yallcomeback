@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminBrandSwitcher } from "@/components/admin-brand-switcher";
@@ -157,7 +158,7 @@ export default async function AdminLayout({
             Pay under{" "}
             <Link
               href="/account/settings/subscription"
-              className="font-semibold underline"
+              className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Subscription
             </Link>{" "}
@@ -178,7 +179,7 @@ export default async function AdminLayout({
             stays until you{" "}
             <Link
               href="/account/settings/subscription"
-              className="font-semibold underline"
+              className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               pay hosting
             </Link>

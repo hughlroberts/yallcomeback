@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatDateUS, formatMoney, nightsBetween } from "@/lib/utils";
@@ -62,7 +63,7 @@ export default async function AdminDirectBookingPage({
       <p>
         <Link
           href="/admin/bookings"
-          className="text-sm font-medium text-bonnet hover:underline"
+          className={`text-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           ← Bookings
         </Link>
@@ -85,7 +86,7 @@ export default async function AdminDirectBookingPage({
                 {block.guestEmail ? (
                   <a
                     href={`mailto:${block.guestEmail}`}
-                    className="text-bonnet hover:underline"
+                    className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     {block.guestEmail}
                   </a>
@@ -93,7 +94,7 @@ export default async function AdminDirectBookingPage({
                 {block.guestPhone ? (
                   <a
                     href={`tel:${block.guestPhone.replace(/[^\d+]/g, "")}`}
-                    className="text-bonnet hover:underline"
+                    className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     {block.guestPhone}
                   </a>
@@ -148,7 +149,7 @@ export default async function AdminDirectBookingPage({
             href={block.stripeHostedInvoiceUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 inline-block text-xs font-medium text-bonnet hover:underline"
+            className={`mt-2 inline-block text-xs font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Open Stripe invoice →
           </a>
@@ -165,7 +166,7 @@ export default async function AdminDirectBookingPage({
         ) : null}
         <Link
           href={`/admin/properties/${block.property.id}?tab=blocks`}
-          className="inline-flex min-h-11 items-center text-sm font-medium text-bonnet hover:underline"
+          className={`inline-flex min-h-11 items-center text-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Edit in Blocks tab →
         </Link>

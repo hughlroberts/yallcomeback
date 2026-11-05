@@ -1,4 +1,5 @@
 import { SEARCH_MAX_PETS } from "@/lib/search-filters";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import Image from "next/image";
 import { BLOCK_TYPE_OPTIONS, DEFAULT_BLOCK_TYPE } from "@/lib/block-types";
 import { listingDisplayTitle } from "@/lib/listing-display-title";
@@ -627,7 +628,7 @@ export default async function AdminPropertyDetailPage({
                     </select>
                     <button
                       type="submit"
-                      className="text-xs font-medium text-bonnet hover:underline"
+                      className={`text-xs font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
                       Save
                     </button>
@@ -637,7 +638,7 @@ export default async function AdminPropertyDetailPage({
                   <form action={deleteSeason}>
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="propertyId" value={property.id} />
-                    <button type="submit" className="text-xs text-red-600">
+                    <button type="submit" className={`text-xs text-red-600 ${PRIMARY_CTA_FOCUS_CLASS}`}>
                       Remove
                     </button>
                   </form>
@@ -674,7 +675,7 @@ export default async function AdminPropertyDetailPage({
                     </select>
                     <button
                       type="submit"
-                      className="text-xs font-medium text-bonnet hover:underline"
+                      className={`text-xs font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
                       Save
                     </button>
@@ -684,7 +685,7 @@ export default async function AdminPropertyDetailPage({
                   <form action={deleteSeason}>
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="propertyId" value={property.id} />
-                    <button type="submit" className="text-xs text-red-600">
+                    <button type="submit" className={`text-xs text-red-600 ${PRIMARY_CTA_FOCUS_CLASS}`}>
                       Delete
                     </button>
                   </form>
@@ -940,7 +941,7 @@ export default async function AdminPropertyDetailPage({
                       href={b.stripeHostedInvoiceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-1 inline-block text-xs font-medium text-bonnet hover:underline"
+                      className={`mt-1 inline-block text-xs font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
                       Open Stripe invoice / pay link →
                     </a>
@@ -950,7 +951,7 @@ export default async function AdminPropertyDetailPage({
                   <form action={deleteCalendarBlock}>
                     <input type="hidden" name="id" value={b.id} />
                     <input type="hidden" name="propertyId" value={property.id} />
-                    <button type="submit" className="text-red-600">
+                    <button type="submit" className={`text-red-600 ${PRIMARY_CTA_FOCUS_CLASS}`}>
                       Remove
                     </button>
                   </form>
@@ -966,7 +967,7 @@ export default async function AdminPropertyDetailPage({
                         <input type="hidden" name="propertyId" value={property.id} />
                         <button
                           type="submit"
-                          className="text-xs font-semibold text-emerald-800 underline-offset-2 hover:underline"
+                          className={`text-xs font-semibold text-emerald-800 underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                         >
                           Mark paid (POS / cash / card in person)
                         </button>

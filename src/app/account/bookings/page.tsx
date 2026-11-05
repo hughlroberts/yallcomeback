@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { formatMoney } from "@/lib/utils";
@@ -36,7 +37,7 @@ export default async function MyBookingsPage() {
         <h1 className="text-2xl font-semibold">My bookings</h1>
         <Link
           href="/account/settings/personal"
-          className="text-sm font-medium text-bonnet hover:underline"
+          className={`text-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Account settings
         </Link>
@@ -45,7 +46,7 @@ export default async function MyBookingsPage() {
         {bookings.length === 0 && (
           <p className="text-stone-500">
             No bookings yet.{" "}
-            <Link href="/properties" className="text-bonnet">
+            <Link href="/properties" className={`text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}>
               Browse properties
             </Link>
           </p>
@@ -59,7 +60,7 @@ export default async function MyBookingsPage() {
               <div>
                 <Link
                   href={`/properties/${b.property.slug}`}
-                  className="font-semibold text-stone-900 hover:underline"
+                  className={`font-semibold text-stone-900 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   {b.property.title}
                 </Link>

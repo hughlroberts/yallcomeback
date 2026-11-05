@@ -325,7 +325,7 @@ export default async function AccountSubscriptionPage({
 
       <p className="mt-6 text-xs leading-relaxed text-stone-400">
         Guest cards, website deposit method, and extras stay under{" "}
-        <Link href="/admin/payments" className="underline hover:text-stone-600">
+        <Link href="/admin/payments" className={`underline hover:text-stone-600 ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Admin → Payments
         </Link>
         . The card on a brand above is only that brand&apos;s Yall Come Back
@@ -477,7 +477,7 @@ function BrandHostingCard({
               </Link>
               <Link
                 href="/help/branded-website"
-                className="text-sm font-semibold text-bonnet hover:underline"
+                className={`text-sm font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 How it works →
               </Link>
@@ -490,7 +490,7 @@ function BrandHostingCard({
             Marketplace listing is included. Set logo, colors, and domain under{" "}
             <Link
               href="/admin/brand"
-              className="font-semibold text-bonnet hover:underline"
+              className={`font-semibold text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Brand &amp; website
             </Link>

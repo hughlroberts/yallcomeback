@@ -1,4 +1,5 @@
 import { planPublicDescription } from "@/lib/hosting-prices";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { brandedPriceLabel } from "@/lib/hosting-prices";
 import { redirect } from "next/navigation";
 import { HostSignupForm } from "@/components/HostSignupForm";
@@ -70,7 +71,7 @@ export default async function SignupPage({
           Looking to book a stay?{" "}
           <a
             href="/register"
-            className="font-medium text-bonnet hover:underline"
+            className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Create a guest account
           </a>

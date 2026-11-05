@@ -194,7 +194,7 @@ export default async function PersonalInfoPage({
               <form action={clearUserAvatar} className="mt-3">
                 <button
                   type="submit"
-                  className="text-xs font-medium text-stone-500 underline-offset-2 hover:underline"
+                  className={`text-xs font-medium text-stone-500 underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   Remove photo
                 </button>
@@ -310,7 +310,7 @@ function Row({
       </div>
       <Link
         href={href}
-        className="shrink-0 text-sm font-medium text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline"
+        className={`shrink-0 text-sm font-medium text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
       >
         {action}
       </Link>

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { requestPasswordReset } from "@/app/actions/auth-email";
 import { Button, Input, Label, Card } from "@/components/ui";
 import { auth } from "@/lib/auth";
@@ -65,7 +66,7 @@ export default async function ForgotPasswordPage({
         )}
 
         <p className="mt-6 text-center text-sm text-stone-500">
-          <a href="/login" className="font-medium text-bonnet">
+          <a href="/login" className={`font-medium text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Back to sign in
           </a>
         </p>

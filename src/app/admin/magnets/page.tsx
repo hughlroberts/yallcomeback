@@ -49,7 +49,7 @@ export default async function AdminMagnetsPage() {
       {properties.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500 shadow-sm">
           No listings yet.{" "}
-          <Link href="/admin/properties/new" className="font-medium text-bonnet">
+          <Link href="/admin/properties/new" className={`font-medium text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Create a listing
           </Link>{" "}
           first.

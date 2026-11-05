@@ -84,7 +84,7 @@ export default async function AdminBookingsPage({
       <p className="mb-3">
         <Link
           href="/admin"
-          className="text-sm font-medium text-bonnet hover:underline"
+          className={`text-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           ← Dashboard
         </Link>
@@ -112,7 +112,7 @@ export default async function AdminBookingsPage({
               <li key={b.id}>
                 <Link
                   href={`/admin/bookings/${b.id}`}
-                  className="font-medium text-bonnet hover:underline"
+                  className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   {b.guestName} · {b.property.title} · {formatDateUS(b.checkIn)}
                 </Link>
@@ -132,7 +132,7 @@ export default async function AdminBookingsPage({
           <Link
             key={`${r.kind}-${r.id}`}
             href={r.href}
-            className="block rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow"
+            className={`block rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">

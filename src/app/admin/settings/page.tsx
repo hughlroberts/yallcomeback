@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { redirect } from "next/navigation";
 import { requireHostAdmin } from "@/lib/auth";
 import { Card } from "@/components/ui";
@@ -24,10 +25,10 @@ export default async function AdminSettingsPage() {
           Update your personal account and notifications under Account settings.
         </p>
         <div className="flex flex-wrap gap-4 text-sm font-semibold">
-          <Link href="/account/settings" className="text-bonnet hover:underline">
+          <Link href="/account/settings" className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Account settings
           </Link>
-          <Link href="/admin" className="text-bonnet hover:underline">
+          <Link href="/admin" className={`text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             ← Host admin
           </Link>
         </div>
