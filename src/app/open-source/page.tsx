@@ -176,7 +176,7 @@ export default function OpenSourcePage() {
           </ol>
 
           <div className="mt-8 overflow-hidden rounded-2xl border border-stone-800 bg-stone-950 text-stone-100 shadow-lg">
-            <div className="border-b border-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-stone-400">
+            <div className="border-b border-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-stone-300">
               Terminal
             </div>
             <pre className="overflow-x-auto p-5 text-sm leading-relaxed">
@@ -330,7 +330,7 @@ npm run build && npm start
           </div>
 
           <div className="mt-8 overflow-hidden rounded-2xl border border-stone-800 bg-stone-950 text-stone-100 shadow-lg">
-            <div className="border-b border-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-stone-400">
+            <div className="border-b border-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-stone-300">
               Remote open source · push one listing (path B)
             </div>
             <pre className="overflow-x-auto p-5 text-sm leading-relaxed">{`# On the central Yall Come Back site after approval:

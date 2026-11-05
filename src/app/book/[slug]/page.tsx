@@ -361,7 +361,7 @@ export default async function BookPage({
               <p className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
                 {formatMoney(quote.depositAmount)}
               </p>
-              <p className="mt-1 text-sm text-honey/80">
+              <p className="mt-1 text-sm text-honey">
                 of {formatMoney(quote.totalAmount)} stay total
                 {paysNow ? "" : " · nothing charged now"}
               </p>
@@ -629,7 +629,12 @@ export default async function BookPage({
               Host disclosure
             </p>
 
-            <div className="mt-3 max-h-64 space-y-4 overflow-y-auto">
+            <div
+              className="mt-3 max-h-64 space-y-4 overflow-y-auto rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
+              tabIndex={0}
+              role="region"
+              aria-label="Host disclosure"
+            >
               <div>
                 <p className="text-sm font-semibold text-stone-900">
                   Cancellation policy
