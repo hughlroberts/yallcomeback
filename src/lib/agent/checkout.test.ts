@@ -59,4 +59,21 @@ describe("agent stay checkout", () => {
     });
     expect(result).toMatchObject({ ok: false, status: 400, code: "stay_too_long" });
   });
+
+  it("E1104-C1: past check-in is 400 past_dates before any DB read", async () => {
+    const result = await createAgentStayCheckout({
+      slug: "any-slug",
+      checkIn: "2025-01-01",
+      checkOut: "2025-01-04",
+      guestName: "Test Guest",
+      guestEmail: "guest@example.com",
+      acceptTerms: true,
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      status: 400,
+      code: "past_dates",
+    });
+  });
+
 });

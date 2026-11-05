@@ -38,15 +38,16 @@ describe("R1104-18 max stay on /book/{slug} and the mobile bar", () => {
   it("book page hides the quote/deposit and disables submit on that error", () => {
     const page = src("src/app/book/[slug]/page.tsx");
     expect(page).toMatch(/stayTooLong = quote\.error === MAX_STAY_QUOTE_ERROR/);
-    expect(page).toMatch(/\{stayTooLong \? null : \(\s*<dl/);
-    expect(page).toMatch(/\{stayTooLong \? null : \(\s*<div className="w-full rounded-2xl bg-bonnet/);
+    expect(page).toMatch(/quoteBlocked = Boolean\(quote\.error\)/);
+    expect(page).toMatch(/\{quoteBlocked \? null : \(\s*<dl/);
+    expect(page).toMatch(/\{quoteBlocked \? null : \(\s*<div className="w-full rounded-2xl bg-bonnet/);
     expect(page).toMatch(/disabled=\{!available \|\| !!quote\.error/);
   });
-  it("mobile sticky bar disables its button with the same check; widget unchanged", () => {
+  it("mobile sticky bar and widget disable on any quote error (max stay or past)", () => {
     const bar = src("src/components/mobile-reserve-bar.tsx");
-    expect(bar).toMatch(/overMaxStay = bar\.error === MAX_STAY_ERROR/);
-    expect(bar).toMatch(/disabled=\{overMaxStay\}/);
+    expect(bar).toMatch(/quoteBlocked = Boolean\(bar\.error\)/);
+    expect(bar).toMatch(/disabled=\{quoteBlocked\}/);
     const widget = src("src/components/booking-widget.tsx");
-    expect(widget).toMatch(/disabled=\{overMaxStay\}/);
+    expect(widget).toMatch(/disabled=\{quoteBlocked\}/);
   });
 });

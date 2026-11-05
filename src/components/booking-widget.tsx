@@ -1,6 +1,5 @@
 "use client";
 
-import { MAX_STAY_ERROR } from "@/lib/booking-quote";
 import { BOOKING_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -152,8 +151,9 @@ export function BookingWidget({
     taxLiabilityAcknowledged,
   });
 
-  const overMaxStay = Boolean(
-    quote && "error" in quote && quote.error === MAX_STAY_ERROR,
+  // E1104-C1 / R1104-18: any quote error (past dates, max stay, pets, …) blocks CTA.
+  const quoteBlocked = Boolean(
+    quote && "error" in quote && quote.error,
   );
 
   function onBook() {
@@ -455,8 +455,8 @@ export function BookingWidget({
         <button
           type="button"
           onClick={onBook}
-          disabled={overMaxStay}
-          aria-disabled={overMaxStay}
+          disabled={quoteBlocked}
+          aria-disabled={quoteBlocked}
           className={`disabled:cursor-not-allowed disabled:opacity-50 mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active ${BOOKING_CTA_FOCUS_CLASS}`}
         >
           {depositDueNow ? "Reserve" : "Request to book"}

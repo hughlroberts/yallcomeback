@@ -34,9 +34,15 @@ export async function createBooking(formData: FormData) {
   }
   // R1104-8: same max stay length as search, quote and agent checkout.
   {
-    const { MAX_STAY_NIGHTS, nightsBetweenYmd } = await import("@/lib/search-dates");
+    const { MAX_STAY_NIGHTS, nightsBetweenYmd, isValidYmd } = await import("@/lib/search-dates");
     if (nightsBetweenYmd(checkIn, checkOut) > MAX_STAY_NIGHTS) {
       throw new Error(`Stays can be up to ${MAX_STAY_NIGHTS} nights. Pick a shorter range.`);
+    }
+    // E1104-C1: past check-in (America/Chicago / host zone).
+    const { hostTodayYmd } = await import("@/lib/host-today");
+    const { PAST_DATES_ERROR } = await import("@/lib/booking-quote");
+    if (isValidYmd(checkIn) && checkIn < hostTodayYmd()) {
+      throw new Error(PAST_DATES_ERROR);
     }
   }
 

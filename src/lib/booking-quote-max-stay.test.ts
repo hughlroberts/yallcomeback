@@ -25,12 +25,12 @@ describe("R1104-18 widget max stay", () => {
     expect(over.error).toBe(MAX_STAY_ERROR);
     expect(over.nights).toBe(91);
   });
-  it("disables the book button when over the max", () => {
+  it("disables the book button when the quote has an error (max stay or past)", () => {
     const src = readFileSync(
       join(process.cwd(), "src/components/booking-widget.tsx"),
       "utf8",
     );
-    expect(src).toMatch(/quote\.error === MAX_STAY_ERROR/);
-    expect(src).toMatch(/disabled=\{overMaxStay\}/);
+    expect(src).toMatch(/const quoteBlocked = Boolean/);
+    expect(src).toMatch(/disabled=\{quoteBlocked\}/);
   });
 });

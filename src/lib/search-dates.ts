@@ -50,6 +50,10 @@ export function isValidYmd(s: string): boolean {
  * because monthly discounts and long-stay cancellation rules start at 28
  * nights, so month-plus stays are a supported case.
  */
+/** Guest-facing copy when check-in is before today (host zone / America/Chicago). */
+export const PAST_DATES_ERROR =
+  "Those dates have already passed. Pick dates from today on.";
+
 export const MAX_STAY_NIGHTS = 90;
 
 export type SearchDatesCheck =

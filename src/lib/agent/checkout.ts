@@ -9,7 +9,8 @@ import { SEARCH_MAX_PETS } from "@/lib/search-filters";
 import { prisma } from "@/lib/db";
 import { calculateQuote } from "@/lib/pricing";
 import { isRangeAvailable, lockPropertyBookings } from "@/lib/availability";
-import { isYmd, MAX_STAY_NIGHTS, nightsBetweenYmd } from "@/lib/search-dates";
+import { isYmd, isValidYmd, MAX_STAY_NIGHTS, nightsBetweenYmd } from "@/lib/search-dates";
+import { hostTodayYmd } from "@/lib/host-today";
 import { marketplacePropertyWhere } from "@/lib/host";
 import { isStripeConfigured } from "@/lib/stripe";
 import { canHostAddFutureWork } from "@/lib/hosting";
@@ -93,6 +94,15 @@ export async function createAgentStayCheckout(
       ok: false,
       status: 400,
       error: "checkOut must be after checkIn.",
+    };
+  }
+  // E1104-C1: past check-in — same code as /api/v1/search and listings.
+  if (isValidYmd(checkIn) && checkIn < hostTodayYmd()) {
+    return {
+      ok: false,
+      status: 400,
+      code: "past_dates",
+      error: "Those dates have already passed. Pick dates from today on.",
     };
   }
   if (nightsBetweenYmd(checkIn, checkOut) > MAX_STAY_NIGHTS) {

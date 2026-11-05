@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  PAST_DATES_ERROR,
   computeBookingQuote,
   initialPetCount,
   type BookingQuoteInput,
@@ -59,6 +60,17 @@ describe("computeBookingQuote", () => {
       ],
     })!;
     expect(q.total).toBe(650);
+  });
+  it("E1104-C1: past check-in is an error with no deposit/total", () => {
+    const q = computeBookingQuote({
+      ...base,
+      checkIn: "2025-01-01",
+      checkOut: "2025-01-04",
+    })!;
+    expect(q.error).toBe(PAST_DATES_ERROR);
+    expect(q.nights).toBe(3);
+    expect(q.total).toBeUndefined();
+    expect(q.deposit).toBeUndefined();
   });
   it("flags blocked nights and bad ranges", () => {
     expect(

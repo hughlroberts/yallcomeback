@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { MAX_STAY_ERROR } from "@/lib/booking-quote";
 import { formatMoney } from "@/lib/utils";
 import {
   type BookingBarState,
@@ -72,7 +71,8 @@ export function MobileReserveBar({
   const dateLabel = bookingBarDateLabel(bar.checkIn, bar.checkOut);
   const ready = Boolean(dateLabel && bar.total != null && !bar.error);
   // R1104-18: same 90-night check as the widget button.
-  const overMaxStay = bar.error === MAX_STAY_ERROR;
+  // E1104-C1 / R1104-18: past dates, max stay, and other quote errors disable CTA.
+  const quoteBlocked = Boolean(bar.error);
   const visible = show && !modalOpen;
 
   useEffect(() => {
@@ -184,8 +184,8 @@ export function MobileReserveBar({
             if (ready && runBookingBarAction()) return;
             scrollToReserve();
           }}
-          disabled={overMaxStay}
-          aria-disabled={overMaxStay}
+          disabled={quoteBlocked}
+          aria-disabled={quoteBlocked}
           className={`disabled:cursor-not-allowed disabled:opacity-50 inline-flex min-h-12 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active ${BOOKING_CTA_FOCUS_CLASS}`}
         >
           {bookingBarCta(depositDueNow)}

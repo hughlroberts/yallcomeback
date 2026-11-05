@@ -1,4 +1,11 @@
-import { MAX_STAY_NIGHTS } from "@/lib/search-dates";
+import {
+  MAX_STAY_NIGHTS,
+  PAST_DATES_ERROR,
+  isValidYmd,
+} from "@/lib/search-dates";
+import { hostTodayYmd } from "@/lib/host-today";
+
+export { PAST_DATES_ERROR };
 
 /** Widget / mobile bar message for a stay over MAX_STAY_NIGHTS. */
 export const MAX_STAY_ERROR = `Stays are limited to ${MAX_STAY_NIGHTS} nights`;
@@ -114,6 +121,11 @@ export function computeBookingQuote(input: BookingQuoteInput): BookingQuote | nu
   const nights = nightsBetween(checkIn, checkOut);
   if (!Number.isFinite(nights)) return { error: "Choose valid dates" };
   if (nights < 1) return { error: "Check-out must be after check-in" };
+  // E1104-C1: past check-in (property zone or America/Chicago).
+  const today = hostTodayYmd();
+  if (isValidYmd(checkIn) && checkIn < today) {
+    return { error: PAST_DATES_ERROR, nights };
+  }
   // R1104-18: same cap as the search, quote and checkout APIs.
   if (nights > MAX_STAY_NIGHTS) {
     return { error: MAX_STAY_ERROR, nights };

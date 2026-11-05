@@ -13,7 +13,16 @@ import {
 import { resolvePetCharges, type PetFeeUnit } from "./pets";
 import { pickSeasonForNight } from "./season-pick";
 import { extraGuestCharge } from "./extra-guests";
-import { MAX_STAY_NIGHTS } from "./search-dates";
+import {
+  MAX_STAY_NIGHTS,
+  PAST_DATES_ERROR,
+  isValidYmd,
+  formatYmd,
+} from "./search-dates";
+import { hostTodayYmd } from "./host-today";
+
+/** Alias so /book and createBooking share the widget copy. */
+export const PAST_DATES_QUOTE_ERROR = PAST_DATES_ERROR;
 
 /** R1104-18: shown on /book/{slug} and the widget for 91+ nights. */
 export const MAX_STAY_QUOTE_ERROR = `Stays are limited to ${MAX_STAY_NIGHTS} nights`;
@@ -145,6 +154,15 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
       0,
       "Check-out must be after check-in",
     );
+  }
+
+  // E1104-C1: reject past check-in the same way as reversed dates (error, $0).
+  {
+    const checkInYmd = formatYmd(startOfDay(checkIn));
+    const today = hostTodayYmd();
+    if (isValidYmd(checkInYmd) && checkInYmd < today) {
+      return emptyQuote(property, pets, nights, PAST_DATES_QUOTE_ERROR);
+    }
   }
 
   if (nights > MAX_STAY_NIGHTS) {

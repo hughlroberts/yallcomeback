@@ -122,6 +122,7 @@ Content-Type: application/json
 
 - No token or API key. Rate limited: 10 checkouts per IP per 15 minutes, 40 per IP per day, 5 per guest email per hour (HTTP 429 with a Retry-After header and the limit named in the body).
 - Returns checkoutUrl. Send the human there to pay with a card.
+- Past check-in dates return HTTP 400 code past_dates (same as search).
 - Stays longer than 90 nights return HTTP 400 code stay_too_long.
 - Dates are not held. Calendar is not written until Stripe confirms the deposit is paid.
 - If another guest pays for overlapping nights first, this payment is refunded in full automatically and the booking is cancelled. Tell the guest this can happen.

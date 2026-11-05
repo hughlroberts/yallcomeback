@@ -528,7 +528,7 @@ export function buildOpenApiDocument(origin: string) {
             },
             "400": {
               description:
-                "Invalid request ({ok:false, code, error}); stays longer than 90 nights get code stay_too_long.",
+                "Invalid request ({ok:false, code, error}); past check-in gets code past_dates; stays longer than 90 nights get code stay_too_long.",
             },
             "404": { description: "Listing not on marketplace" },
             "409": {

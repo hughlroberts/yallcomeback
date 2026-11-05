@@ -56,6 +56,17 @@ describe("pickSeasonForNight", () => {
   });
 
   it("the quote uses a night price set inside a season", () => {
+    // Future calendar year so calculateQuote's past-date guard does not empty the quote.
+    const summer27 = {
+      ...summer,
+      startDate: day("2027-06-01"),
+      endDate: day("2027-08-31"),
+    };
+    const oneNight27 = {
+      ...oneNight,
+      startDate: day("2027-07-04"),
+      endDate: day("2027-07-04"),
+    };
     const q = calculateQuote({
       property: {
         baseNightlyRate: 150,
@@ -65,9 +76,9 @@ describe("pickSeasonForNight", () => {
         petsAllowed: false,
         depositPercent: 100,
       },
-      seasons: [summer, oneNight],
-      checkIn: day("2026-07-07"),
-      checkOut: day("2026-07-08"),
+      seasons: [summer27, oneNight27],
+      checkIn: day("2027-07-07"),
+      checkOut: day("2027-07-08"),
       taxLines: [],
     } as unknown as Parameters<typeof calculateQuote>[0]);
     expect(q.nightlyBreakdown[0]!.rate).toBe(250);
@@ -80,9 +91,9 @@ describe("pickSeasonForNight", () => {
         petsAllowed: false,
         depositPercent: 100,
       },
-      seasons: [summer, oneNight],
-      checkIn: day("2026-07-08"),
-      checkOut: day("2026-07-09"),
+      seasons: [summer27, oneNight27],
+      checkIn: day("2027-07-08"),
+      checkOut: day("2027-07-09"),
       taxLines: [],
     } as unknown as Parameters<typeof calculateQuote>[0]);
     expect(q2.nightlyBreakdown[0]!.seasonName).toBe("Summer");
