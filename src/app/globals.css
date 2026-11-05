@@ -49,6 +49,15 @@
   --focus-ring-offset-width: 2px;
 }
 
+/* E1104-C7: WCAG 2.5.8 minimum target size (24×24 CSS px) for native controls */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+}
+
 @theme inline {
   /* R1104-15: shared muted grays darkened just enough for WCAG AA
      (>= 4.5:1 on white and the cream page/card backgrounds). */

@@ -527,7 +527,7 @@ export default async function MarketplacePropertyPage({
           <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
             <Link
               href="/marketplace"
-              className={`text-stone-500 hover:text-stone-800 ${PRIMARY_CTA_FOCUS_CLASS}`}
+              className={`inline-flex min-h-6 items-center text-stone-500 hover:text-stone-800 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Stays
             </Link>

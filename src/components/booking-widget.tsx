@@ -289,7 +289,7 @@ export function BookingWidget({
               name="guests"
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
-              className={`mt-1 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none ${BOOKING_CTA_FOCUS_CLASS}`}
+              className={`mt-1 min-h-6 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none ${BOOKING_CTA_FOCUS_CLASS}`}
             >
               {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
@@ -308,7 +308,7 @@ export function BookingWidget({
                 name="pets"
                 value={Math.min(pets, petCap)}
                 onChange={(e) => setPets(Number(e.target.value))}
-                className={`mt-1 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none ${BOOKING_CTA_FOCUS_CLASS}`}
+                className={`mt-1 min-h-6 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none ${BOOKING_CTA_FOCUS_CLASS}`}
               >
                 {Array.from({ length: petCap + 1 }, (_, n) => n).map((n) => {
                   const feeHint =

@@ -34,22 +34,22 @@ export function SiteFooter() {
             </p>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <Link href="/marketplace" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+                <Link href="/marketplace" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
                   Browse stays
                 </Link>
               </li>
               <li>
-                <Link href="/about" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+                <Link href="/about" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
                   About
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+                <Link href="/contact" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="/help" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+                <Link href="/help" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
                   Help center
                 </Link>
               </li>
@@ -62,12 +62,12 @@ export function SiteFooter() {
             </p>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <Link href="/for-hosts" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+                <Link href="/for-hosts" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
                   Start hosting
                 </Link>
               </li>
               <li>
-                <Link href="/login?callbackUrl=/admin/calendar" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+                <Link href="/login?callbackUrl=/admin/calendar" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
                   Host sign in
                 </Link>
               </li>
@@ -79,16 +79,16 @@ export function SiteFooter() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-5 text-xs text-buttermilk/75 sm:px-6">
           <p>© {new Date().getFullYear()} {PRODUCT_DOMAIN}</p>
           <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <Link href="/terms" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+            <Link href="/terms" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
               Terms
             </Link>
-            <Link href="/privacy" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+            <Link href="/privacy" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
               Privacy
             </Link>
-            <Link href="/open-source" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+            <Link href="/open-source" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
               Own the code
             </Link>
-            <Link href="/self-host" className={`hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
+            <Link href="/self-host" className={`inline-flex min-h-6 items-center hover:text-honey ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}>
               Self-host
             </Link>
             <span className="text-honey/90">Made in Texas by Texans.</span>
