@@ -1469,7 +1469,7 @@ export function AdminListingWorkspace({
             </Link>
           </div>
         </div>
-        <div className="flex gap-1 overflow-x-auto border-b border-stone-200 pb-px">
+        <div className="flex gap-1 overflow-x-auto border-b border-stone-200 px-1 py-1.5">
           {(
             [
               { id: "calendar", label: "Calendar" },
@@ -1492,6 +1492,7 @@ export function AdminListingWorkspace({
                 onClick={() => setTab("calendar")}
                 className={cn(
                   "shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#171717]",
                   tab === "calendar"
                     ? "border-bonnet text-bonnet"
                     : "border-transparent text-stone-500 hover:text-stone-800",
@@ -1503,7 +1504,7 @@ export function AdminListingWorkspace({
               <Link
                 key={t.id}
                 href={`/admin/properties/${property.id}?tab=${t.id}`}
-                className="shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-stone-500 hover:text-stone-800"
+                className="shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-stone-500 hover:text-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#171717]"
               >
                 {t.label}
               </Link>
@@ -1658,7 +1659,7 @@ export function AdminListingWorkspace({
       </div>
 
       {/* Sub-nav */}
-      <div className="flex gap-1 overflow-x-auto border-b border-stone-200 pb-px">
+      <div className="flex gap-1 overflow-x-auto border-b border-stone-200 px-1 py-1.5">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -1666,7 +1667,8 @@ export function AdminListingWorkspace({
             onClick={() => setTab(t.id)}
             className={cn(
               "shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
-              PRIMARY_CTA_FOCUS_CLASS,
+              // E1104-C10: inset ring — overflow-x-auto clips an outset ring.
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#171717]",
               tab === t.id
                 ? "border-bonnet text-bonnet"
                 : "border-transparent text-stone-500 hover:text-stone-800",
