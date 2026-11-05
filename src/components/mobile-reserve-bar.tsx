@@ -136,7 +136,7 @@ export function MobileReserveBar({
           }}
           disabled={overMaxStay}
           aria-disabled={overMaxStay}
-          className="disabled:cursor-not-allowed disabled:opacity-50 inline-flex min-h-12 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
+          className="disabled:cursor-not-allowed disabled:opacity-50 inline-flex min-h-12 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           {bookingBarCta(depositDueNow)}
         </button>

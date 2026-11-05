@@ -288,7 +288,7 @@ export function BookingWidget({
               name="guests"
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
-              className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"
+              className="mt-1 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
             >
               {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
@@ -307,7 +307,7 @@ export function BookingWidget({
                 name="pets"
                 value={Math.min(pets, petCap)}
                 onChange={(e) => setPets(Number(e.target.value))}
-                className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none"
+                className="mt-1 w-full min-w-0 rounded-sm border-0 bg-transparent p-0 text-base outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
               >
                 {Array.from({ length: petCap + 1 }, (_, n) => n).map((n) => {
                   const feeHint =
@@ -456,7 +456,7 @@ export function BookingWidget({
           onClick={onBook}
           disabled={overMaxStay}
           aria-disabled={overMaxStay}
-          className="disabled:cursor-not-allowed disabled:opacity-50 mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
+          className="disabled:cursor-not-allowed disabled:opacity-50 mt-4 min-h-12 w-full lg:mt-0 lg:min-h-11 lg:py-3 rounded-[var(--radius-control)] bg-bonnet py-3.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           {depositDueNow ? "Reserve" : "Request to book"}
         </button>
