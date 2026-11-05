@@ -35,6 +35,10 @@ export function FirstVisitIntentGate() {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
+        // E1104-D1: Esc = same as "Just browsing" / X — intentional server
+        // action POST (setVisitIntent browse). Not a pageview beacon; analytics
+        // only sees the subsequent GET `/` via TrackPageView (same as the
+        // visible dismiss controls).
         // Browse redirect remounts `/` — stash restore target for WelcomeFocusRestore.
         // Prefer the pre-open focus target when one existed; otherwise header top.
         markWelcomeEscFocusRestore();
