@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export default function AdminNotFound() {
   return (
@@ -13,7 +14,7 @@ export default function AdminNotFound() {
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Link
           href="/admin/calendar"
-          className="rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+          className={`rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Calendar
         </Link>

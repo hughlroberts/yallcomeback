@@ -18,6 +18,7 @@ import {
 } from "@/lib/hosting-prices";
 import { TrackSignupStarted } from "@/components/track-signup-started";
 import { Check, X } from "lucide-react";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type PlanOption = {
   id: string;
@@ -375,7 +376,7 @@ export function HostSignupForm({
       <button
         type="submit"
         disabled={pending}
-        className="mt-6 w-full rounded-full bg-bonnet px-4 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover disabled:opacity-60"
+        className={`mt-6 w-full rounded-full bg-bonnet px-4 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover disabled:opacity-60 ${PRIMARY_CTA_FOCUS_CLASS}`}
       >
         {pending
           ? "Starting…"

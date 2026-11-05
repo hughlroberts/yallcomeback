@@ -1,6 +1,7 @@
 import { brandedPriceLabel } from "@/lib/hosting-prices";
 import Link from "next/link";
 import { brandedUpgradeConfirmPath } from "@/lib/branded-upgrade";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   hostId: string;
@@ -41,7 +42,7 @@ export function MarketplaceToWebsiteUpgrade({
 
       <ol className="space-y-2.5 text-sm text-stone-700">
         <li className="flex gap-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bonnet text-[11px] font-bold text-white">
+          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bonnet text-[11px] font-bold text-white`}>
             1
           </span>
           <span>
@@ -78,7 +79,7 @@ export function MarketplaceToWebsiteUpgrade({
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href={brandedUpgradeConfirmPath(hostId, returnTo)}
-          className="rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet/90"
+          className={`rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet/90 ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Create my branded website
         </Link>

@@ -15,6 +15,7 @@ import {
 
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const metadata = pageMetadata({
   title: "Open source · free self-host",
@@ -162,7 +163,7 @@ export default function OpenSourcePage() {
                 key={step.title}
                 className="flex gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet text-sm font-bold text-white">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet text-sm font-bold text-white`}>
                   {i + 1}
                 </span>
                 <div>
@@ -497,7 +498,7 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               href="/self-host"
-              className="rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+              className={`rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Free self-host guide
             </Link>

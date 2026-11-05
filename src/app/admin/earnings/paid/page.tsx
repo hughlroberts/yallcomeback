@@ -11,6 +11,7 @@ import {
   getPaidEarnings,
 } from "@/lib/earnings";
 import { formatMoney } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Earnings · Paid" };
@@ -148,7 +149,7 @@ export default async function EarningsPaidPage({
             </p>
             <a
               href={exportHref}
-              className="inline-flex rounded-[var(--radius-control)] bg-bonnet px-4 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+              className={`inline-flex rounded-[var(--radius-control)] bg-bonnet px-4 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Export CSV
             </a>

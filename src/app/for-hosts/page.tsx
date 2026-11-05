@@ -14,6 +14,10 @@ import { auth } from "@/lib/auth";
 import { destAfterHostAuth } from "@/lib/host-signup";
 import { SETUP_SERVICE_FEE_USD, SETUP_SERVICE_LABEL } from "@/lib/hosting";
 import { formatMoney } from "@/lib/utils";
+import {
+  PRIMARY_CTA_FOCUS_CLASS,
+  PRIMARY_CTA_FOCUS_ON_DARK_CLASS,
+} from "@/lib/booking-cta-focus";
 
 /** T45: sign in, then buy full setup on the Subscription page. */
 const SETUP_BUY_HREF =
@@ -121,7 +125,7 @@ export default async function ForHostsPage({
       </p>
       <Link
         href={hostDashboardHref}
-        className="mt-4 inline-flex rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover"
+        className={`mt-4 inline-flex rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
       >
         Go to dashboard
       </Link>
@@ -184,13 +188,13 @@ export default async function ForHostsPage({
           <div className="mt-5 flex flex-wrap gap-3 lg:mt-8">
             <a
               href="#apply"
-              className="rounded-full bg-honey px-5 py-2.5 text-sm font-semibold text-stone-900 hover:bg-honey/90"
+              className={`rounded-full bg-honey px-5 py-2.5 text-sm font-semibold text-stone-900 hover:bg-honey/90 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Start hosting
             </a>
             <Link
               href="/marketplace"
-              className="rounded-full border border-white/25 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+              className={`rounded-full border border-white/25 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Finding a place instead?
             </Link>
@@ -427,7 +431,7 @@ export default async function ForHostsPage({
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <Link
                   href={SETUP_BUY_HREF}
-                  className="rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
+                  className={`rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90 ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   Sign in to buy full setup
                 </Link>
@@ -513,7 +517,7 @@ export default async function ForHostsPage({
               </p>
               <Link
                 href={SETUP_BUY_HREF}
-                className="mt-3 inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
+                className={`mt-3 inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90 ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Sign in to buy full setup
               </Link>

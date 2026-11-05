@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AccountSettingsShell } from "@/components/account-settings-shell";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Account settings" };
@@ -102,7 +103,7 @@ export default async function AccountSettingsHubPage() {
           </p>
           <Link
             href="/for-hosts?start=1"
-            className="mt-3 inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover"
+            className={`mt-3 inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Start hosting
           </Link>

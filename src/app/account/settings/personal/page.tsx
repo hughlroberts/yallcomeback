@@ -16,6 +16,7 @@ import { AccountEmailChange } from "@/components/account-email-change";
 import { Button, Input, Label, Textarea } from "@/components/ui";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Profile" };
@@ -74,7 +75,7 @@ export default async function PersonalInfoPage({
                   />
                 </span>
               ) : (
-                <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-bonnet text-lg font-semibold text-white">
+                <span className={`flex size-14 shrink-0 items-center justify-center rounded-full bg-bonnet text-lg font-semibold text-white`}>
                   {(user.name || user.email || "?").slice(0, 1).toUpperCase()}
                 </span>
               )}
@@ -87,7 +88,7 @@ export default async function PersonalInfoPage({
             </div>
             <Link
               href="/account/settings/personal?edit=1"
-              className="rounded-[var(--radius-control)] bg-bonnet px-5 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover"
+              className={`rounded-[var(--radius-control)] bg-bonnet px-5 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Edit profile
             </Link>

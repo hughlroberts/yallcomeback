@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-logo";
 import { PRODUCT_NAME } from "@/lib/features";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || PRODUCT_NAME;
 
@@ -31,7 +32,7 @@ export default function NotFound() {
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/marketplace"
-            className="inline-flex items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
+            className={`inline-flex items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Browse stays
           </Link>

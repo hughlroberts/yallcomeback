@@ -20,6 +20,7 @@ import { auth } from "@/lib/auth";
 import { getRequestTenant } from "@/lib/tenant";
 import { INTENT_COOKIE, shouldShowIntentGate } from "@/lib/intent-cookie";
 import { homePageMetadata } from "@/lib/seo";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = homePageMetadata();
@@ -191,13 +192,13 @@ export default async function HomePage({
           <div className="mt-10 flex flex-wrap gap-3">
             <Link
               href="/marketplace"
-              className="rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover"
+              className={`rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Find a stay
             </Link>
             <Link
               href="/for-hosts"
-              className="rounded-full border border-bonnet/30 bg-petal px-6 py-3 text-sm font-semibold text-bonnet hover:bg-petal-hover"
+              className={`rounded-full border border-bonnet/30 bg-petal px-6 py-3 text-sm font-semibold text-bonnet hover:bg-petal-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Host the guests who come back
             </Link>
@@ -259,7 +260,7 @@ export default async function HomePage({
                       featuredHost.slug,
                       ambiguousSlugs,
                     )}
-                    className="rounded-full bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+                    className={`rounded-full bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     View listing
                   </Link>

@@ -5,6 +5,7 @@ import { BACKUP_RETENTION_DAYS, backupOpsSnapshot } from "@/lib/backup";
 import { SubmitButton } from "@/components/submit-button";
 import { copyBackupsToBucket } from "./actions";
 import { moveCardState } from "@/lib/backup-move-card";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Backups · Ops" };
@@ -140,7 +141,7 @@ export default async function OpsBackupsPage({
         <div className="mt-6">
           <a
             href="/ops/settings/backups/download"
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"
+            className={`inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Run backup now
           </a>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 /** Submits Connect onboarding once after signup when the host chose to collect cards. */
 export function AutoStartConnectOnboarding() {
@@ -25,7 +26,7 @@ export function AutoStartConnectOnboarding() {
       <noscript>
         <button
           type="submit"
-          className="mt-3 rounded-[var(--radius-control)] bg-bonnet px-4 py-2 text-sm font-medium text-white"
+          className={`mt-3 rounded-[var(--radius-control)] bg-bonnet px-4 py-2 text-sm font-medium text-white ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Continue to card onboarding
         </button>

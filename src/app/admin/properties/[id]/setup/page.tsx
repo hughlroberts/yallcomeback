@@ -22,6 +22,7 @@ import { ListingWizardPriceStep } from "@/components/listing-wizard-price-step";
 import { ListingWizardDiscountsStep } from "@/components/listing-wizard-discounts-step";
 import { ListingWizardPublishStep } from "@/components/listing-wizard-publish-step";
 import { viewerCanPublishListings } from "@/lib/email-verified";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Set up listing" };
@@ -222,7 +223,7 @@ export default async function ListingSetupPage({
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col bg-white">
       <header className="flex items-center justify-between border-b border-stone-200 px-4 py-4 sm:px-8">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white`}>
           S
         </span>
         <Link
@@ -260,14 +261,14 @@ export default async function ListingSetupPage({
                 property.host.slug,
                 `/properties/${property.slug}`,
               )}
-              className="rounded-lg bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover"
+              className={`rounded-lg bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               View live listing
             </Link>
           ) : (
             <Link
               href={`/admin/properties/${property.id}/setup?step=10`}
-              className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover"
+              className={`rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Go to publish
             </Link>

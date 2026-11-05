@@ -16,6 +16,7 @@ import {
   parseManualCoords,
   type WizardLocationValues,
 } from "@/lib/wizard-location";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   propertyId: string;
@@ -264,7 +265,7 @@ export function ListingWizardLocationStep({
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col bg-white">
       <header className="flex items-center justify-between border-b border-stone-200 px-4 py-4 sm:px-8">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white`}>
           S
         </span>
         <Link
@@ -343,7 +344,7 @@ export function ListingWizardLocationStep({
                     loading="lazy"
                   />
                   <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2">
-                    <span className="rounded-full bg-bonnet px-4 py-2 text-xs font-medium text-white shadow-lg">
+                    <span className={`rounded-full bg-bonnet px-4 py-2 text-xs font-medium text-white shadow-lg`}>
                       Nudge the pin if needed
                     </span>
                     <div className="flex gap-1 rounded-full bg-white p-1 shadow-md">
@@ -559,7 +560,7 @@ export function ListingWizardLocationStep({
               type="button"
               onClick={phase === "pin" ? onNextFromPin : onSave}
               disabled={nextDisabled}
-              className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-lupine/40"
+              className={`rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-lupine/40 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               {pending ? "Saving…" : "Next"}
             </button>

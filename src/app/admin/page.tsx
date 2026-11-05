@@ -11,6 +11,7 @@ import {
   propertyScopeWhere,
 } from "@/lib/scope";
 import { redirect } from "next/navigation";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin" };
@@ -188,7 +189,7 @@ export default async function AdminDashboard({
         actions={
           <Link
             href="/admin/calendar"
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"
+            className={`inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Open calendar
           </Link>

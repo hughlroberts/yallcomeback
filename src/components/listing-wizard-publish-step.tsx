@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { WizardMissingFields } from "@/components/wizard-missing-fields";
 import { AccountEmailChange } from "@/components/account-email-change";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   propertyId: string;
@@ -82,7 +83,7 @@ export function ListingWizardPublishStep({
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col bg-white">
       <header className="flex items-center justify-between border-b border-stone-200 px-4 py-4 sm:px-8">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white`}>
           S
         </span>
         <Link
@@ -204,7 +205,7 @@ export function ListingWizardPublishStep({
                     <span className="font-normal text-stone-500">night</span>
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full bg-bonnet px-2.5 py-1 text-xs font-semibold text-white">
+                <span className={`shrink-0 rounded-full bg-bonnet px-2.5 py-1 text-xs font-semibold text-white`}>
                   New ★
                 </span>
               </div>
@@ -360,7 +361,7 @@ export function ListingWizardPublishStep({
               type="button"
               onClick={onPublish}
               disabled={pending || !emailVerified}
-              className="rounded-lg bg-bonnet px-8 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300"
+              className={`rounded-lg bg-bonnet px-8 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               {pending ? "Publishing…" : "Publish"}
             </button>

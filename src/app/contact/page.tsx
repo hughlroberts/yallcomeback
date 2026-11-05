@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const metadata = pageMetadata({
   title: "Contact",
@@ -103,7 +104,7 @@ export default function ContactPage() {
               </p>
               <Link
                 href="/marketplace"
-                className="mt-6 inline-flex w-fit rounded-full bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+                className={`mt-6 inline-flex w-fit rounded-full bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Browse stays
               </Link>

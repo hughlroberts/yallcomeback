@@ -4,6 +4,7 @@ import { AccountSettingsShell } from "@/components/account-settings-shell";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { TAX_LIABILITY_WARNING } from "@/lib/tax";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Taxes" };
@@ -77,7 +78,7 @@ export default async function AccountTaxesPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin/taxes"
-              className="inline-flex rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover"
+              className={`inline-flex rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Open tax records and exports
             </Link>

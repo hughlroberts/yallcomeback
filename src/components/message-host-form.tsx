@@ -29,6 +29,7 @@ import {
   prepareInquirySubmit,
   type InquiryFormConfig,
 } from "@/lib/inquiries/form-config-client";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 /** Client-only flag without setState-in-effect (portals need the browser). */
 function useIsClient() {
@@ -410,7 +411,7 @@ export function MessageHostButton({
           void loadConfig();
         }}
         className={cn(
-          "inline-flex items-center justify-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet",
+          `inline-flex items-center justify-center transition ${PRIMARY_CTA_FOCUS_CLASS}`,
           variant === "link"
             ? "rounded-none p-0 text-sm font-medium text-[var(--color-brand,#2563eb)] underline-offset-2 hover:underline"
             : variant === "secondary"

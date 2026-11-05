@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { NAV_ACTIVE, NAV_IDLE } from "@/components/nav-link";
 import { UserMenu, type UserMenuProps } from "@/components/user-menu";
 
@@ -77,6 +78,7 @@ export function SiteHeaderNav(props: Props) {
           hostActive
             ? "bg-bonnet text-white shadow-sm hover:bg-bonnet-hover"
             : "border border-bonnet/25 bg-white text-bonnet shadow-sm hover:border-bonnet/40 hover:bg-petal",
+          PRIMARY_CTA_FOCUS_CLASS,
         )}
         aria-current={hostActive ? "page" : undefined}
       >

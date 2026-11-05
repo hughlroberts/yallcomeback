@@ -15,6 +15,7 @@ import {
   safeBillingReturn,
 } from "@/lib/branded-upgrade";
 import { hostingPriceId, isStripeConfigured } from "@/lib/stripe";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Upgrade to branded website" };
@@ -135,7 +136,7 @@ export default async function BrandedUpgradeConfirmPage({
             <button
               type="submit"
               disabled={!canContinue}
-              className="rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet/90 disabled:cursor-not-allowed disabled:opacity-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               {needsCheckout
                 ? "Continue to checkout"
@@ -201,7 +202,7 @@ function BrandedPayStep({
             <button
               type="submit"
               disabled={!checkoutReady}
-              className="rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet/90 disabled:cursor-not-allowed disabled:opacity-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Pay now — continue to checkout
             </button>

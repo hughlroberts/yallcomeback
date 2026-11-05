@@ -44,6 +44,7 @@ import {
 import { hostingPriceId, isStripeConfigured } from "@/lib/stripe";
 import { formatMoney } from "@/lib/utils";
 import type { Host, HostingPlan } from "@prisma/client";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 import {
   FREE_PLAN_NO_PAYMENT_LABEL,
@@ -470,7 +471,7 @@ function BrandHostingCard({
                   host.id,
                   "/account/settings/subscription",
                 )}
-                className="rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
+                className={`rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90 ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Upgrade to branded website
               </Link>

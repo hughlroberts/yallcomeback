@@ -30,6 +30,7 @@ import {
   TestBrandToggle,
 } from "@/components/billing/hosting-invoice-button";
 import { stripeLiveKeyInUse, testBrandBillingBlocked } from "@/lib/test-brand-billing";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 
@@ -187,7 +188,7 @@ export default async function OpsHostDetailPage({
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
             href={`/admin/brand?hostId=${host.id}`}
-            className="rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover"
+            className={`rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Brand &amp; website
           </Link>

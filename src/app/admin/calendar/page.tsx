@@ -12,6 +12,7 @@ import { AdminListingSwitcher } from "@/components/admin-listing-switcher";
 import { AdminListingWorkspace } from "@/components/admin-listing-workspace";
 import { hostTodayYmd } from "@/lib/host-today";
 import { viewerCanPublishListings } from "@/lib/email-verified";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Calendar · Admin" };
@@ -65,7 +66,7 @@ export default async function AdminCalendarPage({
         {allowCreate ? (
           <Link
             href="/admin/properties/new"
-            className="mt-6 inline-flex rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+            className={`mt-6 inline-flex rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Create a listing
           </Link>

@@ -15,6 +15,7 @@ import {
 
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const metadata = pageMetadata({
   title: "Free self-host · migrate your rental website",
@@ -119,7 +120,7 @@ export default function SelfHostPage() {
             </ul>
             <a
               href="#deploy"
-              className="mt-6 inline-flex rounded-full bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+              className={`mt-6 inline-flex rounded-full bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               How to deploy →
             </a>
@@ -156,7 +157,7 @@ export default function SelfHostPage() {
           </h2>
           <ol className="mt-6 space-y-4 text-sm leading-relaxed text-stone-700">
             <li className="flex gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-bonnet text-xs font-bold text-white">
+              <span className={`flex size-7 shrink-0 items-center justify-center rounded-full bg-bonnet text-xs font-bold text-white`}>
                 1
               </span>
               <span>
@@ -166,7 +167,7 @@ export default function SelfHostPage() {
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-bonnet text-xs font-bold text-white">
+              <span className={`flex size-7 shrink-0 items-center justify-center rounded-full bg-bonnet text-xs font-bold text-white`}>
                 2
               </span>
               <span>
@@ -176,7 +177,7 @@ export default function SelfHostPage() {
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-bonnet text-xs font-bold text-white">
+              <span className={`flex size-7 shrink-0 items-center justify-center rounded-full bg-bonnet text-xs font-bold text-white`}>
                 3
               </span>
               <span>
@@ -186,7 +187,7 @@ export default function SelfHostPage() {
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-bonnet text-xs font-bold text-white">
+              <span className={`flex size-7 shrink-0 items-center justify-center rounded-full bg-bonnet text-xs font-bold text-white`}>
                 4
               </span>
               <span>
@@ -215,7 +216,7 @@ export default function SelfHostPage() {
                 key={step.title}
                 className="flex gap-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white">
+                <span className={`flex size-9 shrink-0 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white`}>
                   {i + 1}
                 </span>
                 <div>

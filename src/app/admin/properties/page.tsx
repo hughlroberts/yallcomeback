@@ -24,6 +24,7 @@ import {
 } from "@/lib/listing-visibility";
 import { cn } from "@/lib/utils";
 import { viewerCanPublishListings } from "@/lib/email-verified";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Listings · Admin" };
@@ -89,7 +90,7 @@ export default async function AdminPropertiesPage() {
         {showCreate ? (
           <Link
             href="/admin/properties/new"
-            className="rounded-[var(--radius-control)] bg-bonnet px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover"
+            className={`rounded-[var(--radius-control)] bg-bonnet px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Create / import listing
           </Link>
@@ -107,7 +108,7 @@ export default async function AdminPropertiesPage() {
             {showCreate ? (
             <Link
               href="/admin/properties/new"
-              className="mt-5 inline-flex rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+              className={`mt-5 inline-flex rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Create a new listing
             </Link>
@@ -198,7 +199,7 @@ export default async function AdminPropertiesPage() {
                 {p.title === "Untitled listing" ? null : (
                   <Link
                     href={calendarHref}
-                    className="rounded-[var(--radius-control)] bg-bonnet px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"
+                    className={`rounded-[var(--radius-control)] bg-bonnet px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     Calendar
                   </Link>

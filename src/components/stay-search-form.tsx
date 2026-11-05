@@ -9,6 +9,7 @@ import {
   SEARCH_DATES_EVENT,
   searchDatesFromEvent,
 } from "@/lib/search-date-sync";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export { addDaysYmd, nightsBetweenYmd } from "@/lib/search-dates";
 
@@ -228,7 +229,7 @@ export function StaySearchForm({
             </div>
             <button
               type="submit"
-              className="min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:min-h-0 sm:w-auto sm:self-center sm:py-2.5"
+              className={`min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:min-h-0 sm:w-auto sm:self-center sm:py-2.5 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Search
             </button>
@@ -299,7 +300,7 @@ export function StaySearchForm({
           </label>
           <button
             type="submit"
-            className="min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:mb-0.5 sm:mr-0.5 sm:min-h-0 sm:w-auto sm:py-2.5"
+            className={`min-h-12 w-full shrink-0 rounded-full bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover sm:mb-0.5 sm:mr-0.5 sm:min-h-0 sm:w-auto sm:py-2.5 ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Find this stay
           </button>

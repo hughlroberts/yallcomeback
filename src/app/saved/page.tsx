@@ -11,6 +11,7 @@ import {
   subscribeSavedListings,
   toggleSavedListing,
 } from "@/lib/saved-listings-storage";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 const emptySaved: SavedListing[] = [];
 
@@ -49,7 +50,7 @@ export default function SavedStaysPage() {
           </p>
           <Link
             href="/marketplace"
-            className="mt-6 inline-flex rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+            className={`mt-6 inline-flex rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Explore stays
           </Link>

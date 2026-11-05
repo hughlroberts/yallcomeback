@@ -1,19 +1,40 @@
 /**
- * Shared focus ring for primary CTAs and the ui Button (N1 / E1104-4).
+ * Shared focus rings for primary CTAs, ui Button, and button-styled links.
  *
  * WCAG 2.4.7 (Focus Visible) + 1.4.11 (Non-text Contrast): 2px ring with
- * 2px offset. A single color cannot hit ≥3:1 against both the bonnet fill
- * (#3a4a86) and the cream page (#fbf7ef), so we use a dark ring + page-colored
- * offset (the gap is the adjacent color to the button).
+ * 2px offset. A single color cannot hit ≥3:1 against both a filled control
+ * and the page, so the ring and the offset share the work (the gap is the
+ * adjacent color to the control).
  *
- * Contrast (relative luminance, WCAG 2):
- * - ring #171717 vs page/offset buttermilk #fbf7ef → 16.78:1
- * - offset buttermilk #fbf7ef vs button bonnet #3a4a86 → 7.85:1
- * Also readable on light Button variants (secondary/ghost/danger): ring vs
- * porcelain/white ≥ 17:1.
+ * Light pages / cream chrome (buttermilk #fbf7ef):
+ * - ring #171717 vs offset buttermilk → 16.78:1
+ * - offset buttermilk vs bonnet #3a4a86 → 7.85:1
+ * Also readable on secondary/ghost fills (porcelain/white).
+ *
+ * Dark sections (stone-950 chrome). Bonnet fills cannot use a dark offset:
+ * bonnet vs stone-950 is only ~2.36:1. Use the dark variant for light fills
+ * on dark heroes (honey, white/ghost) where offset matches the section:
+ * - ring buttermilk vs offset stone-950 → 18.49:1
+ * - offset stone-950 vs honey #e8ce96 → 12.89:1 (≥3:1)
  */
-export const BOOKING_CTA_FOCUS_CLASS =
+
+/** Primary CTA focus on light / cream backgrounds. */
+export const PRIMARY_CTA_FOCUS_CLASS =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#171717] focus-visible:ring-offset-buttermilk";
+
+/**
+ * Alias kept for booking widget / Button imports (same tokens as
+ * PRIMARY_CTA_FOCUS_CLASS).
+ */
+export const BOOKING_CTA_FOCUS_CLASS = PRIMARY_CTA_FOCUS_CLASS;
+
+/**
+ * Primary CTA focus on dark heroes (bg-stone-900 / stone-950). Light ring +
+ * stone-950 offset so the halo matches the section. Use for honey / white /
+ * ghost controls — not for bonnet fills (see file comment).
+ */
+export const PRIMARY_CTA_FOCUS_ON_DARK_CLASS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-buttermilk focus-visible:ring-offset-stone-950";
 
 export const BOOKING_CTA_FOCUS_CONTRAST = {
   ring: "#171717",
@@ -21,6 +42,14 @@ export const BOOKING_CTA_FOCUS_CONTRAST = {
   button: "#3a4a86",
   ringVsOffset: 16.78,
   offsetVsButton: 7.85,
+} as const;
+
+export const PRIMARY_CTA_FOCUS_ON_DARK_CONTRAST = {
+  ring: "#fbf7ef",
+  offset: "#0c0a09", // stone-950
+  honey: "#e8ce96",
+  ringVsOffset: 18.49,
+  offsetVsHoney: 12.89,
 } as const;
 
 /** Move focus to the inline listing #reserve book button (not Guests/Pets). */

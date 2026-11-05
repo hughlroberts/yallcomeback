@@ -8,6 +8,7 @@ import {
 } from "@/lib/listing-amenities";
 import { saveListingAmenities } from "@/app/actions/properties";
 import { useListingWizardAutosave } from "@/lib/use-listing-wizard-autosave";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   propertyId: string;
@@ -93,7 +94,7 @@ export function ListingWizardAmenitiesStep({
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col bg-white">
       <header className="flex items-center justify-between border-b border-stone-200 px-4 py-4 sm:px-8">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-full bg-bonnet text-sm font-bold text-white`}>
           S
         </span>
         <Link
@@ -150,7 +151,7 @@ export function ListingWizardAmenitiesStep({
             type="button"
             onClick={onNext}
             disabled={pending}
-            className="rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:bg-lupine/40"
+            className={`rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-medium text-white hover:bg-bonnet-hover disabled:bg-lupine/40 ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             {pending ? "Saving…" : "Next"}
           </button>

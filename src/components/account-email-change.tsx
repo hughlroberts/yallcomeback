@@ -7,6 +7,7 @@ import {
   updateAccountEmailAndResend,
 } from "@/app/actions/auth-email";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   initialEmail: string;
@@ -107,7 +108,7 @@ export function AccountEmailChange({
           type="button"
           disabled={pending || !email.trim() || (unchanged && verified)}
           onClick={onSubmit}
-          className="rounded-lg bg-bonnet px-4 py-2 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300"
+          className={`rounded-lg bg-bonnet px-4 py-2 text-sm font-medium text-white hover:bg-bonnet-hover disabled:cursor-not-allowed disabled:bg-stone-300 ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           {label}
         </button>

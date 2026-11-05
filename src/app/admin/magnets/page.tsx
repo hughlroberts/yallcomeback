@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
 import { propertyScopeWhere } from "@/lib/scope";
 import { PageHeader } from "@/components/ui";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Fridge magnets · Admin" };
@@ -72,7 +73,7 @@ export default async function AdminMagnetsPage() {
               </div>
               <Link
                 href={`/admin/magnets/${p.id}`}
-                className="shrink-0 rounded-xl bg-bonnet px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover"
+                className={`shrink-0 rounded-xl bg-bonnet px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Open print page
               </Link>

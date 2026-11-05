@@ -1,5 +1,7 @@
 "use client";
 
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
+
 export function PrintMagnetButton({ className }: { className?: string }) {
   return (
     <button
@@ -7,7 +9,7 @@ export function PrintMagnetButton({ className }: { className?: string }) {
       onClick={() => window.print()}
       className={
         className ||
-        "rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+        `rounded-xl bg-bonnet px-5 py-2.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`
       }
     >
       Print this page

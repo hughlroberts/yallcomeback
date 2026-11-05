@@ -22,6 +22,7 @@ import {
 import { GuestCancelPanel } from "@/components/guest-cancel-panel";
 
 import { pageMetadata } from "@/lib/seo";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = pageMetadata({
@@ -373,7 +374,7 @@ export default async function ConfirmationPage({
           </p>
           <Link
             href={`/messages/${inboxId}`}
-            className="mt-3 inline-flex rounded-[var(--radius-control)] bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet"
+            className={`mt-3 inline-flex rounded-[var(--radius-control)] bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Open inbox message
           </Link>

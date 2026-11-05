@@ -11,6 +11,7 @@ import type {
   InsightsListingOption,
   ListingInsights,
 } from "@/lib/listing-insights";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   /** Property this admin page is for (always included in selection by default) */
@@ -217,7 +218,7 @@ export function AdminListingInsights({
                 </button>
                 <button
                   type="button"
-                  className="rounded-full bg-bonnet px-4 py-1.5 text-xs font-semibold text-white hover:bg-bonnet-hover"
+                  className={`rounded-full bg-bonnet px-4 py-1.5 text-xs font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
                   onClick={() => {
                     void applySelection(selected);
                     setOpen(false);

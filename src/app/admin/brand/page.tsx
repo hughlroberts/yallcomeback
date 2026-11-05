@@ -39,6 +39,7 @@ import {
   brandedUpgradeConfirmPath,
   canUpgradeToBranded,
 } from "@/lib/branded-upgrade";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Brand & website" };
@@ -608,7 +609,7 @@ export default async function AdminBrandPage({
                         />
                       </span>
                     ) : (
-                      <span className="flex size-14 items-center justify-center rounded-full bg-bonnet text-lg font-semibold text-white">
+                      <span className={`flex size-14 items-center justify-center rounded-full bg-bonnet text-lg font-semibold text-white`}>
                         {host.name.slice(0, 1)}
                       </span>
                     )}
@@ -1147,7 +1148,7 @@ export default async function AdminBrandPage({
 
               <ol className="space-y-3 rounded-xl border border-stone-200 bg-white px-4 py-4 text-sm text-stone-700">
                 <li className="flex gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bonnet text-[11px] font-bold text-white">
+                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bonnet text-[11px] font-bold text-white`}>
                     1
                   </span>
                   <div>
@@ -1406,7 +1407,7 @@ export default async function AdminBrandPage({
             <div className="flex flex-wrap gap-2">
               <Link
                 href={hostServicesHref(host, `/h/${host.slug}`)}
-                className="inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90"
+                className={`inline-flex rounded-full bg-bonnet px-4 py-2 text-sm font-semibold text-white hover:bg-bonnet/90 ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Open live services editor →
               </Link>

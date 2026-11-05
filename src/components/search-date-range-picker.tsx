@@ -17,6 +17,7 @@ import {
   formatYmd,
   nightsBetweenYmd,
 } from "@/lib/search-dates";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 function useIsClient() {
   return useSyncExternalStore(
@@ -294,7 +295,7 @@ export function SearchDateRangePicker({
                   </p>
                   <button
                     type="button"
-                    className="mt-6 rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover"
+                    className={`mt-6 rounded-full bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
                     onClick={() => {
                       clearDates();
                       setOpen(false);
@@ -441,7 +442,7 @@ export function SearchDateRangePicker({
                 </button>
                 <button
                   type="button"
-                  className="rounded-full bg-bonnet px-5 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover"
+                  className={`rounded-full bg-bonnet px-5 py-2 text-sm font-semibold text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
                   onClick={() => setOpen(false)}
                 >
                   {checkIn && checkOut ? "Apply" : "Done"}

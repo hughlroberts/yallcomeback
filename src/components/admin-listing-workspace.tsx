@@ -58,6 +58,7 @@ import {
   pricingSaveBlocked,
   type ExtraGuestFieldErrors,
 } from "@/lib/extra-guests";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Photo = {
   id: string;
@@ -1647,7 +1648,7 @@ export function AdminListingWorkspace({
               <ListingLinkPair
                 href={visibility === "website" ? websiteHref : findAPlaceHref}
                 testId="view-listing-link"
-                className="inline-flex items-center justify-center rounded-lg bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover"
+                className={`inline-flex items-center justify-center rounded-lg bg-bonnet px-3 py-1.5 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 View listing
               </ListingLinkPair>
@@ -1764,7 +1765,7 @@ export function AdminListingWorkspace({
                   <span className="size-2.5 rounded-full bg-emerald-500" /> Available
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-full bg-bonnet" /> Stay
+                  <span className={`size-2.5 rounded-full bg-bonnet`} /> Stay
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-full bg-sky-600" /> Busy elsewhere

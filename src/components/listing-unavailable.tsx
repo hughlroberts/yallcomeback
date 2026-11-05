@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-logo";
 import { LISTING_UNAVAILABLE_TITLE } from "@/lib/brand-visibility";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 /** Clean page for a listing whose brand is hidden (T46). Status 200. */
 export function ListingUnavailable() {
@@ -21,7 +22,7 @@ export function ListingUnavailable() {
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/marketplace"
-            className="inline-flex items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
+            className={`inline-flex items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-5 py-2.5 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Browse stays
           </Link>

@@ -20,6 +20,7 @@ import {
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export type UserMenuProps = {
   isSignedIn: boolean;
@@ -103,7 +104,7 @@ function MenuRow({
       />
       <span className="flex-1 font-medium">{label}</span>
       {badge != null && badge > 0 ? (
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-1.5 text-[11px] font-semibold text-white">
+        <span className={`flex h-5 min-w-5 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-1.5 text-[11px] font-semibold text-white`}>
           {badge > 9 ? "9+" : badge}
         </span>
       ) : null}
@@ -195,7 +196,7 @@ export function UserMenu({
       <div className="flex items-center gap-2">
         <Link
           href="/login"
-          className="rounded-[var(--radius-control)] bg-bonnet px-4 py-2 text-sm font-medium text-white hover:bg-bonnet-hover"
+          className={`rounded-[var(--radius-control)] bg-bonnet px-4 py-2 text-sm font-medium text-white hover:bg-bonnet-hover ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Sign in
         </Link>
