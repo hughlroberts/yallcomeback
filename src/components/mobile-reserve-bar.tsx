@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { MAX_STAY_ERROR } from "@/lib/booking-quote";
 import { formatMoney } from "@/lib/utils";
 import {
   type BookingBarState,
@@ -60,6 +61,8 @@ export function MobileReserveBar({
   const bar = live ?? initialState ?? getServerBookingBarState();
   const dateLabel = bookingBarDateLabel(bar.checkIn, bar.checkOut);
   const ready = Boolean(dateLabel && bar.total != null && !bar.error);
+  // R1104-18: same 90-night check as the widget button.
+  const overMaxStay = bar.error === MAX_STAY_ERROR;
 
   useEffect(() => {
     const el = document.getElementById(targetId);
@@ -131,7 +134,9 @@ export function MobileReserveBar({
             if (ready && runBookingBarAction()) return;
             scrollToReserve();
           }}
-          className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
+          disabled={overMaxStay}
+          aria-disabled={overMaxStay}
+          className="disabled:cursor-not-allowed disabled:opacity-50 inline-flex min-h-12 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-bonnet px-6 py-3 text-sm font-semibold text-white hover:bg-bonnet-hover active:bg-bonnet-active"
         >
           {bookingBarCta(depositDueNow)}
         </button>

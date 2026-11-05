@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { clampGuests } from "@/lib/extra-guests";
-import { calculateQuote, resolveDisclaimer } from "@/lib/pricing";
+import { calculateQuote, resolveDisclaimer, MAX_STAY_QUOTE_ERROR } from "@/lib/pricing";
 import { publicListingText } from "@/lib/listing-public-text";
 import { isRangeAvailable } from "@/lib/availability";
 import {
@@ -179,6 +179,9 @@ export default async function BookPage({
     taxLiabilityAcknowledged: property.host.taxLiabilityAcknowledged,
   });
 
+  // R1104-18: 91+ nights → message only, no quote/deposit, submit disabled.
+  const stayTooLong = quote.error === MAX_STAY_QUOTE_ERROR;
+
   const disclaimer = resolveDisclaimer(
     property.disclaimer,
     property.host.defaultDisclaimer,
@@ -350,6 +353,7 @@ export default async function BookPage({
           </div>
           <div className="flex flex-col items-end gap-3 sm:min-w-[220px]">
             <BrandSeal size={64} className="h-16 w-16" />
+            {stayTooLong ? null : (
             <div className="w-full rounded-2xl bg-bonnet px-6 py-5 text-white shadow-md sm:text-right">
               <p className="text-sm font-medium text-honey/90">
                 {paysNow ? "Deposit due now" : "Deposit after host approval"}
@@ -362,9 +366,11 @@ export default async function BookPage({
                 {paysNow ? "" : " · nothing charged now"}
               </p>
             </div>
+            )}
           </div>
         </div>
 
+        {stayTooLong ? null : (
         <dl className="mt-8 grid gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-2xl border border-stone-100 bg-stone-50 px-5 py-4">
             <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500">
@@ -441,6 +447,7 @@ export default async function BookPage({
             </dd>
           </div>
         </dl>
+        )}
 
         {!available && (
           <p className="mt-6 text-base text-red-600">
@@ -456,7 +463,7 @@ export default async function BookPage({
             unchanged.
           </p>
         ) : null}
-        {requestOnly && hostTakesNewStays ? (
+        {requestOnly && hostTakesNewStays && !stayTooLong ? (
           <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-base text-amber-900">
             This host does not take online payment yet, so this is a request to
             book. Nothing is charged now. The host reviews your request and,

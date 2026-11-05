@@ -13,6 +13,10 @@ import {
 import { resolvePetCharges, type PetFeeUnit } from "./pets";
 import { pickSeasonForNight } from "./season-pick";
 import { extraGuestCharge } from "./extra-guests";
+import { MAX_STAY_NIGHTS } from "./search-dates";
+
+/** R1104-18: shown on /book/{slug} and the widget for 91+ nights. */
+export const MAX_STAY_QUOTE_ERROR = `Stays are limited to ${MAX_STAY_NIGHTS} nights`;
 
 export type QuoteInput = {
   property: Pick<
@@ -141,6 +145,13 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
       0,
       "Check-out must be after check-in",
     );
+  }
+
+  if (nights > MAX_STAY_NIGHTS) {
+    return {
+      ...emptyQuote(property, pets, nights, MAX_STAY_QUOTE_ERROR),
+      meetsMinNights: true,
+    };
   }
 
   if (petResolved.error) {

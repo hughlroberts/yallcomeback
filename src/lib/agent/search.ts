@@ -20,6 +20,7 @@ import {
   normalizeListingFilters,
   searchGuests,
   searchLimit,
+  SEARCH_MAX_GUESTS,
   SEARCH_MAX_PETS,
 } from "@/lib/search-filters";
 
@@ -146,8 +147,13 @@ export async function agentSearch(
   origin: string,
   rawParams: AgentSearchParams,
 ): Promise<AgentSearchResult> {
-  // A party bigger than the search form allows is capped there, so the
-  // query echo, the filter and humanSearchUrl all use the same number.
+  // Guests above SEARCH_MAX_GUESTS are a 400 (invalid_guests), never clamped.
+  if (rawParams.guests != null && rawParams.guests > SEARCH_MAX_GUESTS) {
+    throw new SearchInputError(
+      "invalid_guests",
+      `guests must be a whole number from 1 to ${SEARCH_MAX_GUESTS} (got ${rawParams.guests}).`,
+    );
+  }
   const params = { ...rawParams, guests: searchGuests(rawParams.guests) };
   const dates = checkSearchDates(params.checkIn, params.checkOut);
   if (!dates.ok) throw new SearchInputError(dates.code, dates.error);
