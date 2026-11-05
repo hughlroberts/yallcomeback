@@ -94,4 +94,22 @@ describe("ListingLifecycleActions", () => {
     );
     expect(src).toMatch(/data-delete-dialog-card[\s\S]{0,40}className="w-full max-w-md/);
   });
+  it("Resume uses resumeBtn, distinct from Archive btn (E1104-A2)", () => {
+    const src = readFileSync(
+      join(process.cwd(), "src/components/listing-lifecycle-actions.tsx"),
+      "utf8",
+    );
+    expect(src).toContain("const resumeBtn =");
+    expect(src).toContain('className={resumeBtn}');
+    expect(src).toContain('onClick={() => run("resume")}');
+    // Resume button uses resumeBtn (emerald), Archive keeps neutral btn.
+    const resumeIdx = src.indexOf('run("resume")');
+    const resumeSlice = src.slice(Math.max(0, resumeIdx - 200), resumeIdx);
+    expect(resumeSlice).toContain("resumeBtn");
+    const archiveIdx = src.indexOf(">\n            Archive");
+    const archiveSlice = src.slice(Math.max(0, archiveIdx - 250), archiveIdx);
+    expect(archiveSlice).toContain("className={btn}");
+    expect(archiveSlice).not.toContain("resumeBtn");
+  });
+
 });

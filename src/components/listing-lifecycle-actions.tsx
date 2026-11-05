@@ -28,6 +28,9 @@ const ACTIONS: Record<
 
 const btn =
   "inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60";
+/** Resume / restore: positive action, distinct from Archive (neutral) and Delete (danger). */
+const resumeBtn =
+  "inline-flex items-center justify-center rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60";
 const dangerBtn =
   "inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-60";
 
@@ -126,7 +129,7 @@ export function ListingLifecycleActions({
           ) : (
             <button
               type="button"
-              className={btn}
+              className={resumeBtn}
               disabled={pending}
               onClick={() => run("resume")}
               title="Take bookings again"
@@ -152,7 +155,7 @@ export function ListingLifecycleActions({
         {canRemove && archived ? (
           <button
             type="button"
-            className={btn}
+            className={resumeBtn}
             disabled={pending}
             onClick={() => run("restore")}
             title="Move back to your listings as paused"

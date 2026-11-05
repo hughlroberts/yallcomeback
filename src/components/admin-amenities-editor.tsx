@@ -36,11 +36,11 @@ function AmenityTile({
           "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold",
           selected
             ? "border-bonnet bg-bonnet text-white"
-            : "border-stone-300 text-transparent",
+            : "border-stone-300 bg-white",
         )}
         aria-hidden
       >
-        ✓
+        {selected ? "✓" : null}
       </span>
       <span className="min-w-0">
         <span className="flex items-center gap-2">

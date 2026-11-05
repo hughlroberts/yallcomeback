@@ -34,9 +34,16 @@ export function ConfirmDeleteProperty({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="text-xs font-medium text-stone-400 hover:text-red-700"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-red-700"
       >
+        <span aria-hidden>{open ? "▾" : "▸"}</span>
         {open ? "Hide danger zone" : "Danger zone"}
+        {!open ? (
+          <span className="font-normal text-stone-400">
+            — permanently delete this listing
+          </span>
+        ) : null}
       </button>
       {open ? (
         <div className="mt-3 rounded-xl border border-red-200 bg-red-50/80 p-4">
