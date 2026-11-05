@@ -9,6 +9,7 @@ import {
   partyFromParams,
   strictSearchLimitFromParams,
 } from "@/lib/search-filters";
+import { isValidYmd } from "@/lib/search-dates";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,14 @@ export async function GET(req: NextRequest) {
     return bad(
       "invalid_location",
       `location must be ${SEARCH_MAX_LOCATION_CHARS} characters or fewer (got ${location.length}).`,
+    );
+  }
+  // E1104-C8: an invalid date string wins over incomplete_dates
+  // (checkIn=notadate alone → invalid_date, not incomplete_dates).
+  if ((checkIn && !isValidYmd(checkIn)) || (checkOut && !isValidYmd(checkOut))) {
+    return bad(
+      "invalid_date",
+      "checkIn and checkOut must be real dates in YYYY-MM-DD format",
     );
   }
   // R1104-12: dates come as a pair. A lone checkIn/checkOut is a 400

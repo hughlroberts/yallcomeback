@@ -49,6 +49,13 @@ describe("GET /api/v1/search", () => {
     expect(host.searchMarketplace).not.toHaveBeenCalled();
   });
 
+  it("E1104-C8: checkIn=notadate with no checkOut is invalid_date (not incomplete_dates)", async () => {
+    const res = await get("checkIn=notadate");
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ ok: false, code: "invalid_date" });
+    expect(host.searchMarketplace).not.toHaveBeenCalled();
+  });
+
     it("returns 400 for check-out before check-in (not a silent flexible search)", async () => {
     const res = await get(`checkIn=${ymd(20)}&checkOut=${ymd(18)}`);
     expect(res.status).toBe(400);
