@@ -96,7 +96,7 @@ function MenuRow({
       href={href}
       prefetch={false}
       onClick={onNavigate}
-      className="flex items-center gap-3 px-4 py-3 text-[15px] text-stone-800 transition hover:bg-stone-50"
+      className={`flex items-center gap-3 px-4 py-3 text-[15px] text-stone-800 transition hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
     >
       <Icon
         className="size-[18px] shrink-0 text-stone-700"
@@ -220,7 +220,8 @@ export function UserMenu({
         }}
         className={cn(
           "flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 shadow-sm transition",
-          "hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet",
+          "hover:shadow-md",
+          PRIMARY_CTA_FOCUS_CLASS,
           open && "shadow-md ring-1 ring-slate-200",
           loggingOut && "cursor-wait opacity-60",
         )}
@@ -375,7 +376,7 @@ export function UserMenu({
               <button
                 type="submit"
                 disabled={loggingOut}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-stone-800 transition hover:bg-stone-50"
+                className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-medium text-stone-800 transition hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 <LogOut
                   className="size-[18px] text-stone-700"

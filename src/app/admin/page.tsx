@@ -247,7 +247,7 @@ export default async function AdminDashboard({
               <li key={b.id}>
                 <Link
                   href={`/admin/bookings/${b.id}`}
-                  className={`block border-l-4 bg-white px-4 py-3 transition hover:bg-slate-50/80 ${bookingAccentClass(b.status)}`}
+                  className={`block border-l-4 bg-white px-4 py-3 transition hover:bg-slate-50/80 ${bookingAccentClass(b.status)} ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   <div className="flex items-center gap-3.5">
                     <ProfileCircle
@@ -302,7 +302,7 @@ export default async function AdminDashboard({
             </h2>
             <Link
               href="/admin/calendar"
-              className="text-sm font-medium text-bonnet hover:text-bonnet"
+              className={`text-sm font-medium text-bonnet hover:text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Open calendar →
             </Link>
@@ -316,7 +316,7 @@ export default async function AdminDashboard({
                 <li key={b.id}>
                   <Link
                     href={href}
-                    className={`block border-l-4 bg-white px-4 py-3 transition hover:bg-slate-50/80 ${blockAccentClass(b.source, b.blockType)}`}
+                    className={`block border-l-4 bg-white px-4 py-3 transition hover:bg-slate-50/80 ${blockAccentClass(b.source, b.blockType)} ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     <div className="flex items-center gap-3.5">
                       <ProfileCircle src={null} alt="" />

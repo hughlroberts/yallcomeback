@@ -17,9 +17,41 @@ function safeParse(raw: string | null): SavedListing[] {
   }
 }
 
+/** Stable empty snapshot for SSR / first client read with nothing saved. */
+const EMPTY: SavedListing[] = [];
+
+/**
+ * Cache the last parsed list so useSyncExternalStore getSnapshot returns the
+ * same reference when localStorage has not changed (React 185 otherwise).
+ */
+let cachedRaw: string | null | undefined = undefined;
+let cachedList: SavedListing[] = EMPTY;
+
+function syncCacheFromStorage(): SavedListing[] {
+  if (typeof window === "undefined") return EMPTY;
+  const raw = localStorage.getItem(SAVED_LISTINGS_KEY);
+  if (raw === cachedRaw) return cachedList;
+  cachedRaw = raw;
+  const next = safeParse(raw);
+  cachedList = next.length === 0 ? EMPTY : next;
+  return cachedList;
+}
+
+function writeCache(next: SavedListing[]) {
+  const raw = JSON.stringify(next);
+  localStorage.setItem(SAVED_LISTINGS_KEY, raw);
+  cachedRaw = raw;
+  cachedList = next.length === 0 ? EMPTY : next;
+}
+
+/** @internal test helper — clear module cache between cases */
+export function __resetSavedListingsCacheForTests() {
+  cachedRaw = undefined;
+  cachedList = EMPTY;
+}
+
 export function readSavedListings(): SavedListing[] {
-  if (typeof window === "undefined") return [];
-  return safeParse(localStorage.getItem(SAVED_LISTINGS_KEY));
+  return syncCacheFromStorage();
 }
 
 export function isListingSaved(id: string): boolean {
@@ -38,7 +70,7 @@ export function toggleSavedListing(
         0,
         MAX_SAVED_LISTINGS,
       );
-  localStorage.setItem(SAVED_LISTINGS_KEY, JSON.stringify(next));
+  writeCache(next);
   // Notify other hearts / wishlist UI on this page
   window.dispatchEvent(new CustomEvent("staylocal:saved-listings"));
   return !exists;
@@ -47,7 +79,11 @@ export function toggleSavedListing(
 export function subscribeSavedListings(cb: () => void) {
   if (typeof window === "undefined") return () => {};
   const onStorage = (e: StorageEvent) => {
-    if (e.key === SAVED_LISTINGS_KEY || e.key === null) cb();
+    if (e.key === SAVED_LISTINGS_KEY || e.key === null) {
+      // Drop cache so the next getSnapshot re-reads (other tab may have written).
+      cachedRaw = undefined;
+      cb();
+    }
   };
   const onCustom = () => cb();
   window.addEventListener("storage", onStorage);

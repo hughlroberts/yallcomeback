@@ -109,7 +109,7 @@ export default async function EarningsReportsPage() {
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href="/admin/earnings/paid"
-          className="rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+          className={`rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Open Paid
         </Link>
@@ -121,7 +121,7 @@ export default async function EarningsReportsPage() {
         </Link>
         <Link
           href="/admin/earnings/upcoming"
-          className="rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+          className={`rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Upcoming ({upcoming.length})
         </Link>

@@ -6,6 +6,7 @@ import { formatDateUS, formatMoney } from "@/lib/utils";
 import { requireHostAdmin } from "@/lib/auth";
 import { bookingScopeWhere, propertyScopeWhere } from "@/lib/scope";
 import { PageHeader } from "@/components/ui";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import {
   buildAdminBookingRows,
   directBookingBlockWhere,
@@ -72,7 +73,7 @@ export default async function AdminBookingsPage({
         view === id
           ? "bg-slate-900 text-white ring-slate-900"
           : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
-      }`}
+      } ${PRIMARY_CTA_FOCUS_CLASS}`}
     >
       {label} ({n})
     </Link>

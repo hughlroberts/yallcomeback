@@ -228,7 +228,7 @@ export default async function ListingSetupPage({
         </span>
         <Link
           href="/admin/properties"
-          className="rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal"
+          className={`rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           All listings
         </Link>
@@ -275,7 +275,7 @@ export default async function ListingSetupPage({
           )}
           <Link
             href={`/admin/properties/${property.id}`}
-            className="rounded-lg border border-stone-300 px-6 py-3 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+            className={`rounded-lg border border-stone-300 px-6 py-3 text-sm font-semibold text-stone-800 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Open listing editor
           </Link>

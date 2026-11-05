@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 /** Compact YCB monogram seal — checkout, magnets, compact chrome. */
 export function BrandMark({
@@ -47,7 +48,8 @@ export function BrandLogo({
     <Link
       href={href}
       className={cn(
-        "ycb-logo group inline-flex shrink-0 items-center gap-2 overflow-visible sm:gap-3",
+        "ycb-logo group inline-flex shrink-0 items-center gap-2 overflow-visible rounded-lg sm:gap-3",
+        PRIMARY_CTA_FOCUS_CLASS,
         className,
       )}
       aria-label={label}

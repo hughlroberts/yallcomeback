@@ -392,7 +392,7 @@ export function HostSignupForm({
           <button
             type="button"
             onClick={() => setPath("paid")}
-            className="font-medium text-bonnet hover:underline"
+            className={`rounded-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Back to hosted plans
           </button>
@@ -402,12 +402,15 @@ export function HostSignupForm({
             <button
               type="button"
               onClick={() => setPath("self")}
-              className="font-medium text-bonnet hover:underline"
+              className={`rounded-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Free self-host
             </button>
             {" · "}
-            <a href="/self-host" className="font-medium text-bonnet hover:underline">
+            <a
+              href="/self-host"
+              className={`rounded-sm font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
+            >
               Deploy guide
             </a>
           </>

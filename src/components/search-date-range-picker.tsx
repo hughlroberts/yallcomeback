@@ -260,6 +260,7 @@ export function SearchDateRangePicker({
                   onClick={() => setMode("dates")}
                   className={cn(
                     "rounded-full px-4 py-1.5 text-sm font-semibold transition",
+                    PRIMARY_CTA_FOCUS_CLASS,
                     mode === "dates"
                       ? "bg-stone-900 text-white"
                       : "bg-stone-100 text-stone-600 hover:bg-stone-200",
@@ -275,6 +276,7 @@ export function SearchDateRangePicker({
                   }}
                   className={cn(
                     "rounded-full px-4 py-1.5 text-sm font-semibold transition",
+                    PRIMARY_CTA_FOCUS_CLASS,
                     mode === "flexible"
                       ? "bg-stone-900 text-white"
                       : "bg-stone-100 text-stone-600 hover:bg-stone-200",
@@ -471,7 +473,7 @@ export function SearchDateRangePicker({
           if (checkIn && !checkOut) setPicking("out");
           else if (checkIn && checkOut) setPicking("in");
         }}
-        className="flex w-full min-w-0 flex-col gap-0.5 rounded-xl px-4 py-3 text-left hover:bg-stone-50 sm:rounded-none sm:py-2.5"
+        className={`flex w-full min-w-0 flex-col gap-0.5 rounded-xl px-4 py-3 text-left hover:bg-stone-50 sm:rounded-none sm:py-2.5 ${PRIMARY_CTA_FOCUS_CLASS}`}
         aria-expanded={open}
         aria-haspopup="dialog"
       >

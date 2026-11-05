@@ -206,7 +206,7 @@ export default async function AdminPropertiesPage() {
                 )}
                 <Link
                   href={`/admin/magnets/${p.id}`}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                  className={`rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   Fridge magnet
                 </Link>
@@ -222,7 +222,7 @@ export default async function AdminPropertiesPage() {
                     <input type="hidden" name="propertyId" value={p.id} />
                     <button
                       type="submit"
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                      className={`rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
                       Duplicate
                     </button>
@@ -230,7 +230,7 @@ export default async function AdminPropertiesPage() {
                 ) : null}
                 <Link
                   href={editHref}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                  className={`rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   {p.title === "Untitled listing" ? "Continue setup" : "Edit listing"}
                 </Link>

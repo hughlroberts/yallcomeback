@@ -56,7 +56,7 @@ export function SiteHeaderNav(props: Props) {
       <div className="flex items-center">
         <Link
           href="/marketplace"
-          className={cn(FIND_LINK, findActive ? NAV_ACTIVE : NAV_IDLE)}
+          className={cn(FIND_LINK, findActive ? NAV_ACTIVE : NAV_IDLE, PRIMARY_CTA_FOCUS_CLASS)}
           aria-current={findActive ? "page" : undefined}
         >
           <span className="sm:hidden">Find</span>

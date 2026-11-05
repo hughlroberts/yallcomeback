@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { prisma } from "@/lib/db";
 import { requireHostAdmin } from "@/lib/auth";
 import { assertPropertyAccess } from "@/lib/scope";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import {
   getSiteOrigin,
   magnetListingUrl,
@@ -137,7 +138,7 @@ export default async function AdminMagnetPrintPage({
           <PrintMagnetButton />
           <Link
             href={`/admin/properties/${property.id}`}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+            className={`rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Edit listing
           </Link>
@@ -232,6 +233,7 @@ function LinkTargetCard({
         selected
           ? "border-bonnet bg-petal ring-1 ring-bonnet/30"
           : "border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:bg-white",
+        PRIMARY_CTA_FOCUS_CLASS,
       )}
       aria-current={selected ? "true" : undefined}
     >

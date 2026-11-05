@@ -145,7 +145,7 @@ export default async function BrandedUpgradeConfirmPage({
           </form>
           <Link
             href={backHref}
-            className="rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+            className={`rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Cancel — stay on Marketplace
           </Link>
@@ -209,7 +209,7 @@ function BrandedPayStep({
           </form>
           <Link
             href={backHref}
-            className="rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+            className={`rounded-full border border-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Not now
           </Link>

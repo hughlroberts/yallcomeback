@@ -84,7 +84,7 @@ export default async function AccountTaxesPage() {
             </Link>
             <Link
               href="/help/taxes"
-              className="inline-flex rounded-[var(--radius-control)] border border-stone-200 px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+              className={`inline-flex rounded-[var(--radius-control)] border border-stone-200 px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Taxes help
             </Link>
@@ -103,7 +103,7 @@ export default async function AccountTaxesPage() {
         </p>
         <a
           href={`/account/taxes/export?year=${new Date().getFullYear()}`}
-          className="inline-flex rounded-[var(--radius-control)] border border-stone-200 px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50"
+          className={`inline-flex rounded-[var(--radius-control)] border border-stone-200 px-5 py-2.5 text-sm font-semibold text-stone-800 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Download my {new Date().getFullYear()} stays CSV
         </a>

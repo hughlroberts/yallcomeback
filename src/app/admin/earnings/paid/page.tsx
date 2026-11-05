@@ -130,7 +130,7 @@ export default async function EarningsPaidPage({
                     <td className="px-2 py-3.5 text-right">
                       <Link
                         href={`/admin/bookings/${r.bookingId}`}
-                        className="inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-medium text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+                        className={`inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-medium text-stone-500 hover:bg-stone-100 hover:text-stone-800 ${PRIMARY_CTA_FOCUS_CLASS}`}
                         title="View booking"
                       >
                         1

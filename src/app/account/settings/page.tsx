@@ -115,7 +115,7 @@ export default async function AccountSettingsHubPage() {
           <li key={s.href}>
             <Link
               href={s.href}
-              className="flex h-full items-start gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-4 transition hover:border-stone-300 hover:bg-stone-50"
+              className={`flex h-full items-start gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-4 transition hover:border-stone-300 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               <span className="text-xl leading-none" aria-hidden>
                 {s.icon}
@@ -139,19 +139,19 @@ export default async function AccountSettingsHubPage() {
       <div className="mt-8 flex flex-wrap gap-3 border-t border-stone-100 pt-6">
         <Link
           href="/account/bookings"
-          className="rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal"
+          className={`rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Trips
         </Link>
         <Link
           href="/messages"
-          className="rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal"
+          className={`rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Messages
         </Link>
         <Link
           href="/saved"
-          className="rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal"
+          className={`rounded-full border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Wishlists
         </Link>

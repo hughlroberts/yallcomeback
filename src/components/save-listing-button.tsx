@@ -8,6 +8,7 @@ import {
   subscribeSavedListings,
   toggleSavedListing,
 } from "@/lib/saved-listings-storage";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type ListingInput = Omit<SavedListing, "savedAt">;
 
@@ -45,7 +46,7 @@ export function SaveListingButton({
         onClick={onClick}
         aria-label={saved ? "Remove from saved" : "Save this stay"}
         aria-pressed={saved}
-        className={`flex size-9 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40 hover:scale-105 ${className}`}
+        className={`flex size-9 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40 hover:scale-105 ${PRIMARY_CTA_FOCUS_CLASS} ${className}`}
       >
         <Heart
           className={`size-[18px] drop-shadow-sm ${
@@ -63,7 +64,7 @@ export function SaveListingButton({
       onClick={onClick}
       aria-label={saved ? "Remove from saved" : "Save this stay"}
       aria-pressed={saved}
-      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-700 underline-offset-2 transition hover:bg-stone-100 hover:underline ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-700 underline-offset-2 transition hover:bg-stone-100 hover:underline ${PRIMARY_CTA_FOCUS_CLASS} ${className}`}
     >
       <Heart
         className={`size-4 ${

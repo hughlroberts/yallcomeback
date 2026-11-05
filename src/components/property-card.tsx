@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { formatMoney } from "@/lib/utils";
+import { cn, formatMoney } from "@/lib/utils";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { SaveListingButton } from "@/components/save-listing-button";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   property: {
@@ -50,7 +51,7 @@ export function PropertyCard({
 
   return (
     <div className="group relative">
-      <Link href={link} className="block">
+      <Link href={link} className={cn("block rounded-2xl", PRIMARY_CTA_FOCUS_CLASS)}>
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-stone-200 shadow-sm ring-1 ring-black/5">
           {cover ? (
             <Image

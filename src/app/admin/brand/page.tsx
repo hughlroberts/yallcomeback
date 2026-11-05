@@ -127,7 +127,7 @@ export default async function AdminBrandPage({
                   />
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-stone-50"
+                    className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     <span>
                       <span className="font-medium text-stone-900">{h.name}</span>
@@ -400,7 +400,7 @@ export default async function AdminBrandPage({
                     <Link
                       key={opt.id}
                       href={brandedUpgradeConfirmPath(host.id, returnTo)}
-                      className="flex items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm hover:border-bonnet/40 hover:bg-petal/30"
+                      className={`flex items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm hover:border-bonnet/40 hover:bg-petal/30 ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
                       <span
                         aria-hidden
@@ -1414,7 +1414,7 @@ export default async function AdminBrandPage({
               <Link
                 href={hostServicesHref(host, `/h/${host.slug}`)}
                 target="_blank"
-                className="inline-flex rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+                className={`inline-flex rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
               >
                 Preview as guest
               </Link>

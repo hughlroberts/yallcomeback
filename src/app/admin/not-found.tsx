@@ -20,7 +20,7 @@ export default function AdminNotFound() {
         </Link>
         <Link
           href="/admin/properties"
-          className="rounded-xl border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-50"
+          className={`rounded-xl border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-800 hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Listings
         </Link>

@@ -38,7 +38,7 @@ export default function NotFound() {
           </Link>
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-[var(--radius-control)] border border-hairline bg-white px-5 py-2.5 text-sm font-semibold text-ink hover:bg-petal"
+            className={`inline-flex items-center justify-center rounded-[var(--radius-control)] border border-hairline bg-white px-5 py-2.5 text-sm font-semibold text-ink hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Back home
           </Link>

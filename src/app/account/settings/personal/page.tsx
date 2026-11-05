@@ -274,7 +274,7 @@ export default async function PersonalInfoPage({
             <Button type="submit">Save</Button>
             <Link
               href="/account/settings/personal"
-              className="inline-flex items-center rounded-lg border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal"
+              className={`inline-flex items-center rounded-lg border border-lupine/50 px-4 py-2 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Cancel
             </Link>

@@ -63,7 +63,6 @@ import {
 } from "@/lib/sleeping-arrangements";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
-
 export const dynamic = "force-dynamic";
 
 function toYmd(d: Date) {

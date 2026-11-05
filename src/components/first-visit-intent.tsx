@@ -4,6 +4,8 @@ import { useEffect, useId, useRef } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { setVisitIntent } from "@/app/actions/intent";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
+import { markWelcomeEscFocusRestore } from "@/components/welcome-focus-restore";
 
 /**
  * First visit to the platform home: Find a Place vs Host a Place.
@@ -14,8 +16,17 @@ export function FirstVisitIntentGate() {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const browseFormRef = useRef<HTMLFormElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    const active = document.activeElement;
+    openerRef.current =
+      active instanceof HTMLElement &&
+      active !== document.body &&
+      !dialogRef.current?.contains(active)
+        ? active
+        : null;
+
     const node = dialogRef.current;
     node?.focus();
     const prev = document.body.style.overflow;
@@ -24,6 +35,19 @@ export function FirstVisitIntentGate() {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
+        // Browse redirect remounts `/` — stash restore target for WelcomeFocusRestore.
+        // Prefer the pre-open focus target when one existed; otherwise header top.
+        markWelcomeEscFocusRestore();
+        if (openerRef.current) {
+          try {
+            sessionStorage.setItem(
+              "ycb-welcome-esc-focus-opener",
+              openerRef.current.id || "",
+            );
+          } catch {
+            /* ignore */
+          }
+        }
         browseFormRef.current?.requestSubmit();
       }
     }
@@ -50,7 +74,7 @@ export function FirstVisitIntentGate() {
             <input type="hidden" name="intent" value="browse" />
             <button
               type="submit"
-              className="inline-flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-petal hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
+              className={`inline-flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-petal hover:text-ink ${PRIMARY_CTA_FOCUS_CLASS}`}
               aria-label="Just browsing"
             >
               <X className="size-5" aria-hidden />
@@ -97,7 +121,7 @@ export function FirstVisitIntentGate() {
           <input type="hidden" name="intent" value="browse" />
           <button
             type="submit"
-            className="text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
+            className={`text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Just browsing
           </button>
@@ -127,7 +151,7 @@ function IntentCard({
       <input type="hidden" name="intent" value={intent} />
       <button
         type="submit"
-        className="group relative flex h-full min-h-[14rem] w-full flex-col overflow-hidden rounded-3xl text-left shadow-[0_8px_24px_rgba(42,53,102,0.12),0_2px_6px_rgba(42,53,102,0.08)] ring-1 ring-hairline transition hover:ring-2 hover:ring-honey focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet sm:min-h-[22rem]"
+        className={`group relative flex h-full min-h-[14rem] w-full flex-col overflow-hidden rounded-3xl text-left shadow-[0_8px_24px_rgba(42,53,102,0.12),0_2px_6px_rgba(42,53,102,0.08)] ring-1 ring-hairline transition hover:ring-2 hover:ring-honey sm:min-h-[22rem] ${PRIMARY_CTA_FOCUS_CLASS}`}
       >
         <Image
           src={image}
