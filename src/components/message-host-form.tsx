@@ -192,7 +192,7 @@ function MessageHostFields({
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="relative space-y-4">
       <div>
         <h3 className="text-lg font-semibold text-stone-900">Message host</h3>
         <p className="mt-1 text-sm text-stone-500">
@@ -449,8 +449,8 @@ export function MessageHostButton({
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="inline-flex size-9 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-800"
-                    aria-label="Close"
+                    className={`inline-flex size-9 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-800 ${PRIMARY_CTA_FOCUS_CLASS}`}
+                    aria-label="Close message form"
                     data-autofocus
                   >
                     <X className="size-5" />
