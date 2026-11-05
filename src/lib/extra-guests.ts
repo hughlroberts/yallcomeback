@@ -35,17 +35,31 @@ export function extraGuestCharge(
 
 /**
  * Clamp a requested guest count to the listing max. `clamped` is true when
- * the request asked for more (or fewer) guests than the listing allows.
+ * the request asked for more guests than the listing allows, or for fewer
+ * than 1 (e.g. guests=0), which we treat as 1.
  */
 export function clampGuests(
   requested: string | number | null | undefined,
   maxGuests: number,
 ): { guests: number; requested: number; clamped: boolean } {
   const max = Math.max(1, Math.floor(maxGuests) || 1);
-  const raw = Math.floor(Number(requested ?? 1));
-  const asked = Number.isFinite(raw) && raw >= 1 ? raw : 1;
+  const rawStr =
+    requested == null ? "" : String(requested).trim();
+  // Missing / blank → default 1, no notice.
+  if (!rawStr) {
+    return { guests: 1, requested: 1, clamped: false };
+  }
+  const raw = Math.floor(Number(rawStr));
+  const invalid = !Number.isFinite(raw) || raw < 1;
+  const asked = invalid ? 1 : raw;
   const guests = Math.min(max, asked);
-  return { guests, requested: asked, clamped: guests !== asked };
+  // Preserve the raw request (0, NaN→0) so callers can explain the clamp.
+  const reported = Number.isFinite(raw) ? raw : 0;
+  return {
+    guests,
+    requested: reported,
+    clamped: invalid || guests !== reported,
+  };
 }
 
 /**

@@ -74,3 +74,11 @@ describe("E1104-C9 openapi without .json", () => {
     expect(doc).toMatch(/"\/api\/v1\/openapi"/);
   });
 });
+
+describe("E1104-D2 book guests=0 notice", () => {
+  it("shows a notice when guests were coerced up from below 1", () => {
+    const page = src("app/book/[slug]/page.tsx");
+    expect(page).toMatch(/guestCount\.requested < 1/);
+    expect(page).toMatch(/Guests must be at least 1/);
+  });
+});

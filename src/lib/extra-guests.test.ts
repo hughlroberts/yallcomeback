@@ -161,14 +161,25 @@ describe("clampGuests", () => {
     });
     expect(clampGuests("4", 4).clamped).toBe(false);
   });
-  it("treats junk or missing as 1 guest without a notice", () => {
+  it("defaults missing guests to 1 without a notice", () => {
     expect(clampGuests(undefined, 4)).toEqual({
       guests: 1,
       requested: 1,
       clamped: false,
     });
-    expect(clampGuests("abc", 4).clamped).toBe(false);
-    expect(clampGuests("0", 4).guests).toBe(1);
+    expect(clampGuests("", 4).clamped).toBe(false);
+  });
+  it("E1104-D2: guests=0 (or junk) becomes 1 and is flagged for a notice", () => {
+    expect(clampGuests("0", 4)).toEqual({
+      guests: 1,
+      requested: 0,
+      clamped: true,
+    });
+    expect(clampGuests("abc", 4)).toEqual({
+      guests: 1,
+      requested: 0,
+      clamped: true,
+    });
   });
 });
 

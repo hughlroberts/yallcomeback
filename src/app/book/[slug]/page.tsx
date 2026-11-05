@@ -342,6 +342,14 @@ export default async function BookPage({
               guest{guests === 1 ? "" : "s"}
               {pets > 0 ? ` · ${pets} pet${pets === 1 ? "" : "s"}` : ""}
             </p>
+            {guestCount.clamped && guestCount.requested < 1 ? (
+              <p
+                role="status"
+                className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 ring-1 ring-amber-200"
+              >
+                Guests must be at least 1, so we set guests to {guests}.
+              </p>
+            ) : null}
             {guestCount.clamped && guestCount.requested > guests ? (
               <p
                 role="status"
