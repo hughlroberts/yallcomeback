@@ -75,7 +75,23 @@ export function extraGuestSettingsError(input: {
 export type ExtraGuestFieldErrors = {
   extraGuestFee?: string;
   extraGuestsIncluded?: string;
+  /** Listing base nightly rate (E1104-A1). */
+  baseNightlyRate?: string;
 };
+
+/** Inline + server error for the base nightly rate (must be ≥ $1). */
+export function baseNightlyRateFieldError(
+  raw: string | null | undefined,
+  badInput = false,
+): string | undefined {
+  const t = (raw ?? "").trim();
+  if (badInput || (t !== "" && !/^-?(\d+(\.\d*)?|\.\d+)$/.test(t))) {
+    return "Nightly price must be a number, for example 150";
+  }
+  if (t === "") return "Enter a nightly price of at least $1";
+  if (Number(t) < 1) return "Nightly price must be at least $1";
+  return undefined;
+}
 
 /** Plain decimal, optional minus sign: "10", "10.5", ".5", "-3". No "1e2" or "0x1". */
 const PLAIN_NUMBER = /^-?(\d+(\.\d*)?|\.\d+)$/;
@@ -128,5 +144,5 @@ export function extraGuestFieldErrors(input: {
 export function pricingSaveBlocked(
   ...errors: (ExtraGuestFieldErrors | null | undefined)[]
 ): boolean {
-  return errors.some((e) => Boolean(e?.extraGuestFee || e?.extraGuestsIncluded));
+  return errors.some((e) => Boolean(e?.extraGuestFee || e?.extraGuestsIncluded || e?.baseNightlyRate));
 }

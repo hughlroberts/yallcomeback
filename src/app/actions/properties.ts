@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import type { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import {
+  baseNightlyRateFieldError,
   extraGuestFieldErrors,
   extraGuestSettingsError,
   type ExtraGuestFieldErrors,
@@ -656,8 +657,26 @@ export async function saveListingPrices(formData: FormData) {
     formData.get("weekendPremiumPercent") || 0,
   );
 
+  {
+    const nightlyErr = baseNightlyRateFieldError(
+      formData.get("baseNightlyRate") == null
+        ? ""
+        : String(formData.get("baseNightlyRate")),
+    );
+    if (nightlyErr) {
+      return {
+        ok: false,
+        error: nightlyErr,
+        fieldErrors: { baseNightlyRate: nightlyErr },
+      };
+    }
+  }
   if (!Number.isFinite(baseNightlyRate) || baseNightlyRate < 1) {
-    throw new Error("Enter a base price of at least $1");
+    return {
+      ok: false,
+      error: "Nightly price must be at least $1",
+      fieldErrors: { baseNightlyRate: "Nightly price must be at least $1" },
+    };
   }
   if (
     !Number.isFinite(weekendPremiumPercent) ||

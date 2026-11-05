@@ -191,3 +191,15 @@ describe("invalid range on /book", () => {
     expect(q.depositAmount).toBe(0);
   });
 });
+
+describe("E1104-A1 baseNightlyRateFieldError", () => {
+  it("rejects negatives, zero, empty and junk", async () => {
+    const { baseNightlyRateFieldError } = await import("./extra-guests");
+    expect(baseNightlyRateFieldError("-50")).toMatch(/at least \$1/);
+    expect(baseNightlyRateFieldError("0")).toMatch(/at least \$1/);
+    expect(baseNightlyRateFieldError("")).toMatch(/at least \$1/);
+    expect(baseNightlyRateFieldError("abc")).toMatch(/number/);
+    expect(baseNightlyRateFieldError("150")).toBeUndefined();
+    expect(baseNightlyRateFieldError("1")).toBeUndefined();
+  });
+});

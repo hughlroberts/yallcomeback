@@ -53,6 +53,7 @@ import { ListingLifecycleActions } from "@/components/listing-lifecycle-actions"
 import { cn, formatMoney } from "@/lib/utils";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import {
+  baseNightlyRateFieldError,
   extraGuestFieldErrors,
   pricingSaveBlocked,
   type ExtraGuestFieldErrors,
@@ -215,6 +216,7 @@ function PricingSidebar({
   // flag for text a number input cannot read (value is "" then).
   const [extraGuestBad, setExtraGuestBad] = useState(false);
   const [extraIncludedBad, setExtraIncludedBad] = useState(false);
+  const [nightlyBad, setNightlyBad] = useState(false);
   const [serverFieldErrors, setServerFieldErrors] =
     useState<ExtraGuestFieldErrors>({});
   const extraErrors = extraGuestFieldErrors({
@@ -224,16 +226,23 @@ function PricingSidebar({
     feeBadInput: extraGuestBad,
     includedBadInput: extraIncludedBad,
   });
+  const nightlyError =
+    baseNightlyRateFieldError(nightly, nightlyBad) ??
+    serverFieldErrors.baseNightlyRate;
+  const pricingErrors: ExtraGuestFieldErrors = {
+    ...extraErrors,
+    baseNightlyRate: nightlyError,
+  };
   const extraGuestError =
     extraErrors.extraGuestFee ?? serverFieldErrors.extraGuestFee;
   const extraIncludedError =
     extraErrors.extraGuestsIncluded ?? serverFieldErrors.extraGuestsIncluded;
-  const saveBlocked = pricingSaveBlocked(extraErrors, serverFieldErrors);
+  const saveBlocked = pricingSaveBlocked(pricingErrors, serverFieldErrors);
 
   function savePricing() {
     setError(null);
     setServerFieldErrors({});
-    if (pricingSaveBlocked(extraErrors)) {
+    if (pricingSaveBlocked(pricingErrors)) {
       setError("Fix the marked fields, then save again.");
       return;
     }
@@ -286,14 +295,35 @@ function PricingSidebar({
                 type="number"
                 min={1}
                 step="0.01"
-                className="h-11 pl-7 text-base font-semibold"
+                className={`h-11 pl-7 text-base font-semibold${nightlyError ? " border-red-500" : ""}`}
+                aria-invalid={nightlyError ? true : undefined}
+                aria-describedby={
+                  nightlyError ? "ws-nightly-error" : undefined
+                }
                 value={nightly}
-                onChange={(e) => setNightly(e.target.value)}
+                onChange={(e) => {
+                  setNightly(e.target.value);
+                  setNightlyBad(e.target.validity.badInput);
+                  setServerFieldErrors((f) => ({
+                    ...f,
+                    baseNightlyRate: undefined,
+                  }));
+                }}
               />
             </div>
-            <p className="mt-1 text-[11px] text-stone-400">
-              Per night · guests pay this base
-            </p>
+            {nightlyError ? (
+              <p
+                id="ws-nightly-error"
+                role="alert"
+                className="mt-1 text-[11px] text-red-600"
+              >
+                {nightlyError}
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-stone-400">
+                Per night · guests pay this base
+              </p>
+            )}
           </div>
 
           <div>

@@ -104,7 +104,7 @@ describe("listing pricing: extra-guest fee and guests included", () => {
     const { readFileSync } = await import("fs");
     const src = readFileSync("src/components/admin-listing-workspace.tsx", "utf8");
     expect(src).toMatch(/disabled=\{pending \|\| saveBlocked\}/);
-    expect(src).toMatch(/if \(pricingSaveBlocked\(extraErrors\)\) \{/);
+    expect(src).toMatch(/if \(pricingSaveBlocked\(pricingErrors\)\) \{/);
   });
 
   it("rejects a non-numeric fee (never saved as 0)", async () => {
