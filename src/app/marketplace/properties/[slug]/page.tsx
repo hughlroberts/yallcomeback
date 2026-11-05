@@ -42,6 +42,7 @@ import {
   resolveBookingChannel,
 } from "@/lib/host-payments";
 import { pageMetadata } from "@/lib/seo";
+import { publicImageSize } from "@/lib/public-image-size";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { listingMetaDescription } from "@/lib/listing-meta-description";
 import { publicListingText } from "@/lib/listing-public-text";
@@ -170,13 +171,18 @@ export async function generateMetadata({
   const cover = property.images[0];
   // Canonical/og:url carry no query string (no ?host=).
   const path = listingCanonicalPath(property.slug);
+  // E1104-D6: absolute OG image + real pixel dimensions (not a lied 1200×630).
+  const coverSize = cover?.url ? await publicImageSize(cover.url) : null;
 
   return pageMetadata({
     title: property.title,
     description,
     path,
+    type: "website",
     image: cover?.url,
     imageAlt: listingPhotoAlt(property.title, cover?.alt, 0),
+    imageWidth: coverSize?.width,
+    imageHeight: coverSize?.height,
     // E1104-D4
     noIndex: Boolean(property.host.isTestBrand),
   });

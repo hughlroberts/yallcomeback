@@ -41,12 +41,23 @@ export type PageMetadataInput = {
   /** OG/Twitter image path or absolute URL. */
   image?: string | null;
   imageAlt?: string;
+  /** Real pixel size of `image` when known (listing photos). */
+  imageWidth?: number;
+  imageHeight?: number;
   /** openGraph.siteName override (host microsites). */
   siteName?: string;
   type?: "website" | "article";
   twitterCard?: "summary" | "summary_large_image";
   noIndex?: boolean;
 };
+
+/** Turn a site-relative or absolute image into an absolute URL for OG scrapers. */
+export function seoAbsoluteImageUrl(image: string): string {
+  const s = image.trim();
+  if (!s) return seoAbsoluteUrl(DEFAULT_OG_IMAGE);
+  if (/^https?:\/\//i.test(s)) return s;
+  return seoAbsoluteUrl(s.startsWith("/") ? s : `/${s}`);
+}
 
 /**
  * Full public-page metadata: unique title/description, canonical, og:url,
@@ -56,7 +67,9 @@ export function pageMetadata(opts: PageMetadataInput): Metadata {
   const siteName = opts.siteName?.trim() || PRODUCT_NAME;
   const description = (opts.description || PRODUCT_TAGLINE).trim().slice(0, 320);
   const canonical = seoAbsoluteUrl(opts.path);
-  const image = (opts.image && opts.image.trim()) || DEFAULT_OG_IMAGE;
+  const rawImage = (opts.image && opts.image.trim()) || DEFAULT_OG_IMAGE;
+  const isDefaultOg = rawImage === DEFAULT_OG_IMAGE;
+  const image = seoAbsoluteImageUrl(rawImage);
   const titleText = opts.title.trim() || siteName;
   const displayTitle = opts.absoluteTitle
     ? titleText
@@ -66,14 +79,32 @@ export function pageMetadata(opts: PageMetadataInput): Metadata {
   const imageAlt =
     opts.imageAlt?.trim() || `${displayTitle}`;
 
+  // E1104-D6: only claim dimensions we know. Default OG card is 1200×630;
+  // listing photos pass real width/height (or omit rather than lie).
+  const width =
+    opts.imageWidth && opts.imageWidth > 0
+      ? opts.imageWidth
+      : isDefaultOg
+        ? 1200
+        : undefined;
+  const height =
+    opts.imageHeight && opts.imageHeight > 0
+      ? opts.imageHeight
+      : isDefaultOg
+        ? 630
+        : undefined;
+
   const ogImages = [
     {
       url: image,
-      width: 1200,
-      height: 630,
+      ...(width != null && height != null ? { width, height } : {}),
       alt: imageAlt,
     },
   ];
+
+  const twitterImage = isDefaultOg
+    ? seoAbsoluteImageUrl(DEFAULT_TWITTER_IMAGE)
+    : image;
 
   return {
     title: opts.absoluteTitle ? { absolute: titleText } : titleText,
@@ -94,7 +125,7 @@ export function pageMetadata(opts: PageMetadataInput): Metadata {
       card: opts.twitterCard || "summary_large_image",
       title: displayTitle,
       description,
-      images: [image === DEFAULT_OG_IMAGE ? DEFAULT_TWITTER_IMAGE : image],
+      images: [twitterImage],
     },
     ...(opts.noIndex
       ? { robots: { index: false, follow: false } }
