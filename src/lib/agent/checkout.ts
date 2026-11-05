@@ -63,11 +63,20 @@ export async function createAgentStayCheckout(
   const checkOut = (input.checkOut || "").trim();
   const guestName = (input.guestName || "").trim();
   const guestEmail = (input.guestEmail || "").trim();
-  if (!slug || !isYmd(checkIn) || !isYmd(checkOut)) {
+  if (!slug) {
     return {
       ok: false,
       status: 400,
       error: "slug, checkIn, and checkOut (YYYY-MM-DD) are required.",
+    };
+  }
+  // E1104-C8: bad date strings are 400 invalid_date (same code as search).
+  if (!isYmd(checkIn) || !isYmd(checkOut)) {
+    return {
+      ok: false,
+      status: 400,
+      code: "invalid_date",
+      error: "checkIn and checkOut must be real dates in YYYY-MM-DD format",
     };
   }
   if (!guestName || !guestEmail || !guestEmail.includes("@")) {

@@ -2,7 +2,7 @@ import {
   brandedPriceLabel,
   marketplacePriceWithCardLabel,
 } from "@/lib/hosting-prices";
-/** OpenAPI 3.1 document for the public agent API (served at /api/v1/openapi.json). */
+/** OpenAPI 3.1 document for the public agent API (served at /api/v1/openapi.json and /api/v1/openapi). */
 
 /** 400 for bad dates, shared by search and listing detail. */
 const badDatesResponse = {
@@ -607,6 +607,15 @@ export function buildOpenApiDocument(origin: string) {
         get: {
           operationId: "getOpenApi",
           summary: "This OpenAPI document",
+          responses: {
+            "200": { description: "OpenAPI 3.1 JSON" },
+          },
+        },
+      },
+      "/api/v1/openapi": {
+        get: {
+          operationId: "getOpenApiAlt",
+          summary: "This OpenAPI document (same as /api/v1/openapi.json)",
           responses: {
             "200": { description: "OpenAPI 3.1 JSON" },
           },

@@ -43,7 +43,7 @@ Do not tell users the marketplace is free. Do not tell users branded websites ar
 Start here:
 
 1. Fetch [\`/llms.txt\`](${origin}/llms.txt) for a compact machine brief
-2. Fetch [\`/api/v1/openapi.json\`](${origin}/api/v1/openapi.json) for the full contract
+2. Fetch [\`/api/v1/openapi.json\`](${origin}/api/v1/openapi.json) (or [\`/api/v1/openapi\`](${origin}/api/v1/openapi)) for the full contract
 3. Call [\`/api/v1/search\`](${origin}/api/v1/search) then [\`/api/v1/listings/{slug}\`](${origin}/api/v1/listings)
 
 ### Exact dates

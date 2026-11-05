@@ -45,7 +45,7 @@ Help: ${origin}/help/become-a-host and ${origin}/help/branded-website
 
 ## Primary agent endpoints
 
-- OpenAPI 3.1: ${origin}/api/v1/openapi.json
+- OpenAPI 3.1: ${origin}/api/v1/openapi.json (also ${origin}/api/v1/openapi)
 - Search: ${origin}/api/v1/search
 - Listing detail: ${origin}/api/v1/listings/{slug}
 - Pay-first checkout: POST ${origin}/api/v1/stays/checkout (public, no token, rate limited per IP)
