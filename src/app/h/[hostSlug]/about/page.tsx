@@ -152,7 +152,7 @@ export default async function HostAboutPage({
                 <dd className="mt-1">
                   <a
                     href={`mailto:${host.contactEmail}`}
-                    className="text-base font-medium text-[var(--color-brand,#2563eb)] hover:underline"
+                    className="inline-flex min-h-6 items-center text-base font-medium text-[var(--color-brand,#2563eb)] hover:underline"
                   >
                     {host.contactEmail}
                   </a>

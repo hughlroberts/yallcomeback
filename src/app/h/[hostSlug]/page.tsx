@@ -157,7 +157,7 @@ export default async function HostSiteHomePage({
           {properties.length > 0 ? (
             <Link
               href={`${base}/stays`}
-              className="text-sm font-semibold text-[var(--color-brand,#2563eb)] hover:underline"
+              className="inline-flex min-h-6 items-center text-sm font-semibold text-[var(--color-brand,#2563eb)] hover:underline"
             >
               See all →
             </Link>
@@ -210,7 +210,7 @@ export default async function HostSiteHomePage({
             </p>
             <Link
               href={`${base}/about`}
-              className="mt-6 inline-flex text-sm font-semibold text-[var(--color-brand)] hover:underline"
+              className="mt-6 inline-flex min-h-6 items-center text-sm font-semibold text-[var(--color-brand)] hover:underline"
             >
               Read more →
             </Link>

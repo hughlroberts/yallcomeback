@@ -176,13 +176,13 @@ export function HostSiteFooter({
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <a
               href={`${PRODUCT_ORIGIN}${TERMS_PATH}`}
-              className="underline-offset-2 hover:text-stone-600 hover:underline"
+              className="inline-flex min-h-6 items-center underline-offset-2 hover:text-stone-600 hover:underline"
             >
               Terms
             </a>
             <a
               href={`${PRODUCT_ORIGIN}${PRIVACY_PATH}`}
-              className="underline-offset-2 hover:text-stone-600 hover:underline"
+              className="inline-flex min-h-6 items-center underline-offset-2 hover:text-stone-600 hover:underline"
             >
               Privacy
             </a>
