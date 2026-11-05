@@ -5,8 +5,12 @@ import {
   BOOKING_CTA_FOCUS_CLASS,
   PRIMARY_CTA_FOCUS_CLASS,
   PRIMARY_CTA_FOCUS_ON_DARK_CLASS,
+  PRIMARY_CTA_FOCUS_ON_CYAN_950_CLASS,
+  PRIMARY_CTA_FOCUS_ON_SLATE_900_CLASS,
   BOOKING_CTA_FOCUS_CONTRAST,
   PRIMARY_CTA_FOCUS_ON_DARK_CONTRAST,
+  PRIMARY_CTA_FOCUS_ON_CYAN_950_CONTRAST,
+  PRIMARY_CTA_FOCUS_ON_SLATE_900_CONTRAST,
 } from "@/lib/booking-cta-focus";
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -71,6 +75,13 @@ describe("PRIMARY_CTA_FOCUS shared tokens", () => {
     expect(PRIMARY_CTA_FOCUS_ON_DARK_CONTRAST.ringVsOffset).toBeGreaterThanOrEqual(3);
   });
 
+  it("section-matched dark offsets stay ≥3:1", () => {
+    expect(PRIMARY_CTA_FOCUS_ON_CYAN_950_CLASS).toContain("ring-offset-cyan-950");
+    expect(PRIMARY_CTA_FOCUS_ON_SLATE_900_CLASS).toContain("ring-offset-slate-900");
+    expect(PRIMARY_CTA_FOCUS_ON_CYAN_950_CONTRAST.offsetVsWhite).toBeGreaterThanOrEqual(3);
+    expect(PRIMARY_CTA_FOCUS_ON_SLATE_900_CONTRAST.offsetVsWhite).toBeGreaterThanOrEqual(3);
+  });
+
   it("known public CTAs use the shared helper (not outline-bonnet)", () => {
     const stay = readFileSync(
       join(process.cwd(), "src/components/stay-search-form.tsx"),
@@ -92,6 +103,10 @@ describe("PRIMARY_CTA_FOCUS shared tokens", () => {
     const home = readFileSync(join(process.cwd(), "src/app/page.tsx"), "utf8");
     expect(home).toContain("PRIMARY_CTA_FOCUS_CLASS");
     expect(home).toContain("Find a stay");
+    const homeStart = home.indexOf("Start hosting");
+    expect(home.slice(Math.max(0, homeStart - 220), homeStart)).toContain(
+      "PRIMARY_CTA_FOCUS_ON_CYAN_950_CLASS",
+    );
 
     const ui = readFileSync(join(process.cwd(), "src/components/ui.tsx"), "utf8");
     expect(ui).toContain("BOOKING_CTA_FOCUS_CLASS");

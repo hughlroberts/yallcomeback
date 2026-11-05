@@ -20,7 +20,10 @@ import { auth } from "@/lib/auth";
 import { getRequestTenant } from "@/lib/tenant";
 import { INTENT_COOKIE, shouldShowIntentGate } from "@/lib/intent-cookie";
 import { homePageMetadata } from "@/lib/seo";
-import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
+import {
+  PRIMARY_CTA_FOCUS_CLASS,
+  PRIMARY_CTA_FOCUS_ON_CYAN_950_CLASS,
+} from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 export const metadata = homePageMetadata();
@@ -266,7 +269,7 @@ export default async function HomePage({
                   </Link>
                   <Link
                     href="/marketplace"
-                    className="rounded-full border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet hover:bg-petal"
+                    className={`rounded-full border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
                   >
                     All stays
                   </Link>
@@ -338,7 +341,7 @@ export default async function HomePage({
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/for-hosts"
-              className="inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-bonnet hover:bg-petal"
+              className={`inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_ON_CYAN_950_CLASS}`}
             >
               Start hosting
             </Link>

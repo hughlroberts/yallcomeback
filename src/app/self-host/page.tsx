@@ -15,7 +15,10 @@ import {
 
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
-import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
+import {
+  PRIMARY_CTA_FOCUS_CLASS,
+  PRIMARY_CTA_FOCUS_ON_DARK_CLASS,
+} from "@/lib/booking-cta-focus";
 
 export const metadata = pageMetadata({
   title: "Free self-host · migrate your rental website",
@@ -48,39 +51,39 @@ export default function SelfHostPage() {
                 href={REPO_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+                className={`rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
               >
                 Get the code
               </a>
             ) : (
               <a
                 href="#deploy"
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+                className={`rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
               >
                 Deploy steps
               </a>
             )}
             <Link
               href="/for-hosts?path=self"
-              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              className={`rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Register free self-host
             </Link>
             <Link
               href="/for-hosts?path=paid"
-              className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5"
+              className={`rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Prefer we host it (paid)?
             </Link>
             <Link
               href="/open-source#marketplace"
-              className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5"
+              className={`rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Remote open source + marketplace
             </Link>
             <Link
               href="/open-source"
-              className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5"
+              className={`rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Full feature list
             </Link>
@@ -143,7 +146,7 @@ export default function SelfHostPage() {
             </ul>
             <Link
               href="/for-hosts?path=paid"
-              className="mt-6 inline-flex rounded-full border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet hover:bg-petal"
+              className={`mt-6 inline-flex rounded-full border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Paid hosting plans →
             </Link>
@@ -271,20 +274,20 @@ export default function SelfHostPage() {
                 href={REPO_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+                className={`rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
               >
                 Clone / download
               </a>
             ) : null}
             <Link
               href="/for-hosts?path=self"
-              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              className={`rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Register as free self-host
             </Link>
             <Link
               href="/for-hosts?path=paid"
-              className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5"
+              className={`rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Apply for paid hosting
             </Link>

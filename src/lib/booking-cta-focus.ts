@@ -36,6 +36,16 @@ export const BOOKING_CTA_FOCUS_CLASS = PRIMARY_CTA_FOCUS_CLASS;
 export const PRIMARY_CTA_FOCUS_ON_DARK_CLASS =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-buttermilk focus-visible:ring-offset-stone-950";
 
+/**
+ * Same dark recipe with section-matched offsets (Tailwind needs full class
+ * strings — do not interpolate). White / honey / ghost fills only.
+ */
+export const PRIMARY_CTA_FOCUS_ON_CYAN_950_CLASS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-buttermilk focus-visible:ring-offset-cyan-950";
+
+export const PRIMARY_CTA_FOCUS_ON_SLATE_900_CLASS =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-buttermilk focus-visible:ring-offset-slate-900";
+
 export const BOOKING_CTA_FOCUS_CONTRAST = {
   ring: "#171717",
   offset: "#fbf7ef",
@@ -50,6 +60,24 @@ export const PRIMARY_CTA_FOCUS_ON_DARK_CONTRAST = {
   honey: "#e8ce96",
   ringVsOffset: 18.49,
   offsetVsHoney: 12.89,
+} as const;
+
+/** cyan-950 #083344; white fill vs offset ≫ 3:1 */
+export const PRIMARY_CTA_FOCUS_ON_CYAN_950_CONTRAST = {
+  ring: "#fbf7ef",
+  offset: "#083344",
+  white: "#ffffff",
+  ringVsOffset: 15.5,
+  offsetVsWhite: 12.6,
+} as const;
+
+/** slate-900 #0f172a */
+export const PRIMARY_CTA_FOCUS_ON_SLATE_900_CONTRAST = {
+  ring: "#fbf7ef",
+  offset: "#0f172a",
+  white: "#ffffff",
+  ringVsOffset: 16.1,
+  offsetVsWhite: 16.7,
 } as const;
 
 /** Move focus to the inline listing #reserve book button (not Guests/Pets). */

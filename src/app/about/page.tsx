@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
+import { PRIMARY_CTA_FOCUS_ON_SLATE_900_CLASS } from "@/lib/booking-cta-focus";
 
 export const metadata = pageMetadata({
   title: "About",
@@ -181,13 +182,13 @@ export default function AboutPage() {
             <div className="relative mt-5 flex flex-wrap gap-3">
               <Link
                 href="/for-hosts"
-                className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-petal"
+                className={`rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-petal ${PRIMARY_CTA_FOCUS_ON_SLATE_900_CLASS}`}
               >
                 Host with Yall Come Back
               </Link>
               <Link
                 href="/marketplace"
-                className="rounded-full border border-white/25 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+                className={`rounded-full border border-white/25 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10 ${PRIMARY_CTA_FOCUS_ON_SLATE_900_CLASS}`}
               >
                 Browse stays
               </Link>

@@ -15,7 +15,10 @@ import {
 
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
-import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
+import {
+  PRIMARY_CTA_FOCUS_CLASS,
+  PRIMARY_CTA_FOCUS_ON_DARK_CLASS,
+} from "@/lib/booking-cta-focus";
 
 export const metadata = pageMetadata({
   title: "Open source · free self-host",
@@ -50,39 +53,39 @@ export default function OpenSourcePage() {
                 href={REPO_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+                className={`rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
               >
                 View on GitHub
               </a>
             ) : (
               <a
                 href="#setup"
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+                className={`rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
               >
                 Get the free copy
               </a>
             )}
             <a
               href="#features"
-              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              className={`rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               What&apos;s included
             </a>
             <a
               href="#marketplace"
-              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              className={`rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               List on the marketplace
             </a>
             <Link
               href="/self-host"
-              className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5"
+              className={`rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Self-host deploy guide
             </Link>
             <Link
               href="/for-hosts?path=paid"
-              className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5"
+              className={`rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-stone-300 hover:bg-white/5 ${PRIMARY_CTA_FOCUS_ON_DARK_CLASS}`}
             >
               Prefer we host it for you?
             </Link>
@@ -504,13 +507,13 @@ curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
             </Link>
             <Link
               href="/for-hosts?path=self"
-              className="rounded-full border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet hover:bg-petal"
+              className={`rounded-full border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Apply as free self-host
             </Link>
             <Link
               href="/marketplace"
-              className="rounded-full border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet hover:bg-petal"
+              className={`rounded-full border border-lupine/50 bg-porcelain px-5 py-2.5 text-sm font-medium text-bonnet hover:bg-petal ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Browse demo stays
             </Link>
