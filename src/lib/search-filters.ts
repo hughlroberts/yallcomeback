@@ -172,6 +172,27 @@ export const SEARCH_MAX_LOCATION_CHARS = 200;
 export const SEARCH_MAX_FLEXIBILITY_DAYS = 14;
 
 /**
+ * UI / carousel dateFlex (aliases flexibilityDays): clamp to
+ * 0–SEARCH_MAX_FLEXIBILITY_DAYS. Missing or non-numeric → 0 (exact dates).
+ * Unlike /api/v1/search (which 400s), never rejects — saved-search carousels
+ * must keep working when a stale localStorage value is out of range.
+ */
+export function lenientFlexibilityDays(
+  raw: string | number | null | undefined,
+): number {
+  if (raw == null) return 0;
+  const t = typeof raw === "number" ? raw : String(raw).trim();
+  if (t === "") return 0;
+  const n = typeof t === "number" ? t : Number(t);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(
+    SEARCH_MAX_FLEXIBILITY_DAYS,
+    Math.max(0, Math.floor(n)),
+  );
+}
+
+
+/**
  * Results per response from `take` (alias `limit`): default 20, max 50.
  * Missing, 0, negative or non-numeric values get the default (20).
  */

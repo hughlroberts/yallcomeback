@@ -130,4 +130,23 @@ describe("GET /api/marketplace/stays", () => {
     const q = host.searchMarketplace.mock.calls[0][0].q as string;
     expect(q).toHaveLength(200);
   });
+
+  it("clamps a bad dateFlex / flexibilityDays instead of erroring", async () => {
+    const cases: Array<[string, number | undefined]> = [
+      ["dateFlex=abc", undefined],
+      ["dateFlex=-4", undefined],
+      ["dateFlex=99", 14],
+      ["flexibilityDays=3.7", 3],
+      ["dateFlex=0", undefined],
+      ["dateFlex=5", 5],
+    ];
+    for (const [q, expected] of cases) {
+      host.searchMarketplace.mockClear();
+      const res = await get(q);
+      expect(res.status, q).toBe(200);
+      const passed = host.searchMarketplace.mock.calls[0][0].dateFlex;
+      expect(passed, q).toBe(expected);
+    }
+  });
+
 });

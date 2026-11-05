@@ -8,8 +8,10 @@ import {
   listingFiltersFromParams,
   listingMatchesFilters,
   SEARCH_DEFAULT_LIMIT,
+  SEARCH_MAX_FLEXIBILITY_DAYS,
   SEARCH_MAX_GUESTS,
   SEARCH_MAX_LIMIT,
+  lenientFlexibilityDays,
   searchGuests,
   searchLimit,
   searchLimitFromParams,
@@ -242,3 +244,30 @@ describe("clampGuestsInput (guests box on blur)", () => {
     expect(clampGuestsInput("abc")).toBe("");
   });
 });
+
+describe("lenientFlexibilityDays (marketplace / UI)", () => {
+  it("defaults missing or non-numeric to 0", () => {
+    expect(lenientFlexibilityDays(undefined)).toBe(0);
+    expect(lenientFlexibilityDays(null)).toBe(0);
+    expect(lenientFlexibilityDays("")).toBe(0);
+    expect(lenientFlexibilityDays("  ")).toBe(0);
+    expect(lenientFlexibilityDays("abc")).toBe(0);
+    expect(lenientFlexibilityDays("1e2")).toBe(SEARCH_MAX_FLEXIBILITY_DAYS); // Number("1e2")=100 → clamp
+    expect(lenientFlexibilityDays(Number.NaN)).toBe(0);
+  });
+
+  it("clamps to 0–SEARCH_MAX_FLEXIBILITY_DAYS and floors fractions", () => {
+    expect(lenientFlexibilityDays(-5)).toBe(0);
+    expect(lenientFlexibilityDays("-3")).toBe(0);
+    expect(lenientFlexibilityDays(0)).toBe(0);
+    expect(lenientFlexibilityDays("0")).toBe(0);
+    expect(lenientFlexibilityDays(3)).toBe(3);
+    expect(lenientFlexibilityDays("7")).toBe(7);
+    expect(lenientFlexibilityDays(3.9)).toBe(3);
+    expect(lenientFlexibilityDays("99")).toBe(SEARCH_MAX_FLEXIBILITY_DAYS);
+    expect(lenientFlexibilityDays(SEARCH_MAX_FLEXIBILITY_DAYS)).toBe(
+      SEARCH_MAX_FLEXIBILITY_DAYS,
+    );
+  });
+});
+

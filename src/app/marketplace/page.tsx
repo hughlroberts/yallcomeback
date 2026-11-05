@@ -22,7 +22,10 @@ import {
   hasListingFilters,
   listingFilterLabels,
   listingFiltersFromParams,
-  type ListingFilters, SEARCH_MAX_LOCATION_CHARS } from "@/lib/search-filters";
+  type ListingFilters,
+  SEARCH_MAX_LOCATION_CHARS,
+  lenientFlexibilityDays,
+} from "@/lib/search-filters";
 
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
@@ -85,11 +88,8 @@ export default async function MarketplacePage({
   const filterParams = new URLSearchParams();
   appendListingFilterParams(filterParams, filters);
   const hiddenFields = Object.fromEntries(filterParams.entries());
-  const dateFlexRaw = Number(params.dateFlex);
-  const dateFlex =
-    Number.isFinite(dateFlexRaw) && dateFlexRaw > 0
-      ? Math.min(14, Math.floor(dateFlexRaw))
-      : 0;
+  // Same clamp as /api/marketplace/stays (never 400 for a bad dateFlex).
+  const dateFlex = lenientFlexibilityDays(params.dateFlex);
 
   const placeSuggestions = await getMarketplacePlaceSuggestions();
   const onlyCity = soleMarketplaceCity(placeSuggestions);
