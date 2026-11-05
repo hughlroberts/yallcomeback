@@ -157,7 +157,7 @@ export function HostSignupForm({
                   minLength={8}
                   value={passwordValue}
                   onChange={(e) => setPasswordValue(e.target.value)}
-                  className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-base"
+                  className={`mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-base ${PRIMARY_CTA_FOCUS_CLASS}`}
                 />
               </label>
 
@@ -219,7 +219,7 @@ export function HostSignupForm({
                   <input
                     type="radio"
                     name="sitePresenceUi"
-                    className="mt-1 size-5 shrink-0"
+                    className={`mt-1 size-5 shrink-0 ${PRIMARY_CTA_FOCUS_CLASS}`}
                     checked={paidPlan === opt.id}
                     onChange={() => {
                       setPaidPlan(opt.id);
@@ -316,7 +316,7 @@ export function HostSignupForm({
               value="1"
               checked={listOnMarketplace}
               onChange={(e) => setListOnMarketplace(e.target.checked)}
-              className="mt-1"
+              className={`mt-1 ${PRIMARY_CTA_FOCUS_CLASS}`}
             />
             <span>
               <span className="font-medium text-stone-900">
@@ -336,7 +336,7 @@ export function HostSignupForm({
             type="checkbox"
             name="setupService"
             value="1"
-            className="mt-1"
+            className={`mt-1 ${PRIMARY_CTA_FOCUS_CLASS}`}
           />
           <span>
             <span className="font-semibold text-stone-900">
@@ -357,15 +357,15 @@ export function HostSignupForm({
           type="checkbox"
           name="acceptTerms"
           required
-          className="mt-1"
+          className={`mt-1 ${PRIMARY_CTA_FOCUS_CLASS}`}
         />
         <span>
           I agree to the{" "}
-          <a href="/terms" className="font-medium text-bonnet underline">
+          <a href="/terms" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Terms of Service
           </a>{" "}
           and{" "}
-          <a href="/privacy" className="font-medium text-bonnet underline">
+          <a href="/privacy" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
             Privacy Policy
           </a>
           . I am an independent host. Yall Come Back does not operate my stays,
@@ -446,7 +446,7 @@ function Field({
         required={required}
         minLength={minLength}
         placeholder={placeholder}
-        className="mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-base"
+        className={`mt-1 min-h-11 w-full rounded-xl border border-stone-300 px-3 py-2.5 text-base ${PRIMARY_CTA_FOCUS_CLASS}`}
       />
       {hint ? (
         <span className="mt-1 block text-xs text-stone-500">{hint}</span>

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
-import { PRIMARY_CTA_FOCUS_ON_SLATE_900_CLASS } from "@/lib/booking-cta-focus";
+import { PRIMARY_CTA_FOCUS_CLASS, PRIMARY_CTA_FOCUS_ON_SLATE_900_CLASS } from "@/lib/booking-cta-focus";
 
 export const metadata = pageMetadata({
   title: "About",
@@ -15,7 +15,7 @@ export default function AboutPage() {
   return (
     <div>
       <PageJsonLd path="/about" name="About" metadata={metadata} kind="AboutPage" />
-      <div className="relative overflow-hidden bg-stone-900">
+      <div data-focus-ring="dark" className="relative overflow-hidden bg-stone-900">
         <Image
           src="/seed/hero/about.jpg"
           alt="Lake view through the screened porch window of a lake house"
@@ -285,14 +285,14 @@ export default function AboutPage() {
                 Prefer a real conversation over a sales funnel?{" "}
                 <Link
                   href="/contact"
-                  className="font-medium text-bonnet hover:underline"
+                  className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   Say hello
                 </Link>
                 {" · "}
                 <Link
                   href="/for-hosts"
-                  className="font-medium text-bonnet hover:underline"
+                  className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   Host with us
                 </Link>

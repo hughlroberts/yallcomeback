@@ -4,6 +4,7 @@ import { Check, Upload } from "lucide-react";
 import { useState } from "react";
 import type { SavedListing } from "@/lib/saved-listings";
 import { SaveListingButton } from "@/components/save-listing-button";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Props = {
   title: string;
@@ -62,7 +63,7 @@ export function ListingShareSave({ title, shareUrl, listing }: Props) {
         type="button"
         onClick={onShare}
         disabled={sharing}
-        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-700 underline-offset-2 transition hover:bg-stone-100 hover:underline disabled:opacity-60"
+        className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-700 underline-offset-2 transition hover:bg-stone-100 hover:underline disabled:opacity-60 ${PRIMARY_CTA_FOCUS_CLASS}`}
         aria-label="Share this stay"
       >
         {copied ? (

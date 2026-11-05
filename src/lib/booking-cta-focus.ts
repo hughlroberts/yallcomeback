@@ -29,6 +29,14 @@ export const PRIMARY_CTA_FOCUS_CLASS =
 export const BOOKING_CTA_FOCUS_CLASS = PRIMARY_CTA_FOCUS_CLASS;
 
 /**
+ * Opt a subtree into the dark global :focus-visible tokens from globals.css
+ * (`--focus-ring-color: buttermilk`, offset stone-950). Prefer the attribute
+ * on section roots; `.focus-ring-on-dark` is the class alias.
+ */
+export const FOCUS_RING_ON_DARK_ATTR = 'data-focus-ring="dark"' as const;
+export const FOCUS_RING_ON_DARK_CLASS = "focus-ring-on-dark";
+
+/**
  * Primary CTA focus on dark heroes (bg-stone-900 / stone-950). Light ring +
  * stone-950 offset so the halo matches the section. Use for honey / white /
  * ghost controls — not for bonnet fills (see file comment).

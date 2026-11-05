@@ -20,6 +20,7 @@ import {
 } from "@/lib/legal";
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const metadata: Metadata = pageMetadata({
   title: "Terms of Service",
@@ -53,7 +54,7 @@ export default function TermsPage() {
       </LegalP>
       <LegalP>
         Related: our{" "}
-        <Link href={PRIVACY_PATH} className="font-medium text-bonnet underline">
+        <Link href={PRIVACY_PATH} className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Privacy Policy
         </Link>
         . Host house rules, cancellation policies, and listing disclaimers are
@@ -515,7 +516,7 @@ export default function TermsPage() {
       <LegalH2 id="contact">27. Contact</LegalH2>
       <LegalP>
         Legal notices: use the{" "}
-        <Link href="/contact" className="font-medium text-bonnet underline">
+        <Link href="/contact" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Contact
         </Link>{" "}
         page on {PRODUCT_DOMAIN}. Platform email is not a monitored legal inbox

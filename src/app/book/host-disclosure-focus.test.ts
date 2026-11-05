@@ -11,6 +11,7 @@ describe("E1104-3 host disclosure scroll region", () => {
     expect(src).toMatch(/max-h-64[\s\S]{0,200}tabIndex=\{0\}/);
     expect(src).toMatch(/aria-label="Host disclosure"/);
     expect(src).toMatch(/role="region"/);
-    expect(src).toMatch(/focus-visible:outline-bonnet/);
+    expect(src).toContain("PRIMARY_CTA_FOCUS_CLASS");
+    expect(src).not.toMatch(/focus-visible:outline-bonnet/);
   });
 });

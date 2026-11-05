@@ -15,6 +15,7 @@ import {
   type LongStayPolicyId,
   type ShortStayPolicyId,
 } from "@/lib/cancellation-policies";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import {
   longRuleText,
   REFUND_PROCESS_TEXT,
@@ -117,7 +118,7 @@ export function AdminCancellationPolicy({
             name="cancellationPolicy"
             value={shortId}
             onChange={(e) => setShortId(e.target.value as ShortStayPolicyId)}
-            className="mt-1.5 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-bonnet focus:ring-2 focus:ring-petal"
+            className={`mt-1.5 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             <optgroup label="Standard">
               {SHORT_STAY_POLICIES.filter((p) => !p.restricted).map((p) => (
@@ -150,7 +151,7 @@ export function AdminCancellationPolicy({
             name="longTermCancellationPolicy"
             value={longId}
             onChange={(e) => setLongId(e.target.value as LongStayPolicyId)}
-            className="mt-1.5 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-bonnet focus:ring-2 focus:ring-petal"
+            className={`mt-1.5 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             {LONG_STAY_POLICIES.map((p) => (
               <option key={p.id} value={p.id}>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { CalendarDays, Search, Shield } from "lucide-react";
 import { AMENITY_SAFETY } from "@/lib/listing-amenities";
 import {
@@ -174,13 +175,13 @@ export function ThingsToKnow({
           <div className="mt-3 flex flex-col gap-1.5">
             <Link
               href={HELP_CANCELLATION_POLICIES_PATH}
-              className="text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline"
+              className={`text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Learn more
             </Link>
             <Link
               href={datesHref}
-              className="text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline"
+              className={`text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Add dates for this stay
             </Link>
@@ -206,7 +207,7 @@ export function ThingsToKnow({
           </ul>
           {houseRules?.trim() ? (
             <details className="mt-3 group">
-              <summary className="cursor-pointer list-none text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline [&::-webkit-details-marker]:hidden">
+              <summary className={`cursor-pointer list-none text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS} [&::-webkit-details-marker]:hidden`}>
                 Learn more
               </summary>
               <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-relaxed text-stone-600">
@@ -238,7 +239,7 @@ export function ThingsToKnow({
             ))}
           </ul>
           <details className="mt-3">
-            <summary className="cursor-pointer list-none text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline [&::-webkit-details-marker]:hidden">
+            <summary className={`cursor-pointer list-none text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS} [&::-webkit-details-marker]:hidden`}>
               Learn more
             </summary>
             <p className="mt-3 text-sm leading-relaxed text-stone-600">

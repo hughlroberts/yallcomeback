@@ -162,7 +162,7 @@ export default async function ForHostsPage({
           description: FOR_HOSTS_DESCRIPTION,
         })}
       />
-      <div className="relative overflow-hidden bg-stone-900">
+      <div data-focus-ring="dark" className="relative overflow-hidden bg-stone-900">
         <Image
           src="/seed/hero/for-hosts.jpg"
           alt="Lake view through the screened porch window of a host's cabin"
@@ -302,7 +302,7 @@ export default async function ForHostsPage({
                 Already hosting?{" "}
                 <Link
                   href="/login?callbackUrl=/admin/calendar"
-                  className="font-medium text-bonnet hover:underline"
+                  className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   Sign in to Host admin
                 </Link>
@@ -464,7 +464,7 @@ export default async function ForHostsPage({
                 Already hosting?{" "}
                 <Link
                   href="/login?callbackUrl=/admin/calendar"
-                  className="font-medium text-bonnet hover:underline"
+                  className={`font-medium text-bonnet hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                 >
                   Sign in to Host admin
                 </Link>

@@ -12,6 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 function useIsClient() {
   return useSyncExternalStore(
@@ -233,6 +234,7 @@ export function WhereAutocomplete({
         }
         className={cn(
           "w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400",
+          PRIMARY_CTA_FOCUS_CLASS,
           className,
         )}
       />

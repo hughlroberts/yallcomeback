@@ -34,6 +34,7 @@ import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 
 import { ListingUnavailable } from "@/components/listing-unavailable";
 import { hiddenFromViewer } from "@/lib/brand-visibility";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
 
@@ -630,7 +631,7 @@ export default async function BookPage({
             </p>
 
             <div
-              className="mt-3 max-h-64 space-y-4 overflow-y-auto rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
+              className={`mt-3 max-h-64 space-y-4 overflow-y-auto rounded-md ${PRIMARY_CTA_FOCUS_CLASS}`}
               tabIndex={0}
               role="region"
               aria-label="Host disclosure"

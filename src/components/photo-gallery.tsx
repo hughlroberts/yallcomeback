@@ -12,6 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { useModalOpen } from "@/lib/modal-open";
 import { useFocusTrap } from "@/lib/use-focus-trap";
@@ -67,7 +68,7 @@ export function PhotoGallery({
         <button
           type="button"
           onClick={() => openAt(0)}
-          className="relative aspect-[4/3] bg-stone-100 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet sm:col-span-2 sm:row-span-2 sm:aspect-auto"
+          className={`relative aspect-[4/3] bg-stone-100 text-left ${PRIMARY_CTA_FOCUS_CLASS} sm:col-span-2 sm:row-span-2 sm:aspect-auto`}
           aria-label={`View photo 1 of ${photos.length}: ${listingPhotoAlt(title, main.alt, 0)}`}
         >
           <Image
@@ -88,7 +89,7 @@ export function PhotoGallery({
               key={img.id}
               type="button"
               onClick={() => openAt(isLastGrid ? 0 : photoIndex)}
-              className="relative hidden aspect-square bg-stone-100 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet sm:block"
+              className={`relative hidden aspect-square bg-stone-100 text-left ${PRIMARY_CTA_FOCUS_CLASS} sm:block`}
               aria-label={
                 isLastGrid
                   ? `+${extra} more, view all ${photos.length} photos`
@@ -124,7 +125,7 @@ export function PhotoGallery({
                 key={img.id}
                 type="button"
                 onClick={() => openAt(i + 1)}
-                className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
+                className={`relative h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-stone-100 ${PRIMARY_CTA_FOCUS_CLASS}`}
                 aria-label={`View photo ${i + 2} of ${photos.length}: ${listingPhotoAlt(title, img.alt, i + 1)}`}
               >
                 <Image
@@ -142,7 +143,7 @@ export function PhotoGallery({
             <button
               type="button"
               onClick={() => openAt(0)}
-              className="shrink-0 rounded-full border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-900 shadow-sm hover:bg-stone-50"
+              className={`shrink-0 rounded-full border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-900 shadow-sm hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               View all
             </button>
@@ -155,7 +156,7 @@ export function PhotoGallery({
           <button
             type="button"
             onClick={() => openAt(0)}
-            className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bonnet"
+            className={`rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm hover:bg-stone-50 ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             Show all {photos.length} photos
           </button>
@@ -246,7 +247,7 @@ function PhotoLightbox({
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top,0px))] z-20 inline-flex size-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-lg ring-1 ring-black/10 hover:bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-5 sm:top-5"
+        className={`absolute right-3 top-[max(0.75rem,env(safe-area-inset-top,0px))] z-20 inline-flex size-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-lg ring-1 ring-black/10 hover:bg-stone-100 ${PRIMARY_CTA_FOCUS_CLASS} sm:right-5 sm:top-5`}
         aria-label="Close photo gallery"
         data-autofocus
       >
@@ -289,7 +290,7 @@ function PhotoLightbox({
                 <button
                   type="button"
                   onClick={goPrev}
-                  className="absolute left-2 top-1/2 z-10 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-900 shadow-md ring-1 ring-black/10 hover:bg-white sm:left-3 sm:size-11"
+                  className={`absolute left-2 top-1/2 z-10 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-900 shadow-md ring-1 ring-black/10 hover:bg-white sm:left-3 sm:size-11 ${PRIMARY_CTA_FOCUS_CLASS}`}
                   aria-label="Previous photo"
                 >
                   <ChevronLeft className="size-6" />
@@ -297,7 +298,7 @@ function PhotoLightbox({
                 <button
                   type="button"
                   onClick={goNext}
-                  className="absolute right-2 top-1/2 z-10 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-900 shadow-md ring-1 ring-black/10 hover:bg-white sm:right-3 sm:size-11"
+                  className={`absolute right-2 top-1/2 z-10 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-stone-900 shadow-md ring-1 ring-black/10 hover:bg-white sm:right-3 sm:size-11 ${PRIMARY_CTA_FOCUS_CLASS}`}
                   aria-label="Next photo"
                 >
                   <ChevronRight className="size-6" />
@@ -330,6 +331,7 @@ function PhotoLightbox({
                   onClick={() => onIndexChange(i)}
                   className={cn(
                     "relative h-14 w-20 shrink-0 overflow-hidden rounded-lg ring-2 transition sm:h-16 sm:w-24",
+                    PRIMARY_CTA_FOCUS_CLASS,
                     i === index
                       ? "ring-white"
                       : "ring-transparent opacity-70 hover:opacity-100",

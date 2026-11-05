@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import { hostTodayYmd, monthStartFromYmd } from "@/lib/host-today";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -480,7 +481,7 @@ function MonthGrid({
                     ? "ring-2 ring-bonnet ring-offset-1"
                     : "",
                   interactive
-                    ? "cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-bonnet"
+                    ? cn("cursor-pointer transition-colors", PRIMARY_CTA_FOCUS_CLASS)
                     : "cursor-default",
                   !interactive && isPast ? "pointer-events-none" : "",
                 )}

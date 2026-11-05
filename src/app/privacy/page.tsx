@@ -12,6 +12,7 @@ import { PRODUCT_DOMAIN, PRODUCT_NAME } from "@/lib/features";
 import { LEGAL_EFFECTIVE_DATE, LEGAL_OPERATOR, TERMS_PATH } from "@/lib/legal";
 import { pageMetadata } from "@/lib/seo";
 import { PageJsonLd } from "@/components/page-json-ld";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const metadata: Metadata = pageMetadata({
   title: "Privacy Policy",
@@ -30,7 +31,7 @@ export default function PrivacyPage() {
         This Privacy Policy is issued by {LEGAL_OPERATOR} (“{PRODUCT_NAME},”
         “we,” “us”). It is effective {LEGAL_EFFECTIVE_DATE}. It should be read
         with our{" "}
-        <Link href={TERMS_PATH} className="font-medium text-bonnet underline">
+        <Link href={TERMS_PATH} className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Terms of Service
         </Link>
         .
@@ -271,7 +272,7 @@ export default function PrivacyPage() {
       <LegalH2 id="contact">13. Contact</LegalH2>
       <LegalP>
         Privacy requests: the{" "}
-        <Link href="/contact" className="font-medium text-bonnet underline">
+        <Link href="/contact" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Contact
         </Link>{" "}
         page on {PRODUCT_DOMAIN}. Platform email is not a monitored inbox until

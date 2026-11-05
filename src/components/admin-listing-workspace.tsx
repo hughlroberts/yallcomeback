@@ -507,7 +507,7 @@ function PricingSidebar({
             </Label>
             <select
               id="ws-pet-unit"
-              className="mt-1 h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-base text-stone-900 outline-none focus:border-bonnet focus:ring-2 focus:ring-petal"
+              className={`mt-1 h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-base text-stone-900 outline-none focus:border-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
               value={petFeeUnit}
               onChange={(e) =>
                 setPetFeeUnit(

@@ -16,21 +16,22 @@ describe("BookingWidget focus rings (E1104-4)", () => {
     "utf8",
   );
 
-  it("Guests/Pets use inset focus rings (not clipped by overflow-hidden)", () => {
+  it("Guests/Pets use the shared focus ring (not navy inset)", () => {
     expect(src).not.toMatch(
       /overflow-hidden rounded-xl border border-stone-300/,
     );
     expect(src).toMatch(
       /rounded-xl border border-stone-300">\s*\n\s*<label[\s\S]*?Guests/,
     );
+    expect(src).toContain("BOOKING_CTA_FOCUS_CLASS");
     const selects = [
-      ...src.matchAll(/name="(guests|pets)"[\s\S]*?className="([^"]+)"/g),
+      ...src.matchAll(/name="(guests|pets)"[\s\S]*?className=\{`([^`]+)`\}/g),
     ];
     expect(selects.map((m) => m[1]).sort()).toEqual(["guests", "pets"]);
     for (const m of selects) {
-      expect(m[2], m[1]).toMatch(/focus:ring-2/);
-      expect(m[2], m[1]).toMatch(/focus:ring-inset/);
-      expect(m[2], m[1]).toMatch(/focus:ring-bonnet/);
+      expect(m[2], m[1]).toContain("${BOOKING_CTA_FOCUS_CLASS}");
+      expect(m[2], m[1]).not.toMatch(/ring-inset/);
+      expect(m[2], m[1]).not.toMatch(/ring-bonnet/);
     }
   });
 

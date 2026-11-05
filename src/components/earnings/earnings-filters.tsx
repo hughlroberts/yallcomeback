@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 type Listing = { id: string; title: string };
 
@@ -41,7 +42,7 @@ export function EarningsFilters({
   );
 
   const pill =
-    "appearance-none rounded-full border border-stone-300 bg-white py-2 pl-3.5 pr-8 text-sm text-stone-700 shadow-sm hover:border-stone-400 focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-100";
+    `appearance-none rounded-full border border-stone-300 bg-white py-2 pl-3.5 pr-8 text-sm text-stone-700 shadow-sm hover:border-stone-400 focus:border-stone-500 focus:outline-none ${PRIMARY_CTA_FOCUS_CLASS}`;
 
   return (
     <div
@@ -58,7 +59,7 @@ export function EarningsFilters({
             name="q"
             defaultValue={sp.get("q") || ""}
             placeholder="Search"
-            className="w-full rounded-full border border-stone-300 bg-white py-2 pl-9 pr-3 text-sm text-stone-800 shadow-sm placeholder:text-stone-400 focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-100"
+            className={`w-full rounded-full border border-stone-300 bg-white py-2 pl-9 pr-3 text-sm text-stone-800 shadow-sm placeholder:text-stone-400 focus:border-stone-500 focus:outline-none ${PRIMARY_CTA_FOCUS_CLASS}`}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();

@@ -41,6 +41,12 @@
   --radius-pill: 999px;
   --shadow-float: 0 8px 24px rgba(42, 53, 102, 0.12),
     0 2px 6px rgba(42, 53, 102, 0.08);
+
+  /* Shared keyboard focus (WCAG 2.4.7 / 1.4.11) — match booking-cta-focus.ts */
+  --focus-ring-color: #171717;
+  --focus-ring-offset-color: #fbf7ef; /* buttermilk */
+  --focus-ring-width: 2px;
+  --focus-ring-offset-width: 2px;
 }
 
 @theme inline {
@@ -163,6 +169,28 @@ body {
   /* Fraunces “Y” sidebearing — slight air so it never clips */
   padding-left: 0.04em;
   padding-right: 0.02em;
+}
+
+
+/*
+ * Default :focus-visible ring (light / cream pages). Lives in @layer base so
+ * Tailwind focus-visible:ring-* utilities (PRIMARY_CTA_FOCUS_*) still win when
+ * present. Dark sections opt in with .focus-ring-on-dark or data-focus-ring="dark".
+ */
+@layer base {
+  :focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 var(--focus-ring-offset-width) var(--focus-ring-offset-color),
+      0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset-width))
+        var(--focus-ring-color);
+  }
+
+  .focus-ring-on-dark,
+  [data-focus-ring="dark"] {
+    --focus-ring-color: #fbf7ef; /* buttermilk */
+    --focus-ring-offset-color: #0c0a09; /* stone-950 */
+  }
 }
 
 /* Prefer light UI always */

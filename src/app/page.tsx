@@ -293,7 +293,7 @@ export default async function HomePage({
           </div>
           <Link
             href="/marketplace"
-            className="text-sm font-semibold text-bonnet hover:text-bonnet"
+            className={`text-sm font-semibold text-bonnet hover:text-bonnet ${PRIMARY_CTA_FOCUS_CLASS}`}
           >
             View all stays →
           </Link>
@@ -318,7 +318,7 @@ export default async function HomePage({
       </section>
 
       {/* CTA */}
-      <section className="relative overflow-hidden bg-cyan-950">
+      <section data-focus-ring="dark" className="relative overflow-hidden bg-cyan-950">
         <div className="absolute inset-0">
           <Image
             src="/seed/hero/marketplace.jpg"

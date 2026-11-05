@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 import type { Metadata } from "next";
 import { HELP_ARTICLES, HELP_CATEGORIES, helpPath } from "@/lib/help";
 import { pageMetadata, seoAbsoluteUrl } from "@/lib/seo";
@@ -49,7 +50,7 @@ export default function HelpIndexPage() {
                   <li key={a.slug}>
                     <Link
                       href={helpPath(a.slug)}
-                      className="block rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-stone-300 hover:shadow-md"
+                      className={`block rounded-2xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-stone-300 hover:shadow-md ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
                       <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
                         {a.category}
@@ -71,7 +72,7 @@ export default function HelpIndexPage() {
         Need more help?{" "}
         <Link
           href="/contact"
-          className="font-semibold text-bonnet underline-offset-2 hover:underline"
+          className={`font-semibold text-bonnet underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
         >
           Contact us
         </Link>

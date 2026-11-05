@@ -5,7 +5,7 @@ import { PRODUCT_DOMAIN } from "@/lib/features";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-hairline bg-bonnet pb-[env(safe-area-inset-bottom,0px)] text-buttermilk/90">
+    <footer data-focus-ring="dark" className="mt-auto border-t border-hairline bg-bonnet pb-[env(safe-area-inset-bottom,0px)] text-buttermilk/90">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Stable columns: brand never collides with link lists when seal grows */}
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">

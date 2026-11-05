@@ -209,7 +209,7 @@ export function StaySearchForm({
                     }
                   }}
                   placeholder="Any"
-                  className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
+                  className={`w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 ${PRIMARY_CTA_FOCUS_CLASS}`}
                 />
               </label>
               <label className="flex min-w-0 flex-1 cursor-text flex-col gap-0.5 rounded-xl px-4 py-3 hover:bg-stone-50 sm:rounded-full sm:py-2.5">
@@ -223,7 +223,7 @@ export function StaySearchForm({
                   max={SEARCH_MAX_PETS}
                   defaultValue={defaultPets}
                   placeholder="0"
-                  className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
+                  className={`w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 ${PRIMARY_CTA_FOCUS_CLASS}`}
                 />
               </label>
             </div>
@@ -295,7 +295,7 @@ export function StaySearchForm({
               placeholder="Dock cabin, we grilled, about 8 people…"
               autoComplete="off"
               enterKeyHint="search"
-              className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400"
+              className={`w-full min-w-0 border-0 bg-transparent p-0 text-base text-stone-900 outline-none placeholder:text-stone-400 ${PRIMARY_CTA_FOCUS_CLASS}`}
             />
           </label>
           <button
