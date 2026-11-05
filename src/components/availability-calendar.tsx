@@ -26,6 +26,18 @@ function monthLabel(d: Date) {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
+/** Accessible name for a calendar day: full date + status. */
+export function calendarDayAriaLabel(day: Date, status: string): string {
+  const datePart = day.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  return `${datePart}, ${status}`;
+}
+
+
 function addDaysYmd(key: string, days: number): string {
   const d = new Date(key + "T12:00:00");
   d.setDate(d.getDate() + days);
@@ -353,6 +365,11 @@ function MonthGrid({
   for (let d = 1; d <= daysInMonth; d++) {
     cells.push(new Date(year, mon, d));
   }
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks: (Date | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
 
   return (
     <div className={className}>
@@ -361,136 +378,175 @@ function MonthGrid({
           "mb-2 text-center font-semibold text-stone-800",
           compact ? "mb-1.5 text-xs" : "mb-3 text-sm",
         )}
+        id={`cal-month-${year}-${mon}`}
       >
         {monthLabel(month)}
       </p>
       <div
-        className={cn(
-          "grid grid-cols-7 text-center font-medium uppercase tracking-wide text-stone-400",
-          compact ? "gap-0 text-[10px]" : "gap-1 text-[11px]",
-        )}
+        role="grid"
+        aria-labelledby={`cal-month-${year}-${mon}`}
+        className={cn(compact ? "gap-y-0.5" : "gap-1")}
       >
-        {WEEKDAYS.map((w) => (
-          <div key={w} className={compact ? "py-0.5" : "py-1"}>
-            {w}
+        <div
+          role="row"
+          className={cn(
+            "grid grid-cols-7 text-center font-medium uppercase tracking-wide text-stone-400",
+            compact ? "gap-0 text-[10px]" : "gap-1 text-[11px]",
+          )}
+        >
+          {WEEKDAYS.map((w) => (
+            <div
+              key={w}
+              role="columnheader"
+              className={compact ? "py-0.5" : "py-1"}
+            >
+              {w}
+            </div>
+          ))}
+        </div>
+        {weeks.map((week, wi) => (
+          <div
+            key={`w-${wi}`}
+            role="row"
+            className={cn(
+              "grid grid-cols-7",
+              compact ? "gap-y-0.5" : "gap-1",
+            )}
+          >
+            {week.map((day, di) => {
+              if (!day) {
+                return (
+                  <div
+                    key={`e-${wi}-${di}`}
+                    role="gridcell"
+                    className="aspect-square"
+                    aria-hidden="true"
+                  />
+                );
+              }
+              const key = ymd(day);
+              const isPast = key < today;
+              const isBlocked = blocked.has(key);
+              const isToday = key === today;
+              const unavailableNight = isPast || isBlocked;
+
+              const isCheckIn = checkIn === key;
+              const isCheckOut = checkOut === key;
+              const inRange =
+                Boolean(checkIn && checkOut) && key > checkIn && key < checkOut;
+              const selected = isCheckIn || isCheckOut || inRange;
+
+              const canClickAsCheckout =
+                selectable &&
+                Boolean(checkIn && !checkOut) &&
+                key > checkIn &&
+                rangeNightsFree(checkIn, key, blocked);
+              const canClickAsCheckIn =
+                selectable && !unavailableNight && !isPast;
+              const interactive =
+                selectable &&
+                (canClickAsCheckIn || canClickAsCheckout || isCheckIn);
+
+              let cellStyle: string;
+              if (isCheckIn || isCheckOut) {
+                cellStyle = "bg-bonnet text-white font-semibold";
+              } else if (inRange) {
+                cellStyle = "bg-petal text-blue-950";
+              } else if (isPast) {
+                cellStyle = "text-stone-300";
+              } else if (isBlocked) {
+                cellStyle = "text-stone-300 bg-stone-50";
+              } else {
+                cellStyle = "text-stone-800 hover:bg-emerald-50";
+              }
+
+              let rangeShape = "rounded-full";
+              if (selected && checkIn && checkOut) {
+                if (isCheckIn && isCheckOut) {
+                  rangeShape = "rounded-full";
+                } else if (isCheckIn) {
+                  rangeShape = "rounded-l-full rounded-r-none";
+                } else if (isCheckOut) {
+                  rangeShape = "rounded-r-full rounded-l-none";
+                } else if (inRange) {
+                  rangeShape = "rounded-none";
+                }
+              }
+
+              const status = isPast
+                ? "past"
+                : isBlocked
+                  ? "unavailable"
+                  : isCheckIn
+                    ? "check-in"
+                    : isCheckOut
+                      ? "checkout"
+                      : inRange
+                        ? "in stay"
+                        : "available";
+              const ariaLabel = calendarDayAriaLabel(day, status);
+              const Comp = interactive ? "button" : "div";
+
+              return (
+                <div
+                  key={key}
+                  role="gridcell"
+                  className={cn(
+                    "relative flex aspect-square items-center justify-center",
+                    inRange ? "bg-petal" : "",
+                    isCheckIn && checkOut ? "bg-petal rounded-l-full" : "",
+                    isCheckOut && checkIn ? "bg-petal rounded-r-full" : "",
+                  )}
+                >
+                  <Comp
+                    type={interactive ? "button" : undefined}
+                    disabled={interactive ? false : undefined}
+                    onClick={
+                      interactive
+                        ? () => onDayClick(key, unavailableNight)
+                        : undefined
+                    }
+                    aria-label={ariaLabel}
+                    aria-pressed={
+                      interactive && selected ? true : interactive ? false : undefined
+                    }
+                    title={
+                      isPast
+                        ? "Past"
+                        : isBlocked
+                          ? "Unavailable night"
+                          : selected
+                            ? isCheckIn
+                              ? "Check-in"
+                              : isCheckOut
+                                ? "Checkout"
+                                : "In stay"
+                            : "Available"
+                    }
+                    className={cn(
+                      "flex h-[88%] w-[88%] items-center justify-center tabular-nums",
+                      compact ? "text-[12px]" : "text-sm",
+                      rangeShape,
+                      cellStyle,
+                      !selected && isToday
+                        ? "ring-2 ring-bonnet ring-offset-1"
+                        : "",
+                      interactive
+                        ? cn(
+                            "cursor-pointer transition-colors",
+                            PRIMARY_CTA_FOCUS_CLASS,
+                          )
+                        : "cursor-default",
+                      !interactive && isPast ? "pointer-events-none" : "",
+                    )}
+                  >
+                    {day.getDate()}
+                  </Comp>
+                </div>
+              );
+            })}
           </div>
         ))}
-      </div>
-      <div
-        className={cn(
-          "mt-0.5 grid grid-cols-7",
-          compact ? "gap-y-0.5" : "gap-1",
-        )}
-      >
-        {cells.map((day, i) => {
-          if (!day) {
-            return <div key={`e-${i}`} className="aspect-square" />;
-          }
-          const key = ymd(day);
-          const isPast = key < today;
-          const isBlocked = blocked.has(key);
-          const isToday = key === today;
-          const unavailableNight = isPast || isBlocked;
-
-          const isCheckIn = checkIn === key;
-          const isCheckOut = checkOut === key;
-          const inRange =
-            Boolean(checkIn && checkOut) && key > checkIn && key < checkOut;
-          const selected = isCheckIn || isCheckOut || inRange;
-
-          // Checkout can be chosen on a blocked calendar day if stay nights free
-          const canClickAsCheckout =
-            selectable &&
-            Boolean(checkIn && !checkOut) &&
-            key > checkIn &&
-            rangeNightsFree(checkIn, key, blocked);
-          const canClickAsCheckIn = selectable && !unavailableNight && !isPast;
-          const interactive =
-            selectable &&
-            (canClickAsCheckIn || canClickAsCheckout || isCheckIn);
-
-          // Softer cells: no strikethrough clutter on past days
-          let cellStyle: string;
-          if (isCheckIn || isCheckOut) {
-            cellStyle = "bg-bonnet text-white font-semibold";
-          } else if (inRange) {
-            cellStyle = "bg-petal text-blue-950";
-          } else if (isPast) {
-            cellStyle = "text-stone-300";
-          } else if (isBlocked) {
-            cellStyle = "text-stone-300 bg-stone-50";
-          } else {
-            cellStyle = "text-stone-800 hover:bg-emerald-50";
-          }
-
-          // Continuous range bar feel between check-in and check-out
-          let rangeShape = "rounded-full";
-          if (selected && checkIn && checkOut) {
-            if (isCheckIn && isCheckOut) {
-              rangeShape = "rounded-full";
-            } else if (isCheckIn) {
-              rangeShape = "rounded-l-full rounded-r-none";
-            } else if (isCheckOut) {
-              rangeShape = "rounded-r-full rounded-l-none";
-            } else if (inRange) {
-              rangeShape = "rounded-none";
-            }
-          }
-
-          const Comp = interactive ? "button" : "div";
-
-          return (
-            <div
-              key={key}
-              className={cn(
-                "relative flex aspect-square items-center justify-center",
-                inRange || isCheckIn || isCheckOut ? "" : "",
-                // Soft range background strip (behind endpoint pills)
-                inRange ? "bg-petal" : "",
-                isCheckIn && checkOut ? "bg-petal rounded-l-full" : "",
-                isCheckOut && checkIn ? "bg-petal rounded-r-full" : "",
-              )}
-            >
-              <Comp
-                type={interactive ? "button" : undefined}
-                disabled={interactive ? false : undefined}
-                onClick={
-                  interactive
-                    ? () => onDayClick(key, unavailableNight)
-                    : undefined
-                }
-                title={
-                  isPast
-                    ? "Past"
-                    : isBlocked
-                      ? "Unavailable night"
-                      : selected
-                        ? isCheckIn
-                          ? "Check-in"
-                          : isCheckOut
-                            ? "Checkout"
-                            : "In stay"
-                        : "Available"
-                }
-                className={cn(
-                  "flex h-[88%] w-[88%] items-center justify-center tabular-nums",
-                  compact ? "text-[12px]" : "text-sm",
-                  rangeShape,
-                  cellStyle,
-                  !selected && isToday
-                    ? "ring-2 ring-bonnet ring-offset-1"
-                    : "",
-                  interactive
-                    ? cn("cursor-pointer transition-colors", PRIMARY_CTA_FOCUS_CLASS)
-                    : "cursor-default",
-                  !interactive && isPast ? "pointer-events-none" : "",
-                )}
-              >
-                {day.getDate()}
-              </Comp>
-            </div>
-          );
-        })}
       </div>
     </div>
   );

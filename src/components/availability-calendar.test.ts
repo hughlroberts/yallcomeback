@@ -5,6 +5,7 @@ import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   AvailabilityCalendar,
+  calendarDayAriaLabel,
   nextDateSelection,
   shortRangeLabel,
 } from "./availability-calendar";
@@ -133,5 +134,25 @@ describe("compact header never changes height between taps", () => {
     expect(shortRangeLabel("2026-12-30", "2027-01-02")).toBe(
       "Dec 30, 2026 → Jan 2, 2027",
     );
+  });
+});
+
+describe("E1104-C2 calendar day a11y", () => {
+  it("names days with the full date and status", () => {
+    const d = new Date(2026, 10, 7); // Sat Nov 7, 2026 local
+    expect(calendarDayAriaLabel(d, "available")).toMatch(
+      /Saturday, Nov 7, 2026, available/,
+    );
+    expect(calendarDayAriaLabel(d, "unavailable")).toMatch(/unavailable$/);
+  });
+
+  it("renders grid semantics and aria-labels on day cells", () => {
+    const html = render({ checkIn: "2026-11-20", checkOut: "2026-11-23" });
+    expect(html).toContain('role="grid"');
+    expect(html).toContain('role="row"');
+    expect(html).toContain('role="gridcell"');
+    expect(html).toContain('role="columnheader"');
+    expect(html).toMatch(/aria-label="[^"]*available"/);
+    expect(html).toMatch(/aria-label="[^"]*check-in"/);
   });
 });
