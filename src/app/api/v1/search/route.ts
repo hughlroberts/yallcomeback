@@ -8,6 +8,8 @@ import {
   plainWholeNumber,
   partyFromParams,
   strictSearchLimitFromParams,
+  unknownAmenityTokens,
+  normalizeListingFilters,
 } from "@/lib/search-filters";
 import { isValidYmd } from "@/lib/search-dates";
 
@@ -136,12 +138,19 @@ export async function GET(req: NextRequest) {
   const take = limit.take;
 
   const amenitiesRaw = sp.get("amenities") || sp.get("amenity");
-  const amenities = amenitiesRaw
-    ? amenitiesRaw
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-    : undefined;
+  let amenities: string[] | undefined;
+  if (amenitiesRaw?.trim()) {
+    const unknown = unknownAmenityTokens(amenitiesRaw);
+    if (unknown.length) {
+      return bad(
+        "invalid_amenity",
+        unknown.length === 1
+          ? `Unknown amenity "${unknown[0]}". Use catalog ids such as lake_view, wifi, pets.`
+          : `Unknown amenities: ${unknown.map((u) => `"${u}"`).join(", ")}. Use catalog ids such as lake_view, wifi, pets.`,
+      );
+    }
+    amenities = normalizeListingFilters({ amenities: amenitiesRaw }).amenities;
+  }
 
   try {
     const result = await agentSearch(origin, {

@@ -193,4 +193,22 @@ describe("GET /api/v1/search", () => {
     expect(JSON.stringify(host.searchMarketplace.mock.calls[0])).toContain("Malakoff");
     expect(JSON.stringify(host.searchMarketplace.mock.calls[0])).not.toContain("Cedar");
   });
+
+  it("F6: amenities=x returns 400 invalid_amenity (not silently dropped)", async () => {
+    const res = await get("location=Malakoff&amenities=x");
+    expect(res.status).toBe(400);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(await res.json()).toMatchObject({
+      ok: false,
+      code: "invalid_amenity",
+    });
+    expect(host.searchMarketplace).not.toHaveBeenCalled();
+
+    const multi = await get("amenities=wifi,not_a_real_amenity");
+    expect(multi.status).toBe(400);
+    expect(await multi.json()).toMatchObject({
+      ok: false,
+      code: "invalid_amenity",
+    });
+  });
 });

@@ -34,7 +34,7 @@ const badDatesResponse = {
 
 const badSearchResponse = {
   description:
-    "Bad search input: past_dates, checkout_not_after_checkin, invalid_date or stay_too_long (more than 90 nights) for dates, incomplete_dates (only one of checkIn/checkOut sent; send both or neither), invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number from 1 to 50; values above 50 are a 400, not clamped), invalid_pets (pets not a whole number from 0 to 4), invalid_price_range (minNightly/maxNightly non-numeric, negative, or min greater than max), invalid_flexibility_days (flexibilityDays not a whole number from 0 to 14) or invalid_location (location/where/q/lake longer than 200 characters).",
+    "Bad search input: past_dates, checkout_not_after_checkin, invalid_date or stay_too_long (more than 90 nights) for dates, incomplete_dates (only one of checkIn/checkOut sent; send both or neither), invalid_limit (take/limit is not a whole number from 1 to 50), invalid_guests (guests not a whole number from 1 to 50; values above 50 are a 400, not clamped), invalid_pets (pets not a whole number from 0 to 4), invalid_price_range (minNightly/maxNightly non-numeric, negative, or min greater than max), invalid_flexibility_days (flexibilityDays not a whole number from 0 to 14), invalid_location (location/where/q/lake longer than 200 characters) or invalid_amenity (amenities/amenity token not in the known catalog; unlike the marketplace UI, unknown amenities are not silently dropped).",
   content: {
     "application/json": {
       schema: {
@@ -55,6 +55,7 @@ const badSearchResponse = {
               "invalid_price_range",
               "invalid_flexibility_days",
               "invalid_location",
+              "invalid_amenity",
             ],
           },
           error: { type: "string" },
@@ -164,7 +165,7 @@ export function buildOpenApiDocument(origin: string) {
               in: "query",
               schema: { type: "string" },
               description:
-                "Comma-separated amenity ids (e.g. lake_view,wifi,pets)",
+                "Comma-separated amenity catalog ids (e.g. lake_view,wifi,pets). Unknown tokens return 400 invalid_amenity (not silently dropped). Alias: amenity.",
             },
             {
               name: "take",

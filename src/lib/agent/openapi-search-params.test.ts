@@ -17,6 +17,33 @@ describe("openapi /api/v1/search params name their 400 codes", () => {
     expect(d("maxNightly")).toMatch(/invalid_price_range/);
     expect(d("guests")).toMatch(/invalid_guests/);
     expect(d("take")).toMatch(/invalid_limit/);
+    expect(d("amenities")).toMatch(/invalid_amenity/);
     for (const p of params) expect(p.description ?? "", p.name).not.toMatch(/capped at 50|clamped to/i);
+  });
+
+  it("F6: search 400 response enum includes invalid_amenity", () => {
+    const doc = buildOpenApiDocument("https://example.test") as unknown as {
+      paths: Record<
+        string,
+        {
+          get: {
+            responses: {
+              "400": {
+                content: {
+                  "application/json": {
+                    schema: { properties: { code: { enum: string[] } } };
+                  };
+                };
+              };
+            };
+          };
+        }
+      >;
+    };
+    const codes =
+      doc.paths["/api/v1/search"].get.responses["400"].content[
+        "application/json"
+      ].schema.properties.code.enum;
+    expect(codes).toContain("invalid_amenity");
   });
 });
