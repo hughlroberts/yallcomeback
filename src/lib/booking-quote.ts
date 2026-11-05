@@ -118,6 +118,10 @@ function rateForNight(
 export function computeBookingQuote(input: BookingQuoteInput): BookingQuote | null {
   const { checkIn, checkOut } = input;
   if (!checkIn || !checkOut) return null;
+  // E1104-D3: reject impossible calendar days (2026-02-30) — never Date-rollover.
+  if (!isValidYmd(checkIn) || !isValidYmd(checkOut)) {
+    return { error: "Those dates don't look right. Pick dates in the calendar." };
+  }
   const nights = nightsBetween(checkIn, checkOut);
   if (!Number.isFinite(nights)) return { error: "Choose valid dates" };
   if (nights < 1) return { error: "Check-out must be after check-in" };

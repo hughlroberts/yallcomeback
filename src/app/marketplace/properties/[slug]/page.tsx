@@ -6,6 +6,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BookingWidget } from "@/components/booking-widget";
 import { clampGuests } from "@/lib/extra-guests";
+import { isValidYmd, nightsBetweenYmd } from "@/lib/search-dates";
 import { hostTodayYmd } from "@/lib/host-today";
 import { MobileReserveBar } from "@/components/mobile-reserve-bar";
 
@@ -388,9 +389,57 @@ export default async function MarketplacePropertyPage({
     applyToPetFee: t.applyToPetFee,
   }));
   const initialPets = sp.pets ? Number(sp.pets) || undefined : undefined;
+  // E1104-D3: validate URL prefills like /book — reject impossible dates (no
+  // Date rollover), warn on reversed / under-min stays and guest clamps.
+  const guestCount = clampGuests(sp.guests, property.maxGuests);
+  const prefillNotices: string[] = [];
+  const ciRaw = (sp.checkIn ?? "").trim();
+  const coRaw = (sp.checkOut ?? "").trim();
+  let initialCheckIn = ciRaw;
+  let initialCheckOut = coRaw;
+  if (ciRaw || coRaw) {
+    const ciOk = !ciRaw || isValidYmd(ciRaw);
+    const coOk = !coRaw || isValidYmd(coRaw);
+    if (!ciOk || !coOk) {
+      prefillNotices.push(
+        "Those dates don't look right. Pick dates in the calendar.",
+      );
+      initialCheckIn = "";
+      initialCheckOut = "";
+    } else if (ciRaw && coRaw) {
+      const nights = nightsBetweenYmd(ciRaw, coRaw);
+      if (nights < 1) {
+        prefillNotices.push(
+          "Check-out has to be after check-in (1 night minimum).",
+        );
+        initialCheckIn = "";
+        initialCheckOut = "";
+      } else if (nights < property.defaultMinNights) {
+        prefillNotices.push(
+          `Minimum stay is ${property.defaultMinNights} night${
+            property.defaultMinNights === 1 ? "" : "s"
+          }. Pick a longer stay or clear the dates.`,
+        );
+        // Keep dates so the widget quote error matches; guest already warned.
+      }
+    } else {
+      prefillNotices.push(
+        "Add both check-in and check-out, or clear the dates.",
+      );
+      initialCheckIn = "";
+      initialCheckOut = "";
+    }
+  }
+  if (guestCount.clamped && guestCount.requested < 1) {
+    prefillNotices.push(
+      `Guests must be at least 1, so we set guests to ${guestCount.guests}.`,
+    );
+  } else if (guestCount.clamped && guestCount.requested > guestCount.guests) {
+    prefillNotices.push(
+      `This place sleeps up to ${property.maxGuests}, so we set guests to ${guestCount.guests}.`,
+    );
+  }
   // Same quote math as the widget, so the mobile bar's first paint shows dates/total.
-  const initialCheckIn = sp.checkIn ?? "";
-  const initialCheckOut = sp.checkOut ?? "";
   const initialBarState = bookingBarStateFromQuote(
     initialCheckIn,
     initialCheckOut,
@@ -398,7 +447,7 @@ export default async function MarketplacePropertyPage({
       checkIn: initialCheckIn,
       checkOut: initialCheckOut,
       pets: initialPetCount(property, initialPets),
-      guests: clampGuests(sp.guests, property.maxGuests).guests,
+      guests: guestCount.guests,
       extraGuestFee: property.extraGuestFee,
       extraGuestsIncluded: property.extraGuestsIncluded,
       baseNightlyRate: property.baseNightlyRate,
@@ -454,6 +503,18 @@ export default async function MarketplacePropertyPage({
   return (
     <div>
       {pausedPreview ? <PausedListingBanner /> : null}
+      {prefillNotices.length > 0 ? (
+        <div
+          role="status"
+          className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 sm:px-6"
+        >
+          <div className="mx-auto max-w-6xl space-y-1">
+            {prefillNotices.map((msg) => (
+              <p key={msg}>{msg}</p>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <ListingJsonLd
         origin={origin}
         name={property.title}
@@ -646,11 +707,9 @@ export default async function MarketplacePropertyPage({
               maxGuests={property.maxGuests}
               seasons={widgetSeasons}
               blockedDates={blockedDates}
-              initialCheckIn={sp.checkIn}
-              initialCheckOut={sp.checkOut}
-              initialGuests={
-                sp.guests ? Number(sp.guests) || undefined : undefined
-              }
+              initialCheckIn={initialCheckIn || undefined}
+              initialCheckOut={initialCheckOut || undefined}
+              initialGuests={guestCount.guests}
               initialPets={initialPets}
               taxLiabilityAcknowledged={property.host.taxLiabilityAcknowledged}
               taxLines={widgetTaxLines}

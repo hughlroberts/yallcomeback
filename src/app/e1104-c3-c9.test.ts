@@ -82,3 +82,19 @@ describe("E1104-D2 book guests=0 notice", () => {
     expect(page).toMatch(/Guests must be at least 1/);
   });
 });
+
+describe("E1104-D3 listing prefill warnings", () => {
+  const page = src("app/marketplace/properties/[slug]/page.tsx");
+  it("rejects impossible dates and warns on min-stay / guest clamps", () => {
+    expect(page).toMatch(/prefillNotices/);
+    expect(page).toMatch(/isValidYmd/);
+    expect(page).toMatch(/Those dates don't look right/);
+    expect(page).toMatch(/Minimum stay is/);
+    expect(page).toMatch(/This place sleeps up to/);
+  });
+  it("booking quote rejects impossible YMD instead of Date rollover", () => {
+    const quote = src("lib/booking-quote.ts");
+    expect(quote).toMatch(/E1104-D3/);
+    expect(quote).toMatch(/!isValidYmd\(checkIn\)/);
+  });
+});

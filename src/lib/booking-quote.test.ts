@@ -125,3 +125,17 @@ describe("bookingBarStateFromQuote (server first paint)", () => {
     });
   });
 });
+
+describe("E1104-D3 impossible calendar days", () => {
+  it("rejects 2026-02-30 instead of rolling to March", () => {
+    const q = computeBookingQuote({
+      ...base,
+      checkIn: "2026-02-30",
+      checkOut: "2026-03-05",
+      guests: 2,
+    });
+    expect(q).toMatchObject({
+      error: "Those dates don't look right. Pick dates in the calendar.",
+    });
+  });
+});
