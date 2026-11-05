@@ -7,6 +7,7 @@ import {
   listingFilterLabels,
   listingFiltersFromParams,
   listingMatchesFilters,
+  unknownAmenityTokens,
   SEARCH_DEFAULT_LIMIT,
   SEARCH_MAX_FLEXIBILITY_DAYS,
   SEARCH_MAX_GUESTS,
@@ -79,6 +80,29 @@ describe("listing filters", () => {
     expect(
       listingMatchesFilters({ ...p, amenities: null }, { amenities: ["wifi"] }),
     ).toBe(false);
+  });
+
+  it("ignores unknown amenities like x (no free-text match) (D5)", () => {
+    expect(listingFiltersFromParams(params("amenities=x"))).toEqual({});
+    expect(unknownAmenityTokens("x")).toEqual(["x"]);
+    expect(unknownAmenityTokens("wifi,x")).toEqual(["x"]);
+    expect(listingFiltersFromParams(params("amenities=wifi,x"))).toEqual({
+      amenities: ["wifi"],
+    });
+    // Substring "x" must not match lake_view / wifi / etc. (exact catalog ids only).
+    const p = {
+      bedrooms: 3,
+      baseNightlyRate: 180,
+      amenities: JSON.stringify(["lake_view", "wifi", "hot_tub"]),
+    };
+    expect(listingMatchesFilters(p, { amenities: ["x"] })).toBe(false);
+    // After normalize, unknown tokens are dropped so filters are empty → match all.
+    const normalized = listingFiltersFromParams(params("amenities=x"));
+    expect(normalized.amenities).toBeUndefined();
+    expect(listingMatchesFilters(p, normalized)).toBe(true);
+    // A known id still filters.
+    expect(listingMatchesFilters(p, { amenities: ["pool"] })).toBe(false);
+    expect(listingMatchesFilters(p, { amenities: ["wifi"] })).toBe(true);
   });
 
   it("writes every active filter into a search URL", () => {

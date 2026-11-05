@@ -4,6 +4,8 @@
  * agent API so results, counts and every search link keep the same filters.
  */
 
+import { selectedAmenityIds } from "@/lib/listing-amenities";
+
 export type ListingFilters = {
   bedrooms?: number;
   minNightly?: number;
@@ -50,11 +52,35 @@ export function normalizeListingFilters(raw: {
     typeof raw.amenities === "string"
       ? raw.amenities.split(",")
       : (raw.amenities ?? []);
-  const amenities = Array.from(
-    new Set(list.map((a) => a.trim().toLowerCase()).filter(Boolean)),
+  const tokens = list.map((a) => a.trim()).filter(Boolean);
+  // Only known catalog ids/labels — never free-text substring match.
+  const amenities = selectedAmenityIds(
+    tokens.map((t) => t.toLowerCase()),
   );
   if (amenities.length > 0) out.amenities = amenities;
   return out;
+}
+
+/**
+ * Tokens from ?amenities= that are not in the known amenity catalog.
+ * Used for the marketplace "unknown amenity" notice.
+ */
+export function unknownAmenityTokens(
+  raw: string | readonly string[] | null | undefined,
+): string[] {
+  if (raw == null) return [];
+  const list = typeof raw === "string" ? raw.split(",") : [...raw];
+  const unknown: string[] = [];
+  const seen = new Set<string>();
+  for (const item of list) {
+    const token = item.trim();
+    if (!token) continue;
+    const key = token.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (selectedAmenityIds([key]).length === 0) unknown.push(token);
+  }
+  return unknown;
 }
 
 /** Read filters from query params (amenities also accepts ?amenity=). */
@@ -98,11 +124,8 @@ export function listingMatchesFilters(
   if (f.minNightly != null && p.baseNightlyRate < f.minNightly) return false;
   if (f.maxNightly != null && p.baseNightlyRate > f.maxNightly) return false;
   if (f.amenities?.length) {
-    const have = parseAmenityJson(p.amenities);
-    return f.amenities.every(
-      (w) =>
-        have.includes(w) || have.some((h) => h.includes(w) || w.includes(h)),
-    );
+    const have = selectedAmenityIds(parseAmenityJson(p.amenities));
+    return f.amenities.every((id) => have.includes(id));
   }
   return true;
 }

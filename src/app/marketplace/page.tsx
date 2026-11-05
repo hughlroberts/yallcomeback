@@ -22,6 +22,7 @@ import {
   hasListingFilters,
   listingFilterLabels,
   listingFiltersFromParams,
+  unknownAmenityTokens,
   type ListingFilters,
   SEARCH_MAX_LOCATION_CHARS,
   lenientFlexibilityDays,
@@ -121,10 +122,18 @@ export default async function MarketplacePage({
       ? `Bedrooms “${bedroomsRaw}” isn’t a valid filter — showing any bedroom count.`
       : undefined;
   const amenitiesRaw = (params.amenities ?? params.amenity)?.trim();
-  const amenitiesIgnored =
-    amenitiesRaw && !filters.amenities?.length
-      ? `Amenities “${amenitiesRaw}” aren’t a valid filter — showing stays with any amenities.`
-      : undefined;
+  const unknownAmenities = amenitiesRaw
+    ? unknownAmenityTokens(amenitiesRaw)
+    : [];
+  const amenitiesIgnored = unknownAmenities.length
+    ? unknownAmenities.length === 1
+      ? `Unknown amenity “${unknownAmenities[0]}” — ignored. Showing stays${
+          filters.amenities?.length ? " that match the other amenity filters" : " with any amenities"
+        }.`
+      : `Unknown amenities “${unknownAmenities.join(", ")}” — ignored. Showing stays${
+          filters.amenities?.length ? " that match the other amenity filters" : " with any amenities"
+        }.`
+    : undefined;
   const sortRaw = params.sort?.trim();
   const sortIgnored = sortRaw
     ? `Sort “${sortRaw}” isn’t available yet — showing the default order.`
