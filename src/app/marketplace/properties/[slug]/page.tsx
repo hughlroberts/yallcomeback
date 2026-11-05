@@ -105,6 +105,7 @@ export async function generateMetadata({
           slug: true,
           hostingMode: true,
           marketplaceSuspendedAt: true,
+          isTestBrand: true,
         },
       },
       images: {
@@ -176,6 +177,8 @@ export async function generateMetadata({
     path,
     image: cover?.url,
     imageAlt: listingPhotoAlt(property.title, cover?.alt, 0),
+    // E1104-D4
+    noIndex: Boolean(property.host.isTestBrand),
   });
 }
 

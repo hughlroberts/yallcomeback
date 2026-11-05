@@ -109,3 +109,17 @@ describe("E1104-C7 leftovers tap targets ≥24px", () => {
     expect(src("components/mobile-reserve-bar.tsx")).toMatch(/line-clamp-2 min-h-6 text-xs/);
   });
 });
+
+describe("E1104-D4 test brands sitemap + noindex", () => {
+  it("excludes isTestBrand from sitemap and marks host/listing noindex", () => {
+    const sm = src("app/sitemap.ts");
+    expect(sm).toMatch(/isTestBrand: false/);
+    expect(sm).not.toMatch(/cherokee/i);
+    expect(src("app/h/[hostSlug]/layout.tsx")).toMatch(
+      /noIndex: Boolean\(host\.isTestBrand\)/,
+    );
+    expect(src("app/marketplace/properties/[slug]/page.tsx")).toMatch(
+      /noIndex: Boolean\(property\.host\.isTestBrand\)/,
+    );
+  });
+});

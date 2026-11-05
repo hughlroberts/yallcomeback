@@ -59,7 +59,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let listings: MetadataRoute.Sitemap = [];
   try {
     const props = await prisma.property.findMany({
-      where: marketplacePropertyWhere(),
+      where: {
+        ...marketplacePropertyWhere(),
+        // E1104-D4: QA / test brands stay out of the public sitemap.
+        host: {
+          ...marketplacePropertyWhere().host,
+          isTestBrand: false,
+        },
+      },
       select: {
         slug: true,
         updatedAt: true,
@@ -86,6 +93,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         approvalStatus: "APPROVED",
         sitePublishState: { in: ["DEMO", "LIVE"] },
         slug: { notIn: [...MARKETPLACE_EXCLUDED_HOST_SLUGS] },
+        // E1104-D4: never sitemap test brands (Cherokee and real hosts untouched).
+        isTestBrand: false,
         OR: [
           { hostingMode: "SELF" },
           {

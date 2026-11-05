@@ -56,6 +56,8 @@ export async function generateMetadata({
     image: ogImage,
     imageAlt: host.name,
     twitterCard: ogImage ? "summary" : "summary_large_image",
+    // E1104-D4: test brands are browsable for QA but must not be indexed.
+    noIndex: Boolean(host.isTestBrand),
   });
 
   return {
