@@ -133,3 +133,58 @@ describe("E1104-D5 marketplace sort/filters notices", () => {
     expect(page).toMatch(/role="status"/);
   });
 });
+
+describe("E1104-D6 listing Open Graph", () => {
+  it("absolutizes images and passes real dimensions", () => {
+    const seo = src("lib/seo.ts");
+    expect(seo).toMatch(/seoAbsoluteImageUrl/);
+    expect(seo).toMatch(/imageWidth/);
+    expect(seo).toMatch(/E1104-D6/);
+    const page = src("app/marketplace/properties/[slug]/page.tsx");
+    expect(page).toMatch(/publicImageSize/);
+    expect(page).toMatch(/type: "website"/);
+    expect(page).toMatch(/imageWidth: coverSize\?\.width/);
+  });
+});
+
+describe("E1104-D7 register autocomplete", () => {
+  it("sets name, email, and new-password autocomplete", () => {
+    const page = src("app/register/page.tsx");
+    expect(page).toMatch(/autoComplete="name"/);
+    expect(page).toMatch(/autoComplete="email"/);
+    expect(page).toMatch(/autoComplete="new-password"/);
+  });
+});
+
+describe("E1104-D8 message host a11y", () => {
+  it("labels fields, hides honeypot, names the close button", () => {
+    const form = src("components/message-host-form.tsx");
+    expect(form).toMatch(/htmlFor="guestName"/);
+    expect(form).toMatch(/htmlFor="guestEmail"/);
+    expect(form).toMatch(/aria-hidden="true"/);
+    expect(form).toMatch(/tabIndex=\{-1\}/);
+    expect(form).toMatch(/-left-\[10000px\]/);
+    expect(form).toMatch(/aria-label="Close message form"/);
+  });
+});
+
+describe("E1104-D1 welcome Esc dismiss", () => {
+  it("Esc submits browse intent (intentional; not a pageview beacon)", () => {
+    const gate = src("components/first-visit-intent.tsx");
+    expect(gate).toMatch(/E1104-D1/);
+    expect(gate).toMatch(/browseFormRef\.current\?\.requestSubmit/);
+    expect(gate).toMatch(/setVisitIntent/);
+  });
+});
+
+describe("E1104-C8 invalid_date over incomplete_dates", () => {
+  it("validates YMD before the incomplete pair check", () => {
+    const route = src("app/api/v1/search/route.ts");
+    expect(route).toMatch(/E1104-C8/);
+    expect(route).toMatch(/!isValidYmd\(checkIn\)/);
+    const invalidIdx = route.indexOf("invalid_date");
+    const incompleteIdx = route.indexOf("incomplete_dates");
+    expect(invalidIdx).toBeGreaterThan(-1);
+    expect(incompleteIdx).toBeGreaterThan(invalidIdx);
+  });
+});
