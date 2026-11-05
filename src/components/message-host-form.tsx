@@ -11,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useModalOpen } from "@/lib/modal-open";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { X } from "lucide-react";
 import {
   startGuestConversation,
@@ -349,6 +350,7 @@ export function MessageHostButton({
   variant?: "primary" | "secondary" | "link";
 }) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [config, setConfig] = useState<InquiryFormConfig | null>(null);
   const configRef = useRef<InquiryFormConfig | null>(null);
@@ -381,6 +383,7 @@ export function MessageHostButton({
   const aboutLabel = propertyTitle?.trim() || hostName?.trim() || "host";
   // Hides the mobile "Request to book" bar while this dialog is open.
   useModalOpen(open);
+  useFocusTrap(dialogRef, open);
 
   useEffect(() => {
     if (!open) return;
@@ -432,6 +435,7 @@ export function MessageHostButton({
               }}
             >
               <div
+                ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
@@ -446,6 +450,7 @@ export function MessageHostButton({
                     onClick={() => setOpen(false)}
                     className="inline-flex size-9 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-800"
                     aria-label="Close"
+                    data-autofocus
                   >
                     <X className="size-5" />
                   </button>

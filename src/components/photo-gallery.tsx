@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -13,6 +14,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { listingPhotoAlt } from "@/lib/listing-photo-alt";
 import { useModalOpen } from "@/lib/modal-open";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 function useIsClient() {
   return useSyncExternalStore(
@@ -188,9 +190,11 @@ function PhotoLightbox({
 }) {
   const titleId = useId();
   const mounted = useIsClient();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const current = photos[index] ?? photos[0];
   // Hides the mobile reserve bar while the lightbox is open.
   useModalOpen(true);
+  useFocusTrap(dialogRef, true);
 
   const goPrev = useCallback(() => {
     onIndexChange((index - 1 + photos.length) % photos.length);
@@ -222,6 +226,7 @@ function PhotoLightbox({
 
   return createPortal(
     <div
+      ref={dialogRef}
       data-testid="photo-gallery-dialog"
       // Above the sticky header (z-200) and mobile reserve bar (z-150).
       className="fixed inset-0 z-[250] flex flex-col"
@@ -243,6 +248,7 @@ function PhotoLightbox({
         onClick={onClose}
         className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top,0px))] z-20 inline-flex size-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-lg ring-1 ring-black/10 hover:bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-5 sm:top-5"
         aria-label="Close photo gallery"
+        data-autofocus
       >
         <X className="size-5" strokeWidth={2.5} />
       </button>
