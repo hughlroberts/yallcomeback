@@ -185,16 +185,17 @@ export default async function AdminPropertyDetailPage({
         <input type="hidden" name="id" value={property.id} />
         <div className="sm:col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" defaultValue={property.title} required />
+          <Input id="title" autoComplete="off" name="title" defaultValue={property.title} required />
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="tagline">Tagline</Label>
-          <Input id="tagline" name="tagline" defaultValue={property.tagline || ""} />
+          <Input id="tagline" autoComplete="off" name="tagline" defaultValue={property.tagline || ""} />
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
+            autoComplete="off"
             name="description"
             rows={5}
             defaultValue={property.description || ""}
@@ -202,19 +203,19 @@ export default async function AdminPropertyDetailPage({
         </div>
         <div>
           <Label htmlFor="city">City</Label>
-          <Input id="city" name="city" defaultValue={property.city || ""} />
+          <Input id="city" autoComplete="address-level2" name="city" defaultValue={property.city || ""} />
         </div>
         <div>
           <Label htmlFor="region">Region / State</Label>
-          <Input id="region" name="region" defaultValue={property.region || ""} />
+          <Input id="region" autoComplete="address-level1" name="region" defaultValue={property.region || ""} />
         </div>
         <div>
           <Label htmlFor="country">Country</Label>
-          <Input id="country" name="country" defaultValue={property.country || ""} />
+          <Input id="country" autoComplete="country-name" name="country" defaultValue={property.country || ""} />
         </div>
         <div>
           <Label htmlFor="address">Address</Label>
-          <Input id="address" name="address" defaultValue={property.address || ""} />
+          <Input id="address" autoComplete="street-address" name="address" defaultValue={property.address || ""} />
         </div>
         <div>
           <Label htmlFor="locationId">Location page</Label>

@@ -173,7 +173,7 @@ export default async function AdminTeamPage({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required />
+              <Input id="email" autoComplete="email" name="email" type="email" required />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="name">Name</Label>
@@ -183,6 +183,7 @@ export default async function AdminTeamPage({
               <Label htmlFor="password">Temporary password (min 8)</Label>
               <Input
                 id="password"
+                autoComplete="new-password"
                 name="password"
                 type="password"
                 minLength={8}
