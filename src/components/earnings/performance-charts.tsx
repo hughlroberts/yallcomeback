@@ -123,7 +123,7 @@ export function PerformanceCharts({
           <div className="mt-6 overflow-x-auto">
             <svg
               viewBox={`0 0 ${w} ${h}`}
-              className="mx-auto h-auto w-full max-w-3xl"
+              className="mx-auto h-auto w-full min-w-[640px] max-w-3xl"
               role="img"
               aria-label={`Earnings by month for ${year}`}
             >
@@ -145,7 +145,7 @@ export function PerformanceCharts({
                       y={y + 4}
                       textAnchor="end"
                       className="fill-stone-400"
-                      fontSize={11}
+                      fontSize={12}
                     >
                       {val >= 1000
                         ? `$${(val / 1000).toFixed(1)}k`
@@ -180,7 +180,7 @@ export function PerformanceCharts({
                       x={x + bw / 2}
                       y={h - 12}
                       textAnchor="middle"
-                      fontSize={11}
+                      fontSize={12}
                       className={
                         active ? "fill-stone-900 font-semibold" : "fill-stone-500"
                       }
@@ -263,7 +263,7 @@ export function PerformanceCharts({
           <div className="mt-4 overflow-x-auto">
             <svg
               viewBox={`0 0 ${w} ${h}`}
-              className="mx-auto h-auto w-full max-w-3xl"
+              className="mx-auto h-auto w-full min-w-[640px] max-w-3xl"
               role="img"
               aria-label="Year over year earnings"
             >
@@ -284,7 +284,7 @@ export function PerformanceCharts({
                       x={padL - 8}
                       y={y + 4}
                       textAnchor="end"
-                      fontSize={11}
+                      fontSize={12}
                       className="fill-stone-400"
                     >
                       {val >= 1000
@@ -316,7 +316,7 @@ export function PerformanceCharts({
                     x={x}
                     y={h - 10}
                     textAnchor="middle"
-                    fontSize={11}
+                    fontSize={12}
                     className="fill-stone-500"
                   >
                     {label}

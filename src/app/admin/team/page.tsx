@@ -272,9 +272,7 @@ export default async function AdminTeamPage({
                       </Button>
                     </form>
                   </div>
-                ) : (
-                  <p className="text-xs text-stone-400">Owner</p>
-                )}
+                ) : null}
               </li>
             );
           })}

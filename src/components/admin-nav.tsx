@@ -21,15 +21,14 @@ export function AdminNav({
   links: LinkItem[];
 }) {
   return (
-    // T25: one row on phones (links scroll, travel links as icons); the
-    // label shows from sm up.
-    <div className="mx-auto flex max-w-[1400px] flex-row items-center gap-1.5 px-3 py-1.5 sm:flex-wrap sm:gap-1 sm:px-6 sm:py-2.5">
+    // Wrap on phones so every label and travel control has its own space.
+    <div className="mx-auto flex max-w-[1400px] flex-row flex-wrap items-center gap-1.5 px-3 py-1.5 sm:flex-wrap sm:gap-1 sm:px-6 sm:py-2.5">
       {label ? (
         <span className="hidden shrink-0 text-sm font-semibold text-slate-900 sm:mr-3 sm:inline">
           {label}
         </span>
       ) : null}
-      <div className="-mx-1 flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] sm:flex-none sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden">
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-0.5 pb-0.5 sm:w-auto sm:flex-1">
         {links.map((l) => (
           <NavLink
             key={l.href}
@@ -50,8 +49,6 @@ export function AdminNav({
             )}
           </NavLink>
         ))}
-        {/* Trailing spacer so the last link can scroll fully clear of icons */}
-        <span className="inline-block w-3 shrink-0 sm:hidden" aria-hidden />
       </div>
       {/* Hosts can travel too: same account, no second sign-up. */}
       <div

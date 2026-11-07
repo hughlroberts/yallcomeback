@@ -576,9 +576,9 @@ export default async function AdminPropertyDetailPage({
         )}
       </div>
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead>
+      <div className="mt-6" data-testid="season-ranges">
+        <table className="block w-full text-left text-sm sm:table">
+          <thead className="hidden sm:table-header-group">
             <tr className="border-b text-stone-500">
               <th className="py-2 pr-3">Name</th>
               <th className="py-2 pr-3">Dates</th>
@@ -587,7 +587,7 @@ export default async function AdminPropertyDetailPage({
               <th />
             </tr>
           </thead>
-          <tbody>
+          <tbody className="block sm:table-row-group">
             {property.seasons.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-3 text-stone-500">
@@ -596,28 +596,30 @@ export default async function AdminPropertyDetailPage({
               </tr>
             ) : null}
             {peakSeasons.map((s) => (
-              <tr key={s.id} className="border-b border-stone-100">
-                <td className="py-2 pr-3 font-medium">
+              <tr key={s.id} className="mb-4 block rounded-xl border border-stone-200 p-3 sm:mb-0 sm:table-row sm:rounded-none sm:border-x-0 sm:border-t-0 sm:p-0">
+                <td className="block min-w-0 break-words sm:table-cell py-2 pr-3 font-medium">
                   {s.name}
                   <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">
                     Peak
                   </span>
                 </td>
-                <td className="py-2 pr-3 text-stone-600">
+                <td className="block min-w-0 break-words sm:table-cell py-2 pr-3 text-stone-600">
                   {toYmd(s.startDate)} → {toYmd(s.endDate)}
                 </td>
-                <td className="py-2 pr-3">${s.nightlyRate}</td>
-                <td className="py-2 pr-3">
+                <td className="block min-w-0 break-words sm:table-cell py-2 pr-3"><span className="sm:hidden">Rate: </span>${s.nightlyRate}</td>
+                <td className="block min-w-0 break-words sm:table-cell py-2 pr-3">
                   <form
                     action={updateSeasonMinNights}
-                    className="flex items-center gap-1"
+                    className="flex min-w-0 flex-wrap items-center gap-2"
                   >
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="propertyId" value={property.id} />
+                    <span className="w-full text-xs text-stone-500 sm:hidden">Min nights</span>
                     <select
                       name="minNights"
+                      aria-label={`Minimum nights for ${s.name}`}
                       defaultValue={s.minNights}
-                      className="max-w-[11rem] rounded-lg border border-stone-300 px-2 py-1 text-sm font-semibold"
+                      className="w-full min-w-0 sm:w-auto sm:min-w-[11rem] rounded-lg border border-stone-300 px-2 py-1 text-sm font-semibold"
                     >
                       <option value={0}>
                         Default only ({property.defaultMinNights})
@@ -636,7 +638,7 @@ export default async function AdminPropertyDetailPage({
                     </button>
                   </form>
                 </td>
-                <td className="py-2">
+                <td className="block min-w-0 break-words sm:table-cell py-2">
                   <form action={deleteSeason}>
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="propertyId" value={property.id} />
@@ -653,23 +655,25 @@ export default async function AdminPropertyDetailPage({
               </tr>
             ))}
             {otherSeasons.map((s) => (
-              <tr key={s.id} className="border-b border-stone-100">
-                <td className="py-2 pr-3 font-medium">{s.name}</td>
-                <td className="py-2 pr-3 text-stone-600">
+              <tr key={s.id} className="mb-4 block rounded-xl border border-stone-200 p-3 sm:mb-0 sm:table-row sm:rounded-none sm:border-x-0 sm:border-t-0 sm:p-0">
+                <td className="block min-w-0 break-words sm:table-cell py-2 pr-3 font-medium">{s.name}</td>
+                <td className="block min-w-0 break-words sm:table-cell py-2 pr-3 text-stone-600">
                   {toYmd(s.startDate)} → {toYmd(s.endDate)}
                 </td>
-                <td className="py-2 pr-3">${s.nightlyRate}</td>
-                <td className="py-2 pr-3">
+                <td className="block min-w-0 break-words sm:table-cell py-2 pr-3"><span className="sm:hidden">Rate: </span>${s.nightlyRate}</td>
+                <td className="block min-w-0 break-words sm:table-cell py-2 pr-3">
                   <form
                     action={updateSeasonMinNights}
-                    className="flex items-center gap-1"
+                    className="flex min-w-0 flex-wrap items-center gap-2"
                   >
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="propertyId" value={property.id} />
+                    <span className="w-full text-xs text-stone-500 sm:hidden">Min nights</span>
                     <select
                       name="minNights"
+                      aria-label={`Minimum nights for ${s.name}`}
                       defaultValue={s.minNights}
-                      className="max-w-[11rem] rounded-lg border border-stone-300 px-2 py-1 text-sm"
+                      className="w-full min-w-0 sm:w-auto sm:min-w-[11rem] rounded-lg border border-stone-300 px-2 py-1 text-sm"
                     >
                       <option value={0}>
                         Default only ({property.defaultMinNights})
@@ -688,7 +692,7 @@ export default async function AdminPropertyDetailPage({
                     </button>
                   </form>
                 </td>
-                <td className="py-2">
+                <td className="block min-w-0 break-words sm:table-cell py-2">
                   <form action={deleteSeason}>
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="propertyId" value={property.id} />

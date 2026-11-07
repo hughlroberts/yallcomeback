@@ -20,9 +20,9 @@ describe("T25 compact admin header", () => {
     expect(sw).toContain("Platform admin");
     expect(sw).not.toContain("Ops Panel");
   });
-  it("admin nav is one row on phones", () => {
+  it("admin nav wraps on phones to keep every label readable", () => {
     const nav = read("src/components/admin-nav.tsx");
-    expect(nav).toContain("flex-row items-center");
+    expect(nav).toContain("flex-row flex-wrap items-center");
     expect(nav).toContain('aria-label="Book a stay"');
   });
 });
