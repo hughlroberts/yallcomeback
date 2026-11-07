@@ -177,7 +177,7 @@ export default async function AdminTeamPage({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" placeholder="Optional" />
+              <Input id="name" autoComplete="name" name="name" placeholder="Optional" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Temporary password (min 8)</Label>
@@ -194,6 +194,7 @@ export default async function AdminTeamPage({
               <Label htmlFor="hostAccess">Access level</Label>
               <select
                 id="hostAccess"
+                autoComplete="off"
                 name="hostAccess"
                 defaultValue="LIMITED"
                 className="h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm"

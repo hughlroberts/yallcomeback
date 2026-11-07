@@ -34,3 +34,15 @@ describe("J2 explicit autofill intent", () => {
   expect(team).toMatch(/id="password"[^>]*autoComplete="new-password"/);
  });
 });
+
+describe("J2 reopened invite autocomplete coverage", () => {
+ it("gives every invite field an explicit appropriate autocomplete token", () => {
+  const team = src("app/admin/team/page.tsx");
+  const form = team.slice(team.indexOf("<form action={inviteCoHost}"), team.indexOf("</form>", team.indexOf("<form action={inviteCoHost}")));
+  const fields = form.match(/<(?:Input|input|select|textarea)\b[^>]*>/g) ?? [];
+  expect(fields).toHaveLength(4);
+  for (const field of fields) expect(field).toMatch(/autoComplete="[^"]+"/);
+  expect(form).toMatch(/id="name"[^>]*autoComplete="name"/);
+  expect(form).toMatch(/id="hostAccess"[^>]*autoComplete="off"/);
+ });
+});
