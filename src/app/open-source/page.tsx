@@ -1,3 +1,4 @@
+import { CodeBlock } from "@/components/code-block";
 import {
   brandedPriceLabel,
   marketplacePriceWithCardLabel,
@@ -183,7 +184,7 @@ export default function OpenSourcePage() {
             <div className="border-b border-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-stone-300">
               Terminal
             </div>
-            <pre className="overflow-x-auto p-5 text-sm leading-relaxed">
+            <CodeBlock aria-label="Self-host setup commands">
 {REPO_URL
   ? `# Clone the free open-source copy
 git clone ${REPO_URL}
@@ -206,7 +207,7 @@ npm run dev
 # Production
 npm run build && npm start
 # or: docker compose up`}
-            </pre>
+            </CodeBlock>
           </div>
 
           <p className="mt-4 text-sm text-stone-500">
@@ -337,7 +338,7 @@ npm run build && npm start
             <div className="border-b border-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wide text-stone-300">
               Remote open source · push one listing (path B)
             </div>
-            <pre className="overflow-x-auto p-5 text-sm leading-relaxed">{`# On the central Yall Come Back site after approval:
+            <CodeBlock aria-label="Marketplace syndication commands">{`# On the central Yall Come Back site after approval:
 # Admin → Brand & website → Generate syndication API key
 
 export YCB_ORIGIN="${PRODUCT_ORIGIN}"   # or your platform origin
@@ -366,7 +367,7 @@ curl -sS "$YCB_ORIGIN/api/syndication/listings" \\
 
 # Unpublish from marketplace
 curl -sS -X DELETE "$YCB_ORIGIN/api/syndication/listings/lake-cabin" \\
-  -H "Authorization: Bearer $YCB_SYNDICATION_KEY"`}</pre>
+  -H "Authorization: Bearer $YCB_SYNDICATION_KEY"`}</CodeBlock>
           </div>
 
           <div className="mt-6 rounded-2xl border border-stone-200 bg-stone-50 p-5 text-sm text-stone-700">
