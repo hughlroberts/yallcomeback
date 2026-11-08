@@ -789,6 +789,7 @@ export default async function MarketplacePropertyPage({
           maxPets={property.maxPets}
           amenities={amenities}
           datesHref="#reserve"
+          cancellationHelpHref={brandedHostSlug ? brandedPath("/help/cancellation-policies") : undefined}
           cancellationPolicy={property.cancellationPolicy}
           longTermCancellationPolicy={property.longTermCancellationPolicy}
           nonRefundableOption={property.nonRefundableOption}

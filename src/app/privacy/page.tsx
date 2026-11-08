@@ -1,3 +1,6 @@
+import { guestFlowPath } from "@/lib/branded-flow";
+import { getHostForGuestSite } from "@/lib/host";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -20,9 +23,12 @@ export const metadata: Metadata = pageMetadata({
   path: "/privacy",
 });
 
-export default function PrivacyPage() {
+export default async function PrivacyPage({ params }: { params?: Promise<{ hostSlug?: string }> } = {}) {
+  const hostSlug = (await params)?.hostSlug;
+  if (hostSlug && !(await getHostForGuestSite(hostSlug))) notFound();
   return (
     <LegalLayout
+      hostSlug={hostSlug}
       title="Privacy Policy"
       description="This policy explains what information we collect, how we use it, and the choices you have. It applies to yallcomeback.app, host sites we operate, and related services."
     >
@@ -31,7 +37,7 @@ export default function PrivacyPage() {
         This Privacy Policy is issued by {LEGAL_OPERATOR} (“{PRODUCT_NAME},”
         “we,” “us”). It is effective {LEGAL_EFFECTIVE_DATE}. It should be read
         with our{" "}
-        <Link href={TERMS_PATH} className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
+        <Link href={guestFlowPath(hostSlug, TERMS_PATH)} className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Terms of Service
         </Link>
         .
@@ -272,7 +278,7 @@ export default function PrivacyPage() {
       <LegalH2 id="contact">13. Contact</LegalH2>
       <LegalP>
         Privacy requests: the{" "}
-        <Link href="/contact" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
+        <Link href={guestFlowPath(hostSlug, "/contact")} className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Contact
         </Link>{" "}
         page on {PRODUCT_DOMAIN}. Platform email is not a monitored inbox until

@@ -24,6 +24,7 @@ type Props = {
   amenities?: string[];
   /** Scroll target for booking widget dates */
   datesHref?: string;
+  cancellationHelpHref?: string;
   className?: string;
   cancellationPolicy?: string | null;
   longTermCancellationPolicy?: string | null;
@@ -104,6 +105,7 @@ export function ThingsToKnow({
   maxPets,
   amenities = [],
   datesHref = "#reserve",
+  cancellationHelpHref = HELP_CANCELLATION_POLICIES_PATH,
   className = "",
   cancellationPolicy,
   longTermCancellationPolicy,
@@ -174,7 +176,7 @@ export function ThingsToKnow({
           </p>
           <div className="mt-3 flex flex-col gap-1.5">
             <Link
-              href={HELP_CANCELLATION_POLICIES_PATH}
+              href={cancellationHelpHref}
               className={`inline-flex min-h-6 items-center text-[15px] font-semibold text-bonnet underline-offset-2 hover:underline ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Learn more

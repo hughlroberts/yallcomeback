@@ -1,3 +1,4 @@
+import { guestFlowPath } from "@/lib/branded-flow";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -13,6 +14,7 @@ type RelatedLink = {
 };
 
 type Props = {
+  hostSlug?: string;
   article: HelpArticle;
   children: ReactNode;
   /** Extra related links (e.g. product pages) after catalog related articles */
@@ -23,8 +25,9 @@ export function HelpArticleLayout({
   article,
   children,
   extraRelated,
+  hostSlug,
 }: Props) {
-  const relatedFromCatalog = (article.related ?? [])
+  const relatedFromCatalog = (hostSlug ? [] : article.related ?? [])
     .map((slug) => getHelpArticle(slug))
     .filter((a): a is HelpArticle => Boolean(a));
 
@@ -33,8 +36,8 @@ export function HelpArticleLayout({
       <div className="border-b border-stone-200 bg-stone-50">
         <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
           <p className="text-sm font-medium text-stone-500">
-            <Link href="/help" className="hover:text-stone-800 hover:underline">
-              Help
+            <Link href={hostSlug ? guestFlowPath(hostSlug, "/stays") : "/help"} className="hover:text-stone-800 hover:underline">
+              {hostSlug ? "Stays" : "Help"}
             </Link>
             <span className="mx-1.5 text-stone-300">/</span>
             <span>{article.category}</span>

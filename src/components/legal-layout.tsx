@@ -1,14 +1,16 @@
+import { guestFlowPath } from "@/lib/branded-flow";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LEGAL_EFFECTIVE_DATE, PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 
 type Props = {
+  hostSlug?: string;
   title: string;
   description: string;
   children: ReactNode;
 };
 
-export function LegalLayout({ title, description, children }: Props) {
+export function LegalLayout({ title, description, children, hostSlug }: Props) {
   return (
     <div className="bg-white">
       <div className="border-b border-stone-200 bg-stone-50">
@@ -26,8 +28,8 @@ export function LegalLayout({ title, description, children }: Props) {
             Effective {LEGAL_EFFECTIVE_DATE}
           </p>
           <nav className="mt-6 flex flex-wrap gap-2 text-sm">
-            <LegalTab href={TERMS_PATH} label="Terms of Service" />
-            <LegalTab href={PRIVACY_PATH} label="Privacy Policy" />
+            <LegalTab href={guestFlowPath(hostSlug, TERMS_PATH)} label="Terms of Service" />
+            <LegalTab href={guestFlowPath(hostSlug, PRIVACY_PATH)} label="Privacy Policy" />
           </nav>
         </div>
       </div>

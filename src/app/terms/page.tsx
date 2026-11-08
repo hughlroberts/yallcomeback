@@ -1,3 +1,6 @@
+import { guestFlowPath } from "@/lib/branded-flow";
+import { getHostForGuestSite } from "@/lib/host";
+import { notFound } from "next/navigation";
 import {
   brandedPriceLabel,
   marketplacePriceWithCardLabel,
@@ -28,9 +31,12 @@ export const metadata: Metadata = pageMetadata({
   path: "/terms",
 });
 
-export default function TermsPage() {
+export default async function TermsPage({ params }: { params?: Promise<{ hostSlug?: string }> } = {}) {
+  const hostSlug = (await params)?.hostSlug;
+  if (hostSlug && !(await getHostForGuestSite(hostSlug))) notFound();
   return (
     <LegalLayout
+      hostSlug={hostSlug}
       title="Terms of Service"
       description="Please read these Terms before you create an account, list a stay, or request a booking. By using Yall Come Back, you agree to them."
     >
@@ -54,7 +60,7 @@ export default function TermsPage() {
       </LegalP>
       <LegalP>
         Related: our{" "}
-        <Link href={PRIVACY_PATH} className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
+        <Link href={guestFlowPath(hostSlug, PRIVACY_PATH)} className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Privacy Policy
         </Link>
         . Host house rules, cancellation policies, and listing disclaimers are
@@ -516,7 +522,7 @@ export default function TermsPage() {
       <LegalH2 id="contact">27. Contact</LegalH2>
       <LegalP>
         Legal notices: use the{" "}
-        <Link href="/contact" className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
+        <Link href={guestFlowPath(hostSlug, "/contact")} className={`font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
           Contact
         </Link>{" "}
         page on {PRODUCT_DOMAIN}. Platform email is not a monitored legal inbox

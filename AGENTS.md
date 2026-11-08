@@ -105,3 +105,7 @@ Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`. Keep thos
 - Branded listing URLs `/h/{hostSlug}/properties/{slug}` render in place with host chrome and their own canonical URL. Never redirect a branded guest to marketplace.
 - Branded home/search/listings/nearby show only that host’s stays; omit empty sections. Branded booking and confirmation stay under `/h/{hostSlug}/book/...`, including payment returns and brand-context booking email links. No marketplace references in branded guest flows. Marketplace discovery remains multi-host and unchanged. Never mix brands on admin/back-end surfaces.
 - `Host.showHostedCredit` defaults false. Only when enabled show “Hosted on Yall Come Back” in the branded footer, linked to main-site home. This K1 decision (2026-11-08) supersedes prior branded discovery/redirect policy.
+
+### K1-a branded legal/help navigation (2026-11-08)
+
+Branded book/listing/footer links use `/h/{hostSlug}/terms`, `/h/{hostSlug}/privacy`, and `/h/{hostSlug}/help/cancellation-policies`. These render the unchanged shared legal/policy content with host chrome; canonicals remain the global `/terms`, `/privacy`, and `/help/cancellation-policies` URLs. Legal cross-links/contact and policy navigation remain branded. External contact/social targets and the optional K1 hosted-credit main-home link are unchanged.

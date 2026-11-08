@@ -1,3 +1,4 @@
+import { guestFlowPath } from "@/lib/branded-flow";
 import Image from "next/image";
 import Link from "next/link";
 import type { Host } from "@prisma/client";
@@ -176,13 +177,13 @@ export function HostSiteFooter({
           </p>
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <a
-              href={`${PRODUCT_ORIGIN}${TERMS_PATH}`}
+              href={guestFlowPath(host.slug, TERMS_PATH)}
               className="inline-flex min-h-6 items-center underline-offset-2 hover:text-stone-600 hover:underline"
             >
               Terms
             </a>
             <a
-              href={`${PRODUCT_ORIGIN}${PRIVACY_PATH}`}
+              href={guestFlowPath(host.slug, PRIVACY_PATH)}
               className="inline-flex min-h-6 items-center underline-offset-2 hover:text-stone-600 hover:underline"
             >
               Privacy

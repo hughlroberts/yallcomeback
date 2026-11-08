@@ -672,6 +672,11 @@ export default async function BookPage({
                 <p className="mt-1 text-sm text-stone-600">
                   {cancelPolicy.summary}
                 </p>
+                {brandSlug ? (
+                  <Link href={guestFlowPath(brandSlug, "/help/cancellation-policies")} className={`inline-flex min-h-6 items-center text-sm font-medium text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
+                    Learn more
+                  </Link>
+                ) : null}
                 {cancelBullets.length > 0 ? (
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-stone-700">
                     {cancelBullets.map((line) => (
@@ -713,12 +718,12 @@ export default async function BookPage({
               <span>
                 I have read and accept the cancellation policy
                 {disclaimer ? " and host disclaimer" : ""}, and the{" "}
-                <a href="/terms" className="inline-flex min-h-6 items-center font-medium text-bonnet underline">
+                <a href={guestFlowPath(brandSlug, "/terms")} className="inline-flex min-h-6 items-center font-medium text-bonnet underline">
                   Terms of Service
                 </a>{" "}
                 and{" "}
                 <a
-                  href="/privacy"
+                  href={guestFlowPath(brandSlug, "/privacy")}
                   className="inline-flex min-h-6 items-center font-medium text-bonnet underline"
                 >
                   Privacy Policy

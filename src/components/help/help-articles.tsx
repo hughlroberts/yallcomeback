@@ -29,7 +29,7 @@ import {
  * All guest- and host-facing copy uses ASD-STE100 Simplified Technical English.
  * See docs/help-writing-ste.md and AGENTS.md.
  */
-export function HelpArticleBody({ article }: { article: HelpArticle }) {
+export function HelpArticleBody({ article, hostSlug }: { article: HelpArticle; hostSlug?: string }) {
   switch (article.slug) {
     case "getting-started":
       return <GettingStarted article={article} />;
@@ -64,7 +64,7 @@ export function HelpArticleBody({ article }: { article: HelpArticle }) {
     case "self-host":
       return <SelfHost article={article} />;
     case "cancellation-policies":
-      return <CancellationPolicies article={article} />;
+      return <CancellationPolicies article={article} hostSlug={hostSlug} />;
     default:
       return (
         <HelpArticleLayout article={article}>
@@ -1873,14 +1873,17 @@ function SelfHost({ article }: { article: HelpArticle }) {
   );
 }
 
-function CancellationPolicies({ article }: { article: HelpArticle }) {
+function CancellationPolicies({ article, hostSlug }: { article: HelpArticle; hostSlug?: string }) {
   const standard = SHORT_STAY_POLICIES.filter((p) => !p.restricted);
   const restricted = SHORT_STAY_POLICIES.filter((p) => p.restricted);
 
   return (
     <HelpArticleLayout
       article={article}
-      extraRelated={[
+      hostSlug={hostSlug}
+      extraRelated={hostSlug ? [
+        { href: `/h/${encodeURIComponent(hostSlug)}/stays`, title: "Stays", description: "See your host’s stays and listing policies." },
+      ] : [
         {
           href: "/marketplace",
           title: "Find a Place",
