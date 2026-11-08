@@ -53,5 +53,6 @@ describe("K1 branded listing rendering", () => {
   expect(elements.find((e) => "bookBasePath" in e.props)?.props.bookBasePath).toBe("/h/qa-host/book/cabin");
   expect(elements.filter((e) => typeof e.props.href === "string").some((e) => String(e.props.href).includes("/marketplace"))).toBe(false);
   expect(elements.some((e) => e.props.children === "More places nearby")).toBe(false);
+  expect(elements.some((e) => e.props.children === "Marketplace")).toBe(false);
  });
 });

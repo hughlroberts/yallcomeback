@@ -597,7 +597,7 @@ export default async function MarketplacePropertyPage({
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/45 to-stone-900/20" />
         <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-8 sm:px-6">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-200/90">
-            Marketplace
+            {brandedHost ? brandedHost.name : "Marketplace"}
           </p>
           <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
             {property.title}
