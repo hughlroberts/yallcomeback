@@ -1,0 +1,1 @@
+ALTER TABLE "Host" ADD COLUMN "showHostedCredit" BOOLEAN NOT NULL DEFAULT false;

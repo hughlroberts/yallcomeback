@@ -453,6 +453,7 @@ export async function updateHostProfile(formData: FormData) {
   let primaryColor = existing.primaryColor || "#2563eb";
   let contactEmail = existing.contactEmail;
   let contactPhone = existing.contactPhone;
+  let showHostedCredit = existing.showHostedCredit;
   let sitePageAbout = existing.sitePageAbout;
   let sitePageServices = existing.sitePageServices;
   let siteAddress = existing.siteAddress;
@@ -495,6 +496,7 @@ export async function updateHostProfile(formData: FormData) {
       String(formData.get("contactEmail") || "").trim() || null;
     contactPhone =
       String(formData.get("contactPhone") || "").trim() || null;
+    showHostedCredit = formData.get("showHostedCredit") === "on";
     sitePageAbout = formData.get("sitePageAbout") === "on";
     sitePageServices = formData.get("sitePageServices") === "on";
     siteAddress = optionalText(formData, "siteAddress", 500);
@@ -604,6 +606,7 @@ export async function updateHostProfile(formData: FormData) {
       sitePresence,
       listOnMarketplace,
       siteAddress,
+      showHostedCredit,
       sitePageAbout,
       sitePageServices,
       siteServicesTitle,

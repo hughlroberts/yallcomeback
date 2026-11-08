@@ -194,6 +194,7 @@ model Host {
   /// Physical address shown on About (hosted site is not a freeform CMS)
   siteAddress          String?
   /// Fixed hosted-site pages (toggle only — no arbitrary page builder)
+  showHostedCredit     Boolean             @default(false)
   sitePageAbout        Boolean             @default(true)
   sitePageServices     Boolean             @default(false)
   /// DEPRECATED (Nov 2026): the Services override was removed. Not read by any code; Services is Branded plan only.

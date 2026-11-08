@@ -101,6 +101,7 @@ Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`. Keep thos
 
 ## Listing URLs and brand chrome (F3)
 
-- **Canonical** guest listing URL: `/marketplace/properties/{slug}` (SEO canonical/og omit `?host=`).
-- Brand path `/h/{hostSlug}/properties/{slug}` redirects to that marketplace URL with `?host={hostSlug}&via=host_site` and **keeps the host's header/branding** (middleware tenant when `via=host_site`).
-- Plain marketplace links (search, "more stays" from other hosts) use marketplace chrome. Front-end brand mixing in discovery is allowed; do not mix brands on admin/back-end surfaces.
+- Marketplace canonical listing URL: `/marketplace/properties/{slug}` (SEO canonical/og omit `?host=`).
+- Branded listing URLs `/h/{hostSlug}/properties/{slug}` render in place with host chrome and their own canonical URL. Never redirect a branded guest to marketplace.
+- Branded home/search/listings/nearby show only that host’s stays; omit empty sections. Branded booking and confirmation stay under `/h/{hostSlug}/book/...`, including payment returns and brand-context booking email links. No marketplace references in branded guest flows. Marketplace discovery remains multi-host and unchanged. Never mix brands on admin/back-end surfaces.
+- `Host.showHostedCredit` defaults false. Only when enabled show “Hosted on Yall Come Back” in the branded footer, linked to main-site home. This K1 decision (2026-11-08) supersedes prior branded discovery/redirect policy.

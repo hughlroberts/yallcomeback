@@ -831,6 +831,16 @@ export default async function AdminBrandPage({
             </Card>
           ) : null}
 
+          {branded ? (
+            <section className="rounded-2xl border border-stone-200 p-5">
+              <label className="flex items-center gap-3 text-sm font-medium">
+                <input type="checkbox" name="showHostedCredit" defaultChecked={host.showHostedCredit} />
+                Show &quot;Hosted on Yall Come Back&quot; credit
+              </label>
+              <p className="mt-2 text-xs text-stone-500">Optional footer credit. Off by default.</p>
+            </section>
+          ) : null}
+
           {/* —— Fixed pages (branded) —— */}
           {branded ? (
             <Card id="pages" className="order-6 scroll-mt-28 space-y-5 p-6">

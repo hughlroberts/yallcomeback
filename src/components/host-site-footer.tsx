@@ -19,6 +19,7 @@ type Props = {
     | "contactPhone"
     | "websiteUrl"
     | "siteAddress"
+    | "showHostedCredit"
     | "sitePageAbout"
     | "sitePageServices"
     | "siteServicesTitle"
@@ -186,8 +187,8 @@ export function HostSiteFooter({
             >
               Privacy
             </a>
-            <span>
-              Powered by{" "}
+            {host.showHostedCredit ? <span>
+              Hosted on{" "}
               <a
                 href={PRODUCT_ORIGIN}
                 className="underline-offset-2 hover:text-stone-600 hover:underline"
@@ -195,7 +196,7 @@ export function HostSiteFooter({
               >
                 Yall Come Back
               </a>
-            </span>
+            </span> : null}
           </p>
         </div>
       </div>
