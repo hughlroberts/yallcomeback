@@ -148,9 +148,9 @@ describe("paused listing: the host (and admin) can preview", () => {
 
   it("own host: /h/ website link goes on to the listing page preview", async () => {
     asOwnHost();
-    await expect(hostSitePage()).rejects.toMatchObject({
-      url: "/marketplace/properties/qa-test-listing-do-not-book?host=qa-tester-two",
-    });
+    const el = await hostSitePage();
+    const { default: ListingPage } = await import("@/app/marketplace/properties/[slug]/page");
+    expect(el.type).toBe(ListingPage);
   });
 
   it("signed preview token works with NO session (new tab without cookie)", async () => {
@@ -167,16 +167,13 @@ describe("paused listing: the host (and admin) can preview", () => {
     const other = createListingPreviewToken("p_other");
     expect((await pausedListingAccess("qa-test-listing-do-not-book", "qa-tester-two", other))?.kind).toBe("unavailable");
     expect((await pausedListingAccess("qa-test-listing-do-not-book", "qa-tester-two", "1.x"))?.kind).toBe("unavailable");
-    // /h/ link carries the token through its redirect
+    // /h/ renders in place and preserves the signed preview token.
     const { default: Page } = await import("@/app/h/[hostSlug]/properties/[slug]/page");
-    await expect(
-      Page({
-        params: Promise.resolve({ hostSlug: "qa-tester-two", slug: "qa-test-listing-do-not-book" }),
-        searchParams: Promise.resolve({ preview: t }),
-      }),
-    ).rejects.toMatchObject({
-      url: `/marketplace/properties/qa-test-listing-do-not-book?host=qa-tester-two&preview=${encodeURIComponent(t)}`,
+    const el = await Page({
+      params: Promise.resolve({ hostSlug: "qa-tester-two", slug: "qa-test-listing-do-not-book" }),
+      searchParams: Promise.resolve({ preview: t }),
     });
+    expect(await el.props.searchParams).toEqual({ preview: t });
   });
 
   it("published listings are not treated as paused", async () => {

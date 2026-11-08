@@ -1,3 +1,4 @@
+import { guestFlowPath, sameBrand } from "@/lib/branded-flow";
 import { effectiveMaxPets } from "@/lib/pets";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,11 +42,11 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; hostSlug?: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, hostSlug } = await params;
   const property = await prisma.property.findFirst({
-    where: { slug, ...marketplacePropertyWhere() },
+    where: hostSlug ? { slug, published: true, archivedAt: null, host: { slug: hostSlug, active: true } } : { slug, ...marketplacePropertyWhere() },
     select: {
       title: true,
       tagline: true,
@@ -64,7 +65,7 @@ export async function generateMetadata({
     return pageMetadata({
       title: "Book",
       description: "Complete your stay booking on Yall Come Back.",
-      path: `/book/${encodeURIComponent(slug)}`,
+      path: guestFlowPath(hostSlug, `/book/${encodeURIComponent(slug)}`),
       noIndex: true,
     });
   }
@@ -76,7 +77,7 @@ export async function generateMetadata({
   return pageMetadata({
     title: `Book · ${property.title}`,
     description,
-    path: `/book/${encodeURIComponent(slug)}`,
+    path: guestFlowPath(hostSlug, `/book/${encodeURIComponent(slug)}`),
     image: property.images[0]?.url,
     noIndex: true,
   });
@@ -86,7 +87,7 @@ export default async function BookPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; hostSlug?: string }>;
   searchParams: Promise<{
     checkIn?: string;
     checkOut?: string;
@@ -95,16 +96,18 @@ export default async function BookPage({
     host?: string;
   }>;
 }) {
-  const { slug } = await params;
+  const { slug, hostSlug } = await params;
   const sp = await searchParams;
   const tenant = await getRequestTenant();
+  if (hostSlug && tenant?.slug !== hostSlug) notFound();
+  const brandSlug = hostSlug ?? tenant?.slug;
 
   const property = await prisma.property.findFirst({
     where: {
       slug,
       published: true,
       archivedAt: null,
-      ...(sp.host ? { host: { slug: sp.host } } : {}),
+      ...(brandSlug ? { host: { slug: brandSlug } } : sp.host ? { host: { slug: sp.host } } : {}),
     },
     include: {
       seasons: true,
@@ -127,9 +130,9 @@ export default async function BookPage({
       },
     },
   });
-  if (!property) notFound();
+  if (!property || !sameBrand(brandSlug, property.host.slug)) notFound();
   // T46: hidden brand. No new bookings; host/admin can still preview.
-  if (await hiddenFromViewer(property.host)) return <ListingUnavailable />;
+  if (await hiddenFromViewer(property.host)) return <ListingUnavailable hostSlug={brandSlug} />;
 
   const checkIn = sp.checkIn;
   const checkOut = sp.checkOut;
@@ -149,7 +152,7 @@ export default async function BookPage({
 
   if (!checkIn || !checkOut) {
     redirect(
-      sp.host
+      brandSlug ? guestFlowPath(brandSlug, `/properties/${slug}`) : sp.host
         ? `/marketplace/properties/${slug}?host=${sp.host}`
         : `/marketplace/properties/${slug}`,
     );
@@ -233,7 +236,7 @@ export default async function BookPage({
     .filter(Boolean)
     .join(", ");
   const cover = property.images[0];
-  const listingHref = sp.host
+  const listingHref = brandSlug ? guestFlowPath(brandSlug, `/properties/${property.slug}`) : sp.host
     ? `/marketplace/properties/${property.slug}?host=${sp.host}`
     : `/marketplace/properties/${property.slug}`;
 

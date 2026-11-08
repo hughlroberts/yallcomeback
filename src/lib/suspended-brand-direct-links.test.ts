@@ -191,16 +191,16 @@ describe("direct listing links for a hidden brand (signed out / guest / other br
 });
 
 describe("preview for the brand's own host and Platform admins", () => {
-  it("own host: /h/ link goes on to the listing (redirect), not the hidden page", async () => {
+  it("own host: /h/ link renders the listing inline, not the hidden page", async () => {
     asOwnHost();
-    await expect(hostSitePage()).rejects.toMatchObject({
-      url: "/marketplace/properties/qa-cabin?host=qa-marketplace-test&via=host_site#reserve",
-    });
+    const el = await hostSitePage();
+    const { default: ListingPage } = await import("@/app/marketplace/properties/[slug]/page");
+    expect(el.type).toBe(ListingPage);
   });
 
   it("admin: /h/ link goes on to the listing too", async () => {
     asAdmin();
-    await expect(hostSitePage()).rejects.toMatchObject({ url: expect.stringContaining("via=host_site") });
+    expect(isUnavailable(await hostSitePage())).toBe(false);
   });
 });
 
@@ -231,6 +231,14 @@ describe("new bookings for a hidden brand", () => {
     await expect(createBooking(bookingForm())).rejects.toThrow(LISTING_UNAVAILABLE_BOOKING_ERROR);
   });
 
+  it("cannot book a foreign brand from a branded guest route", async () => {
+    seed(false);
+    const { getRequestTenant } = await import("@/lib/tenant");
+    vi.mocked(getRequestTenant).mockResolvedValueOnce({ slug: "other-brand" } as never);
+    const { createBooking } = await import("@/app/actions/bookings");
+    await expect(createBooking(bookingForm())).rejects.toThrow("This stay is not available on this host site.");
+  });
+
   it("once paid, createBooking gets past the hidden-brand check", async () => {
     seed(false);
     const { createBooking } = await import("@/app/actions/bookings");
@@ -241,6 +249,8 @@ describe("new bookings for a hidden brand", () => {
 describe("after payment clears the suspension", () => {
   it("/h/ link goes to the listing again for the public", async () => {
     seed(false);
-    await expect(hostSitePage()).rejects.toMatchObject({ url: expect.stringContaining("/marketplace/properties/qa-cabin") });
+    const el = await hostSitePage();
+    const { default: ListingPage } = await import("@/app/marketplace/properties/[slug]/page");
+    expect(el.type).toBe(ListingPage);
   });
 });

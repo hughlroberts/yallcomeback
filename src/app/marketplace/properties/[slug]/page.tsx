@@ -1,3 +1,5 @@
+import { guestFlowPath } from "@/lib/branded-flow";
+import { getHostForGuestSite } from "@/lib/host";
 import { computeBookingQuote, initialPetCount } from "@/lib/booking-quote";
 import { bookingBarStateFromQuote } from "@/lib/booking-bar-state";
 import type { Metadata } from "next";
@@ -66,11 +68,15 @@ export async function generateMetadata({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ host?: string; via?: string; preview?: string }>;
+  params: Promise<{ slug: string; hostSlug?: string }>;
+  searchParams?: Promise<{ host?: string; via?: string; preview?: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const sp = await searchParams;
+  const { slug, hostSlug: brandedHostSlug } = await params;
+  const brandedHost = brandedHostSlug ? await getHostForGuestSite(brandedHostSlug) : null;
+  if (brandedHostSlug && !brandedHost) notFound();
+  const brandedPath = (path: string) => guestFlowPath(brandedHostSlug, path);
+  const rawSearch = (await searchParams) ?? {};
+  const sp = brandedHost ? { ...rawSearch, host: brandedHost.slug, via: "host_site" } : rawSearch;
   const marketplaceWhere = marketplacePropertyWhere();
 
   const property = await prisma.property.findFirst({
@@ -79,6 +85,7 @@ export async function generateMetadata({
       ...(sp.via === "host_site" && sp.host
         ? {
             published: true,
+            archivedAt: null,
             host: { slug: sp.host, active: true },
           }
         : {
@@ -129,7 +136,7 @@ export async function generateMetadata({
       return pageMetadata({
         title: pausedPreviewTitle(name),
         description: "Paused, not visible to guests.",
-        path: `/marketplace/properties/${encodeURIComponent(slug)}`,
+        path: brandedHostSlug ? brandedPath(`/properties/${encodeURIComponent(slug)}`) : `/marketplace/properties/${encodeURIComponent(slug)}`,
         noIndex: true,
       });
     }
@@ -143,7 +150,7 @@ export async function generateMetadata({
     return pageMetadata({
       title: LISTING_UNAVAILABLE_TITLE,
       description: "Find another place to stay on Yall Come Back.",
-      path: `/marketplace/properties/${encodeURIComponent(slug)}`,
+      path: brandedHostSlug ? brandedPath(`/properties/${encodeURIComponent(slug)}`) : `/marketplace/properties/${encodeURIComponent(slug)}`,
       noIndex: true,
     });
   }
@@ -152,7 +159,7 @@ export async function generateMetadata({
     return pageMetadata({
       title: "Listing",
       description: "Stay again with a host you know on Yall Come Back.",
-      path: `/marketplace/properties/${encodeURIComponent(slug)}`,
+      path: brandedHostSlug ? brandedPath(`/properties/${encodeURIComponent(slug)}`) : `/marketplace/properties/${encodeURIComponent(slug)}`,
       noIndex: true,
     });
   }
@@ -170,12 +177,13 @@ export async function generateMetadata({
   });
   const cover = property.images[0];
   // Canonical/og:url carry no query string (no ?host=).
-  const path = listingCanonicalPath(property.slug);
+  const path = brandedHostSlug ? brandedPath(`/properties/${encodeURIComponent(property.slug)}`) : listingCanonicalPath(property.slug);
   // E1104-D6: absolute OG image + real pixel dimensions (not a lied 1200×630).
   const coverSize = cover?.url ? await publicImageSize(cover.url) : null;
 
   return pageMetadata({
     title: property.title,
+    siteName: brandedHost?.name,
     description,
     path,
     type: "website",
@@ -192,8 +200,8 @@ export default async function MarketplacePropertyPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{
+  params: Promise<{ slug: string; hostSlug?: string }>;
+  searchParams?: Promise<{
     host?: string;
     preview?: string;
     checkIn?: string;
@@ -203,8 +211,12 @@ export default async function MarketplacePropertyPage({
     via?: string;
   }>;
 }) {
-  const { slug } = await params;
-  const sp = await searchParams;
+  const { slug, hostSlug: brandedHostSlug } = await params;
+  const brandedHost = brandedHostSlug ? await getHostForGuestSite(brandedHostSlug) : null;
+  if (brandedHostSlug && !brandedHost) notFound();
+  const brandedPath = (path: string) => guestFlowPath(brandedHostSlug, path);
+  const rawSearch = (await searchParams) ?? {};
+  const sp = brandedHost ? { ...rawSearch, host: brandedHost.slug, via: "host_site" } : rawSearch;
 
   const marketplaceWhere = marketplacePropertyWhere();
   const viaHostSite = sp.via === "host_site";
@@ -260,6 +272,7 @@ export default async function MarketplacePropertyPage({
           where: {
             slug,
             published: true,
+            archivedAt: null,
             host: { slug: sp.host, active: true },
           },
           include,
@@ -278,7 +291,7 @@ export default async function MarketplacePropertyPage({
         });
 
   // Wrong ?host= (e.g. personal listing linked as Cherokee) → correct URL
-  if (!property && sp.host) {
+  if (!property && sp.host && !brandedHostSlug) {
     const bySlug = await prisma.property.findFirst({
       where: {
         slug,
@@ -313,7 +326,7 @@ export default async function MarketplacePropertyPage({
     });
   }
 
-  const tenant = await getRequestTenant();
+  const tenant = brandedHost ?? await getRequestTenant();
   if (!property && tenant) {
     property = await prisma.property.findFirst({
       where: {
@@ -329,21 +342,21 @@ export default async function MarketplacePropertyPage({
   if (!property) {
     const hidden = await findHiddenBrandListing(slug, sp.host);
     if (hidden) {
-      if (!(await canPreviewBrand(hidden.hostId))) return <ListingUnavailable />;
+      if (!(await canPreviewBrand(hidden.hostId))) return <ListingUnavailable hostSlug={brandedHostSlug} />;
       property = await prisma.property.findFirst({
         where: { id: hidden.id },
         include,
       });
     }
   } else if (await hiddenFromViewer(property.host)) {
-    return <ListingUnavailable />;
+    return <ListingUnavailable hostSlug={brandedHostSlug} />;
   }
 
   // T58: paused listing. Guests: "not available". Host/admin: preview + banner.
   let pausedPreview = false;
   if (!property) {
     const paused = await pausedListingAccess(slug, sp.host, sp.preview);
-    if (paused?.kind === "unavailable") return <ListingUnavailable />;
+    if (paused?.kind === "unavailable") return <ListingUnavailable hostSlug={brandedHostSlug} />;
     if (paused?.kind === "preview") {
       property = await prisma.property.findFirst({
         where: { id: paused.id },
@@ -354,6 +367,7 @@ export default async function MarketplacePropertyPage({
   }
 
   if (!property) notFound();
+  if (brandedHost && property.hostId !== brandedHost.id) notFound();
 
   const bookingChannel = resolveBookingChannel({
     tenantHostSlug: tenant?.slug,
@@ -485,7 +499,11 @@ export default async function MarketplacePropertyPage({
   );
   const cover = property.images[0]?.url;
 
-  const nearby = await getNearbyMarketplaceListings(
+  const nearby = brandedHost ? (await prisma.property.findMany({
+    where: { hostId: brandedHost.id, published: true, archivedAt: null, id: { not: property.id } },
+    include: { images: { take: 1 }, host: true },
+    take: 6,
+  })).map((item) => ({ ...item, distanceLabel: undefined })) : await getNearbyMarketplaceListings(
     {
       id: property.id,
       latitude: property.latitude,
@@ -501,7 +519,7 @@ export default async function MarketplacePropertyPage({
   );
 
   const origin = await getSiteOrigin();
-  const listingUrl = `${origin}${listingCanonicalPath(property.slug)}`;
+  const listingUrl = `${origin}${brandedHostSlug ? brandedPath(`/properties/${encodeURIComponent(property.slug)}`) : listingCanonicalPath(property.slug)}`;
   const absImages = property.images.map((img) =>
     img.url.startsWith("http") ? img.url : `${origin}${img.url}`,
   );
@@ -545,7 +563,7 @@ export default async function MarketplacePropertyPage({
         priceNightly={property.baseNightlyRate}
         hostName={property.host.name}
       />
-      <TrackRecentlyViewed
+      {!brandedHostSlug ? <TrackRecentlyViewed
         id={property.id}
         slug={property.slug}
         hostSlug={property.host.slug}
@@ -556,7 +574,7 @@ export default async function MarketplacePropertyPage({
         bedrooms={property.bedrooms}
         maxGuests={property.maxGuests}
         imageUrl={property.images[0]?.url ?? null}
-      />
+      /> : null}
       <TrackListingView propertyId={property.id} />
 
       {/* Early in tree (fixed visually): Tab reaches sticky CTA before #reserve (N2). */}
@@ -596,7 +614,7 @@ export default async function MarketplacePropertyPage({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-5">
           <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
             <Link
-              href="/marketplace"
+              href={brandedHostSlug ? brandedPath("/stays") : "/marketplace"}
               className={`inline-flex min-h-6 items-center text-stone-500 hover:text-stone-800 ${PRIMARY_CTA_FOCUS_CLASS}`}
             >
               Stays
@@ -694,7 +712,7 @@ export default async function MarketplacePropertyPage({
             <BookingWidget
               propertySlug={property.slug}
               hostSlug={property.host.slug}
-              bookBasePath={`/book/${property.slug}`}
+              bookBasePath={brandedPath(`/book/${property.slug}`)}
               channel={bookingChannel}
               depositDueNow={depositDueNow}
               baseNightlyRate={property.baseNightlyRate}
@@ -784,13 +802,13 @@ export default async function MarketplacePropertyPage({
                   More places nearby
                 </h2>
                 <p className="mt-1 text-sm text-stone-500">
-                  {property.latitude != null && property.longitude != null
+                  {brandedHost ? `More stays from ${brandedHost.name}.` : property.latitude != null && property.longitude != null
                     ? "Sorted by miles on the map - closest first."
                     : property.city
                       ? `Other stays near ${property.city}${
                           property.region ? `, ${property.region}` : ""
                         }.`
-                      : "Other marketplace stays you might like."}
+                      : brandedHost ? "More stays from your host." : "Other marketplace stays you might like."}
                 </p>
               </div>
             </div>
@@ -802,7 +820,7 @@ export default async function MarketplacePropertyPage({
                     ...item,
                     images: item.images ?? [],
                   }}
-                  href={marketplaceListingHref(
+                  href={brandedHostSlug ? brandedPath(`/properties/${item.slug}`) : marketplaceListingHref(
                     item.slug,
                     item.host.slug,
                     ambiguousNearby,

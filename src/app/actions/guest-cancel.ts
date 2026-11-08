@@ -1,5 +1,8 @@
 "use server";
 
+import { guestFlowPath, sameBrand } from "@/lib/branded-flow";
+import { getRequestTenant } from "@/lib/tenant";
+
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
@@ -35,6 +38,7 @@ export async function guestCancelBooking(formData: FormData) {
       createdAt: true,
       property: {
         select: {
+          host: { select: { slug: true } },
           checkInTime: true,
           cancellationPolicy: true,
           longTermCancellationPolicy: true,
@@ -64,9 +68,11 @@ export async function guestCancelBooking(formData: FormData) {
   }
   if (!allowed) notFound();
 
+  const tenant = await getRequestTenant();
+  if (!sameBrand(tenant?.slug, booking.property.host?.slug ?? "")) notFound();
   const back = (q: string) =>
     redirect(
-      `/book/confirmation/${bookingId}?t=${bookingAccessToken(bookingId)}&${q}`,
+      guestFlowPath(tenant?.slug, `/book/confirmation/${bookingId}?t=${bookingAccessToken(bookingId)}&${q}`),
     );
 
   if (booking.status === "CANCELLED") back("cancelled=1");

@@ -35,6 +35,7 @@ export default async function HostSiteHomePage({
       where: {
         hostId: host.id,
         published: true,
+        archivedAt: null,
       },
       include: {
         images: {

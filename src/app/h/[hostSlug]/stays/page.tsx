@@ -47,7 +47,7 @@ export default async function HostStaysPage({
   const base = await hostPublicBasePath(host.slug);
 
   const properties = await prisma.property.findMany({
-    where: { hostId: host.id, published: true },
+    where: { hostId: host.id, published: true, archivedAt: null },
     include: {
       images: {
         orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }],

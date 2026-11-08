@@ -1,3 +1,5 @@
+import { guestFlowPath, sameBrand } from "@/lib/branded-flow";
+import { getRequestTenant } from "@/lib/tenant";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -25,18 +27,21 @@ import { pageMetadata } from "@/lib/seo";
 import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
 
 export const dynamic = "force-dynamic";
-export const metadata = pageMetadata({
-  title: "Booking confirmation",
-  description: "Your stay booking confirmation on Yall Come Back.",
-  path: "/book/confirmation",
-  noIndex: true,
-});
+export async function generateMetadata({ params }: { params: Promise<{ id: string; hostSlug?: string }> }) {
+  const { id, hostSlug } = await params;
+  return pageMetadata({
+    title: "Booking confirmation",
+    description: "Your stay booking confirmation.",
+    path: guestFlowPath(hostSlug, `/book/confirmation/${encodeURIComponent(id)}`),
+    noIndex: true,
+  });
+}
 
 export default async function ConfirmationPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; hostSlug?: string }>;
   searchParams: Promise<{
     pendingStripe?: string;
     inbox?: string;
@@ -46,7 +51,10 @@ export default async function ConfirmationPage({
     cancelError?: string;
   }>;
 }) {
-  const { id } = await params;
+  const { id, hostSlug } = await params;
+  const tenant = await getRequestTenant();
+  if (hostSlug && hostSlug !== tenant?.slug) notFound();
+  const brandSlug = hostSlug ?? tenant?.slug;
   const sp = await searchParams;
   const inboxId = sp.inbox?.trim() || null;
   const booking = await prisma.booking.findUnique({
@@ -66,7 +74,7 @@ export default async function ConfirmationPage({
       payments: { orderBy: { createdAt: "desc" } },
     },
   });
-  if (!booking) notFound();
+  if (!booking || !sameBrand(brandSlug, booking.property.host.slug)) notFound();
 
   // P0-3: do not expose guest PII to anyone who knows the booking id
   const session = await auth();
@@ -93,7 +101,7 @@ export default async function ConfirmationPage({
   if (!tokenOk && !isGuest && !isHost) {
     if (!session?.user) {
       redirect(
-        `/login?callbackUrl=${encodeURIComponent(`/book/confirmation/${id}`)}`,
+        `/login?callbackUrl=${encodeURIComponent(guestFlowPath(brandSlug, `/book/confirmation/${id}`))}`,
       );
     }
     notFound();
@@ -161,7 +169,7 @@ export default async function ConfirmationPage({
   return (
     <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
       <div className="text-center">
-        <BrandSeal size={88} className="mx-auto h-[5.5rem] w-[5.5rem]" />
+        {!brandSlug ? <BrandSeal size={88} className="mx-auto h-[5.5rem] w-[5.5rem]" /> : null}
         <h1 className="mt-6 text-2xl font-semibold text-stone-900">
           {isCancelled
             ? "This booking is cancelled"
@@ -366,7 +374,7 @@ export default async function ConfirmationPage({
         </p>
       ) : null}
 
-      {inboxId ? (
+      {inboxId && !brandSlug ? (
         <div className="mt-6 rounded-xl border border-cyan-200 bg-cyan-50 p-4 text-center text-sm text-bonnet">
           <p className="font-medium">Your host sent a message</p>
           <p className="mt-1 text-bonnet/80">
@@ -406,7 +414,7 @@ export default async function ConfirmationPage({
           />
           <Link
             href={
-              booking.property.host
+              brandSlug ? guestFlowPath(brandSlug, `/properties/${booking.property.slug}`) : booking.property.host
                 ? `/marketplace/properties/${booking.property.slug}?host=${booking.property.host.slug}`
                 : `/marketplace/properties/${booking.property.slug}`
             }
@@ -419,7 +427,7 @@ export default async function ConfirmationPage({
 
       <div className="mt-8 text-center">
         <Link
-          href="/"
+          href={guestFlowPath(brandSlug, "")}
           className="inline-block text-sm font-medium text-bonnet hover:text-bonnet"
         >
           Back to home

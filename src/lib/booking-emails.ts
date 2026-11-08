@@ -1,3 +1,4 @@
+import { guestFlowPath } from "@/lib/branded-flow";
 /**
  * Transactional booking emails, sent with the shared platform email helper
  * (dispatchPlatformEmail → Resend/SMTP, same keys as signup mail).
@@ -33,6 +34,7 @@ import {
 export type CancelledBy = "GUEST" | "HOST" | "SYSTEM";
 
 export type BookingEmailData = {
+  sourceChannel?: string;
   id: string;
   status: string;
   guestName: string;
@@ -54,7 +56,7 @@ export type BookingEmailData = {
     checkInTime: string;
     cancellationPolicy: string;
     longTermCancellationPolicy: string;
-    host: { name: string };
+    host: { name: string; slug?: string };
   };
   payments: {
     method: string;
@@ -67,12 +69,12 @@ export type BookingEmailData = {
 
 export type OutgoingEmail = { to: string; subject: string; text: string };
 
-export function manageBookingUrl(bookingId: string): string {
-  return `${messagingSiteOrigin()}/book/confirmation/${bookingId}?t=${bookingAccessToken(bookingId)}`;
+export function manageBookingUrl(bookingId: string, hostSlug?: string): string {
+  return `${messagingSiteOrigin()}${guestFlowPath(hostSlug, `/book/confirmation/${bookingId}?t=${bookingAccessToken(bookingId)}`)}`;
 }
 
-export function cancelBookingUrl(bookingId: string): string {
-  return `${manageBookingUrl(bookingId)}&cancel=1`;
+export function cancelBookingUrl(bookingId: string, hostSlug?: string): string {
+  return `${manageBookingUrl(bookingId, hostSlug)}&cancel=1`;
 }
 
 export function adminBookingUrl(bookingId: string): string {
@@ -87,6 +89,7 @@ export async function bookingHostRecipients(hostId: string): Promise<string[]> {
 export { dedupeEmails };
 
 const bookingSelect = {
+  sourceChannel: true,
   id: true,
   status: true,
   guestName: true,
@@ -109,7 +112,7 @@ const bookingSelect = {
       checkInTime: true,
       cancellationPolicy: true,
       longTermCancellationPolicy: true,
-      host: { select: { name: true } },
+      host: { select: { name: true, slug: true } },
     },
   },
   payments: {
@@ -244,8 +247,8 @@ export function composeBookingCreatedEmails(
     cancelRuleLine(b, now),
     REFUND_PROCESS_TEXT,
     "",
-    `View or manage your booking: ${manageBookingUrl(b.id)}`,
-    `Cancel this ${confirmed ? "booking" : "request"}: ${cancelBookingUrl(b.id)}`,
+    `View or manage your booking: ${manageBookingUrl(b.id, b.sourceChannel === "host_site" ? b.property.host.slug : undefined)}`,
+    `Cancel this ${confirmed ? "booking" : "request"}: ${cancelBookingUrl(b.id, b.sourceChannel === "host_site" ? b.property.host.slug : undefined)}`,
     "",
     "Keep this email. The links above are private to you.",
   ].join("\n");
@@ -315,7 +318,7 @@ export function composeCancellationEmails(
     guestMoney,
     "",
     `Reference: ${shortRef(b.id)}`,
-    `Booking details: ${manageBookingUrl(b.id)}`,
+    `Booking details: ${manageBookingUrl(b.id, b.sourceChannel === "host_site" ? b.property.host.slug : undefined)}`,
   ].join("\n");
 
   const hostText = [

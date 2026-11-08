@@ -117,6 +117,16 @@ describe("host recipients", () => {
 });
 
 describe("booking-time emails", () => {
+  it("K1 brand-context email manage/cancel links stay on the owning host", () => {
+    const b = booking();
+    b.sourceChannel = "host_site";
+    b.property.host.slug = "qa-host";
+    const guest = composeBookingCreatedEmails(b, ["owner@motel.com"])[0]!;
+    expect(guest.text).toContain(`/h/qa-host/book/confirmation/${b.id}?t=`);
+    expect(guest.text).toContain("&cancel=1");
+    expect(guest.text).not.toContain("/marketplace");
+  });
+
   it("guest gets request-received with manage + cancel links; each host gets a new-request email", () => {
     const b = booking();
     const emails = composeBookingCreatedEmails(

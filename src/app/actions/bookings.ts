@@ -1,5 +1,7 @@
 "use server";
 
+import { guestFlowPath, sameBrand } from "@/lib/branded-flow";
+
 import { redirect } from "next/navigation";
 import type { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
@@ -109,6 +111,8 @@ export async function createBooking(formData: FormData) {
   }
 
   const tenant = await getRequestTenant();
+  if (!sameBrand(tenant?.slug, property.host.slug)) throw new Error("This stay is not available on this host site.");
+  const brandSlug = tenant?.slug;
   const channel = resolveBookingChannel({
     tenantHostSlug: tenant?.slug ?? null,
     listingHostSlug: property.host.slug,
@@ -338,8 +342,8 @@ export async function createBooking(formData: FormData) {
       accountId: property.host.stripeAccountId,
       name: depositCheckoutName(property.title),
       amountCents: toStripeAmount(quote.depositAmount),
-      successPath: `/book/confirmation/${booking.id}?${confirmParams.toString()}`,
-      cancelPath: `/book/${property.slug}`,
+      successPath: guestFlowPath(brandSlug, `/book/confirmation/${booking.id}?${confirmParams.toString()}`),
+      cancelPath: brandSlug ? guestFlowPath(brandSlug, `/book/${property.slug}?${new URLSearchParams({ checkIn, checkOut, guests: String(guests), pets: String(pets) })}`) : `/book/${property.slug}`,
       customerEmail: guestEmail,
       metadata: {
         kind: "booking_deposit",
@@ -356,7 +360,7 @@ export async function createBooking(formData: FormData) {
   }
 
   if (method === "STRIPE") confirmParams.set("pendingStripe", "1");
-  redirect(`/book/confirmation/${booking.id}?${confirmParams.toString()}`);
+  redirect(guestFlowPath(brandSlug, `/book/confirmation/${booking.id}?${confirmParams.toString()}`));
 }
 
 export async function markDepositPaid(formData: FormData) {

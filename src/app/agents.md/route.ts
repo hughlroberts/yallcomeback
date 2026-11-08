@@ -76,7 +76,7 @@ GET ${origin}/api/v1/listings/{slug}?checkIn=${checkIn}&checkOut=${checkOut}&gue
 
 Each result uses the **property** slug in \`slug\`, \`url\`, \`bookUrl\`, and \`apiUrl\`. The host brand slug is \`hostSlug\` (also under \`host.slug\`).
 
-Canonical listing URLs for humans and SEO are on the marketplace: \`/marketplace/properties/{slug}\` (no \`?host=\` on canonical/og). Brand microsite paths \`/h/{hostSlug}/properties/{slug}\` redirect there with \`?host={hostSlug}&via=host_site\` and keep that host's header/branding. Marketplace discovery links (and "more stays" from other hosts) stay on marketplace chrome. Do not invent a second public listing document URL.
+Branded listing URLs \`/h/{hostSlug}/properties/{slug}\` render with host chrome and their own canonical (no marketplace redirect). Branded home, search, listings and nearby sections show only that host's stays, hiding empty sections. Booking, payment returns, confirmation/cancellation and brand-context booking email links stay on \`/h/{hostSlug}/book/...\`. No marketplace links or mentions in branded guest flows. A per-brand optional “Hosted on Yall Come Back” footer credit is OFF by default; when enabled it links to main-site home. Marketplace listing URLs retain their own canonical \`/marketplace/properties/{slug}\` and multi-host discovery is unchanged. Never mix back-end brand data. This 2026-11-08 K1 policy supersedes the previous branded redirect/discovery rule.
 
 Use \`listing.url\` and \`listing.bookUrl\` to send humans into the product. \`bookUrl\` (listing and search) keeps the dates, \`guests\` and \`pets\` you sent (pets only when the listing takes that many; pets must be 0–4, else 400 \`invalid_pets\`).
 

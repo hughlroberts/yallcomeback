@@ -70,6 +70,10 @@ function rewriteHostGuestPath(
     pathname === "/properties"
   ) {
     target = `/h/${hostSlug}/stays`;
+  } else if (pathname.startsWith("/book/")) {
+    target = `/h/${hostSlug}${pathname}`;
+  } else if (pathname.startsWith("/marketplace/properties/")) {
+    target = `/h/${hostSlug}/properties/${pathname.slice("/marketplace/properties/".length)}`;
   } else if (pathname.startsWith("/properties/")) {
     // Host-native listing path → microsite property (then booking UI)
     const slug = pathname.slice("/properties/".length).split("/")[0];
@@ -106,8 +110,6 @@ function rewriteHostGuestPath(
       target = `/h/${hostSlug}/${seg}`;
     }
   }
-  // /marketplace/properties/* stays as-is with tenant chrome (booking UI).
-  // Do not rewrite it back to /h/.../properties or we loop with the host property redirect.
 
   if (!target) {
     // Other guest paths still get tenant chrome (header/footer) via header
@@ -288,10 +290,7 @@ export default auth(async (req) => {
     return withTenant(req, hMatch[1].toLowerCase(), { mode: "path" });
   }
 
-  // F3: /h/{brand}/properties/{slug} redirects to the marketplace listing with
-  // ?host=&via=host_site. Keep that host's chrome on the marketplace URL so
-  // guests stay in the brand (canonical listing URL is marketplace; branding
-  // follows via=host_site).
+  // K1: old branded bookmarks now enter the host-owned document.
   if (/^\/marketplace\/properties\//i.test(path)) {
     const via = req.nextUrl.searchParams.get("via");
     const host = req.nextUrl.searchParams.get("host")?.trim().toLowerCase();
@@ -300,7 +299,11 @@ export default auth(async (req) => {
       host &&
       /^[a-z0-9-]+$/.test(host)
     ) {
-      return withTenant(req, host, { mode: "path" });
+      const branded = req.nextUrl.clone();
+      branded.pathname = `/h/${host}${path.slice("/marketplace".length)}`;
+      branded.searchParams.delete("via");
+      branded.searchParams.delete("host");
+      return NextResponse.redirect(branded);
     }
   }
 

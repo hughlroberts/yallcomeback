@@ -37,11 +37,11 @@ describe("E1104-C6 listing URL prefill", () => {
     expect(page).toMatch(/initialGuests=\{guestCount\.guests\}/);
   });
 
-  it("host listing redirect keeps trip params for the widget", () => {
+  it("host listing inline renderer keeps trip params for the widget", () => {
     const page = src("app/h/[hostSlug]/properties/[slug]/page.tsx");
-    expect(page).toMatch(/listingRedirectQuery/);
-    expect(page).toMatch(/q\.set\("checkIn"/);
-    expect(page).toMatch(/q\.set\("guests"/);
+    expect(page).toContain('searchParams={Promise.resolve(sp)}');
+    expect(page).toContain('<ListingPage');
+    expect(page).not.toContain('redirect(');
   });
 });
 

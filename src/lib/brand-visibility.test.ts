@@ -132,7 +132,7 @@ describe("direct links, booking and API wiring", () => {
       "src/app/h/[hostSlug]/properties/[slug]/page.tsx",
       "src/app/book/[slug]/page.tsx",
     ]) {
-      expect(src(f)).toContain("<ListingUnavailable />");
+      expect(src(f)).toContain("<ListingUnavailable ");
     }
   });
   it("createBooking blocks new bookings for hidden brands", () => {

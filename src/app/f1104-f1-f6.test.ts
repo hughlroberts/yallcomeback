@@ -22,24 +22,24 @@ describe("F4 brand home landmarks", () => {
   });
 });
 
-describe("F3 branded listing chrome + canonical marketplace URL", () => {
-  it("middleware applies tenant for marketplace listing via=host_site", () => {
+describe("K1 supersedes F3 branded redirect policy", () => {
+  it("middleware sends legacy host_site bookmarks to branded documents", () => {
     const mw = src("middleware.ts");
     expect(mw).toMatch(/via === "host_site"/);
     expect(mw).toMatch(/\/marketplace\/properties\//);
-    expect(mw).toMatch(/withTenant\(req, host/);
+    expect(mw).toContain("NextResponse.redirect(branded)");
   });
 
-  it("host property path still redirects to marketplace with via=host_site", () => {
+  it("host property path renders inline rather than redirecting", () => {
     const page = src("app/h/[hostSlug]/properties/[slug]/page.tsx");
-    expect(page).toMatch(/via:\s*"host_site"/);
-    expect(page).toMatch(/\/marketplace\/properties\//);
+    expect(page).toContain('<ListingPage');
+    expect(page).not.toContain('redirect(');
   });
 
-  it("agents.md documents marketplace canonical + via=host_site branding", () => {
+  it("agents.md documents separate branded and marketplace canonicals", () => {
     const agents = src("app/agents.md/route.ts");
-    expect(agents).toMatch(/via=host_site/);
-    expect(agents).toMatch(/Canonical listing URLs/);
+    expect(agents).toContain('Branded listing URLs');
+    expect(agents).toContain('own canonical');
     expect(agents).toMatch(/invalid_amenity/);
   });
 });
