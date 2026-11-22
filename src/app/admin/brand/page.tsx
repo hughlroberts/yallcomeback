@@ -630,6 +630,7 @@ export default async function AdminBrandPage({
                           <Input
                             id="logoUrl"
                             name="logoUrl"
+                            autoComplete="off"
                             defaultValue={host.logoUrl || ""}
                             placeholder="/brand/hosts/your-logo.png"
                           />
@@ -649,6 +650,7 @@ export default async function AdminBrandPage({
               <Input
                 id="name"
                 name="name"
+                autoComplete="organization"
                 required
                 defaultValue={host.name}
                 placeholder="Your name or brand"
@@ -662,6 +664,7 @@ export default async function AdminBrandPage({
               <Input
                 id="tagline"
                 name="tagline"
+                autoComplete="off"
                 defaultValue={host.tagline || ""}
                 placeholder={
                   branded
@@ -775,6 +778,7 @@ export default async function AdminBrandPage({
                 <select
                   id="sitePublishState"
                   name="sitePublishState"
+                  autoComplete="off"
                   defaultValue={host.sitePublishState}
                   className="block w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm font-medium text-stone-900"
                 >
@@ -918,6 +922,7 @@ export default async function AdminBrandPage({
                 <Textarea
                   id="description"
                   name="description"
+                  autoComplete="off"
                   rows={8}
                   defaultValue={host.description || ""}
                   placeholder="Tell guests who you are…"
@@ -944,6 +949,7 @@ export default async function AdminBrandPage({
                 <Textarea
                   id="siteAddress"
                   name="siteAddress"
+                  autoComplete="street-address"
                   rows={2}
                   defaultValue={host.siteAddress || ""}
                   placeholder={"123 Lake Rd\nLog Cabin, TX 75148"}
@@ -955,6 +961,7 @@ export default async function AdminBrandPage({
                   <Input
                     id="contactPhone"
                     name="contactPhone"
+                    autoComplete="tel"
                     type="tel"
                     defaultValue={host.contactPhone || ""}
                     placeholder="(903) 555-0100"
@@ -965,6 +972,7 @@ export default async function AdminBrandPage({
                   <Input
                     id="contactEmail"
                     name="contactEmail"
+                    autoComplete="email"
                     type="email"
                     defaultValue={host.contactEmail || ""}
                     placeholder="stay@example.com"
@@ -1002,6 +1010,7 @@ export default async function AdminBrandPage({
                 <Input
                   id="siteServicesTitle"
                   name="siteServicesTitle"
+                  autoComplete="off"
                   defaultValue={host.siteServicesTitle || ""}
                   placeholder="Boat rentals & lake extras"
                 />
@@ -1018,6 +1027,7 @@ export default async function AdminBrandPage({
                   <Input
                     id="siteServicesPath"
                     name="siteServicesPath"
+                    autoComplete="off"
                     className="max-w-xs font-mono text-sm"
                     defaultValue={host.siteServicesPath || "services"}
                     placeholder="boat-rentals"
@@ -1060,6 +1070,7 @@ export default async function AdminBrandPage({
                   <Input
                     id="socialFacebook"
                     name="socialFacebook"
+                    autoComplete="off"
                     defaultValue={host.socialFacebook || ""}
                     placeholder="https://facebook.com/… or page name"
                   />
@@ -1069,6 +1080,7 @@ export default async function AdminBrandPage({
                   <Input
                     id="socialX"
                     name="socialX"
+                    autoComplete="off"
                     defaultValue={host.socialX || ""}
                     placeholder="https://x.com/… or @handle"
                   />
@@ -1078,6 +1090,7 @@ export default async function AdminBrandPage({
                   <Input
                     id="socialInstagram"
                     name="socialInstagram"
+                    autoComplete="off"
                     defaultValue={host.socialInstagram || ""}
                     placeholder="https://instagram.com/… or @handle"
                   />
@@ -1087,6 +1100,7 @@ export default async function AdminBrandPage({
                   <Input
                     id="socialTiktok"
                     name="socialTiktok"
+                    autoComplete="off"
                     defaultValue={host.socialTiktok || ""}
                     placeholder="https://tiktok.com/@… or @handle"
                   />
@@ -1216,6 +1230,7 @@ export default async function AdminBrandPage({
                 <Input
                   id="customDomain"
                   name="customDomain"
+                  autoComplete="off"
                   defaultValue={host.customDomain || ""}
                   placeholder="e.g. cherokeelanding.net"
                 />
@@ -1223,7 +1238,7 @@ export default async function AdminBrandPage({
                 <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
                   A custom domain is a Branded website plan feature (
                   {brandedPriceLabel()}). Until you upgrade, guests use the
-                  free demo at{" "}
+                  demo included on every plan at{" "}
                   <Link
                     href={previewPath}
                     className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
@@ -1287,6 +1302,7 @@ export default async function AdminBrandPage({
                 <Input
                   id="websiteUrl"
                   name="websiteUrl"
+                  autoComplete="url"
                   type="url"
                   defaultValue={
                     host.websiteUrl && host.websiteUrl !== "none"
@@ -1395,6 +1411,7 @@ export default async function AdminBrandPage({
               <Textarea
                 id="defaultDisclaimer"
                 name="defaultDisclaimer"
+                autoComplete="off"
                 rows={3}
                 defaultValue={host.defaultDisclaimer || ""}
                 placeholder="Optional house rules summary on bookings…"

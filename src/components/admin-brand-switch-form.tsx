@@ -42,6 +42,7 @@ export function AdminBrandSwitchForm({
       <select
         id="admin-brand-select"
         name="hostId"
+        autoComplete="off"
         key={activeHostId || "none"}
         defaultValue={activeHostId || ""}
         className="max-w-[16rem] rounded-lg border border-amber-300/80 bg-white px-2.5 py-1.5 text-sm font-medium text-stone-900"

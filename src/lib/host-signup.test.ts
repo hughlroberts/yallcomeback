@@ -133,8 +133,30 @@ describe("platform signup plan (K1-c)", () => {
     expect(form).not.toMatch(/name=["']planId["']/);
     expect(form).toContain("Branded website · ${brandedPrice}");
     expect(form).toContain(
+      "A /h/ demo is included on every plan, including Marketplace only.",
+    );
+    expect(form).toContain(
       "The Branded website plan is charged when you connect a custom domain",
     );
+    expect(form).not.toMatch(/Start a free \/h\/ demo|free \/h\/ demo/);
+    expect(form).toContain(
+      "Included on Marketplace only — no second fee. You can change this later.",
+    );
+    expect(form).not.toContain(
+      "Included on the branded website plan — no second fee",
+    );
+  });
+
+  it("admin brand copy uses included, not free, for the /h/ demo", () => {
+    const page = src("app/admin/brand/page.tsx");
+    expect(page).toContain("The /h/{host.slug} demo site is included on every plan.");
+    expect(page).toContain("demo included on every plan at");
+    expect(page).not.toMatch(/free demo/i);
+    expect(page).toMatch(/id="customDomain"[^>]*autoComplete="off"/);
+    expect(page).toMatch(/id="websiteUrl"[^>]*autoComplete="url"/);
+    expect(page).toMatch(/id="name"[^>]*autoComplete="organization"/);
+    expect(page).toMatch(/id="contactEmail"[^>]*autoComplete="email"/);
+    expect(page).toMatch(/id="contactPhone"[^>]*autoComplete="tel"/);
   });
 
   it("first listing page can prompt to connect a domain later", () => {

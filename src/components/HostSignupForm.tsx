@@ -186,7 +186,7 @@ export function HostSignupForm({
                   {
                     id: "website" as const,
                     label: `Branded website · ${brandedPrice}`,
-                    hint: "Start a free /h/ demo on Marketplace only. The Branded website plan is charged when you connect a custom domain. We will ask for a brand name next.",
+                    hint: "A /h/ demo is included on every plan, including Marketplace only. The Branded website plan is charged when you connect a custom domain. We will ask for a brand name next.",
                   },
                 ] as const
               ).map((opt) => (
@@ -309,7 +309,7 @@ export function HostSignupForm({
               <span className="mt-0.5 block text-xs text-stone-500">
                 {path === "self"
                   ? `The hosted marketplace is a paid product (${marketplacePriceWithCardLabel()}). Uncheck to keep stays only on your site.`
-                  : "Included on the branded website plan — no second fee. You can change this later."}
+                  : "Included on Marketplace only — no second fee. You can change this later."}
               </span>
             </span>
           </label>
