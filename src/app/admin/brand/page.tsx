@@ -26,7 +26,7 @@ import {
   hostHasBrandedWebsite,
   hostProductPath,
   marketplaceListingPath,
-  planIncludesBrandedSite,
+  planIncludesCustomDomain,
 } from "@/lib/hosting";
 import {
   hostProfileFaceUrl,
@@ -184,7 +184,7 @@ export default async function AdminBrandPage({
         select: { monthlyPrice: true, slug: true },
       })
     : null;
-  const brandedSiteOnPlan = planIncludesBrandedSite({
+  const domainOnPlan = planIncludesCustomDomain({
     hostingMode: host.hostingMode,
     plan: currentPlan,
   });
@@ -354,23 +354,24 @@ export default async function AdminBrandPage({
                 Marketplace only, or a branded website. Find a Place is a
                 checkbox on the website plan — not a third product.
               </p>
-              {!brandedSiteOnPlan && host.hostingMode === "PLATFORM" ? (
-                <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                  A branded site at{" "}
-                  <span className="font-medium">/h/{host.slug}</span> is a
-                  Branded website plan feature ({brandedPriceLabel()}).
-                  Guests who open those URLs are sent to Find a Place until you
-                  upgrade.{" "}
-                  {upgradeAvailable ? (
+              <p className="mt-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700">
+                A branded demo site at{" "}
+                <span className="font-medium">/h/{host.slug}</span> is included
+                on every plan, including Marketplace only — you can build it
+                without upgrading. Connecting your own domain needs the Branded
+                website plan ({brandedPriceLabel()}).
+                {upgradeAvailable && host.hostingMode === "PLATFORM" ? (
+                  <>
+                    {" "}
                     <Link
-                      href={brandedUpgradeConfirmPath(host.id, returnTo)}
-                      className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
+                      href={`${returnTo.split("#")[0]}#domain-setup`}
+                      className={`font-semibold text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
-                      Upgrade — confirm and pay by card →
+                      Domain & guest site
                     </Link>
-                  ) : null}
-                </p>
-              ) : null}
+                  </>
+                ) : null}
+              </p>
             </div>
 
             {host.hostingMode === "SELF" ? (
@@ -415,32 +416,7 @@ export default async function AdminBrandPage({
                       body: `Hosted brand site on your domain (logo, palette, About, services). One price covers every listing — the bill does not grow when you add stays. Marketplace listing is included — uncheck it below if you do not want Find a Place. No second fee.`,
                     },
                   ] as const
-                ).map((opt) =>
-                  opt.id === "BOTH" && upgradeAvailable ? (
-                    // T38: Marketplace → Branded opens the confirm page and
-                    // card checkout. It never switches the plan on save.
-                    <Link
-                      key={opt.id}
-                      href={brandedUpgradeConfirmPath(host.id, returnTo)}
-                      className={`flex items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm hover:border-bonnet/40 hover:bg-petal/30 ${PRIMARY_CTA_FOCUS_CLASS}`}
-                    >
-                      <span
-                        aria-hidden
-                        className="mt-1 inline-block size-[13px] shrink-0 rounded-full border border-stone-400"
-                      />
-                      <span>
-                        <span className="font-semibold text-stone-900">
-                          {opt.title}
-                        </span>
-                        <span className="mt-0.5 block text-xs leading-relaxed text-stone-500">
-                          {opt.body}
-                        </span>
-                        <span className="mt-1.5 block text-xs font-semibold text-bonnet">
-                          Upgrade — confirm and pay by card →
-                        </span>
-                      </span>
-                    </Link>
-                  ) : (
+                ).map((opt) => (
                   <label
                     key={opt.id}
                     className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm hover:bg-stone-50 has-[:checked]:border-bonnet/40 has-[:checked]:bg-petal/30"
@@ -465,23 +441,10 @@ export default async function AdminBrandPage({
                       </span>
                     </span>
                   </label>
-                  ),
-                )}
+                ))}
               </fieldset>
             )}
           </Card>
-
-          {/* —— Marketplace → branded upgrade —— */}
-          {!brandedSiteOnPlan && host.hostingMode === "PLATFORM" ? (
-            <div className="order-2">
-              <MarketplaceToWebsiteUpgrade
-                hostId={host.id}
-                returnTo={returnTo}
-                hostName={host.name}
-                previewPath={`/h/${host.slug}`}
-              />
-            </div>
-          ) : null}
 
           {/* —— Marketplace-only: listing URLs —— */}
           {!branded ? (
@@ -1144,7 +1107,20 @@ export default async function AdminBrandPage({
                   <strong className="font-semibold text-stone-800">not</strong>{" "}
                   move your old website or change DNS by itself.
                 </p>
+                <p className="mt-2 text-sm text-stone-600">
+                  The /h/{host.slug} demo site is included on every plan.
+                  Connecting a custom domain needs the Branded website plan (
+                  {brandedPriceLabel()}).
+                </p>
               </div>
+              {!domainOnPlan && host.hostingMode === "PLATFORM" ? (
+                <MarketplaceToWebsiteUpgrade
+                  hostId={host.id}
+                  returnTo={returnTo}
+                  hostName={host.name}
+                  previewPath={`/h/${host.slug}`}
+                />
+              ) : null}
 
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
                 <p className="font-semibold">
@@ -1236,12 +1212,45 @@ export default async function AdminBrandPage({
                 <Label htmlFor="customDomain">
                   Domain name to connect (does not change DNS)
                 </Label>
+                {domainOnPlan ? (
                 <Input
                   id="customDomain"
                   name="customDomain"
                   defaultValue={host.customDomain || ""}
                   placeholder="e.g. cherokeelanding.net"
                 />
+                ) : (
+                <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                  A custom domain is a Branded website plan feature (
+                  {brandedPriceLabel()}). Until you upgrade, guests use the
+                  free demo at{" "}
+                  <Link
+                    href={previewPath}
+                    className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
+                  >
+                    {previewPath}
+                  </Link>
+                  {host.customDomain ? (
+                    <>. A domain already saved on this brand (
+                    <code className="rounded bg-white px-1 font-mono text-[11px]">
+                      {host.customDomain}
+                    </code>
+                    ) will redirect to that /h/ URL instead of being served.</>
+                  ) : null}
+                  {upgradeAvailable ? (
+                    <>
+                      {" "}
+                      <Link
+                        href={brandedUpgradeConfirmPath(host.id, returnTo)}
+                        className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
+                      >
+                        Upgrade — confirm and pay by card →
+                      </Link>
+                    </>
+                  ) : null}
+                </p>
+                )}
+                {domainOnPlan ? (
                 <p className="text-xs text-stone-500">
                   Bare hostname only (no https://). Example:{" "}
                   <code className="rounded bg-stone-100 px-1">
@@ -1250,7 +1259,8 @@ export default async function AdminBrandPage({
                   . Leave empty to stay on preview only. Saving notifies our team and
                   tries to prepare DNS values automatically.
                 </p>
-                {host.customDomain ? (
+                ) : null}
+                {domainOnPlan && host.customDomain ? (
                   <p className="rounded-lg border border-emerald-100 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-950">
                     <strong className="font-semibold">Step 1 done in app:</strong>{" "}
                     mapped{" "}
@@ -1266,7 +1276,7 @@ export default async function AdminBrandPage({
                 ) : null}
               </div>
 
-              {host.customDomain ? (
+              {domainOnPlan && host.customDomain ? (
                 <DomainDnsPanel host={host} variant="brand" />
               ) : null}
 

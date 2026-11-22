@@ -98,33 +98,77 @@ export function hostSlugForHostname(
   return map[host] || map[bare] || map[`www.${bare}`] || null;
 }
 
-let domainMapCache: { at: number; map: Record<string, string> } | null = null;
+export type DomainMapPayload = {
+  domains: Record<string, string>;
+  gated: Record<string, string>;
+};
+
+export function parseDomainMapPayload(json: unknown): DomainMapPayload {
+  if (json && typeof json === "object" && !Array.isArray(json)) {
+    const rec = json as Record<string, unknown>;
+    if (rec.domains && typeof rec.domains === "object" && !Array.isArray(rec.domains)) {
+      const gated =
+        rec.gated && typeof rec.gated === "object" && !Array.isArray(rec.gated)
+          ? (rec.gated as Record<string, string>)
+          : {};
+      return {
+        domains: rec.domains as Record<string, string>,
+        gated,
+      };
+    }
+    const domains: Record<string, string> = {};
+    for (const [k, v] of Object.entries(rec)) {
+      if (k === "domains" || k === "gated" || k === "__gated") continue;
+      if (typeof v === "string") domains[k] = v;
+    }
+    return { domains, gated: {} };
+  }
+  return { domains: {}, gated: {} };
+}
+
+export type CustomDomainResolution = { slug: string; serve: boolean };
+
+let domainMapCache: { at: number; payload: DomainMapPayload } | null = null;
 const DOMAIN_MAP_TTL_MS = 60_000;
+
+function envOnlyPayload(): DomainMapPayload {
+  return {
+    domains: parseHostDomainMap(process.env.HOST_DOMAIN_MAP ?? ""),
+    gated: {},
+  };
+}
 
 /**
  * Env map + optional DB map (fetched from platform /api/domain-map).
  * Safe for middleware: short timeout, falls back to env-only.
  */
+export async function resolveCustomDomain(
+  hostname: string | null | undefined,
+): Promise<CustomDomainResolution | null> {
+  if (!hostname) return null;
+  const host = hostname.split(":")[0]?.toLowerCase() ?? "";
+  if (!host || isPlatformHostname(host)) return null;
+
+  const payload = await loadDomainMap();
+  const allowed = hostSlugForHostname(hostname, null, payload.domains);
+  if (allowed) return { slug: allowed, serve: true };
+  const gated = hostSlugForHostname(hostname, null, payload.gated);
+  if (gated) return { slug: gated, serve: false };
+  return null;
+}
+
+/** Serveable custom-domain slug only (Marketplace-only domains are omitted). */
 export async function resolveHostSlugForHostname(
   hostname: string | null | undefined,
 ): Promise<string | null> {
-  const fromEnv = hostSlugForHostname(hostname);
-  if (fromEnv) return fromEnv;
-  if (!hostname) return null;
-
-  const host = hostname.split(":")[0]?.toLowerCase() ?? "";
-  if (!host || isPlatformHostname(host)) {
-    return null;
-  }
-
-  const extra = await loadDbDomainMap();
-  return hostSlugForHostname(hostname, null, extra);
+  const resolved = await resolveCustomDomain(hostname);
+  return resolved?.serve ? resolved.slug : null;
 }
 
-async function loadDbDomainMap(): Promise<Record<string, string>> {
+async function loadDomainMap(): Promise<DomainMapPayload> {
   const now = Date.now();
   if (domainMapCache && now - domainMapCache.at < DOMAIN_MAP_TTL_MS) {
-    return domainMapCache.map;
+    return domainMapCache.payload;
   }
 
   const base =
@@ -132,7 +176,7 @@ async function loadDbDomainMap(): Promise<Record<string, string>> {
     (process.env.RAILWAY_PUBLIC_DOMAIN
       ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
       : null);
-  if (!base) return {};
+  if (!base) return envOnlyPayload();
 
   try {
     const ctrl = new AbortController();
@@ -144,12 +188,12 @@ async function loadDbDomainMap(): Promise<Record<string, string>> {
       next: { revalidate: 60 },
     } as RequestInit);
     clearTimeout(t);
-    if (!res.ok) return domainMapCache?.map || {};
-    const map = (await res.json()) as Record<string, string>;
-    domainMapCache = { at: now, map: map || {} };
-    return domainMapCache.map;
+    if (!res.ok) return domainMapCache?.payload || envOnlyPayload();
+    const payload = parseDomainMapPayload(await res.json());
+    domainMapCache = { at: now, payload };
+    return payload;
   } catch {
-    return domainMapCache?.map || {};
+    return domainMapCache?.payload || envOnlyPayload();
   }
 }
 

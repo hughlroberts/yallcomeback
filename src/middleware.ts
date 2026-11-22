@@ -9,9 +9,11 @@ import {
   platformGate,
 } from "./auth.config";
 import {
-  resolveHostSlugForHostname,
+  resolveCustomDomain,
   isPlatformPath,
 } from "./lib/custom-domains";
+import { customDomainToPlatformPath } from "./lib/plan-branded-site";
+import { PRODUCT_ORIGIN } from "./lib/features";
 import { TENANT_SLUG_HEADER } from "./lib/tenant-constants";
 import { applyVisitorCookies } from "./lib/analytics-visitor";
 import {
@@ -276,10 +278,21 @@ export default auth(async (req) => {
 
   const hostname = requestHostname(req);
   // Env HOST_DOMAIN_MAP + Host.customDomain via /api/domain-map
-  const hostSlug = await resolveHostSlugForHostname(hostname);
+  const custom = await resolveCustomDomain(hostname);
 
-  if (hostSlug) {
-    const rewritten = rewriteHostGuestPath(req, hostSlug);
+  if (custom && !custom.serve) {
+    // Marketplace-only (or otherwise unentitled) custom domain: send guests
+    // to the platform /h/<brand>/ demo instead of serving the domain.
+    const path = isPlatformPath(req.nextUrl.pathname)
+      ? req.nextUrl.pathname
+      : customDomainToPlatformPath(custom.slug, req.nextUrl.pathname);
+    const dest = new URL(path, PRODUCT_ORIGIN);
+    dest.search = req.nextUrl.search;
+    return NextResponse.redirect(dest);
+  }
+
+  if (custom?.serve) {
+    const rewritten = rewriteHostGuestPath(req, custom.slug);
     if (rewritten) return rewritten;
   }
 

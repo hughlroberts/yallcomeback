@@ -247,11 +247,10 @@ describe("new bookings for a hidden brand", () => {
 });
 
 describe("after payment clears the suspension", () => {
-  it("/h/ link for a Marketplace-only brand redirects to the marketplace listing", async () => {
+  it("/h/ link goes to the listing again for the public", async () => {
     seed(false);
-    await expect(hostSitePage()).rejects.toMatchObject({
-      message: "NEXT_REDIRECT",
-      url: "https://www.yallcomeback.app/marketplace/properties/qa-cabin?host=qa-marketplace-test",
-    });
+    const el = await hostSitePage();
+    const { default: ListingPage } = await import("@/app/marketplace/properties/[slug]/page");
+    expect(el.type).toBe(ListingPage);
   });
 });

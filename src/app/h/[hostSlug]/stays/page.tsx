@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getHostForGuestSite } from "@/lib/host";
-import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { PropertyCard } from "@/components/property-card";
 import { pageMetadata } from "@/lib/seo";
@@ -41,7 +41,8 @@ export default async function HostStaysPage({
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await requireBrandedGuestSite(hostSlug, "/stays");
+  const host = await getHostForGuestSite(hostSlug);
+  if (!host) notFound();
 
   const base = await hostPublicBasePath(host.slug);
 

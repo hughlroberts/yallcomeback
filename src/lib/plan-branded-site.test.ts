@@ -2,97 +2,112 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  brandedSiteGuestFallback,
-  planIncludesBrandedSite,
+  customDomainToPlatformPath,
+  planIncludesCustomDomain,
 } from "./plan-branded-site";
+import { parseDomainMapPayload } from "./custom-domains";
 
-describe("planIncludesBrandedSite (K1-c)", () => {
-  it("excludes the Marketplace-only plan, including when sitePresence is branded", () => {
+describe("planIncludesCustomDomain (K1-c revised)", () => {
+  it("is false on Marketplace only, including when a /h/ demo exists", () => {
     expect(
-      planIncludesBrandedSite({
+      planIncludesCustomDomain({
         hostingMode: "PLATFORM",
         plan: { slug: "marketplace" },
       }),
     ).toBe(false);
     expect(
-      planIncludesBrandedSite({ hostingMode: "PLATFORM", plan: null }),
+      planIncludesCustomDomain({ hostingMode: "PLATFORM", plan: null }),
     ).toBe(false);
   });
 
-  it("includes the Branded website plan, complimentary hosted brands, and self-host", () => {
+  it("is true on the Branded website plan, complimentary hosted brands, and self-host", () => {
     expect(
-      planIncludesBrandedSite({
+      planIncludesCustomDomain({
         hostingMode: "PLATFORM",
         plan: { slug: "branded" },
       }),
     ).toBe(true);
     expect(
-      planIncludesBrandedSite({
+      planIncludesCustomDomain({
         hostingMode: "PLATFORM",
         plan: { slug: "complimentary" },
       }),
     ).toBe(true);
     expect(
-      planIncludesBrandedSite({ hostingMode: "SELF", plan: null }),
+      planIncludesCustomDomain({ hostingMode: "SELF", plan: null }),
     ).toBe(true);
   });
 });
 
-describe("brandedSiteGuestFallback (K1-c)", () => {
-  it("sends property pages to the marketplace listing so guest links keep working", () => {
+describe("customDomainToPlatformPath", () => {
+  it("maps custom-domain guest paths onto the platform /h/<brand>/ demo", () => {
+    expect(customDomainToPlatformPath("qa-host", "/")).toBe("/h/qa-host");
+    expect(customDomainToPlatformPath("qa-host", "/stays")).toBe("/h/qa-host/stays");
     expect(
-      brandedSiteGuestFallback("qa-host", "/properties/lake-cabin", {
-        checkIn: "2027-06-01",
-        checkOut: "2027-06-05",
-      }),
-    ).toBe(
-      "/marketplace/properties/lake-cabin?checkIn=2027-06-01&checkOut=2027-06-05&host=qa-host",
-    );
-  });
-
-  it("sends branded booking and confirmation to the shared /book routes", () => {
+      customDomainToPlatformPath("qa-host", "/properties/lake-cabin"),
+    ).toBe("/h/qa-host/properties/lake-cabin");
     expect(
-      brandedSiteGuestFallback("qa-host", "/book/lake-cabin", {
-        checkIn: "2027-06-01",
-        checkOut: "2027-06-05",
-        guests: "4",
-      }),
-    ).toBe(
-      "/book/lake-cabin?checkIn=2027-06-01&checkOut=2027-06-05&guests=4&host=qa-host",
-    );
+      customDomainToPlatformPath("qa-host", "/marketplace/properties/lake-cabin"),
+    ).toBe("/h/qa-host/properties/lake-cabin");
     expect(
-      brandedSiteGuestFallback("qa-host", "/book/confirmation/b1", {
-        t: "token",
-        cancel: "1",
-      }),
-    ).toBe("/book/confirmation/b1?t=token&cancel=1");
-  });
-
-  it("sends home, stays, legal and help to /marketplace", () => {
-    for (const path of ["/", "/stays", "/terms", "/privacy", "/help/cancellation-policies", "/about"]) {
-      expect(brandedSiteGuestFallback("qa-host", path)).toBe("/marketplace");
-    }
+      customDomainToPlatformPath("qa-host", "/book/lake-cabin"),
+    ).toBe("/h/qa-host/book/lake-cabin");
+    expect(
+      customDomainToPlatformPath("qa-host", "/h/qa-host/about"),
+    ).toBe("/h/qa-host/about");
   });
 });
 
-describe("K1-c wiring", () => {
-  const src = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
-
-  it("centralizes entitlement in planIncludesBrandedSite and gates guest /h/ routes", () => {
-    expect(src("src/lib/host.ts")).toContain("planIncludesBrandedSite(any)");
-    expect(src("src/app/h/[hostSlug]/properties/[slug]/page.tsx")).toContain(
-      "brandedSiteGuestFallbackUrl",
-    );
-    expect(src("src/app/h/[hostSlug]/page.tsx")).toContain("requireBrandedGuestSite");
-    expect(src("src/app/book/[slug]/page.tsx")).toContain("redirectIfBrandedSiteGated");
-    expect(src("src/lib/booking-emails.ts")).toContain("brandedBookingLinkSlug");
-    expect(src("src/app/admin/brand/page.tsx")).toContain("brandedSiteOnPlan");
-    expect(src("src/app/sitemap.ts")).toContain("planIncludesBrandedSite(h)");
+describe("parseDomainMapPayload", () => {
+  it("reads the { domains, gated } document used by middleware", () => {
+    expect(
+      parseDomainMapPayload({
+        domains: { "qa-brand.test": "qa-host" },
+        gated: { "demo.test": "qa-market" },
+      }),
+    ).toEqual({
+      domains: { "qa-brand.test": "qa-host" },
+      gated: { "demo.test": "qa-market" },
+    });
   });
 
-  it("does not invent new fee copy in the host admin upgrade notice (B7)", () => {
-    const brand = src("src/app/admin/brand/page.tsx");
-    expect(brand).toContain("brandedPriceLabel()");
-    expect(brand).toContain("Branded website plan feature");
+  it("treats a legacy flat map as all-serveable domains", () => {
+    expect(
+      parseDomainMapPayload({ "qa-brand.test": "qa-host" }),
+    ).toEqual({
+      domains: { "qa-brand.test": "qa-host" },
+      gated: {},
+    });
+  });
+});
+
+describe("K1-c revised wiring", () => {
+  const src = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
+
+  it("does not plan-gate public /h/ routes, emails, or the sitemap", () => {
+    expect(src("src/lib/host.ts")).not.toContain("planIncludesCustomDomain");
+    expect(src("src/lib/host.ts")).not.toContain("planIncludesBrandedSite");
+    expect(src("src/app/h/[hostSlug]/page.tsx")).toContain("getHostForGuestSite");
+    expect(src("src/app/h/[hostSlug]/page.tsx")).not.toContain("requireBrandedGuestSite");
+    expect(src("src/app/h/[hostSlug]/properties/[slug]/page.tsx")).not.toContain(
+      "brandedSiteGuestFallbackUrl",
+    );
+    expect(src("src/lib/booking-emails.ts")).not.toContain("brandedBookingLinkSlug");
+    expect(src("src/app/sitemap.ts")).not.toContain("planIncludesCustomDomain");
+  });
+
+  it("gates custom domains in admin, profile save, domain-map and middleware", () => {
+    expect(src("src/app/admin/brand/page.tsx")).toContain("domainOnPlan");
+    expect(src("src/app/admin/brand/page.tsx")).toContain(
+      "demo site is included on every plan",
+    );
+    expect(src("src/app/admin/brand/page.tsx")).toContain("brandedPriceLabel()");
+    expect(src("src/app/actions/host.ts")).toContain("upgradeNeedsCheckout = true");
+    expect(src("src/app/actions/host.ts")).toContain(
+      "Never change planId here",
+    );
+    expect(src("src/app/api/domain-map/route.ts")).toContain("planIncludesCustomDomain");
+    expect(src("src/middleware.ts")).toContain("customDomainToPlatformPath");
+    expect(src("src/middleware.ts")).toContain("resolveCustomDomain");
   });
 });

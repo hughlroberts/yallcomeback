@@ -173,6 +173,7 @@ export function hostHasBrandedWebsite(
 }
 
 export {
+  planIncludesCustomDomain,
   planIncludesBrandedSite,
   MARKETPLACE_PLAN_SLUG,
   BRANDED_PLAN_SLUG,

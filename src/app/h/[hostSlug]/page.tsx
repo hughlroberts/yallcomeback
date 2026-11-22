@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { hostServicesPageOn } from "@/lib/services-access";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
+import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { hostServicesPageLabel, hostSiteNavItems } from "@/lib/host-site";
 import { hostSiteMarkUrl } from "@/lib/host-images";
@@ -23,8 +24,9 @@ export default async function HostSiteHomePage({
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await requireBrandedGuestSite(hostSlug, "/");
+  const host = await getHostForGuestSite(hostSlug);
   const hostAbout = publicListingText(host?.description);
+  if (!host) notFound();
 
   const base = await hostPublicBasePath(host.slug);
 

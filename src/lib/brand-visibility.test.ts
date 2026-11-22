@@ -112,11 +112,7 @@ describe("getHostForGuestSite on a hidden brand", () => {
   });
   it("returns the host once payment clears the suspension", async () => {
     authMock.auth.mockResolvedValue(null);
-    db.prisma.host.findFirst.mockResolvedValue({
-      ...host,
-      marketplaceSuspendedAt: null,
-      plan: { slug: "branded" },
-    });
+    db.prisma.host.findFirst.mockResolvedValue({ ...host, marketplaceSuspendedAt: null });
     expect(await getHostForGuestSite("brand")).not.toBeNull();
   });
 });
@@ -149,44 +145,5 @@ describe("direct links, booking and API wiring", () => {
   });
   it("sends no email", () => {
     expect(src("src/lib/brand-visibility.ts")).not.toMatch(/email|resend/i);
-  });
-});
-
-describe("getHostForGuestSite plan gate (K1-c)", () => {
-  const live = {
-    id: "h1",
-    slug: "qa-host",
-    active: true,
-    hostingMode: "PLATFORM",
-    approvalStatus: "APPROVED",
-    subscriptionStatus: "ACTIVE",
-    sitePublishState: "LIVE",
-    marketplaceSuspendedAt: null,
-  };
-  beforeEach(() => {
-    authMock.auth.mockReset();
-    authMock.auth.mockResolvedValue(null);
-  });
-  it("hides /h/ from the public when the plan is Marketplace only", async () => {
-    db.prisma.host.findFirst.mockResolvedValue({
-      ...live,
-      plan: { slug: "marketplace" },
-    });
-    expect(await getHostForGuestSite("qa-host")).toBeNull();
-  });
-  it("serves /h/ when the plan is Branded website", async () => {
-    db.prisma.host.findFirst.mockResolvedValue({
-      ...live,
-      plan: { slug: "branded" },
-    });
-    expect(await getHostForGuestSite("qa-host")).not.toBeNull();
-  });
-  it("lets the brand owner preview a Marketplace-only site", async () => {
-    db.prisma.host.findFirst.mockResolvedValue({
-      ...live,
-      plan: { slug: "marketplace" },
-    });
-    authMock.auth.mockResolvedValue({ user: { role: "HOST", hostId: "h1" } });
-    expect(await getHostForGuestSite("qa-host")).not.toBeNull();
   });
 });

@@ -18,7 +18,6 @@ import {
   resolveBookingChannel,
 } from "@/lib/host-payments";
 import { getRequestTenant } from "@/lib/tenant";
-import { planIncludesBrandedSiteForHost } from "@/lib/branded-site-gate";
 
 export async function createBooking(formData: FormData) {
   const propertyId = String(formData.get("propertyId") || "");
@@ -113,10 +112,7 @@ export async function createBooking(formData: FormData) {
 
   const tenant = await getRequestTenant();
   if (!sameBrand(tenant?.slug, property.host.slug)) throw new Error("This stay is not available on this host site.");
-  const brandSlug =
-    tenant && (await planIncludesBrandedSiteForHost(tenant))
-      ? tenant.slug
-      : undefined;
+  const brandSlug = tenant?.slug;
   const channel = resolveBookingChannel({
     tenantHostSlug: tenant?.slug ?? null,
     listingHostSlug: property.host.slug,

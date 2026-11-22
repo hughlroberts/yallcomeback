@@ -64,13 +64,30 @@ describe("Marketplace → Branded never switches instantly (T38)", () => {
     expect(db.prisma.host.update).not.toHaveBeenCalled();
   });
 
-  it("saving Brand with Branded picked keeps a paid brand on Marketplace and opens confirm", async () => {
+  it("saving Brand with a website presence keeps the Marketplace plan and does not open checkout", async () => {
     db.prisma.hostingPlan.findUnique.mockResolvedValue({ monthlyPrice: 12, slug: "marketplace" });
     await expect(
-      updateHostProfile(form({ hostId: "h1", name: "QA", sitePresence: "BOTH", returnTo: "/admin/brand" })),
+      updateHostProfile(form({ hostId: "h1", name: "QA", sitePresence: "BOTH", listOnMarketplace: "on", returnTo: "/admin/brand" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/admin/brand?saved=1");
+    const data = db.prisma.host.update.mock.calls[0][0].data;
+    expect(data.sitePresence).toBe("BOTH");
+    expect(data.planId).toBeUndefined();
+  });
+
+  it("connecting a custom domain on Marketplace only opens checkout and does not save the domain", async () => {
+    db.prisma.hostingPlan.findUnique.mockResolvedValue({ monthlyPrice: 12, slug: "marketplace" });
+    await expect(
+      updateHostProfile(form({
+        hostId: "h1",
+        name: "QA",
+        sitePresence: "BOTH",
+        listOnMarketplace: "on",
+        customDomain: "qa-demo.test",
+        returnTo: "/admin/brand",
+      })),
     ).rejects.toThrow(/NEXT_REDIRECT:\/account\/settings\/subscription\/upgrade\?hostId=h1/);
     const data = db.prisma.host.update.mock.calls[0][0].data;
-    expect(data.sitePresence).toBe("STAYLOCAL");
+    expect(data.customDomain).toBeNull();
     expect(data.planId).toBeUndefined();
   });
 

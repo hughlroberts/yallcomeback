@@ -1,78 +1,59 @@
 /**
- * K1-c: a public branded host site (/h/<brand>/) is included on the Branded
- * website plan and on complimentary hosted brands, not on Marketplace only.
- * Open-source / self-host is not the Marketplace-only product, so it stays
- * entitled. Check entitlement here; do not infer it from sitePresence alone.
+ * K1-c (revised): a public /h/<brand>/ demo site is included on every plan,
+ * including Marketplace only. The Branded website plan (and complimentary
+ * hosted / self-host) is what includes a custom domain.
  */
 
 export const MARKETPLACE_PLAN_SLUG = "marketplace";
 export const BRANDED_PLAN_SLUG = "branded";
 export const COMPLIMENTARY_PLAN_SLUG = "complimentary";
 
-export type PlanForBrandedSite = { slug: string } | null | undefined;
+export type PlanForCustomDomain = { slug: string } | null | undefined;
 
-export function planIncludesBrandedSite(host: {
+export function planIncludesCustomDomain(host: {
   hostingMode?: string | null;
-  plan?: PlanForBrandedSite;
+  plan?: PlanForCustomDomain;
 }): boolean {
   if (host.hostingMode === "SELF") return true;
   const slug = host.plan?.slug;
   return slug === BRANDED_PLAN_SLUG || slug === COMPLIMENTARY_PLAN_SLUG;
 }
 
-function searchFrom(
-  search?: Record<string, string | undefined> | URLSearchParams | string,
-): URLSearchParams {
-  if (!search) return new URLSearchParams();
-  if (typeof search === "string") {
-    return new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
-  }
-  if (search instanceof URLSearchParams) return new URLSearchParams(search);
-  const q = new URLSearchParams();
-  for (const [k, v] of Object.entries(search)) {
-    if (v != null && v !== "") q.set(k, v);
-  }
-  return q;
-}
-
-function withQuery(path: string, q: URLSearchParams): string {
-  const qs = q.toString();
-  return qs ? `${path}?${qs}` : path;
-}
+/** @deprecated Use planIncludesCustomDomain. Same check: the $25 plan is for a custom domain, not /h/. */
+export const planIncludesBrandedSite = planIncludesCustomDomain;
 
 /**
- * Marketplace equivalent of a branded /h/<brand>/... path.
- * Property pages go to /marketplace/properties/<slug>?host=<brand> so existing
- * guest links keep working. Booking/confirmation stay on the shared /book
- * routes. Other branded pages (home, stays, legal, help) go to /marketplace.
+ * Map a request path on a host custom domain to the platform /h/<brand>/ path
+ * so a Marketplace-only brand is not served on that domain.
  */
-export function brandedSiteGuestFallback(
+export function customDomainToPlatformPath(
   hostSlug: string,
-  pathWithinBrand: string,
-  search?: Record<string, string | undefined> | URLSearchParams | string,
+  pathname: string,
 ): string {
-  const path = pathWithinBrand.startsWith("/")
-    ? pathWithinBrand
-    : `/${pathWithinBrand}`;
-  const q = searchFrom(search);
-  q.delete("via");
+  const slug = hostSlug.toLowerCase();
+  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
 
-  const prop = path.match(/^\/properties\/([^/]+)\/?$/);
-  if (prop) {
-    if (!q.has("host")) q.set("host", hostSlug);
-    return withQuery(`/marketplace/properties/${prop[1]}`, q);
+  if (path === `/h/${slug}` || path.startsWith(`/h/${slug}/`)) return path;
+
+  if (path === "/" || path === "") return `/h/${slug}`;
+  if (path === "/about" || path.startsWith("/about/")) return `/h/${slug}/about`;
+  if (path === "/services" || path.startsWith("/services/")) {
+    return `/h/${slug}/services`;
   }
-
-  const book = path.match(/^\/book\/([^/]+)\/?$/);
-  if (book && book[1] !== "confirmation") {
-    if (!q.has("host")) q.set("host", hostSlug);
-    return withQuery(`/book/${book[1]}`, q);
+  if (path === "/contact" || path.startsWith("/contact/")) {
+    return `/h/${slug}/contact`;
   }
-
-  const conf = path.match(/^\/book\/confirmation\/([^/]+)\/?$/);
-  if (conf) {
-    return withQuery(`/book/confirmation/${conf[1]}`, q);
+  if (path === "/stays" || path === "/marketplace" || path === "/properties") {
+    return `/h/${slug}/stays`;
   }
-
-  return "/marketplace";
+  if (path.startsWith("/book/")) return `/h/${slug}${path}`;
+  if (path.startsWith("/marketplace/properties/")) {
+    return `/h/${slug}/properties/${path.slice("/marketplace/properties/".length)}`;
+  }
+  if (path.startsWith("/properties/")) {
+    const propertySlug = path.slice("/properties/".length).split("/")[0];
+    if (propertySlug) return `/h/${slug}/properties/${propertySlug}`;
+  }
+  if (path.startsWith("/h/")) return `/h/${slug}`;
+  return `/h/${slug}${path}`;
 }

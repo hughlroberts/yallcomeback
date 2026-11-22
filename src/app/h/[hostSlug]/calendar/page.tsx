@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
-import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
+import { notFound, redirect } from "next/navigation";
+import { getHostForGuestSite } from "@/lib/host";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,8 @@ export default async function HostCalendarRedirect({
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await requireBrandedGuestSite(hostSlug, "/calendar");
+  const host = await getHostForGuestSite(hostSlug);
+  if (!host) notFound();
   const base = await hostPublicBasePath(host.slug);
   redirect(`${base}/stays`);
 }

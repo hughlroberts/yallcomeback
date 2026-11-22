@@ -1,10 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import ListingPage, { generateMetadata as listingMetadata } from "@/app/marketplace/properties/[slug]/page";
-import { getHostBySlugAny, getHostForGuestSite } from "@/lib/host";
-import {
-  brandedSiteGuestFallbackUrl,
-  planIncludesBrandedSiteForHost,
-} from "@/lib/branded-site-gate";
+import { getHostForGuestSite } from "@/lib/host";
 import { prisma } from "@/lib/db";
 import { findHiddenBrandListing, pausedListingAccess } from "@/lib/brand-visibility";
 import { ListingUnavailable } from "@/components/listing-unavailable";
@@ -21,10 +17,6 @@ export default async function HostPropertyPage({ params, searchParams }: {
   const host = await getHostForGuestSite(hostSlug);
   if (!host) {
     if (await findHiddenBrandListing(slug, hostSlug)) return <ListingUnavailable hostSlug={hostSlug} />;
-    const any = await getHostBySlugAny(hostSlug);
-    if (any?.active && !(await planIncludesBrandedSiteForHost(any))) {
-      redirect(brandedSiteGuestFallbackUrl(hostSlug, `/properties/${slug}`, sp));
-    }
     notFound();
   }
   const property = await prisma.property.findFirst({

@@ -1,5 +1,6 @@
 import { guestFlowPath } from "@/lib/branded-flow";
-import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
+import { getHostForGuestSite } from "@/lib/host";
+import { notFound } from "next/navigation";
 import {
   brandedPriceLabel,
   marketplacePriceWithCardLabel,
@@ -32,7 +33,7 @@ export const metadata: Metadata = pageMetadata({
 
 export default async function TermsPage({ params }: { params?: Promise<{ hostSlug?: string }> } = {}) {
   const hostSlug = (await params)?.hostSlug;
-  if (hostSlug) await requireBrandedGuestSite(hostSlug, "/terms");
+  if (hostSlug && !(await getHostForGuestSite(hostSlug))) notFound();
   return (
     <LegalLayout
       hostSlug={hostSlug}

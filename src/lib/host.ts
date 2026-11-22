@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 import type { Host, Property } from "@prisma/client";
-import { HOSTING_PUBLIC_STATUSES, isHostPublicLive, planIncludesBrandedSite } from "./hosting";
+import { HOSTING_PUBLIC_STATUSES, isHostPublicLive } from "./hosting";
 import {
   formatDistanceMiles,
   hasCoordinates,
@@ -108,31 +108,27 @@ export async function getHostForGuestSite(slug: string) {
     session?.user?.role === "HOST" &&
     session.user.hostId != null;
 
-  // Peek without publish gate first for ownership check. Include plan so
-  // K1-c can tell Marketplace-only ($12) from Branded website ($25).
-  const any = await prisma.host.findFirst({
-    where: { slug },
-    include: { plan: { select: { slug: true } } },
-  });
+  // Peek without publish gate first for ownership check
+  const any = await getHostBySlugAny(slug);
   if (!any || !any.active) return null;
-  const canPreview =
-    isPlatform || (isOwnHost && session!.user.hostId === any.id);
   // T46: a hidden Marketplace brand (grace ended) is preview-only.
   if (any.hostingMode === "PLATFORM" && any.marketplaceSuspendedAt != null) {
-    return canPreview ? any : null;
-  }
-  // K1-c: public guests only see /h/<brand>/ when the plan includes it.
-  // Owner / platform admin may still preview (same as unpublished).
-  if (!planIncludesBrandedSite(any)) {
-    return canPreview ? any : null;
+    if (isPlatform) return any;
+    if (isOwnHost && session!.user.hostId === any.id) return any;
+    return null;
   }
   if (!isHostPublicLive(any)) {
     // Still allow own host / platform to preview while pending payment/review
-    return canPreview ? any : null;
+    if (isPlatform) return any;
+    if (isOwnHost && session!.user.hostId === any.id) return any;
+    return null;
   }
 
   if (any.sitePublishState !== "UNPUBLISHED") return any;
-  return canPreview ? any : null;
+
+  if (isPlatform) return any;
+  if (isOwnHost && session!.user.hostId === any.id) return any;
+  return null;
 }
 
 export type MarketplaceSearchOpts = {

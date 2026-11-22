@@ -6,7 +6,7 @@ import {
   MARKETPLACE_EXCLUDED_HOST_SLUGS,
   marketplacePropertyWhere,
 } from "@/lib/host";
-import { HOSTING_PUBLIC_STATUSES, planIncludesBrandedSite } from "@/lib/hosting";
+import { HOSTING_PUBLIC_STATUSES } from "@/lib/hosting";
 import { isAgentApiEnabled } from "@/lib/platform-features";
 import { listingCanonicalPath } from "@/lib/site-url";
 import { hostSitemapEntries } from "@/lib/host-meta";
@@ -103,19 +103,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
         ],
       },
-      select: {
-        slug: true,
-        updatedAt: true,
-        sitePageAbout: true,
-        hostingMode: true,
-        plan: { select: { slug: true } },
-      },
+      select: { slug: true, updatedAt: true, sitePageAbout: true },
       take: 2000,
       orderBy: { updatedAt: "desc" },
     });
-    hostPages = hosts
-      .filter((h) => planIncludesBrandedSite(h))
-      .flatMap((h) => hostSitemapEntries(base, h));
+    hostPages = hosts.flatMap((h) => hostSitemapEntries(base, h));
   } catch {
     // Build/DB unavailable
   }

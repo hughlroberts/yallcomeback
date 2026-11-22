@@ -1,5 +1,4 @@
 import { guestFlowPath, sameBrand } from "@/lib/branded-flow";
-import { redirectIfBrandedSiteGated, planIncludesBrandedSiteForHost } from "@/lib/branded-site-gate";
 import { effectiveMaxPets } from "@/lib/pets";
 import Image from "next/image";
 import Link from "next/link";
@@ -99,17 +98,9 @@ export default async function BookPage({
 }) {
   const { slug, hostSlug } = await params;
   const sp = await searchParams;
-  if (hostSlug) {
-    await redirectIfBrandedSiteGated(hostSlug, `/book/${slug}`, sp);
-  }
   const tenant = await getRequestTenant();
   if (hostSlug && tenant?.slug !== hostSlug) notFound();
-  const brandSlug =
-    (hostSlug || tenant?.slug) &&
-    tenant &&
-    (await planIncludesBrandedSiteForHost(tenant))
-      ? tenant.slug
-      : undefined;
+  const brandSlug = hostSlug ?? tenant?.slug;
 
   const property = await prisma.property.findFirst({
     where: {

@@ -4,7 +4,6 @@ import { hostCanUseServices } from "@/lib/services-access";
 import {
   brandedUpgradeConfirmPath,
   brandedUpgradeNeedsCheckout,
-  canUpgradeToBranded,
 } from "@/lib/branded-upgrade";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -24,6 +23,7 @@ import {
   SETUP_SERVICE_FEE_USD,
   applyMarketplaceOptIn,
   planSlugForSitePresence,
+  planIncludesCustomDomain,
 } from "@/lib/hosting";
 import { parseSitePublishState } from "@/lib/host-site";
 import { normalizeCustomDomain } from "@/lib/custom-domains";
@@ -409,28 +409,24 @@ export async function updateHostProfile(formData: FormData) {
 
   const isSelf = hostingMode === "SELF";
 
-  let requestedPresence = parseSitePresence(
+  const requestedPresence = parseSitePresence(
     String(formData.get("sitePresence") || existing.sitePresence),
   );
-  // T38: Marketplace → Branded never switches on save. Paid brands go
-  // through the confirm page + card checkout; the plan changes after payment.
+  // K1-c (revised): the /h/ demo site is included on every plan. Saving
+  // Brand with a website presence must not switch the plan or start $25
+  // checkout. Checkout is only for connecting a custom domain.
   let upgradeNeedsCheckout = false;
-  if (
-    !isSelf &&
-    requestedPresence !== "STAYLOCAL" &&
-    canUpgradeToBranded(existing)
-  ) {
-    const currentPlan = existing.planId
+  const currentPlan = existing.plan
+    ?? (existing.planId
       ? await prisma.hostingPlan.findUnique({
           where: { id: existing.planId },
-          select: { monthlyPrice: true },
+          select: { monthlyPrice: true, slug: true },
         })
-      : null;
-    if (brandedUpgradeNeedsCheckout(existing, currentPlan)) {
-      upgradeNeedsCheckout = true;
-      requestedPresence = "STAYLOCAL";
-    }
-  }
+      : null);
+  const domainOnPlan = planIncludesCustomDomain({
+    hostingMode,
+    plan: currentPlan,
+  });
 
   const opted = applyMarketplaceOptIn(
     isSelf ? "SELF" : "PLATFORM",
@@ -510,9 +506,24 @@ export async function updateHostProfile(formData: FormData) {
     socialX = optionalText(formData, "socialX", 300);
     socialInstagram = optionalText(formData, "socialInstagram", 300);
     socialTiktok = optionalText(formData, "socialTiktok", 300);
-    customDomain = normalizeCustomDomain(
-      String(formData.get("customDomain") || ""),
-    );
+    if (formData.has("customDomain")) {
+      const requestedDomain = normalizeCustomDomain(
+        String(formData.get("customDomain") || ""),
+      );
+      if (domainOnPlan) {
+        customDomain = requestedDomain;
+      } else if (
+        requestedDomain &&
+        requestedDomain !== existing.customDomain &&
+        !isSelf &&
+        brandedUpgradeNeedsCheckout({ hostingMode, plan: currentPlan }, currentPlan)
+      ) {
+        // Do not store a new domain on a Marketplace-only plan; open checkout.
+        upgradeNeedsCheckout = true;
+      } else if (!requestedDomain) {
+        customDomain = null;
+      }
+    }
     sitePublishState = parseSitePublishState(
       String(formData.get("sitePublishState") || existing.sitePublishState),
     );
@@ -567,29 +578,8 @@ export async function updateHostProfile(formData: FormData) {
 
   const previousCustomDomain = existing.customDomain;
 
-  // Keep paid plan aligned with product path (skip complimentary / self-host)
-  let planIdUpdate: string | null | undefined;
-  if (!isSelf && hostingMode === "PLATFORM") {
-    const currentPlan = existing.planId
-      ? await prisma.hostingPlan.findUnique({
-          where: { id: existing.planId },
-          select: { monthlyPrice: true, slug: true },
-        })
-      : null;
-    const isComplimentary = Boolean(
-      currentPlan && currentPlan.monthlyPrice <= 0,
-    );
-    if (!isComplimentary) {
-      const wantSlug = planSlugForSitePresence(sitePresence);
-      const matched = await prisma.hostingPlan.findFirst({
-        where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
-      });
-      if (matched && matched.id !== existing.planId) {
-        planIdUpdate = matched.id;
-      }
-    }
-  }
-
+  // Never change planId here. Having a /h/ demo must not move a host onto
+  // the $25 plan; that happens only after custom-domain checkout (or Ops).
   const host = await prisma.host.update({
     where: { id: hostId },
     data: {
@@ -619,7 +609,6 @@ export async function updateHostProfile(formData: FormData) {
       socialTiktok,
       sitePublishState,
       customDomain,
-      ...(planIdUpdate !== undefined ? { planId: planIdUpdate } : {}),
       ...(access.isPlatform
         ? {
             active,

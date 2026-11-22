@@ -33,8 +33,7 @@ describe("K1 supersedes F3 branded redirect policy", () => {
   it("host property path renders inline rather than redirecting", () => {
     const page = src("app/h/[hostSlug]/properties/[slug]/page.tsx");
     expect(page).toContain('<ListingPage');
-    expect(page).toContain("brandedSiteGuestFallbackUrl");
-    expect(page).toContain("planIncludesBrandedSiteForHost");
+    expect(page).not.toContain('redirect(');
   });
 
   it("agents.md documents separate branded and marketplace canonicals", () => {
