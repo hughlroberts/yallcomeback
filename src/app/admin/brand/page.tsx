@@ -41,6 +41,7 @@ import {
   canUpgradeToBranded,
 } from "@/lib/branded-upgrade";
 import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
+import { adminBrandDemoSiteCopy } from "@/lib/admin-brand-demo-copy";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Brand & website" };
@@ -191,6 +192,7 @@ export default async function AdminBrandPage({
   const upgradeAvailable = canUpgradeToBranded({ ...host, plan: currentPlan });
   const awaitingPayment = brandedAwaitingPayment(host, currentPlan);
   const previewPath = `/h/${host.slug}`;
+  const demoSiteCopy = adminBrandDemoSiteCopy(host);
   const returnTo = access.isPlatform
     ? `/admin/brand?hostId=${host.id}`
     : "/admin/brand";
@@ -354,12 +356,30 @@ export default async function AdminBrandPage({
                 Marketplace only, or a branded website. Find a Place is a
                 checkbox on the website plan — not a third product.
               </p>
-              <p className="mt-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700">
-                A branded demo site at{" "}
-                <span className="font-medium">/h/{host.slug}</span> is included
-                on every plan, including Marketplace only — you can build it
-                without upgrading. Connecting your own domain needs the Branded
-                website plan ({brandedPriceLabel()}).
+              <p
+                className={`mt-3 rounded-xl border px-4 py-3 text-sm ${
+                  demoSiteCopy.hidden
+                    ? "border-red-200 bg-red-50 text-red-950"
+                    : "border-stone-200 bg-white text-stone-700"
+                }`}
+              >
+                {demoSiteCopy.text}
+                {demoSiteCopy.hidden ? (
+                  <>
+                    {" "}
+                    You can still{" "}
+                    <Link
+                      href={previewPath}
+                      target="_blank"
+                      className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
+                    >
+                      preview the site while you are signed in
+                    </Link>
+                    .
+                  </>
+                ) : null}{" "}
+                Connecting your own domain needs the Branded website plan (
+                {brandedPriceLabel()}).
                 {upgradeAvailable ? (
                   <>
                     {" "}

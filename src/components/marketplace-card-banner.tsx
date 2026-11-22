@@ -44,9 +44,9 @@ export function MarketplaceCardBanner({
       {suspended ? (
         <p>
           <strong>Marketplace · Listings hidden.</strong> The 14 days to add a
-          card ended. Guests cannot find {hostName} on Find a Place. Select{" "}
-          {SUBSCRIBE_CHECKOUT_LABEL} to show your listings again. Your listings and bookings are not
-          deleted.
+          card ended. Guests cannot find {hostName} on Find a Place or open the
+          /h/ demo site. Select {SUBSCRIBE_CHECKOUT_LABEL} to show your listings
+          and demo again. Your listings and bookings are not deleted.
         </p>
       ) : (
         <p>
