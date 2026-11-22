@@ -22,15 +22,16 @@ import {
 import {
   SETUP_SERVICE_FEE_USD,
   applyMarketplaceOptIn,
-  planSlugForSitePresence,
   planIncludesCustomDomain,
 } from "@/lib/hosting";
 import { parseSitePublishState } from "@/lib/host-site";
 import { normalizeCustomDomain } from "@/lib/custom-domains";
 import {
-  FIRST_LISTING_PATH,
   destAfterHostAuth,
+  firstListingPathAfterSignup,
   hostRecordName,
+  resolvePlatformSignupPlanId,
+  signupChoseBrandedDemo,
   signupNeedsBrandFields,
   uniqueHostSlug,
 } from "@/lib/host-signup";
@@ -135,21 +136,14 @@ export async function registerHost(formData: FormData) {
     // Soft: allow missing URL at apply time; host fills later
   }
 
-  let resolvedPlanId: string | null = null;
-  if (hostingMode === "PLATFORM") {
-    const wantSlug = planSlugForSitePresence(sitePresence);
-    const matched = await prisma.hostingPlan.findFirst({
-      where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
-    });
-    resolvedPlanId = matched?.id ?? null;
-    if (!resolvedPlanId) {
-      const fallback = await prisma.hostingPlan.findFirst({
-        where: { isActive: true, monthlyPrice: { gt: 0 } },
-        orderBy: { sortOrder: "asc" },
-      });
-      resolvedPlanId = fallback?.id ?? null;
-    }
-  }
+  // K1-c: always Marketplace only at signup. Choosing a branded /h/ demo
+  // does not set the $25 plan — that happens after custom-domain checkout.
+  const resolvedPlanId =
+    hostingMode === "PLATFORM" ? await resolvePlatformSignupPlanId() : null;
+  const domainHint = signupChoseBrandedDemo({ hostingMode, sitePresence });
+  const approvalNotes = domainHint
+    ? "Self-serve. Hosting goes live after payment. Chose a branded /h/ demo at signup; custom domain needs the Branded website plan after checkout."
+    : "Self-serve. Hosting goes live after payment.";
 
   const wantsSetup = formData.get("setupService") === "1";
 
@@ -169,7 +163,7 @@ export async function registerHost(formData: FormData) {
         hostingMode,
         approvalStatus: "APPROVED",
         reviewedAt: new Date(),
-        approvalNotes: "Self-serve. Hosting goes live after payment.",
+        approvalNotes,
         subscriptionStatus:
           hostingMode === "PLATFORM" ? "PENDING_PAYMENT" : "NONE",
         planId: hostingMode === "PLATFORM" ? resolvedPlanId : null,
@@ -221,7 +215,7 @@ export async function registerHost(formData: FormData) {
   await signIn("credentials", {
     email,
     password,
-    redirectTo: FIRST_LISTING_PATH,
+    redirectTo: firstListingPathAfterSignup({ domainHint }),
   });
   return {
     error:
@@ -298,21 +292,14 @@ export async function startHosting(formData: FormData) {
   const slug = await uniqueHostSlug(slugRaw);
   const wantsSetup = formData.get("setupService") === "1";
 
-  let resolvedPlanId: string | null = null;
-  if (hostingMode === "PLATFORM") {
-    const wantSlug = planSlugForSitePresence(sitePresence);
-    const matched = await prisma.hostingPlan.findFirst({
-      where: { slug: wantSlug, isActive: true, monthlyPrice: { gt: 0 } },
-    });
-    resolvedPlanId = matched?.id ?? null;
-    if (!resolvedPlanId) {
-      const fallback = await prisma.hostingPlan.findFirst({
-        where: { isActive: true, monthlyPrice: { gt: 0 } },
-        orderBy: { sortOrder: "asc" },
-      });
-      resolvedPlanId = fallback?.id ?? null;
-    }
-  }
+  // K1-c: always Marketplace only at signup. Choosing a branded /h/ demo
+  // does not set the $25 plan — that happens after custom-domain checkout.
+  const resolvedPlanId =
+    hostingMode === "PLATFORM" ? await resolvePlatformSignupPlanId() : null;
+  const domainHint = signupChoseBrandedDemo({ hostingMode, sitePresence });
+  const approvalNotes = domainHint
+    ? "Self-serve. Hosting goes live after payment. Chose a branded /h/ demo at signup; custom domain needs the Branded website plan after checkout."
+    : "Self-serve. Hosting goes live after payment.";
 
   const email = user.email;
   await prisma.$transaction(async (tx) => {
@@ -330,7 +317,7 @@ export async function startHosting(formData: FormData) {
         hostingMode,
         approvalStatus: "APPROVED",
         reviewedAt: new Date(),
-        approvalNotes: "Self-serve. Hosting goes live after payment.",
+        approvalNotes,
         subscriptionStatus:
           hostingMode === "PLATFORM" ? "PENDING_PAYMENT" : "NONE",
         planId: hostingMode === "PLATFORM" ? resolvedPlanId : null,
@@ -375,7 +362,7 @@ export async function startHosting(formData: FormData) {
     console.error("[auth] start hosting email failed", err);
   }
 
-  redirect(FIRST_LISTING_PATH);
+  redirect(firstListingPathAfterSignup({ domainHint }));
 }
 
 const HOST_PROFILE_PATH = "/admin";

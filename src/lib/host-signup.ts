@@ -5,6 +5,35 @@ import { slugify } from "@/lib/utils";
 /** First-run after creating a host: add a listing, not billing. */
 export const FIRST_LISTING_PATH = "/admin/properties/new?welcome=1";
 
+/** Paid platform signups always start here. The $25 plan is applied only after custom-domain checkout. */
+export const PLATFORM_SIGNUP_PLAN_SLUG = "marketplace" as const;
+
+export function signupChoseBrandedDemo(opts: {
+  hostingMode: "PLATFORM" | "SELF";
+  sitePresence: "STAYLOCAL" | "CUSTOM" | "BOTH";
+}): boolean {
+  return opts.hostingMode === "PLATFORM" && opts.sitePresence !== "STAYLOCAL";
+}
+
+export function firstListingPathAfterSignup(opts?: { domainHint?: boolean }): string {
+  return opts?.domainHint
+    ? `${FIRST_LISTING_PATH}&domainHint=1`
+    : FIRST_LISTING_PATH;
+}
+
+/** Marketplace-only plan id for a new PLATFORM host. Never the branded plan. */
+export async function resolvePlatformSignupPlanId(): Promise<string | null> {
+  const matched = await prisma.hostingPlan.findFirst({
+    where: {
+      slug: PLATFORM_SIGNUP_PLAN_SLUG,
+      isActive: true,
+      monthlyPrice: { gt: 0 },
+    },
+    select: { id: true },
+  });
+  return matched?.id ?? null;
+}
+
 export function signupNeedsBrandFields(opts: {
   hostingMode: "PLATFORM" | "SELF";
   sitePresence: "STAYLOCAL" | "CUSTOM" | "BOTH";

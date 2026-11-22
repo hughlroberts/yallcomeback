@@ -11,7 +11,6 @@ import {
   SETUP_SERVICE_LABEL,
 } from "@/lib/hosting";
 import {
-  MARKETPLACE_LISTING_USD,
   brandedPriceLabel,
   marketplacePriceWithCardLabel,
   setupServicePriceLabel,
@@ -34,12 +33,12 @@ type Path = "paid" | "self";
 type PaidPlan = "marketplace" | "website";
 
 export function HostSignupForm({
-  plans,
   initialPath = "paid",
   initialPlan = "marketplace",
   existingAccount = null,
   brandedPrice = brandedPriceLabel(),
 }: {
+  /** Plans stay in the signature for the for-hosts page; assignment is server-side. */
   plans: PlanOption[];
   initialPath?: Path;
   initialPlan?: PaidPlan;
@@ -54,23 +53,6 @@ export function HostSignupForm({
   const [paidPlan, setPaidPlan] = useState<PaidPlan>(initialPlan);
   const [listOnMarketplace, setListOnMarketplace] = useState(true);
   const [passwordValue, setPasswordValue] = useState("");
-
-  const marketplacePlanId =
-    plans.find((p) => p.slug === "marketplace")?.id ||
-    plans.find((p) => p.monthlyPrice === MARKETPLACE_LISTING_USD)?.id ||
-    plans.find((p) => /marketplace/i.test(p.name))?.id ||
-    "";
-  const brandedPlanId =
-    plans.find((p) => p.slug === "branded")?.id ||
-    plans.find((p) => p.monthlyPrice === 25)?.id ||
-    plans.find((p) => /branded/i.test(p.name))?.id ||
-    plans.find((p) => p.isDefault)?.id ||
-    plans[0]?.id ||
-    "";
-  const syncedPlanId =
-    paidPlan === "marketplace"
-      ? marketplacePlanId || brandedPlanId
-      : brandedPlanId;
 
   const showBrandFields = path === "self" || paidPlan === "website";
 
@@ -93,7 +75,6 @@ export function HostSignupForm({
         "sitePresence",
         paidPlan === "marketplace" ? "STAYLOCAL" : "BOTH",
       );
-      if (syncedPlanId) formData.set("planId", syncedPlanId);
     }
     if (path === "paid" && paidPlan === "marketplace") {
       formData.set("listOnMarketplace", "1");
@@ -190,9 +171,6 @@ export function HostSignupForm({
 
         {path === "paid" ? (
           <>
-            {syncedPlanId ? (
-              <input type="hidden" name="planId" value={syncedPlanId} />
-            ) : null}
 
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium text-stone-700">
@@ -208,7 +186,7 @@ export function HostSignupForm({
                   {
                     id: "website" as const,
                     label: `Branded website · ${brandedPrice}`,
-                    hint: "Your own site and domain. $25 covers every listing, including marketplace. We will ask for a brand name next.",
+                    hint: "Start a free /h/ demo on Marketplace only. The Branded website plan is charged when you connect a custom domain. We will ask for a brand name next.",
                   },
                 ] as const
               ).map((opt) => (
@@ -243,7 +221,13 @@ export function HostSignupForm({
                 account is created. Hosting is billed when the listing is
                 published.
               </p>
-            ) : null}
+            ) : (
+              <p className="rounded-xl bg-stone-50 px-3 py-2 text-xs text-stone-600">
+                You start on Marketplace only. A /h/ demo is included. The
+                Branded website plan ({brandedPrice}) is applied when you
+                connect a custom domain, after paid hosting checkout.
+              </p>
+            )}
           </>
         ) : (
           <div className="space-y-3">

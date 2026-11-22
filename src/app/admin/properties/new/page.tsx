@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PRIMARY_CTA_FOCUS_CLASS } from "@/lib/booking-cta-focus";
+import { brandedPriceLabel } from "@/lib/hosting-prices";
 import { redirect } from "next/navigation";
 import { ListingImportAgent } from "@/components/listing-import-agent";
 import { ListingWizardTypeStep } from "@/components/listing-wizard-type-step";
@@ -16,7 +17,7 @@ export const metadata = { title: "Create listing" };
 export default async function NewListingWizardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ importUrl?: string; welcome?: string }>;
+  searchParams: Promise<{ importUrl?: string; welcome?: string; domainHint?: string }>;
 }) {
   const access = await requireHostAdmin();
   if (!access) redirect("/login?callbackUrl=/admin/properties/new");
@@ -88,6 +89,18 @@ export default async function NewListingWizardPage({
             start from scratch. Confirm your email before you publish. Add a
             hosting card under Account → Subscription when guests should be
             able to book.
+            {sp.domainHint === "1" ? (
+              <>
+                {" "}
+                Your branded /h/ demo is included on Marketplace only. A custom
+                domain needs the Branded website plan ({brandedPriceLabel()}).
+                You can connect one later under{" "}
+                <Link href="/admin/brand#domain-setup" className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}>
+                  Brand & website
+                </Link>
+                .
+              </>
+            ) : null}
           </p>
         ) : null}
       </div>
