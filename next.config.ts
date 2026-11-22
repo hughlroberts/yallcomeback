@@ -4,6 +4,9 @@ import { contentSecurityPolicy } from "./src/lib/content-security-policy";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    agentUpgrade: "security",
+  },
   images: {
     remotePatterns: [],
     unoptimized: false,
