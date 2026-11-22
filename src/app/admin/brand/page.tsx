@@ -360,14 +360,14 @@ export default async function AdminBrandPage({
                 on every plan, including Marketplace only — you can build it
                 without upgrading. Connecting your own domain needs the Branded
                 website plan ({brandedPriceLabel()}).
-                {upgradeAvailable && host.hostingMode === "PLATFORM" ? (
+                {upgradeAvailable ? (
                   <>
                     {" "}
                     <Link
-                      href={`${returnTo.split("#")[0]}#domain-setup`}
+                      href={brandedUpgradeConfirmPath(host.id, returnTo)}
                       className={`font-semibold text-bonnet underline ${PRIMARY_CTA_FOCUS_CLASS}`}
                     >
-                      Domain & guest site
+                      Review the Branded website plan →
                     </Link>
                   </>
                 ) : null}

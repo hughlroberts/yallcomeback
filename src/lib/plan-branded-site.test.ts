@@ -110,4 +110,17 @@ describe("K1-c revised wiring", () => {
     expect(src("src/middleware.ts")).toContain("customDomainToPlatformPath");
     expect(src("src/middleware.ts")).toContain("resolveCustomDomain");
   });
+
+  it("links marketplace-only brands from the domain-plan copy to the upgrade confirm page", () => {
+    const page = src("src/app/admin/brand/page.tsx");
+    const start = page.indexOf("Connecting your own domain needs the Branded");
+    expect(start).toBeGreaterThan(-1);
+    const snippet = page.slice(start, start + 900);
+    expect(snippet).toContain("brandedUpgradeConfirmPath(host.id, returnTo)");
+    expect(snippet).toContain("Review the Branded website plan →");
+    expect(snippet).toContain("{upgradeAvailable ? (");
+    expect(snippet).not.toContain("#domain-setup");
+    expect(snippet).not.toMatch(/<form[\s>]/);
+    expect(snippet).not.toMatch(/\bfree\b/i);
+  });
 });
