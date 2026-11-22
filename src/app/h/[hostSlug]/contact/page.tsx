@@ -1,5 +1,5 @@
-import { redirect, notFound } from "next/navigation";
-import { getHostForGuestSite } from "@/lib/host";
+import { redirect } from "next/navigation";
+import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 
 export const dynamic = "force-dynamic";
@@ -14,8 +14,7 @@ export default async function HostContactPage({
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await getHostForGuestSite(hostSlug);
-  if (!host) notFound();
+  const host = await requireBrandedGuestSite(hostSlug, "/contact");
 
   const base = await hostPublicBasePath(host.slug);
 

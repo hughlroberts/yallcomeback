@@ -390,7 +390,7 @@ export async function updateHostProfile(formData: FormData) {
     redirect(`${HOST_PROFILE_PATH}?error=forbidden`);
   }
 
-  const existing = await prisma.host.findUnique({ where: { id: hostId } });
+  const existing = await prisma.host.findUnique({ where: { id: hostId }, include: { plan: { select: { slug: true, monthlyPrice: true } } } });
   if (!existing) redirect(`${HOST_PROFILE_PATH}?error=missing`);
 
   const name = String(formData.get("name") || "").trim();

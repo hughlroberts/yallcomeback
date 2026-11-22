@@ -121,10 +121,23 @@ describe("booking-time emails", () => {
     const b = booking();
     b.sourceChannel = "host_site";
     b.property.host.slug = "qa-host";
+    b.property.host.hostingMode = "PLATFORM";
+    b.property.host.plan = { slug: "branded" };
     const guest = composeBookingCreatedEmails(b, ["owner@motel.com"])[0]!;
     expect(guest.text).toContain(`/h/qa-host/book/confirmation/${b.id}?t=`);
     expect(guest.text).toContain("&cancel=1");
     expect(guest.text).not.toContain("/marketplace");
+  });
+
+  it("K1-c email links for a Marketplace-only brand fall back to marketplace URLs", () => {
+    const b = booking();
+    b.sourceChannel = "host_site";
+    b.property.host.slug = "qa-host";
+    b.property.host.hostingMode = "PLATFORM";
+    b.property.host.plan = { slug: "marketplace" };
+    const guest = composeBookingCreatedEmails(b, ["owner@motel.com"])[0]!;
+    expect(guest.text).toContain(`/book/confirmation/${b.id}?t=`);
+    expect(guest.text).not.toContain("/h/qa-host/");
   });
 
   it("guest gets request-received with manage + cancel links; each host gets a new-request email", () => {

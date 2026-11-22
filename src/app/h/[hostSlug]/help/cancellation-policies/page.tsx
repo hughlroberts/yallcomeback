@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getHostForGuestSite } from "@/lib/host";
+import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
 import { getHelpArticle } from "@/lib/help";
 import { HelpArticleBody } from "@/components/help/help-articles";
 import { generateMetadata as sharedMetadata } from "@/app/help/[slug]/page";
@@ -11,7 +11,7 @@ export async function generateMetadata() {
 }
 export default async function BrandedCancellationPage({ params }: { params: Promise<{ hostSlug: string }> }) {
   const { hostSlug } = await params;
-  if (!(await getHostForGuestSite(hostSlug))) notFound();
+  await requireBrandedGuestSite(hostSlug, "/help/cancellation-policies");
   const article = getHelpArticle("cancellation-policies");
   if (!article) notFound();
   return <HelpArticleBody article={article} hostSlug={hostSlug} />;

@@ -12,6 +12,7 @@ import { brandedPriceLabel } from "@/lib/hosting-prices";
  * share them.
  */
 import type { Host, HostingPlan } from "@prisma/client";
+import { planIncludesBrandedSite } from "@/lib/plan-branded-site";
 
 /** Checkout metadata flag on an upgrade session (session + subscription). */
 export const BRANDED_UPGRADE_METADATA = { upgrade: "branded" } as const;
@@ -21,16 +22,16 @@ export const HOSTING_BILLING_ROUTE = "/api/billing/hosting";
 
 export const SUBSCRIPTION_PATH = "/account/settings/subscription";
 
-type UpgradeHost = Pick<Host, "hostingMode" | "sitePresence">;
+type UpgradeHost = Pick<Host, "hostingMode"> & { plan?: { slug: string } | null };
 type PlanPrice = Pick<HostingPlan, "monthlyPrice"> | null | undefined;
 
 export function isComplimentaryPlanPrice(plan: PlanPrice): boolean {
   return Boolean(plan && plan.monthlyPrice <= 0);
 }
 
-/** Marketplace-only on the hosted platform: the upgrade applies. */
+/** Hosted platform brands whose current plan does not include a branded site. */
 export function canUpgradeToBranded(host: UpgradeHost): boolean {
-  return host.hostingMode === "PLATFORM" && host.sitePresence === "STAYLOCAL";
+  return host.hostingMode === "PLATFORM" && !planIncludesBrandedSite(host);
 }
 
 /**

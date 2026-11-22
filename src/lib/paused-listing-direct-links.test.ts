@@ -90,7 +90,7 @@ import { PausedListingBanner } from "@/components/paused-listing-banner";
 import { pausedListingAccess, PAUSED_PREVIEW_BANNER } from "@/lib/brand-visibility";
 
 function seed() {
-  store.host = { id: "h_qa", slug: "qa-tester-two", name: "QA Tester Two", active: true, listOnMarketplace: true, hostingMode: "PLATFORM", sitePresence: "STAYLOCAL", approvalStatus: "APPROVED", subscriptionStatus: "ACTIVE", sitePublishState: "LIVE", marketplaceSuspendedAt: null };
+  store.host = { id: "h_qa", slug: "qa-tester-two", name: "QA Tester Two", active: true, listOnMarketplace: true, hostingMode: "PLATFORM", sitePresence: "BOTH", approvalStatus: "APPROVED", subscriptionStatus: "ACTIVE", sitePublishState: "LIVE", marketplaceSuspendedAt: null, plan: { slug: "branded" } };
   store.listing = { id: "p_qa", slug: "qa-test-listing-do-not-book", hostId: "h_qa", published: false, archivedAt: null, listOnMarketplace: true, maxGuests: 4 };
   store.session = null;
 }

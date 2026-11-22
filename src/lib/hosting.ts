@@ -172,6 +172,13 @@ export function hostHasBrandedWebsite(
   return hostProductPath(host) !== "marketplace";
 }
 
+export {
+  planIncludesBrandedSite,
+  MARKETPLACE_PLAN_SLUG,
+  BRANDED_PLAN_SLUG,
+  COMPLIMENTARY_PLAN_SLUG,
+} from "@/lib/plan-branded-site";
+
 /** Public plan slug for marketplace-only vs branded website. */
 export function planSlugForSitePresence(
   sitePresence: Host["sitePresence"] | string,

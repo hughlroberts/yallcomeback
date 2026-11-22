@@ -26,6 +26,7 @@ import {
   hostHasBrandedWebsite,
   hostProductPath,
   marketplaceListingPath,
+  planIncludesBrandedSite,
 } from "@/lib/hosting";
 import {
   hostProfileFaceUrl,
@@ -177,13 +178,17 @@ export default async function AdminBrandPage({
 
   const product = hostProductPath(host);
   const branded = hostHasBrandedWebsite(host);
-  const upgradeAvailable = canUpgradeToBranded(host);
   const currentPlan = host.planId
     ? await prisma.hostingPlan.findUnique({
         where: { id: host.planId },
-        select: { monthlyPrice: true },
+        select: { monthlyPrice: true, slug: true },
       })
     : null;
+  const brandedSiteOnPlan = planIncludesBrandedSite({
+    hostingMode: host.hostingMode,
+    plan: currentPlan,
+  });
+  const upgradeAvailable = canUpgradeToBranded({ ...host, plan: currentPlan });
   const awaitingPayment = brandedAwaitingPayment(host, currentPlan);
   const previewPath = `/h/${host.slug}`;
   const returnTo = access.isPlatform
@@ -349,6 +354,23 @@ export default async function AdminBrandPage({
                 Marketplace only, or a branded website. Find a Place is a
                 checkbox on the website plan — not a third product.
               </p>
+              {!brandedSiteOnPlan && host.hostingMode === "PLATFORM" ? (
+                <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                  A branded site at{" "}
+                  <span className="font-medium">/h/{host.slug}</span> is a
+                  Branded website plan feature ({brandedPriceLabel()}).
+                  Guests who open those URLs are sent to Find a Place until you
+                  upgrade.{" "}
+                  {upgradeAvailable ? (
+                    <Link
+                      href={brandedUpgradeConfirmPath(host.id, returnTo)}
+                      className={`font-semibold underline ${PRIMARY_CTA_FOCUS_CLASS}`}
+                    >
+                      Upgrade — confirm and pay by card →
+                    </Link>
+                  ) : null}
+                </p>
+              ) : null}
             </div>
 
             {host.hostingMode === "SELF" ? (
@@ -450,7 +472,7 @@ export default async function AdminBrandPage({
           </Card>
 
           {/* —— Marketplace → branded upgrade —— */}
-          {!branded && host.hostingMode === "PLATFORM" ? (
+          {!brandedSiteOnPlan && host.hostingMode === "PLATFORM" ? (
             <div className="order-2">
               <MarketplaceToWebsiteUpgrade
                 hostId={host.id}

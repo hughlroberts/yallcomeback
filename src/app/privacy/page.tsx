@@ -1,6 +1,5 @@
 import { guestFlowPath } from "@/lib/branded-flow";
-import { getHostForGuestSite } from "@/lib/host";
-import { notFound } from "next/navigation";
+import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -25,7 +24,7 @@ export const metadata: Metadata = pageMetadata({
 
 export default async function PrivacyPage({ params }: { params?: Promise<{ hostSlug?: string }> } = {}) {
   const hostSlug = (await params)?.hostSlug;
-  if (hostSlug && !(await getHostForGuestSite(hostSlug))) notFound();
+  if (hostSlug) await requireBrandedGuestSite(hostSlug, "/privacy");
   return (
     <LegalLayout
       hostSlug={hostSlug}

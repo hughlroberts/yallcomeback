@@ -1,3 +1,4 @@
+import { planIncludesBrandedSite } from "@/lib/plan-branded-site";
 import { guestFlowPath } from "@/lib/branded-flow";
 /**
  * Transactional booking emails, sent with the shared platform email helper
@@ -56,7 +57,7 @@ export type BookingEmailData = {
     checkInTime: string;
     cancellationPolicy: string;
     longTermCancellationPolicy: string;
-    host: { name: string; slug?: string };
+    host: { name: string; slug?: string; hostingMode?: string; plan?: { slug: string } | null };
   };
   payments: {
     method: string;
@@ -75,6 +76,17 @@ export function manageBookingUrl(bookingId: string, hostSlug?: string): string {
 
 export function cancelBookingUrl(bookingId: string, hostSlug?: string): string {
   return `${manageBookingUrl(bookingId, hostSlug)}&cancel=1`;
+}
+
+/** Brand-context email links stay on /h/ only when the plan includes a branded site. */
+export function brandedBookingLinkSlug(b: Pick<BookingEmailData, "sourceChannel" | "property">): string | undefined {
+  if (b.sourceChannel !== "host_site") return undefined;
+  const host = b.property.host;
+  if (!host.slug) return undefined;
+  if (!planIncludesBrandedSite({ hostingMode: host.hostingMode ?? "PLATFORM", plan: host.plan })) {
+    return undefined;
+  }
+  return host.slug;
 }
 
 export function adminBookingUrl(bookingId: string): string {
@@ -112,7 +124,7 @@ const bookingSelect = {
       checkInTime: true,
       cancellationPolicy: true,
       longTermCancellationPolicy: true,
-      host: { select: { name: true, slug: true } },
+      host: { select: { name: true, slug: true, hostingMode: true, plan: { select: { slug: true } } } },
     },
   },
   payments: {
@@ -247,8 +259,8 @@ export function composeBookingCreatedEmails(
     cancelRuleLine(b, now),
     REFUND_PROCESS_TEXT,
     "",
-    `View or manage your booking: ${manageBookingUrl(b.id, b.sourceChannel === "host_site" ? b.property.host.slug : undefined)}`,
-    `Cancel this ${confirmed ? "booking" : "request"}: ${cancelBookingUrl(b.id, b.sourceChannel === "host_site" ? b.property.host.slug : undefined)}`,
+    `View or manage your booking: ${manageBookingUrl(b.id, brandedBookingLinkSlug(b))}`,
+    `Cancel this ${confirmed ? "booking" : "request"}: ${cancelBookingUrl(b.id, brandedBookingLinkSlug(b))}`,
     "",
     "Keep this email. The links above are private to you.",
   ].join("\n");
@@ -318,7 +330,7 @@ export function composeCancellationEmails(
     guestMoney,
     "",
     `Reference: ${shortRef(b.id)}`,
-    `Booking details: ${manageBookingUrl(b.id, b.sourceChannel === "host_site" ? b.property.host.slug : undefined)}`,
+    `Booking details: ${manageBookingUrl(b.id, brandedBookingLinkSlug(b))}`,
   ].join("\n");
 
   const hostText = [

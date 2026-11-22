@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MessageHostButton } from "@/components/message-host-form";
 import { getHostForGuestSite } from "@/lib/host";
+import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import { hostSocialLinks } from "@/lib/host-site";
 import { pageMetadata } from "@/lib/seo";
@@ -47,9 +48,9 @@ export default async function HostAboutPage({
   params: Promise<{ hostSlug: string }>;
 }) {
   const { hostSlug } = await params;
-  const host = await getHostForGuestSite(hostSlug);
+  const host = await requireBrandedGuestSite(hostSlug, "/about");
   const hostAbout = publicListingText(host?.description);
-  if (!host || !host.sitePageAbout) notFound();
+  if (!host.sitePageAbout) notFound();
 
   const base = await hostPublicBasePath(host.slug);
   const socials = hostSocialLinks(host);

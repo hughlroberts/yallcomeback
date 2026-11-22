@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { hostServicesPageOn } from "@/lib/services-access";
 import { notFound, redirect } from "next/navigation";
 import { getHostForGuestSite } from "@/lib/host";
+import { requireBrandedGuestSite } from "@/lib/branded-site-gate";
 import { hostPublicBasePath } from "@/lib/host-base-path";
 import {
   HOST_SITE_RESERVED_PATHS,
@@ -67,8 +68,8 @@ export default async function HostCustomPageSlug({
     notFound();
   }
 
-  const host = await getHostForGuestSite(hostSlug);
-  if (!host || !hostServicesPageOn(host)) notFound();
+  const host = await requireBrandedGuestSite(hostSlug, `/${pageSlug}`);
+  if (!hostServicesPageOn(host)) notFound();
 
   const expected = hostServicesPathSegment(host);
   if (pageSlug !== expected) {

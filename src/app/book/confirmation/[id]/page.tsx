@@ -1,4 +1,5 @@
 import { guestFlowPath, sameBrand } from "@/lib/branded-flow";
+import { redirectIfBrandedSiteGated, planIncludesBrandedSiteForHost } from "@/lib/branded-site-gate";
 import { getRequestTenant } from "@/lib/tenant";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -52,10 +53,18 @@ export default async function ConfirmationPage({
   }>;
 }) {
   const { id, hostSlug } = await params;
+  const sp = await searchParams;
+  if (hostSlug) {
+    await redirectIfBrandedSiteGated(hostSlug, `/book/confirmation/${id}`, sp);
+  }
   const tenant = await getRequestTenant();
   if (hostSlug && hostSlug !== tenant?.slug) notFound();
-  const brandSlug = hostSlug ?? tenant?.slug;
-  const sp = await searchParams;
+  const brandSlug =
+    (hostSlug || tenant?.slug) &&
+    tenant &&
+    (await planIncludesBrandedSiteForHost(tenant))
+      ? tenant.slug
+      : undefined;
   const inboxId = sp.inbox?.trim() || null;
   const booking = await prisma.booking.findUnique({
     where: { id },

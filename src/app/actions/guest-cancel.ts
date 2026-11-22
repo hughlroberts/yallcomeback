@@ -2,6 +2,7 @@
 
 import { guestFlowPath, sameBrand } from "@/lib/branded-flow";
 import { getRequestTenant } from "@/lib/tenant";
+import { planIncludesBrandedSiteForHost } from "@/lib/branded-site-gate";
 
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -70,9 +71,13 @@ export async function guestCancelBooking(formData: FormData) {
 
   const tenant = await getRequestTenant();
   if (!sameBrand(tenant?.slug, booking.property.host?.slug ?? "")) notFound();
+  const brandSlug =
+    tenant && (await planIncludesBrandedSiteForHost(tenant))
+      ? tenant.slug
+      : undefined;
   const back = (q: string) =>
     redirect(
-      guestFlowPath(tenant?.slug, `/book/confirmation/${bookingId}?t=${bookingAccessToken(bookingId)}&${q}`),
+      guestFlowPath(brandSlug, `/book/confirmation/${bookingId}?t=${bookingAccessToken(bookingId)}&${q}`),
     );
 
   if (booking.status === "CANCELLED") back("cancelled=1");

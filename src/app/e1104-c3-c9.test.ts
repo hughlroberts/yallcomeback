@@ -41,7 +41,7 @@ describe("E1104-C6 listing URL prefill", () => {
     const page = src("app/h/[hostSlug]/properties/[slug]/page.tsx");
     expect(page).toContain('searchParams={Promise.resolve(sp)}');
     expect(page).toContain('<ListingPage');
-    expect(page).not.toContain('redirect(');
+    expect(page).toContain("brandedSiteGuestFallbackUrl");
   });
 });
 

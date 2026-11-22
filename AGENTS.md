@@ -102,10 +102,14 @@ Implementation lives under `src/lib/agent/**` and `src/app/api/v1/**`. Keep thos
 ## Listing URLs and brand chrome (F3)
 
 - Marketplace canonical listing URL: `/marketplace/properties/{slug}` (SEO canonical/og omit `?host=`).
-- Branded listing URLs `/h/{hostSlug}/properties/{slug}` render in place with host chrome and their own canonical URL. Never redirect a branded guest to marketplace.
+- Branded listing URLs `/h/{hostSlug}/properties/{slug}` render in place with host chrome and their own canonical URL when the brand's plan includes a branded site (K1-c). Never redirect an entitled branded guest to marketplace.
 - Branded home/search/listings/nearby show only that host’s stays; omit empty sections. Branded booking and confirmation stay under `/h/{hostSlug}/book/...`, including payment returns and brand-context booking email links. No marketplace references in branded guest flows. Marketplace discovery remains multi-host and unchanged. Never mix brands on admin/back-end surfaces.
 - `Host.showHostedCredit` defaults false. Only when enabled show “Hosted on Yall Come Back” in the branded footer, linked to main-site home. This K1 decision (2026-11-08) supersedes prior branded discovery/redirect policy.
 
 ### K1-a branded legal/help navigation (2026-11-08)
 
 Branded book/listing/footer links use `/h/{hostSlug}/terms`, `/h/{hostSlug}/privacy`, and `/h/{hostSlug}/help/cancellation-policies`. These render the unchanged shared legal/policy content with host chrome; canonicals remain the global `/terms`, `/privacy`, and `/help/cancellation-policies` URLs. Legal cross-links/contact and policy navigation remain branded. External contact/social targets and the optional K1 hosted-credit main-home link are unchanged.
+
+### K1-c branded site plan gate (2026-11-22)
+
+A public `/h/{hostSlug}/` site is included on the Branded website plan and on complimentary hosted brands (and self-host). It is not included on Marketplace only. Guests hitting a gated brand's `/h/` URLs are redirected to the marketplace equivalent (`/marketplace/properties/{slug}` for property pages so links keep working; `/book/...` for booking/confirmation; `/marketplace` otherwise). Booking and email links for gated brands use marketplace URLs. `planIncludesBrandedSite` is the single entitlement check. Owner/admin may still preview. Do not infer entitlement from `sitePresence` alone.

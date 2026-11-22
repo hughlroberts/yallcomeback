@@ -47,7 +47,7 @@ export default async function BrandedUpgradeConfirmPage({
 
   const host = await prisma.host.findUnique({
     where: { id: access.hostId },
-    include: { plan: { select: { monthlyPrice: true } } },
+    include: { plan: { select: { monthlyPrice: true, slug: true } } },
   });
   if (!host) redirect(SUBSCRIPTION_PATH);
   const backHrefEarly = safeBillingReturn(sp.returnTo) || SUBSCRIPTION_PATH;

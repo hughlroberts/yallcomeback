@@ -12,9 +12,14 @@ import {
 const market = { hostingMode: "PLATFORM", sitePresence: "STAYLOCAL" } as const;
 
 describe("branded upgrade helpers (T38)", () => {
-  it("only marketplace brands on the platform can upgrade", () => {
+  it("platform brands whose plan does not include a branded site can upgrade", () => {
     expect(canUpgradeToBranded(market)).toBe(true);
-    expect(canUpgradeToBranded({ ...market, sitePresence: "BOTH" })).toBe(false);
+    expect(
+      canUpgradeToBranded({ ...market, plan: { slug: "marketplace" } }),
+    ).toBe(true);
+    expect(
+      canUpgradeToBranded({ ...market, plan: { slug: "branded" } }),
+    ).toBe(false);
     expect(canUpgradeToBranded({ ...market, hostingMode: "SELF" })).toBe(false);
   });
 
